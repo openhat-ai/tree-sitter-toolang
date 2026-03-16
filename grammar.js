@@ -26,7 +26,7 @@ module.exports = grammar({
 
     use_statement: ($) =>
       seq(
-        "use",
+        field("keyword", $.use_keyword),
         field("kind", $.cap_kind),
         field("reference", $.reference),
         optional($.comment),
@@ -37,24 +37,29 @@ module.exports = grammar({
       seq(
         field("kind", $.decl_kind),
         field("name", $.identifier),
-        ":",
+        field("colon", $.colon),
         field("fence", $.fence_delimiter_inline),
         optional($.comment),
         $.newline,
       ),
 
     fence_delimiter_inline: ($) =>
-      seq("```", optional(field("language", $.language))),
+      seq(field("ticks", $.fence_ticks), optional(field("language", $.language))),
 
     fence_delimiter: ($) =>
-      seq("```", optional(field("language", $.language)), optional($.comment), $.newline),
+      seq(
+        field("ticks", $.fence_ticks),
+        optional(field("language", $.language)),
+        optional($.comment),
+        $.newline,
+      ),
 
     thunk_header: ($) =>
       seq(
-        "thunk",
+        field("keyword", $.thunk_keyword),
         optional(field("name", $.identifier)),
-        optional(seq("=>", field("output", $.identifier))),
-        ":",
+        optional(seq(field("arrow", $.arrow), field("output", $.identifier))),
+        field("colon", $.colon),
         optional($.comment),
         $.newline,
       ),
@@ -63,9 +68,9 @@ module.exports = grammar({
       seq(
         optional($.indent),
         choice(
-          seq("no", optional(field("target", $.line_value))),
-          seq("with", field("target", $.line_value)),
-          seq("use", field("target", $.line_value)),
+          seq(field("keyword", $.no_keyword), optional(field("target", $.line_value))),
+          seq(field("keyword", $.with_keyword), field("target", $.line_value)),
+          seq(field("keyword", $.use_keyword), field("target", $.line_value)),
         ),
         optional($.comment),
         $.newline,
@@ -78,6 +83,14 @@ module.exports = grammar({
       ),
 
     indent: () => /[ \t]+/,
+
+    use_keyword: () => "use",
+    thunk_keyword: () => "thunk",
+    no_keyword: () => "no",
+    with_keyword: () => "with",
+    arrow: () => "=>",
+    colon: () => ":",
+    fence_ticks: () => "```",
 
     cap_kind: () => choice("skill", "service", "prompt", "psyche"),
 

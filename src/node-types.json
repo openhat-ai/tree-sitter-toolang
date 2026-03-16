@@ -13,6 +13,16 @@
     "type": "declaration_header",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "fence": {
         "multiple": false,
         "required": true,
@@ -63,6 +73,24 @@
     "type": "directive_line",
     "named": true,
     "fields": {
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "no_keyword",
+            "named": true
+          },
+          {
+            "type": "use_keyword",
+            "named": true
+          },
+          {
+            "type": "with_keyword",
+            "named": true
+          }
+        ]
+      },
       "target": {
         "multiple": false,
         "required": false,
@@ -106,6 +134,16 @@
             "named": true
           }
         ]
+      },
+      "ticks": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "fence_ticks",
+            "named": true
+          }
+        ]
       }
     },
     "children": {
@@ -133,6 +171,16 @@
         "types": [
           {
             "type": "language",
+            "named": true
+          }
+        ]
+      },
+      "ticks": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "fence_ticks",
             "named": true
           }
         ]
@@ -221,6 +269,36 @@
     "type": "thunk_header",
     "named": true,
     "fields": {
+      "arrow": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "arrow",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "thunk_keyword",
+            "named": true
+          }
+        ]
+      },
       "name": {
         "multiple": false,
         "required": false,
@@ -261,6 +339,16 @@
     "type": "use_statement",
     "named": true,
     "fields": {
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "use_keyword",
+            "named": true
+          }
+        ]
+      },
       "kind": {
         "multiple": false,
         "required": true,
@@ -298,19 +386,19 @@
     }
   },
   {
-    "type": ":",
-    "named": false
+    "type": "arrow",
+    "named": true
   },
   {
-    "type": "=>",
-    "named": false
-  },
-  {
-    "type": "```",
-    "named": false
+    "type": "colon",
+    "named": true
   },
   {
     "type": "comment",
+    "named": true
+  },
+  {
+    "type": "fence_ticks",
     "named": true
   },
   {
@@ -334,8 +422,8 @@
     "named": true
   },
   {
-    "type": "no",
-    "named": false
+    "type": "no_keyword",
+    "named": true
   },
   {
     "type": "note",
@@ -370,15 +458,15 @@
     "named": true
   },
   {
-    "type": "thunk",
-    "named": false
+    "type": "thunk_keyword",
+    "named": true
   },
   {
-    "type": "use",
-    "named": false
+    "type": "use_keyword",
+    "named": true
   },
   {
-    "type": "with",
-    "named": false
+    "type": "with_keyword",
+    "named": true
   }
 ]

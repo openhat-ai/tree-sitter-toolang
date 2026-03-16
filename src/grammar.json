@@ -67,8 +67,12 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "use"
+          "type": "FIELD",
+          "name": "keyword",
+          "content": {
+            "type": "SYMBOL",
+            "name": "use_keyword"
+          }
         },
         {
           "type": "FIELD",
@@ -124,8 +128,12 @@
           }
         },
         {
-          "type": "STRING",
-          "value": ":"
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
         },
         {
           "type": "FIELD",
@@ -157,8 +165,12 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "```"
+          "type": "FIELD",
+          "name": "ticks",
+          "content": {
+            "type": "SYMBOL",
+            "name": "fence_ticks"
+          }
         },
         {
           "type": "CHOICE",
@@ -182,8 +194,12 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "```"
+          "type": "FIELD",
+          "name": "ticks",
+          "content": {
+            "type": "SYMBOL",
+            "name": "fence_ticks"
+          }
         },
         {
           "type": "CHOICE",
@@ -223,8 +239,12 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "thunk"
+          "type": "FIELD",
+          "name": "keyword",
+          "content": {
+            "type": "SYMBOL",
+            "name": "thunk_keyword"
+          }
         },
         {
           "type": "CHOICE",
@@ -249,8 +269,12 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "STRING",
-                  "value": "=>"
+                  "type": "FIELD",
+                  "name": "arrow",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "arrow"
+                  }
                 },
                 {
                   "type": "FIELD",
@@ -268,8 +292,12 @@
           ]
         },
         {
-          "type": "STRING",
-          "value": ":"
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
         },
         {
           "type": "CHOICE",
@@ -311,8 +339,12 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "STRING",
-                  "value": "no"
+                  "type": "FIELD",
+                  "name": "keyword",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "no_keyword"
+                  }
                 },
                 {
                   "type": "CHOICE",
@@ -336,8 +368,12 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "STRING",
-                  "value": "with"
+                  "type": "FIELD",
+                  "name": "keyword",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "with_keyword"
+                  }
                 },
                 {
                   "type": "FIELD",
@@ -353,8 +389,12 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "STRING",
-                  "value": "use"
+                  "type": "FIELD",
+                  "name": "keyword",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "use_keyword"
+                  }
                 },
                 {
                   "type": "FIELD",
@@ -434,6 +474,34 @@
     "indent": {
       "type": "PATTERN",
       "value": "[ \\t]+"
+    },
+    "use_keyword": {
+      "type": "STRING",
+      "value": "use"
+    },
+    "thunk_keyword": {
+      "type": "STRING",
+      "value": "thunk"
+    },
+    "no_keyword": {
+      "type": "STRING",
+      "value": "no"
+    },
+    "with_keyword": {
+      "type": "STRING",
+      "value": "with"
+    },
+    "arrow": {
+      "type": "STRING",
+      "value": "=>"
+    },
+    "colon": {
+      "type": "STRING",
+      "value": ":"
+    },
+    "fence_ticks": {
+      "type": "STRING",
+      "value": "```"
     },
     "cap_kind": {
       "type": "CHOICE",
