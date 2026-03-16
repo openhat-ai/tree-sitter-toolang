@@ -1,0 +1,16 @@
+[package]
+name = "tree-sitter-toolang"
+version = "0.0.1"
+edition = "2021"
+description = "Toolang grammar for tree-sitter"
+license = "MIT"
+build = "bindings/rust/build.rs"
+
+[lib]
+path = "bindings/rust/lib.rs"
+
+[dependencies]
+tree-sitter-language = "0.1"
+
+[build-dependencies]
+cc = "1.1"
