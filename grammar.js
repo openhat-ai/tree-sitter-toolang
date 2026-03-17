@@ -40,11 +40,25 @@ module.exports = grammar({
       seq(
         field("kind", $.decl_kind),
         field("name", $.identifier),
+        optional(field("parameters", $.parameter_list)),
         field("colon", $.colon),
         field("open", $.fence_open),
         optional(field("language", $.language)),
         optional($.inline_comment),
         $.newline,
+      ),
+
+    parameter_list: ($) =>
+      seq(
+        $.lparen,
+        seq(field("parameter", $.parameter), repeat(seq($.comma, field("parameter", $.parameter)))),
+        $.rparen,
+      ),
+
+    parameter: ($) =>
+      seq(
+        field("name", $.identifier),
+        optional(field("optional", $.question)),
       ),
 
     thunk: ($) =>
@@ -57,38 +71,41 @@ module.exports = grammar({
       seq(
         field("keyword", $.thunk_keyword),
         optional(field("name", $.identifier)),
+        optional(field("input", $.thunk_input)),
         optional(seq(field("arrow", $.arrow), field("output", $.identifier))),
         field("colon", $.colon),
         optional($.inline_comment),
         $.newline,
       ),
 
+    thunk_input: ($) =>
+      seq($.lparen, field("value", $.identifier), $.rparen),
+
     directive_line: ($) =>
       seq(
-        choice($.no_directive, $.with_directive, $.use_directive),
+        choice($.collection_directive, $.model_directive),
         optional($.inline_comment),
         $.newline,
       ),
 
-    no_directive: ($) =>
+    collection_directive: ($) =>
       seq(
-        field("keyword", $.no_keyword),
-        optional(field("subject", $.directive_subject)),
-        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
+        field("subject", $.collection_subject),
+        field("operator", choice($.assign_operator, $.remove_operator)),
+        optional(field("values", $.directive_values)),
       ),
 
-    with_directive: ($) =>
+    model_directive: ($) =>
       seq(
-        field("keyword", $.with_keyword),
-        field("subject", $.directive_subject),
-        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
+        field("subject", $.model_subject),
+        field("operator", $.assign_operator),
+        optional(field("values", $.directive_values)),
       ),
 
-    use_directive: ($) =>
+    directive_values: ($) =>
       seq(
-        field("keyword", $.use_keyword),
-        field("subject", $.directive_subject),
-        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
+        field("value", $.directive_value),
+        repeat(seq($.comma, field("value", $.directive_value))),
       ),
 
     prompt_line: ($) =>
@@ -110,23 +127,27 @@ module.exports = grammar({
 
     use_keyword: () => "use",
     thunk_keyword: () => "thunk",
-    no_keyword: () => "no",
-    with_keyword: () => "with",
+    assign_operator: () => "=",
+    remove_operator: () => "-",
     arrow: () => "=>",
     colon: () => ":",
+    lparen: () => "(",
+    rparen: () => ")",
+    comma: () => ",",
+    question: () => "?",
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),
 
     cap_kind: () => choice("skill", "service", "prompt", "psyche"),
-    decl_kind: () => choice("service", "prompt", "psyche", "output", "note"),
+    decl_kind: () => choice("service", "prompt", "psyche", "struct", "stash"),
+    collection_subject: () => choice("skills", "services", "tools", "thunks"),
+    model_subject: () => "model",
 
     identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
     reference: () => token(/[A-Za-z0-9_./-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
-    directive_subject: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
-    directive_target: () => token(/[^\n#]+/),
+    directive_value: () => token(/[A-Za-z0-9_./-]+/),
     prompt_text: () => token(prec(-1, /[^\n#][^\n]*/)),
     fence_text: () => token(/[^`\n][^\n]*/),
-    indent: () => token(/[ \t]+/),
   },
 });

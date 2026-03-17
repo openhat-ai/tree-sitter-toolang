@@ -20,6 +20,51 @@
     "fields": {}
   },
   {
+    "type": "collection_directive",
+    "named": true,
+    "fields": {
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assign_operator",
+            "named": true
+          },
+          {
+            "type": "remove_operator",
+            "named": true
+          }
+        ]
+      },
+      "subject": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "collection_subject",
+            "named": true
+          }
+        ]
+      },
+      "values": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "directive_values",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "collection_subject",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "decl_kind",
     "named": true,
     "fields": {}
@@ -113,6 +158,16 @@
             "named": true
           }
         ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "parameter_list",
+            "named": true
+          }
+        ]
       }
     },
     "children": {
@@ -139,32 +194,54 @@
       "required": true,
       "types": [
         {
+          "type": "collection_directive",
+          "named": true
+        },
+        {
           "type": "inline_comment",
           "named": true
         },
         {
+          "type": "model_directive",
+          "named": true
+        },
+        {
           "type": "newline",
-          "named": true
-        },
-        {
-          "type": "no_directive",
-          "named": true
-        },
-        {
-          "type": "use_directive",
-          "named": true
-        },
-        {
-          "type": "with_directive",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "directive_subject",
+    "type": "directive_value",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "directive_values",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "directive_value",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "fence_body",
@@ -218,9 +295,40 @@
     "fields": {}
   },
   {
-    "type": "identifier",
+    "type": "model_directive",
     "named": true,
-    "fields": {}
+    "fields": {
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assign_operator",
+            "named": true
+          }
+        ]
+      },
+      "subject": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "model_subject",
+            "named": true
+          }
+        ]
+      },
+      "values": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "directive_values",
+            "named": true
+          }
+        ]
+      }
+    }
   },
   {
     "type": "newline",
@@ -228,49 +336,63 @@
     "fields": {}
   },
   {
-    "type": "no_directive",
+    "type": "parameter",
     "named": true,
     "fields": {
-      "colon": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "keyword": {
+      "name": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "no_keyword",
+            "type": "identifier",
             "named": true
           }
         ]
       },
-      "subject": {
+      "optional": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "directive_subject",
-            "named": true
-          }
-        ]
-      },
-      "target": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "directive_target",
+            "type": "question",
             "named": true
           }
         ]
       }
+    }
+  },
+  {
+    "type": "parameter_list",
+    "named": true,
+    "fields": {
+      "parameter": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "parameter",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        },
+        {
+          "type": "lparen",
+          "named": true
+        },
+        {
+          "type": "rparen",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -302,6 +424,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "reference",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "source_file",
@@ -393,6 +520,16 @@
           }
         ]
       },
+      "input": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "thunk_input",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
@@ -440,49 +577,33 @@
     }
   },
   {
-    "type": "use_directive",
+    "type": "thunk_input",
     "named": true,
     "fields": {
-      "colon": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "keyword": {
+      "value": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "use_keyword",
-            "named": true
-          }
-        ]
-      },
-      "subject": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "directive_subject",
-            "named": true
-          }
-        ]
-      },
-      "target": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "directive_target",
+            "type": "identifier",
             "named": true
           }
         ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "lparen",
+          "named": true
+        },
+        {
+          "type": "rparen",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -536,52 +657,6 @@
     }
   },
   {
-    "type": "with_directive",
-    "named": true,
-    "fields": {
-      "colon": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "keyword": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "with_keyword",
-            "named": true
-          }
-        ]
-      },
-      "subject": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "directive_subject",
-            "named": true
-          }
-        ]
-      },
-      "target": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "directive_target",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "```",
     "named": false
   },
@@ -590,7 +665,15 @@
     "named": true
   },
   {
+    "type": "assign_operator",
+    "named": true
+  },
+  {
     "type": "colon",
+    "named": true
+  },
+  {
+    "type": "comma",
     "named": true
   },
   {
@@ -598,11 +681,11 @@
     "named": true
   },
   {
-    "type": "directive_target",
+    "type": "fence_text",
     "named": true
   },
   {
-    "type": "fence_text",
+    "type": "identifier",
     "named": true
   },
   {
@@ -614,16 +697,12 @@
     "named": true
   },
   {
-    "type": "no_keyword",
+    "type": "lparen",
     "named": true
   },
   {
-    "type": "note",
-    "named": false
-  },
-  {
-    "type": "output",
-    "named": false
+    "type": "model_subject",
+    "named": true
   },
   {
     "type": "prompt",
@@ -638,7 +717,15 @@
     "named": false
   },
   {
-    "type": "reference",
+    "type": "question",
+    "named": true
+  },
+  {
+    "type": "remove_operator",
+    "named": true
+  },
+  {
+    "type": "rparen",
     "named": true
   },
   {
@@ -646,7 +733,23 @@
     "named": false
   },
   {
+    "type": "services",
+    "named": false
+  },
+  {
     "type": "skill",
+    "named": false
+  },
+  {
+    "type": "skills",
+    "named": false
+  },
+  {
+    "type": "stash",
+    "named": false
+  },
+  {
+    "type": "struct",
     "named": false
   },
   {
@@ -654,11 +757,15 @@
     "named": true
   },
   {
-    "type": "use_keyword",
-    "named": true
+    "type": "thunks",
+    "named": false
   },
   {
-    "type": "with_keyword",
+    "type": "tools",
+    "named": false
+  },
+  {
+    "type": "use_keyword",
     "named": true
   }
 ]
