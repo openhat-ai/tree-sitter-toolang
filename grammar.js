@@ -4,8 +4,6 @@ module.exports = grammar({
   extras: () => [/[ \t\f]/],
   conflicts: ($) => [[$.thunk]],
 
-  word: ($) => $.identifier,
-
   rules: {
     source_file: ($) =>
       repeat(
@@ -34,7 +32,7 @@ module.exports = grammar({
     declaration: ($) =>
       seq(
         field("header", $.declaration_header),
-        repeat(field("content", $.fence_content_line)),
+        optional(field("body", $.fence_body)),
         field("close", $.fence_close),
       ),
 
@@ -67,7 +65,6 @@ module.exports = grammar({
 
     directive_line: ($) =>
       seq(
-        field("indent", $.indent),
         choice($.no_directive, $.with_directive, $.use_directive),
         optional($.inline_comment),
         $.newline,
@@ -76,32 +73,35 @@ module.exports = grammar({
     no_directive: ($) =>
       seq(
         field("keyword", $.no_keyword),
-        optional(field("target", $.directive_target)),
+        optional(field("subject", $.directive_subject)),
+        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
       ),
 
     with_directive: ($) =>
       seq(
         field("keyword", $.with_keyword),
-        field("target", $.directive_target),
+        field("subject", $.directive_subject),
+        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
       ),
 
     use_directive: ($) =>
       seq(
         field("keyword", $.use_keyword),
-        field("target", $.directive_target),
+        field("subject", $.directive_subject),
+        optional(seq(field("colon", $.colon), field("target", $.directive_target))),
       ),
 
     prompt_line: ($) =>
       seq(
-        optional(field("indent", $.indent)),
         field("text", $.prompt_text),
         optional($.inline_comment),
         $.newline,
       ),
 
+    fence_body: ($) => repeat1($.fence_content_line),
+
     fence_content_line: ($) =>
       seq(
-        optional(field("indent", $.indent)),
         optional(field("text", $.fence_text)),
         $.newline,
       ),
@@ -120,12 +120,13 @@ module.exports = grammar({
     cap_kind: () => choice("skill", "service", "prompt", "psyche"),
     decl_kind: () => choice("service", "prompt", "psyche", "output", "note"),
 
-    identifier: () => /[A-Za-z_][A-Za-z0-9_-]*/,
-    reference: () => /[A-Za-z0-9_./-]+/,
-    language: () => /[A-Za-z0-9_-]+/,
-    directive_target: () => /[^\n#]+/,
-    prompt_text: () => /[^\n#][^\n]*/,
-    fence_text: () => /[^`\n][^\n]*/,
-    indent: () => /[ \t]+/,
+    identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
+    reference: () => token(/[A-Za-z0-9_./-]+/),
+    language: () => token(/[A-Za-z0-9_-]+/),
+    directive_subject: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
+    directive_target: () => token(/[^\n#]+/),
+    prompt_text: () => token(prec(-1, /[^\n#][^\n]*/)),
+    fence_text: () => token(/[^`\n][^\n]*/),
+    indent: () => token(/[ \t]+/),
   },
 });

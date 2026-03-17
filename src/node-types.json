@@ -28,22 +28,22 @@
     "type": "declaration",
     "named": true,
     "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "fence_body",
+            "named": true
+          }
+        ]
+      },
       "close": {
         "multiple": false,
         "required": true,
         "types": [
           {
             "type": "fence_close",
-            "named": true
-          }
-        ]
-      },
-      "content": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "fence_content_line",
             "named": true
           }
         ]
@@ -133,18 +133,7 @@
   {
     "type": "directive_line",
     "named": true,
-    "fields": {
-      "indent": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "indent",
-            "named": true
-          }
-        ]
-      }
-    },
+    "fields": {},
     "children": {
       "multiple": true,
       "required": true,
@@ -173,6 +162,26 @@
     }
   },
   {
+    "type": "directive_subject",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "fence_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "fence_content_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "fence_close",
     "named": true,
     "fields": {}
@@ -181,16 +190,6 @@
     "type": "fence_content_line",
     "named": true,
     "fields": {
-      "indent": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "indent",
-            "named": true
-          }
-        ]
-      },
       "text": {
         "multiple": false,
         "required": false,
@@ -219,6 +218,11 @@
     "fields": {}
   },
   {
+    "type": "identifier",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "newline",
     "named": true,
     "fields": {}
@@ -227,12 +231,32 @@
     "type": "no_directive",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
         "types": [
           {
             "type": "no_keyword",
+            "named": true
+          }
+        ]
+      },
+      "subject": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "directive_subject",
             "named": true
           }
         ]
@@ -253,16 +277,6 @@
     "type": "prompt_line",
     "named": true,
     "fields": {
-      "indent": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "indent",
-            "named": true
-          }
-        ]
-      },
       "text": {
         "multiple": false,
         "required": true,
@@ -429,6 +443,16 @@
     "type": "use_directive",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
@@ -439,9 +463,19 @@
           }
         ]
       },
-      "target": {
+      "subject": {
         "multiple": false,
         "required": true,
+        "types": [
+          {
+            "type": "directive_subject",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": false,
         "types": [
           {
             "type": "directive_target",
@@ -505,6 +539,16 @@
     "type": "with_directive",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
@@ -515,9 +559,19 @@
           }
         ]
       },
-      "target": {
+      "subject": {
         "multiple": false,
         "required": true,
+        "types": [
+          {
+            "type": "directive_subject",
+            "named": true
+          }
+        ]
+      },
+      "target": {
+        "multiple": false,
+        "required": false,
         "types": [
           {
             "type": "directive_target",
@@ -549,14 +603,6 @@
   },
   {
     "type": "fence_text",
-    "named": true
-  },
-  {
-    "type": "identifier",
-    "named": true
-  },
-  {
-    "type": "indent",
     "named": true
   },
   {
