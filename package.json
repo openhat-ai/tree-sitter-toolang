@@ -5,7 +5,10 @@
   "main": "grammar.js",
   "scripts": {
     "generate": "tree-sitter generate",
-    "test": "tree-sitter test"
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse",
+    "highlight": "tree-sitter highlight",
+    "check": "npm run generate && npm run test"
   },
   "devDependencies": {
     "tree-sitter-cli": "^0.24.7"

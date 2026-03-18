@@ -1,0 +1,100 @@
+====================
+Use And Declarations
+====================
+use skill briceyan/pdf-processing
+prompt summarize(style, audience?): ```md
+Summarize {{input}}
+```
+struct WorkspaceSummary: ```json
+{}
+```
+
+---
+
+(source_file
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline))
+  (declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
+        (rparen))
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close)))
+
+=====================
+Thunk With Directives
+=====================
+thunk summarize(user) => WorkspaceSummary:
+    model = gpt-5
+    skills = briceyan/pdf-processing, anthropic/create-skill
+
+    Turn the input into a workspace summary.
+
+---
+
+(source_file
+  (thunk
+    header: (thunk_header
+      keyword: (thunk_keyword)
+      name: (identifier)
+      input: (thunk_input
+        (lparen)
+        value: (identifier)
+        (rparen))
+      arrow: (arrow)
+      output: (identifier)
+      colon: (colon)
+      (newline))
+    (directive_line
+      (model_directive
+        subject: (model_subject)
+        operator: (assign_operator)
+        values: (directive_values
+          value: (directive_value)))
+      (newline))
+    (directive_line
+      (collection_directive
+        subject: (collection_subject)
+        operator: (assign_operator)
+        values: (directive_values
+          value: (directive_value)
+          (comma)
+          value: (directive_value)))
+      (newline))
+    (blank_line
+      (newline))
+    (prompt_line
+      text: (prompt_text)
+      (newline))))
