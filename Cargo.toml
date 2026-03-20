@@ -4,6 +4,7 @@ version = "0.0.5"
 edition = "2021"
 description = "Toolang grammar for tree-sitter"
 license = "MIT"
+authors = ["Brice Yan"]
 readme = "README.md"
 homepage = "https://github.com/openhat-ai/tree-sitter-toolang"
 repository = "https://github.com/openhat-ai/tree-sitter-toolang"

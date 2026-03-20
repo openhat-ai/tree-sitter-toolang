@@ -25,7 +25,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 authors = [
-  { name = "OpenHat" },
+  { name = "Brice Yan" },
 ]
 
 [project.urls]
