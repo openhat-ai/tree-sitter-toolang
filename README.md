@@ -2,166 +2,89 @@
 
 Tree-sitter grammar for Toolang.
 
-This repository is the source of truth for the Toolang grammar and now also
-ships a Python extension package named `tree-sitter-toolang`. The package builds
-the grammar into a native extension at install time, so downstream consumers can
-parse Toolang without compiling `parser.c` at runtime.
+This repository publishes:
 
-The same repository is also structured to publish a normal npm grammar package
-for Tree-sitter CLI users.
+- the npm grammar package `tree-sitter-toolang`
+- the Python extension package `tree-sitter-toolang`
 
-## Source Of Truth
+## Install
 
-Edit these files in this repository only:
-
-- `grammar.js`
-- `queries/*.scm`
-- `test/corpus/*.txt`
-
-Treat generated files as build output:
-
-- `src/parser.c`
-- `src/grammar.json`
-- `src/node-types.json`
-- `tree-sitter-toolang.wasm`
-
-The Zed extension consumes query files that are synced from this grammar repo.
-Do not hand-edit the copies under `../zed-toolang/languages/toolang`.
-
-## Python Package Usage
-
-Install the grammar package and `tree-sitter`:
+### Python
 
 ```bash
 python -m pip install tree-sitter-toolang tree-sitter
 ```
 
-Use the package from Python:
-
 ```python
 import tree_sitter_toolang
 from tree_sitter import Language, Parser
 
-TOOLANG_LANGUAGE = Language(tree_sitter_toolang.language())
-parser = Parser(TOOLANG_LANGUAGE)
+language = Language(tree_sitter_toolang.language())
+parser = Parser(language)
 tree = parser.parse(b"use skill a/b\n")
 ```
 
-If you need bundled queries, the package also exposes:
+The Python package also exposes packaged query strings:
+`HIGHLIGHTS_QUERY`, `INJECTIONS_QUERY`, `INDENTS_QUERY`, `OUTLINE_QUERY`, and
+`TAGS_QUERY`.
 
-- `tree_sitter_toolang.HIGHLIGHTS_QUERY`
-- `tree_sitter_toolang.INJECTIONS_QUERY`
-- `tree_sitter_toolang.INDENTS_QUERY`
-- `tree_sitter_toolang.OUTLINE_QUERY`
-- `tree_sitter_toolang.TAGS_QUERY`
+### Tree-sitter CLI
 
-## Workflow
-
-1. Update `grammar.js` and, if needed, `queries/*.scm`.
-2. Add or update corpus fixtures under `test/corpus/`.
-3. Regenerate the parser:
-
-```bash
-npm install
-npm run generate
-```
-
-4. Run parser tests:
-
-```bash
-npm test
-```
-
-5. Run the CLI smoke checks for language discovery, highlighting, and tags:
-
-```bash
-npm run test:cli
-```
-
-6. From the sibling Zed repository, sync query files into the extension:
-
-```bash
-cd ../zed-toolang
-./scripts/sync-tree-sitter-queries.sh
-```
-
-## Building The Python Package
-
-Build a wheel and sdist locally:
-
-```bash
-python -m pip install --upgrade pip build
-python -m build
-```
-
-Run the Python smoke tests locally:
-
-```bash
-python -m pip install --upgrade pip pytest tree-sitter
-python -m pip install -e .[tests]
-pytest tests
-```
-
-The package follows the same packaging model used by official Tree-sitter
-grammar packages: the generated parser in `src/` stays in this repository, and
-the Python package exposes a top-level `language()` function backed by a
-compiled extension module.
-
-## npm Package And Tree-sitter CLI Usage
-
-Publish the grammar to npm under the package name `tree-sitter-toolang`.
-
-Before publishing, verify the npm payload:
-
-```bash
-npm run pack:dry-run
-```
-
-For local CLI usage, Tree-sitter discovers grammars from the directories listed
-in your CLI config. Generate the config once:
+Install `tree-sitter-toolang` or clone this repository, then make sure the
+directory that contains `tree-sitter-toolang` is listed in your Tree-sitter
+`parser-directories`.
 
 ```bash
 tree-sitter init-config
-```
-
-Then add the parent directory that contains `tree-sitter-toolang` to your
-`parser-directories`. For example, if this repository lives under
-`/Users/bryan/openhat-ai/tree-sitter-toolang`, add `/Users/bryan/openhat-ai`.
-
-After that, these commands should work as expected:
-
-```bash
 tree-sitter dump-languages
 tree-sitter parse path/to/file.too
 tree-sitter highlight path/to/file.too
 tree-sitter tags path/to/file.too
 ```
 
-Installing the npm package alone is not enough for `tree-sitter dump-languages`
-to discover Toolang automatically. The package directory still needs to live
-under one of the configured `parser-directories`, or you need to point CLI tools
-at the grammar location explicitly.
+Installing the npm package alone does not make `tree-sitter dump-languages`
+discover Toolang automatically. The package must still live under one of the
+configured `parser-directories`, or the grammar path must be provided
+explicitly.
+
+## Development
+
+Edit:
+
+- `grammar.js`
+- `queries/*.scm`
+- `test/corpus/*.txt`
+
+Regenerate and test:
+
+```bash
+npm install
+npm run generate
+npm test
+npm run test:cli
+python -m pip install -e .[tests]
+pytest tests
+```
 
 ## Publishing
 
-Build artifacts are produced by GitHub Actions using `cibuildwheel` for macOS,
-Linux, and Windows. For releases:
-
-1. Bump the grammar version consistently in repository metadata.
-2. Tag a release such as `v0.0.6`.
-3. Build and verify artifacts in CI.
-4. Run `npm publish`.
-5. Upload the wheel and sdist artifacts to TestPyPI or PyPI.
-
-Trusted Publishing is a straightforward next step: configure a PyPI trusted
-publisher for this repository, then let a release workflow publish the artifacts
-generated by the wheel build job.
-
-## Helpful Commands
+Verify the npm package:
 
 ```bash
-npm run parse -- ../toolang/syntax.too
-npm run highlight -- ../toolang/syntax.too
-npm run tags -- ../toolang/syntax.too
-npm run check
+npm publish --dry-run
 ```
+
+Verify the Python distributions:
+
+```bash
+python -m pip install --upgrade pip build twine
+python -m build
+python -m twine check dist/*
+```
+
+Release checklist:
+
+1. Bump the version in repository metadata.
+2. Confirm CI is green.
+3. Publish to npm.
+4. Upload the sdist and wheels to PyPI.

@@ -45,7 +45,7 @@
     "parse": "tree-sitter parse",
     "highlight": "tree-sitter highlight",
     "tags": "tree-sitter tags",
-    "test:cli": "python3 scripts/check_cli.py",
+    "test:cli": "node scripts/check_cli.mjs",
     "pack:dry-run": "npm pack --dry-run",
     "check": "npm run generate && npm run test && npm run test:cli"
   },

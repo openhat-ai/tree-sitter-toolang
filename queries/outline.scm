@@ -1,5 +1,5 @@
 ; Source of truth for Toolang Tree-sitter outline queries.
-; Sync this file into editor integrations instead of editing copies by hand.
+; Maintain this file in this repository and consume it from tooling.
 
 (thunk_header
   name: (identifier) @name

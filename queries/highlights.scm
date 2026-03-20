@@ -1,5 +1,5 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
-; Sync this file into editor integrations instead of editing copies by hand.
+; Maintain this file in this repository and consume it from tooling.
 
 (comment) @comment
 (inline_comment) @comment
