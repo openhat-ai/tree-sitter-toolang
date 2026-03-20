@@ -19,6 +19,15 @@ include = [
     "tree-sitter.json",
     "README.md",
     "LICENSE",
+    "!node_modules/**",
+    "!.pytest_cache/**",
+    "!target/**",
+    "!build/**",
+    "!dist/**",
+    "!__pycache__/**",
+    "!*.egg-info/**",
+    "!tree-sitter-toolang.wasm",
+    "!.DS_Store",
 ]
 build = "bindings/rust/build.rs"
 
