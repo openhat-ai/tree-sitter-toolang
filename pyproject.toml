@@ -39,6 +39,7 @@ tests = ["pytest>=8", "tree-sitter~=0.25"]
 
 [tool.cibuildwheel]
 build = "cp310-*"
+archs = ["auto64"]
 build-frontend = "build"
 test-requires = ["pytest>=8", "tree-sitter~=0.25"]
 test-command = "pytest {project}/tests"
