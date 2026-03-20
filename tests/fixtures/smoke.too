@@ -1,0 +1,4 @@
+use skill a/b
+prompt summarize(style, audience?): ```md
+Summarize {{input}}
+```
