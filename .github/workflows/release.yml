@@ -16,6 +16,7 @@ jobs:
       version: ${{ steps.metadata.outputs.version }}
       npm_exists: ${{ steps.metadata.outputs.npm_exists }}
       pypi_exists: ${{ steps.metadata.outputs.pypi_exists }}
+      crates_exists: ${{ steps.metadata.outputs.crates_exists }}
 
     steps:
       - uses: actions/checkout@v6
@@ -81,6 +82,20 @@ jobs:
                   raise
               return version in data.get(key, {})
 
+          def crates_version_exists(crate_name: str) -> bool:
+              request = urllib.request.Request(
+                  f"https://crates.io/api/v1/crates/{crate_name}",
+                  headers={"User-Agent": "tree-sitter-toolang-release-check"},
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=15) as response:
+                      data = json.load(response)
+              except urllib.error.HTTPError as exc:
+                  if exc.code == 404:
+                      return False
+                  raise
+              return any(item.get("num") == version for item in data.get("versions", []))
+
           npm_exists = version_exists(
               f"https://registry.npmjs.org/{package_name}",
               "versions",
@@ -89,11 +104,13 @@ jobs:
               f"https://pypi.org/pypi/{package_name}/json",
               "releases",
           )
+          crates_exists = crates_version_exists(package_name)
 
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as fh:
               fh.write(f"version={version}\n")
               fh.write(f"npm_exists={'true' if npm_exists else 'false'}\n")
               fh.write(f"pypi_exists={'true' if pypi_exists else 'false'}\n")
+              fh.write(f"crates_exists={'true' if crates_exists else 'false'}\n")
           PY
 
   publish-npm:
@@ -200,3 +217,24 @@ jobs:
           merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-rust:
+    name: Publish Rust crate
+    needs: validate
+    if: needs.validate.outputs.crates_exists != 'true'
+    runs-on: ubuntu-latest
+    env:
+      CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish to crates.io
+        if: env.CRATES_IO_TOKEN != ''
+        run: cargo publish --token "$CRATES_IO_TOKEN"
+
+      - name: Skip crates.io publish
+        if: env.CRATES_IO_TOKEN == ''
+        run: echo "CRATES_IO_TOKEN is not configured; skipping crates.io publish."

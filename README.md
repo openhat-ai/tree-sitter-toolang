@@ -86,6 +86,9 @@ pytest tests
 Trusted publishers are configured in GitHub Actions with
 [release.yml](.github/workflows/release.yml).
 
+To publish the Rust crate automatically, add the repository secret
+`CRATES_IO_TOKEN`.
+
 Verify the npm package locally:
 
 ```bash
@@ -113,7 +116,7 @@ Release checklist:
 3. Push the version commit to `main`.
 4. Create and push a matching tag such as `v0.0.6`.
 5. GitHub Actions publishes npm and PyPI automatically.
-6. Optionally publish the Rust crate to crates.io.
+6. GitHub Actions also publishes the Rust crate when `CRATES_IO_TOKEN` is set.
 
-The release workflow skips npm or PyPI if that version already exists on the
-registry. The git tag must match the package version.
+The release workflow skips npm, PyPI, or crates.io if that version already
+exists on the registry. The git tag must match the package version.
