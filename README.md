@@ -83,13 +83,16 @@ pytest tests
 
 ## Publishing
 
-Verify the npm package:
+Trusted publishers are configured in GitHub Actions with
+[release.yml](.github/workflows/release.yml).
+
+Verify the npm package locally:
 
 ```bash
 npm publish --dry-run
 ```
 
-Verify the Python distributions:
+Verify the Python distributions locally:
 
 ```bash
 python -m pip install --upgrade pip build twine
@@ -105,8 +108,12 @@ cargo publish --dry-run
 
 Release checklist:
 
-1. Bump the version in repository metadata.
+1. Bump the version in `package.json`, `pyproject.toml`, and `Cargo.toml`.
 2. Confirm CI is green.
-3. Publish to npm.
-4. Upload the sdist and wheels to PyPI.
-5. Optionally publish the Rust crate to crates.io.
+3. Push the version commit to `main`.
+4. Create and push a matching tag such as `v0.0.6`.
+5. GitHub Actions publishes npm and PyPI automatically.
+6. Optionally publish the Rust crate to crates.io.
+
+The release workflow skips npm or PyPI if that version already exists on the
+registry. The git tag must match the package version.

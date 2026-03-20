@@ -1,0 +1,202 @@
+name: Release
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  validate:
+    name: Validate release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      npm_exists: ${{ steps.metadata.outputs.npm_exists }}
+      pypi_exists: ${{ steps.metadata.outputs.pypi_exists }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: metadata
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import tomllib
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          package = json.loads(Path("package.json").read_text())
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+          cargo_lines = Path("Cargo.toml").read_text().splitlines()
+
+          versions = {
+              "package.json": package["version"],
+              "pyproject.toml": pyproject["project"]["version"],
+          }
+
+          cargo_version = None
+          in_package = False
+          for line in cargo_lines:
+              stripped = line.strip()
+              if stripped == "[package]":
+                  in_package = True
+                  continue
+              if in_package and stripped.startswith("["):
+                  break
+              if in_package and stripped.startswith("version = "):
+                  cargo_version = stripped.split('"')[1]
+                  break
+
+          if cargo_version is None:
+              raise SystemExit("Could not find package.version in Cargo.toml")
+
+          versions["Cargo.toml"] = cargo_version
+          unique_versions = set(versions.values())
+          if len(unique_versions) != 1:
+              raise SystemExit(f"Version mismatch across metadata files: {versions}")
+
+          version = unique_versions.pop()
+          tag_version = os.environ["REF_NAME"].removeprefix("v")
+          if version != tag_version:
+              raise SystemExit(
+                  f"Tag version {tag_version!r} does not match package version {version!r}"
+              )
+
+          package_name = package["name"]
+
+          def version_exists(url: str, key: str) -> bool:
+              try:
+                  with urllib.request.urlopen(url, timeout=15) as response:
+                      data = json.load(response)
+              except urllib.error.HTTPError as exc:
+                  if exc.code == 404:
+                      return False
+                  raise
+              return version in data.get(key, {})
+
+          npm_exists = version_exists(
+              f"https://registry.npmjs.org/{package_name}",
+              "versions",
+          )
+          pypi_exists = version_exists(
+              f"https://pypi.org/pypi/{package_name}/json",
+              "releases",
+          )
+
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as fh:
+              fh.write(f"version={version}\n")
+              fh.write(f"npm_exists={'true' if npm_exists else 'false'}\n")
+              fh.write(f"pypi_exists={'true' if pypi_exists else 'false'}\n")
+          PY
+
+  publish-npm:
+    name: Publish npm package
+    needs: validate
+    if: needs.validate.outputs.npm_exists != 'true'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install grammar tooling
+        run: npm ci
+
+      - name: Verify grammar and package contents
+        run: |
+          npm run check
+          npm run pack:dry-run
+
+      - name: Publish to npm
+        run: npm publish --provenance
+
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: validate
+    if: needs.validate.outputs.pypi_exists != 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.4.0
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_BUILD: cp310-*
+          CIBW_TEST_REQUIRES: pytest>=8 tree-sitter~=0.25
+          CIBW_TEST_COMMAND: pytest {project}/tests
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  build-sdist:
+    name: Build sdist
+    needs: validate
+    if: needs.validate.outputs.pypi_exists != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install build frontend
+        run: python -m pip install --upgrade pip build
+
+      - name: Build sdist
+        run: python -m build --sdist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  publish-pypi:
+    name: Publish Python distributions
+    needs:
+      - validate
+      - build-wheels
+      - build-sdist
+    if: needs.validate.outputs.pypi_exists != 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
