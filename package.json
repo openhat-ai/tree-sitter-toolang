@@ -42,6 +42,7 @@
   "scripts": {
     "generate": "tree-sitter generate",
     "test": "tree-sitter test",
+    "build:wasm": "tree-sitter build --wasm",
     "parse": "tree-sitter parse",
     "highlight": "tree-sitter highlight",
     "tags": "tree-sitter tags",

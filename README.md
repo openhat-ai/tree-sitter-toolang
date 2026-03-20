@@ -6,6 +6,7 @@ This repository publishes:
 
 - the npm grammar package `tree-sitter-toolang`
 - the Python extension package `tree-sitter-toolang`
+- the Rust crate `tree-sitter-toolang`
 
 ## Install
 
@@ -47,6 +48,18 @@ discover Toolang automatically. The package must still live under one of the
 configured `parser-directories`, or the grammar path must be provided
 explicitly.
 
+### Rust
+
+```toml
+[dependencies]
+tree-sitter = "0.25"
+tree-sitter-toolang = "0.0.5"
+```
+
+```rust
+let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
+```
+
 ## Development
 
 Edit:
@@ -62,6 +75,8 @@ npm install
 npm run generate
 npm test
 npm run test:cli
+npm run build:wasm
+cargo test
 python -m pip install -e .[tests]
 pytest tests
 ```
@@ -82,9 +97,16 @@ python -m build
 python -m twine check dist/*
 ```
 
+Verify the Rust crate:
+
+```bash
+cargo publish --dry-run
+```
+
 Release checklist:
 
 1. Bump the version in repository metadata.
 2. Confirm CI is green.
 3. Publish to npm.
 4. Upload the sdist and wheels to PyPI.
+5. Optionally publish the Rust crate to crates.io.
