@@ -38,3 +38,4 @@ def test_parser_can_parse_toolang_source():
 def test_queries_are_packaged():
     assert "@" in tree_sitter_toolang.HIGHLIGHTS_QUERY
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY
+    assert "@definition" in tree_sitter_toolang.TAGS_QUERY

@@ -1,14 +1,53 @@
 {
   "name": "tree-sitter-toolang",
   "version": "0.0.5",
-  "private": true,
+  "description": "Toolang grammar for tree-sitter",
+  "license": "MIT",
+  "homepage": "https://github.com/openhat-ai/tree-sitter-toolang",
+  "bugs": {
+    "url": "https://github.com/openhat-ai/tree-sitter-toolang/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openhat-ai/tree-sitter-toolang.git"
+  },
+  "keywords": [
+    "grammar",
+    "parser",
+    "toolang",
+    "tree-sitter",
+    "tree-sitter-grammar"
+  ],
   "main": "grammar.js",
+  "files": [
+    "grammar.js",
+    "queries/*.scm",
+    "src/**",
+    "tree-sitter.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "tree-sitter": [
+    {
+      "name": "toolang",
+      "scope": "source.toolang",
+      "file-types": [
+        "too"
+      ],
+      "highlights": "queries/highlights.scm",
+      "injections": "queries/injections.scm",
+      "tags": "queries/tags.scm"
+    }
+  ],
   "scripts": {
     "generate": "tree-sitter generate",
     "test": "tree-sitter test",
     "parse": "tree-sitter parse",
     "highlight": "tree-sitter highlight",
-    "check": "npm run generate && npm run test"
+    "tags": "tree-sitter tags",
+    "test:cli": "python3 scripts/check_cli.py",
+    "pack:dry-run": "npm pack --dry-run",
+    "check": "npm run generate && npm run test && npm run test:cli"
   },
   "devDependencies": {
     "tree-sitter-cli": "^0.24.7"

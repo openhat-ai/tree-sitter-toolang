@@ -9,6 +9,7 @@ _QUERY_FILES = {
     "INJECTIONS_QUERY": "injections.scm",
     "INDENTS_QUERY": "indents.scm",
     "OUTLINE_QUERY": "outline.scm",
+    "TAGS_QUERY": "tags.scm",
 }
 
 __all__ = ["language", *_QUERY_FILES]
