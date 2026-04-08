@@ -53,7 +53,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.0.5"
+tree-sitter-toolang = "0.0.6"
 ```
 
 ```rust
