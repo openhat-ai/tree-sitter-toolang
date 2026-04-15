@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "cli.too");
+const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
 
 function runCli(...args) {
   const result = spawnSync("npx", ["tree-sitter", ...args], {
@@ -41,7 +41,11 @@ try {
   }
 
   const tagsOutput = runCli("tags", "--config-path", configPath, FIXTURE);
-  if (!tagsOutput.includes("WorkspaceSummary") || !tagsOutput.includes("summarize")) {
+  if (
+    !tagsOutput.includes("ReviewResult") ||
+    !tagsOutput.includes("review") ||
+    !tagsOutput.includes("summarize")
+  ) {
     throw new Error(`Tag output was missing expected symbols.\n${tagsOutput}`);
   }
 } finally {

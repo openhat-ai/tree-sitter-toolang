@@ -1,9 +1,0 @@
-struct WorkspaceSummary:
-  title: string
-  summary: string
-
-thunk summarize(input, style?) -> WorkspaceSummary:
-  model = gpt-5
-  skills = review
-
-  Produce a concise workspace summary.

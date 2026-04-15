@@ -1,10 +1,10 @@
 ==================
 Use Selectors
 ==================
+use psyche toolang.ai/reviewer
 use skill by3gus/pdf-processing
 use service github://openhat/caps/services/github@main
 use slash https://toolang.ai/review
-use psyche toolang.ai/reviewer
 
 ---
 
@@ -33,12 +33,12 @@ use psyche toolang.ai/reviewer
 =====================
 Fenced Cap Declarations
 =====================
-service github: ```md
-Use this service when the agent needs GitHub access.
-```
-
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
+```
+
+service github: ```md
+Use this service when the agent needs GitHub access.
 ```
 
 ---
@@ -74,20 +74,44 @@ Prefer concrete findings and direct language.
     close: (fence_close)))
 
 =================
-Struct And Slash
+Slash And Struct
 =================
+slash review(path, focus?):
+  Review {{path}} carefully.
+  {{focus}}
+
 struct ReviewFinding:
   path: string
   line: number?
   tags: string[]
 
-slash review(path, focus?):
-  Review {{path}} carefully.
-  {{focus}}
-
 ---
 
 (source_file
+  (slash_declaration
+    header: (slash_header
+      keyword: (slash_keyword)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
+        (rparen))
+      colon: (colon)
+      (newline))
+    body: (slash_body
+      (body_line
+        text: (body_text)
+        (newline))
+      (body_line
+        text: (body_text)
+        (newline))
+      (blank_line
+        (newline))))
   (struct_declaration
     header: (struct_header
       keyword: (struct_keyword)
@@ -117,30 +141,6 @@ slash review(path, focus?):
           type: (type_expression
             name: (identifier)
             array: (array_suffix)))
-        (newline))
-      (blank_line
-        (newline))))
-  (slash_declaration
-    header: (slash_header
-      keyword: (slash_keyword)
-      name: (identifier)
-      parameters: (parameter_list
-        (lparen)
-        parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (rparen))
-      colon: (colon)
-      (newline))
-    body: (slash_body
-      (body_line
-        text: (body_text)
-        (newline))
-      (body_line
-        text: (body_text)
         (newline)))))
 
 =============================

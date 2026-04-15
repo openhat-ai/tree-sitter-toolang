@@ -45,6 +45,19 @@ def test_minimal_fixture_parses_one_thunk():
     assert child_types == ["thunk"]
 
 
+def test_fixtures_can_parse_without_any_thunks():
+    parser = _parser()
+
+    for fixture_name in ("fenced_caps.too", "slash_only.too"):
+        source = (FIXTURES_DIR / fixture_name).read_bytes()
+        tree = parser.parse(source)
+        root = tree.root_node
+
+        thunk_count = sum(1 for child in root.named_children if child.type == "thunk")
+
+        assert thunk_count == 0, fixture_name
+
+
 def test_kitchen_sink_fixture_covers_core_program_constructs():
     parser = _parser()
     source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
@@ -64,9 +77,10 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "blank_line",
         "fenced_declaration",
         "blank_line",
-        "struct_declaration",
-        "struct_declaration",
         "slash_declaration",
+        "struct_declaration",
+        "struct_declaration",
+        "thunk",
         "thunk",
     ]
 

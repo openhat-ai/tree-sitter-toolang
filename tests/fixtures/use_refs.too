@@ -1,7 +1,7 @@
+use psyche toolang.ai/reviewer
 use skill by3gus/pdf-processing
 use service github://openhat/caps/services/github@main
 use slash https://toolang.ai/review
-use psyche toolang.ai/reviewer
 
 thunk main(input):
   Resolve imported capabilities.

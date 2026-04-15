@@ -11,8 +11,8 @@ module.exports = grammar({
           $.blank_line,
           $.use_statement,
           $.fenced_declaration,
-          $.struct_declaration,
           $.slash_declaration,
+          $.struct_declaration,
           $.thunk,
         ),
       ),
@@ -220,8 +220,8 @@ module.exports = grammar({
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),
 
-    cap_kind: () => choice("skill", "service", "slash", "psyche"),
-    decl_kind: () => choice("service", "psyche"),
+    cap_kind: () => choice("psyche", "skill", "service", "slash"),
+    decl_kind: () => choice("psyche", "service"),
     collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
 
