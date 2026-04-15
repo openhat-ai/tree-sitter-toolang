@@ -3,9 +3,6 @@
 (thunk_header
   name: (identifier) @name) @definition.function
 
-(slash_header
-  name: (identifier) @name) @definition.function
-
 (struct_header
   name: (identifier) @name) @definition.class
 

@@ -2,10 +2,7 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-  conflicts: ($) => [
-    [$.thunk_body],
-    [$.slash_keyword, $.decl_kind],
-  ],
+  conflicts: ($) => [[$.thunk_body]],
   rules: {
     source_file: ($) =>
       repeat(
@@ -14,7 +11,6 @@ module.exports = grammar({
           $.blank_line,
           $.use_statement,
           $.fenced_declaration,
-          $.slash_declaration,
           $.struct_declaration,
           $.thunk,
         ),
@@ -82,24 +78,6 @@ module.exports = grammar({
         field("colon", $.colon),
         field("type", $.type_expression),
       ),
-
-    slash_declaration: ($) =>
-      seq(
-        field("header", $.slash_header),
-        field("body", $.slash_body),
-      ),
-
-    slash_header: ($) =>
-      seq(
-        field("keyword", $.slash_keyword),
-        field("name", $.identifier),
-        optional(field("parameters", $.parameter_list)),
-        field("colon", $.colon),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
-    slash_body: ($) => prec.right(repeat1(choice($.body_line, $.blank_line))),
 
     parameter_list: ($) =>
       seq(
@@ -209,7 +187,6 @@ module.exports = grammar({
 
     use_keyword: () => "use",
     struct_keyword: () => "struct",
-    slash_keyword: () => "slash",
     thunk_keyword: () => "thunk",
     assign_operator: () => "=",
     add_assign_operator: () => "+=",

@@ -6,7 +6,6 @@
 
 (use_keyword) @keyword
 (struct_keyword) @keyword
-(slash_keyword) @keyword
 (thunk_keyword) @keyword
 (decl_kind) @keyword
 
@@ -53,9 +52,6 @@
 
 (struct_header
   name: (identifier) @type)
-
-(slash_header
-  name: (identifier) @function)
 
 (thunk_header
   name: (identifier) @function)

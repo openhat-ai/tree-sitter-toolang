@@ -105,12 +105,13 @@ Review {{path}} carefully.
         (newline)))
     close: (fence_close)))
 
-=================
-Slash And Struct
-=================
-slash review(path, focus?):
-  Review {{path}} carefully.
-  {{focus}}
+========================
+Fenced Slash And Struct
+========================
+slash review(path, focus?): ```md
+Review {{path}} carefully.
+{{focus}}
+```
 
 struct ReviewFinding:
   path: string
@@ -120,9 +121,9 @@ struct ReviewFinding:
 ---
 
 (source_file
-  (slash_declaration
-    header: (slash_header
-      keyword: (slash_keyword)
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
       name: (identifier)
       parameters: (parameter_list
         (lparen)
@@ -134,16 +135,19 @@ struct ReviewFinding:
           optional: (question))
         (rparen))
       colon: (colon)
+      open: (fence_open)
+      language: (language)
       (newline))
-    body: (slash_body
-      (body_line
-        text: (body_text)
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
         (newline))
-      (body_line
-        text: (body_text)
-        (newline))
-      (blank_line
-        (newline))))
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
   (struct_declaration
     header: (struct_header
       keyword: (struct_keyword)
@@ -175,25 +179,29 @@ struct ReviewFinding:
             array: (array_suffix)))
         (newline)))))
 
-========================
-Slash Without Parameters
-========================
-slash review:
-  Review the current request directly.
+==============================
+Fenced Slash Without Parameters
+==============================
+slash review: ```md
+Review the current request directly.
+```
 
 ---
 
 (source_file
-  (slash_declaration
-    header: (slash_header
-      keyword: (slash_keyword)
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
       name: (identifier)
       colon: (colon)
+      open: (fence_open)
+      language: (language)
       (newline))
-    body: (slash_body
-      (body_line
-        text: (body_text)
-        (newline)))))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close)))
 
 =============================
 Thunk With Full Directives
@@ -343,8 +351,10 @@ Use this service when the agent needs GitHub access.
 struct ReviewResult:
   summary: string # inline struct field comment
 
-slash review(path, focus?): # inline slash header comment
-  Review {{path}} carefully. # inline slash body comment
+slash review(path, focus?): ```md # inline slash header comment
+Review {{path}} carefully.
+{{focus}}
+```
 
 thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
   model = gpt-5 # inline directive comment
@@ -396,9 +406,9 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
         (newline))
       (blank_line
         (newline))))
-  (slash_declaration
-    header: (slash_header
-      keyword: (slash_keyword)
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
       name: (identifier)
       parameters: (parameter_list
         (lparen)
@@ -410,15 +420,20 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
           optional: (question))
         (rparen))
       colon: (colon)
+      open: (fence_open)
+      language: (language)
       (inline_comment)
       (newline))
-    body: (slash_body
-      (body_line
-        text: (body_text)
-        (inline_comment)
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
         (newline))
-      (blank_line
-        (newline))))
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
   (thunk
     header: (thunk_header
       keyword: (thunk_keyword)

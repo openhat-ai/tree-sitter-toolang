@@ -78,27 +78,19 @@ def test_slashes_fixture_covers_supported_slash_forms():
     child_types = [child.type for child in root.named_children]
 
     assert child_types == [
-        "slash_declaration",
-        "slash_declaration",
         "fenced_declaration",
         "blank_line",
         "fenced_declaration",
     ]
 
     first_header = root.named_children[0].child_by_field_name("header")
-    second_header = root.named_children[1].child_by_field_name("header")
-    third_header = root.named_children[2].child_by_field_name("header")
-    fourth_header = root.named_children[4].child_by_field_name("header")
+    second_header = root.named_children[2].child_by_field_name("header")
 
     assert first_header is not None
     assert second_header is not None
-    assert third_header is not None
-    assert fourth_header is not None
 
     assert first_header.child_by_field_name("parameters") is None
     assert second_header.child_by_field_name("parameters") is not None
-    assert third_header.child_by_field_name("parameters") is None
-    assert fourth_header.child_by_field_name("parameters") is not None
 
 
 def test_uses_fixture_contains_only_use_statements():
@@ -156,7 +148,8 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "blank_line",
         "fenced_declaration",
         "blank_line",
-        "slash_declaration",
+        "fenced_declaration",
+        "blank_line",
         "struct_declaration",
         "struct_declaration",
         "thunk",

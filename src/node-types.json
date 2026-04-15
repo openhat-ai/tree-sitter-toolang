@@ -455,116 +455,6 @@
     "fields": {}
   },
   {
-    "type": "slash_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "body_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "slash_declaration",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "slash_body",
-            "named": true
-          }
-        ]
-      },
-      "header": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "slash_header",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "slash_header",
-    "named": true,
-    "fields": {
-      "colon": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "keyword": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "slash_keyword",
-            "named": true
-          }
-        ]
-      },
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      },
-      "parameters": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "parameter_list",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "inline_comment",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "slash_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "source_file",
     "named": true,
     "root": true,
@@ -583,10 +473,6 @@
         },
         {
           "type": "fenced_declaration",
-          "named": true
-        },
-        {
-          "type": "slash_declaration",
           "named": true
         },
         {

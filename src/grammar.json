@@ -25,10 +25,6 @@
           },
           {
             "type": "SYMBOL",
-            "name": "slash_declaration"
-          },
-          {
-            "type": "SYMBOL",
             "name": "struct_declaration"
           },
           {
@@ -376,108 +372,6 @@
           }
         }
       ]
-    },
-    "slash_declaration": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "header",
-          "content": {
-            "type": "SYMBOL",
-            "name": "slash_header"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "slash_body"
-          }
-        }
-      ]
-    },
-    "slash_header": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "keyword",
-          "content": {
-            "type": "SYMBOL",
-            "name": "slash_keyword"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "FIELD",
-              "name": "parameters",
-              "content": {
-                "type": "SYMBOL",
-                "name": "parameter_list"
-              }
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "FIELD",
-          "name": "colon",
-          "content": {
-            "type": "SYMBOL",
-            "name": "colon"
-          }
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "inline_comment"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "slash_body": {
-      "type": "PREC_RIGHT",
-      "value": 0,
-      "content": {
-        "type": "REPEAT1",
-        "content": {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "body_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "blank_line"
-            }
-          ]
-        }
-      }
     },
     "parameter_list": {
       "type": "SEQ",
@@ -1061,10 +955,6 @@
       "type": "STRING",
       "value": "struct"
     },
-    "slash_keyword": {
-      "type": "STRING",
-      "value": "slash"
-    },
     "thunk_keyword": {
       "type": "STRING",
       "value": "thunk"
@@ -1241,10 +1131,6 @@
   "conflicts": [
     [
       "thunk_body"
-    ],
-    [
-      "slash_keyword",
-      "decl_kind"
     ]
   ],
   "precedences": [],

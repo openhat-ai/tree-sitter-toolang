@@ -12,9 +12,10 @@ service github: ```md # inline declaration header comment
 Use this service when the agent needs GitHub access.
 ```
 
-slash review(path, focus?): # inline slash header comment
-  Review {{path}} carefully. # inline slash body comment
-  {{focus}}
+slash review(path, focus?): ```md # inline slash header comment
+Review {{path}} carefully.
+{{focus}}
+```
 
 struct ReviewFinding:
   path: string
