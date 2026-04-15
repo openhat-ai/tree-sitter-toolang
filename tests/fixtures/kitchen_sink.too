@@ -1,0 +1,40 @@
+# top-level file comment
+use skill by3gus/pdf-processing # inline use comment
+use service github://openhat/caps/services/github@main
+use slash https://toolang.ai/review
+use psyche toolang.ai/reviewer
+
+service github: ```md # inline declaration header comment
+Use this service when the agent needs GitHub access.
+```
+
+psyche reviewer: ```md
+Prefer concrete findings and direct language.
+```
+
+stash session: ```json
+{}
+```
+
+struct ReviewFinding:
+  path: string
+  line: number? # inline struct field comment
+
+struct ReviewResult:
+  summary: string
+  findings: ReviewFinding[]
+
+slash review(path, focus?): # inline slash header comment
+  Review {{path}} carefully. # inline slash body comment
+  {{focus}}
+
+thunk review(input, path?: path, focus?) -> ReviewResult: # inline thunk header comment
+  model = gpt-5 # inline directive comment
+  psyches = reviewer, concise
+  skills += review, patch
+  services -= linear
+  tools = shell, service_use
+
+  Review the target carefully. # inline thunk body comment
+
+  Return a precise result.

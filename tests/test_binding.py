@@ -34,19 +34,33 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_full_program_fixture_covers_core_program_constructs():
+def test_minimal_fixture_parses_one_thunk():
     parser = _parser()
-    source = (FIXTURES_DIR / "full_program.too").read_bytes()
+    source = (FIXTURES_DIR / "minimal.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    child_types = [child.type for child in root.named_children]
+
+    assert child_types == ["thunk"]
+
+
+def test_kitchen_sink_fixture_covers_core_program_constructs():
+    parser = _parser()
+    source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
     child_types = [child.type for child in root.named_children]
 
     assert child_types == [
+        "comment",
         "use_statement",
         "use_statement",
         "use_statement",
         "use_statement",
+        "blank_line",
+        "fenced_declaration",
         "blank_line",
         "fenced_declaration",
         "blank_line",
