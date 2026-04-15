@@ -48,7 +48,7 @@ def test_minimal_fixture_parses_one_thunk():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("inline_caps.too", "slash_only.too"):
+    for fixture_name in ("fenced_declarations.too", "slash_only.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         root = tree.root_node
