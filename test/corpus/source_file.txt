@@ -296,3 +296,130 @@ thunk summarize(input) -> text:
       (blank_line
         (newline
           (MISSING "newline_token1"))))))
+
+==========================
+Top-Level And Inline Comments
+==========================
+# top-level file comment
+use skill by3gus/pdf-processing # inline use comment
+
+service github: ```md # inline declaration header comment
+Use this service when the agent needs GitHub access.
+```
+
+struct ReviewResult:
+  summary: string # inline struct field comment
+
+slash review(path, focus?): # inline slash header comment
+  Review {{path}} carefully. # inline slash body comment
+
+thunk review(input, path?: path) -> ReviewResult: # inline thunk header comment
+  model = gpt-5 # inline directive comment
+
+  Review the target carefully. # inline thunk body comment
+
+---
+
+(source_file
+  (comment)
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (inline_comment)
+    (newline))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (inline_comment)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (struct_declaration
+    header: (struct_header
+      keyword: (struct_keyword)
+      name: (identifier)
+      colon: (colon)
+      (newline))
+    body: (struct_body
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (inline_comment)
+        (newline))
+      (blank_line
+        (newline))))
+  (slash_declaration
+    header: (slash_header
+      keyword: (slash_keyword)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
+        (rparen))
+      colon: (colon)
+      (inline_comment)
+      (newline))
+    body: (slash_body
+      (body_line
+        text: (body_text)
+        (inline_comment)
+        (newline))
+      (blank_line
+        (newline))))
+  (thunk
+    header: (thunk_header
+      keyword: (thunk_keyword)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (rparen))
+      arrow: (arrow)
+      returns: (type_expression
+        name: (identifier))
+      colon: (colon)
+      (inline_comment)
+      (newline))
+    body: (thunk_body
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (inline_comment)
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
+        (inline_comment)
+        (newline)))))

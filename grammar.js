@@ -229,7 +229,7 @@ module.exports = grammar({
     reference: () => token(/[A-Za-z0-9_./:@-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
     directive_value: () => token(/[A-Za-z0-9_./:@-]+/),
-    body_text: () => token(prec(-1, /[^\n#][^\n]*/)),
+    body_text: () => token(prec(-1, /[^\n#][^\n#]*/)),
     fence_text: () => token(/[^`\n][^\n]*/),
   },
 });

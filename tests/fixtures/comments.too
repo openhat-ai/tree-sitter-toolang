@@ -1,0 +1,17 @@
+# top-level file comment
+use skill by3gus/pdf-processing # inline use comment
+
+service github: ```md # inline declaration header comment
+Use this service when the agent needs GitHub access.
+```
+
+struct ReviewResult:
+  summary: string # inline struct field comment
+
+slash review(path, focus?): # inline slash header comment
+  Review {{path}} carefully. # inline slash body comment
+
+thunk review(input, path?: path) -> ReviewResult: # inline thunk header comment
+  model = gpt-5 # inline directive comment
+
+  Review the target carefully. # inline thunk body comment
