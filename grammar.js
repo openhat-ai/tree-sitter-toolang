@@ -360,13 +360,13 @@ module.exports = grammar({
     reference: () => token(/[A-Za-z0-9_./:@-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
     directive_value: () => token(/[A-Za-z0-9_./:@-]+/),
-    body_text: () => token(prec(-1, /[^\n#][^\n#]*/)),
-    fence_text: () => token(/[^`\n][^\n]*/),
+    body_text: () => token(prec(-1, /[^\r\n#][^\r\n#]*/)),
+    fence_text: () => token(/[^`\r\n][^\r\n]*/),
     non_frontmatter_fence_text: () =>
       token(
-        /(?:[^`\n-][^\n]*|-[^-\n][^\n]*|--[^-\n][^\n]*|---[^-\n][^\n]*|----[^\n]*)/,
+        /(?:[^`\r\n-][^\r\n]*|-[^-\r\n][^\r\n]*|--[^-\r\n][^\r\n]*|---[^-\r\n][^\r\n]*|----[^\r\n]*)/,
       ),
     frontmatter_header_name: () => token(/[A-Za-z0-9_-]+/),
-    frontmatter_scalar: () => token(/[^\n]+/),
+    frontmatter_scalar: () => token(/[^\r\n]+/),
   },
 });
