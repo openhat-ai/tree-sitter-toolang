@@ -356,6 +356,29 @@ def test_slash_frontmatter_rejects_unknown_fields():
     assert root.has_error is True
 
 
+def test_slash_frontmatter_parses_with_crlf_line_endings():
+    parser = _parser()
+    source = (
+        b"slash review: ```md\r\n"
+        b"---\r\n"
+        b"params: path, focus?\r\n"
+        b"---\r\n"
+        b"\r\n"
+        b"Review {{path}} carefully.\r\n"
+        b"{{focus}}\r\n"
+        b"```\r\n"
+    )
+
+    tree = parser.parse(source)
+    root = tree.root_node
+
+    assert root.has_error is False
+    declaration = root.named_children[0]
+    body = declaration.child_by_field_name("body")
+    assert body is not None
+    assert body.child_by_field_name("frontmatter") is not None
+
+
 def test_queries_are_packaged():
     assert "@" in tree_sitter_toolang.HIGHLIGHTS_QUERY
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY

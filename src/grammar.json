@@ -2069,7 +2069,7 @@
         "value": -1,
         "content": {
           "type": "PATTERN",
-          "value": "[^\\n#][^\\n#]*"
+          "value": "[^\\r\\n#][^\\r\\n#]*"
         }
       }
     },
@@ -2077,14 +2077,14 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[^`\\n][^\\n]*"
+        "value": "[^`\\r\\n][^\\r\\n]*"
       }
     },
     "non_frontmatter_fence_text": {
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "(?:[^`\\n-][^\\n]*|-[^-\\n][^\\n]*|--[^-\\n][^\\n]*|---[^-\\n][^\\n]*|----[^\\n]*)"
+        "value": "(?:[^`\\r\\n-][^\\r\\n]*|-[^-\\r\\n][^\\r\\n]*|--[^-\\r\\n][^\\r\\n]*|---[^-\\r\\n][^\\r\\n]*|----[^\\r\\n]*)"
       }
     },
     "frontmatter_header_name": {
@@ -2098,7 +2098,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[^\\n]+"
+        "value": "[^\\r\\n]+"
       }
     }
   },
