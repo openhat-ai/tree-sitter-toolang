@@ -59,7 +59,7 @@ def test_minimal_invoke_fixture_parses_one_thunk():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("fenced_declarations.too", "slash_only.too"):
+    for fixture_name in ("fenced_caps.too", "slash_only.too", "use_statements.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         root = tree.root_node
@@ -84,9 +84,25 @@ def test_slash_only_fixture_parses_slash_without_parameters():
     assert header.child_by_field_name("parameters") is None
 
 
-def test_fenced_declarations_fixture_covers_supported_kinds():
+def test_use_statements_fixture_contains_only_use_statements():
     parser = _parser()
-    source = (FIXTURES_DIR / "fenced_declarations.too").read_bytes()
+    source = (FIXTURES_DIR / "use_statements.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    child_types = [child.type for child in root.named_children]
+
+    assert child_types == [
+        "use_statement",
+        "use_statement",
+        "use_statement",
+        "use_statement",
+    ]
+
+
+def test_fenced_caps_fixture_covers_supported_kinds():
+    parser = _parser()
+    source = (FIXTURES_DIR / "fenced_caps.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -102,17 +118,6 @@ def test_fenced_declarations_fixture_covers_supported_kinds():
         kinds.append(source[kind.start_byte : kind.end_byte].decode("utf-8"))
 
     assert kinds == ["service", "psyche", "slash"]
-
-
-def test_default_main_thunk_fixture_parses_one_unnamed_thunk():
-    parser = _parser()
-    source = (FIXTURES_DIR / "default_main_thunk.too").read_bytes()
-
-    tree = parser.parse(source)
-    root = tree.root_node
-    child_types = [child.type for child in root.named_children]
-
-    assert child_types == ["thunk"]
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():
