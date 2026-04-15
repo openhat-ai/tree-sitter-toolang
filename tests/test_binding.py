@@ -93,6 +93,9 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "struct_declaration",
         "thunk",
         "thunk",
+        "thunk",
+        "thunk",
+        "thunk",
     ]
 
 

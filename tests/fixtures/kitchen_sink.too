@@ -25,19 +25,28 @@ struct ReviewResult:
   summary: string
   findings: ReviewFinding[]
 
-thunk review(input, path?: path, focus?) -> ReviewResult: # inline thunk header comment
+thunk: # inline thunk header comment
+  Respond directly. # inline thunk body comment
+
+thunk summarize:
+  Summarize the current workspace in a concise style.
+
+thunk inspect() -> ReviewResult:
+  Return a precise result.
+
+thunk review(input: message, path?: path, focus?) -> ReviewResult:
   model = gpt-5 # inline directive comment
   psyches = reviewer, concise
   skills += review, patch
   services -= linear
   tools = shell, service_use
 
-  Review the target carefully. # inline thunk body comment
+  Review the target carefully.
 
   Return a precise result.
 
-thunk summarize(input, style?) -> ReviewResult:
+thunk classify(input: message, style?, strict?: boolean):
   model = gpt-5
   skills = review
 
-  Summarize the current workspace in a concise style.
+  Classify the current workspace in the requested style.
