@@ -41,6 +41,11 @@ service github: ```md
 Use this service when the agent needs GitHub access.
 ```
 
+slash review(path, focus?): ```md
+Review {{path}} carefully.
+{{focus}}
+```
+
 ---
 
 (source_file
@@ -68,6 +73,33 @@ Use this service when the agent needs GitHub access.
       language: (language)
       (newline))
     body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
+        (rparen))
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline)))

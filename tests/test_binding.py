@@ -58,6 +58,26 @@ def test_fixtures_can_parse_without_any_thunks():
         assert thunk_count == 0, fixture_name
 
 
+def test_fenced_declarations_fixture_covers_supported_kinds():
+    parser = _parser()
+    source = (FIXTURES_DIR / "fenced_declarations.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+
+    kinds: list[str] = []
+    for child in root.named_children:
+        if child.type != "fenced_declaration":
+            continue
+        header = child.child_by_field_name("header")
+        assert header is not None
+        kind = header.child_by_field_name("kind")
+        assert kind is not None
+        kinds.append(source[kind.start_byte : kind.end_byte].decode("utf-8"))
+
+    assert kinds == ["service", "psyche", "slash"]
+
+
 def test_default_main_thunk_fixture_parses_one_unnamed_thunk():
     parser = _parser()
     source = (FIXTURES_DIR / "default_main_thunk.too").read_bytes()

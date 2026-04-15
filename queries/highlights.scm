@@ -42,7 +42,14 @@
     (directive_value) @type))
 
 (declaration_header
-  name: (identifier) @type)
+  kind: (decl_kind) @_kind
+  name: (identifier) @function
+  (#eq? @_kind "slash"))
+
+(declaration_header
+  kind: (decl_kind) @_kind
+  name: (identifier) @type
+  (#any-of? @_kind "psyche" "service"))
 
 (struct_header
   name: (identifier) @type)

@@ -2,7 +2,10 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-  conflicts: ($) => [[$.thunk_body]],
+  conflicts: ($) => [
+    [$.thunk_body],
+    [$.slash_keyword, $.decl_kind],
+  ],
   rules: {
     source_file: ($) =>
       repeat(
@@ -221,7 +224,7 @@ module.exports = grammar({
     fence_close: () => seq("```", /\r?\n/),
 
     cap_kind: () => choice("psyche", "skill", "service", "slash"),
-    decl_kind: () => choice("psyche", "service"),
+    decl_kind: () => choice("psyche", "service", "slash"),
     collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
 

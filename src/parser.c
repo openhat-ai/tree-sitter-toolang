@@ -34,9 +34,9 @@ enum ts_symbol_identifiers {
   sym_comma = 16,
   sym_question = 17,
   anon_sym_BQUOTE_BQUOTE_BQUOTE = 18,
-  anon_sym_skill = 19,
-  anon_sym_service = 20,
-  anon_sym_psyche = 21,
+  anon_sym_psyche = 19,
+  anon_sym_skill = 20,
+  anon_sym_service = 21,
   anon_sym_psyches = 22,
   anon_sym_skills = 23,
   anon_sym_services = 24,
@@ -113,9 +113,9 @@ static const char * const ts_symbol_names[] = {
   [sym_comma] = "comma",
   [sym_question] = "question",
   [anon_sym_BQUOTE_BQUOTE_BQUOTE] = "```",
+  [anon_sym_psyche] = "psyche",
   [anon_sym_skill] = "skill",
   [anon_sym_service] = "service",
-  [anon_sym_psyche] = "psyche",
   [anon_sym_psyches] = "psyches",
   [anon_sym_skills] = "skills",
   [anon_sym_services] = "services",
@@ -192,9 +192,9 @@ static const TSSymbol ts_symbol_map[] = {
   [sym_comma] = sym_comma,
   [sym_question] = sym_question,
   [anon_sym_BQUOTE_BQUOTE_BQUOTE] = anon_sym_BQUOTE_BQUOTE_BQUOTE,
+  [anon_sym_psyche] = anon_sym_psyche,
   [anon_sym_skill] = anon_sym_skill,
   [anon_sym_service] = anon_sym_service,
-  [anon_sym_psyche] = anon_sym_psyche,
   [anon_sym_psyches] = anon_sym_psyches,
   [anon_sym_skills] = anon_sym_skills,
   [anon_sym_services] = anon_sym_services,
@@ -328,15 +328,15 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
     .visible = true,
     .named = false,
   },
+  [anon_sym_psyche] = {
+    .visible = true,
+    .named = false,
+  },
   [anon_sym_skill] = {
     .visible = true,
     .named = false,
   },
   [anon_sym_service] = {
-    .visible = true,
-    .named = false,
-  },
-  [anon_sym_psyche] = {
     .visible = true,
     .named = false,
   },
@@ -1159,10 +1159,10 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == 'e') ADVANCE(78);
       END_STATE();
     case 26:
-      if (lookahead == 'e') ADVANCE(100);
+      if (lookahead == 'e') ADVANCE(97);
       END_STATE();
     case 27:
-      if (lookahead == 'e') ADVANCE(98);
+      if (lookahead == 'e') ADVANCE(100);
       END_STATE();
     case 28:
       if (lookahead == 'e') ADVANCE(42);
@@ -1212,7 +1212,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == 'l') ADVANCE(106);
       END_STATE();
     case 43:
-      if (lookahead == 'l') ADVANCE(97);
+      if (lookahead == 'l') ADVANCE(99);
       END_STATE();
     case 44:
       if (lookahead == 'l') ADVANCE(57);
@@ -1434,24 +1434,24 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           lookahead != '\n') ADVANCE(192);
       END_STATE();
     case 97:
-      ACCEPT_TOKEN(anon_sym_skill);
+      ACCEPT_TOKEN(anon_sym_psyche);
       END_STATE();
     case 98:
-      ACCEPT_TOKEN(anon_sym_service);
-      END_STATE();
-    case 99:
-      ACCEPT_TOKEN(anon_sym_service);
+      ACCEPT_TOKEN(anon_sym_psyche);
       if (lookahead == '-' ||
           ('0' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(131);
       END_STATE();
+    case 99:
+      ACCEPT_TOKEN(anon_sym_skill);
+      END_STATE();
     case 100:
-      ACCEPT_TOKEN(anon_sym_psyche);
+      ACCEPT_TOKEN(anon_sym_service);
       END_STATE();
     case 101:
-      ACCEPT_TOKEN(anon_sym_psyche);
+      ACCEPT_TOKEN(anon_sym_service);
       if (lookahead == '-' ||
           ('0' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
@@ -1531,7 +1531,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 113:
       ACCEPT_TOKEN(sym_identifier);
-      if (lookahead == 'e') ADVANCE(101);
+      if (lookahead == 'e') ADVANCE(98);
       if (lookahead == '-' ||
           ('0' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
@@ -1540,7 +1540,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 114:
       ACCEPT_TOKEN(sym_identifier);
-      if (lookahead == 'e') ADVANCE(99);
+      if (lookahead == 'e') ADVANCE(101);
       if (lookahead == '-' ||
           ('0' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
@@ -1820,14 +1820,14 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 146:
       ACCEPT_TOKEN(sym_body_text);
-      if (lookahead == 'e') ADVANCE(100);
+      if (lookahead == 'e') ADVANCE(97);
       if (lookahead != 0 &&
           lookahead != '\n' &&
           lookahead != '#') ADVANCE(187);
       END_STATE();
     case 147:
       ACCEPT_TOKEN(sym_body_text);
-      if (lookahead == 'e') ADVANCE(98);
+      if (lookahead == 'e') ADVANCE(100);
       if (lookahead != 0 &&
           lookahead != '\n' &&
           lookahead != '#') ADVANCE(187);
@@ -2362,9 +2362,9 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
     [sym_comma] = ACTIONS(1),
     [sym_question] = ACTIONS(1),
     [anon_sym_BQUOTE_BQUOTE_BQUOTE] = ACTIONS(1),
+    [anon_sym_psyche] = ACTIONS(1),
     [anon_sym_skill] = ACTIONS(1),
     [anon_sym_service] = ACTIONS(1),
-    [anon_sym_psyche] = ACTIONS(1),
     [anon_sym_tools] = ACTIONS(1),
     [sym_model_subject] = ACTIONS(1),
   },
@@ -2391,8 +2391,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
     [sym_struct_keyword] = ACTIONS(11),
     [anon_sym_slash] = ACTIONS(13),
     [sym_thunk_keyword] = ACTIONS(15),
-    [anon_sym_service] = ACTIONS(17),
     [anon_sym_psyche] = ACTIONS(17),
+    [anon_sym_service] = ACTIONS(17),
   },
 };
 
@@ -2427,8 +2427,8 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(179), 1,
       sym_slash_keyword,
     ACTIONS(17), 2,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
     STATE(3), 7,
       sym_blank_line,
       sym_use_statement,
@@ -2467,8 +2467,8 @@ static const uint16_t ts_small_parse_table[] = {
     STATE(179), 1,
       sym_slash_keyword,
     ACTIONS(43), 2,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
     STATE(3), 7,
       sym_blank_line,
       sym_use_statement,
@@ -2526,8 +2526,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [180] = 7,
     ACTIONS(66), 1,
       aux_sym_newline_token1,
@@ -2549,8 +2549,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [210] = 6,
     ACTIONS(46), 1,
       aux_sym_newline_token1,
@@ -2570,8 +2570,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [237] = 8,
     ACTIONS(76), 1,
       aux_sym_newline_token1,
@@ -2614,8 +2614,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [295] = 6,
     ACTIONS(46), 1,
       aux_sym_newline_token1,
@@ -2635,8 +2635,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [322] = 6,
     ACTIONS(46), 1,
       aux_sym_newline_token1,
@@ -2656,8 +2656,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [349] = 6,
     ACTIONS(100), 1,
       aux_sym_newline_token1,
@@ -2686,8 +2686,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_body_text,
   [388] = 2,
     ACTIONS(112), 3,
@@ -2699,8 +2699,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_identifier,
   [403] = 2,
     ACTIONS(116), 1,
@@ -2712,8 +2712,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_body_text,
   [418] = 2,
     ACTIONS(120), 3,
@@ -2725,8 +2725,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_identifier,
   [433] = 2,
     ACTIONS(124), 3,
@@ -2738,8 +2738,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_identifier,
   [448] = 3,
     ACTIONS(128), 1,
@@ -2753,8 +2753,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [465] = 2,
     ACTIONS(135), 3,
       ts_builtin_sym_end,
@@ -2765,8 +2765,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_identifier,
   [480] = 2,
     ACTIONS(124), 1,
@@ -2778,8 +2778,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_body_text,
   [495] = 2,
     ACTIONS(135), 1,
@@ -2791,8 +2791,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
       sym_body_text,
   [510] = 1,
     ACTIONS(135), 9,
@@ -2803,8 +2803,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [522] = 1,
     ACTIONS(139), 9,
       ts_builtin_sym_end,
@@ -2814,8 +2814,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [534] = 1,
     ACTIONS(141), 9,
       ts_builtin_sym_end,
@@ -2825,8 +2825,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [546] = 1,
     ACTIONS(143), 9,
       ts_builtin_sym_end,
@@ -2836,8 +2836,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [558] = 1,
     ACTIONS(145), 9,
       ts_builtin_sym_end,
@@ -2847,8 +2847,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [570] = 1,
     ACTIONS(124), 9,
       ts_builtin_sym_end,
@@ -2858,8 +2858,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [582] = 1,
     ACTIONS(147), 9,
       ts_builtin_sym_end,
@@ -2869,8 +2869,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [594] = 1,
     ACTIONS(149), 9,
       ts_builtin_sym_end,
@@ -2880,8 +2880,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [606] = 1,
     ACTIONS(151), 9,
       ts_builtin_sym_end,
@@ -2891,8 +2891,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [618] = 1,
     ACTIONS(153), 9,
       ts_builtin_sym_end,
@@ -2902,8 +2902,8 @@ static const uint16_t ts_small_parse_table[] = {
       sym_struct_keyword,
       anon_sym_slash,
       sym_thunk_keyword,
-      anon_sym_service,
       anon_sym_psyche,
+      anon_sym_service,
   [630] = 4,
     ACTIONS(157), 1,
       sym_array_suffix,
@@ -3256,9 +3256,9 @@ static const uint16_t ts_small_parse_table[] = {
       sym_cap_kind,
     ACTIONS(245), 4,
       anon_sym_slash,
+      anon_sym_psyche,
       anon_sym_skill,
       anon_sym_service,
-      anon_sym_psyche,
   [1070] = 1,
     ACTIONS(247), 5,
       aux_sym_newline_token1,
@@ -3864,22 +3864,22 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(445), 1,
       sym_identifier,
   [1887] = 1,
-    ACTIONS(447), 1,
+    ACTIONS(448), 1,
       sym_colon,
   [1891] = 1,
-    ACTIONS(449), 1,
+    ACTIONS(450), 1,
       sym_colon,
   [1895] = 1,
-    ACTIONS(451), 1,
+    ACTIONS(452), 1,
       aux_sym_reference_token1,
   [1899] = 1,
-    ACTIONS(453), 1,
+    ACTIONS(454), 1,
       sym_identifier,
   [1903] = 1,
-    ACTIONS(455), 1,
+    ACTIONS(456), 1,
       aux_sym_newline_token1,
   [1907] = 1,
-    ACTIONS(457), 1,
+    ACTIONS(458), 1,
       sym_colon,
 };
 
@@ -4285,13 +4285,13 @@ static const TSParseActionEntry ts_parse_actions[] = {
   [439] = {.entry = {.count = 1, .reusable = true}}, SHIFT(109),
   [441] = {.entry = {.count = 1, .reusable = true}}, SHIFT(172),
   [443] = {.entry = {.count = 1, .reusable = true}}, SHIFT(104),
-  [445] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_slash_keyword, 1, 0, 0),
-  [447] = {.entry = {.count = 1, .reusable = true}}, SHIFT(147),
-  [449] = {.entry = {.count = 1, .reusable = true}}, SHIFT(85),
-  [451] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_cap_kind, 1, 0, 0),
-  [453] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_decl_kind, 1, 0, 0),
-  [455] = {.entry = {.count = 1, .reusable = true}}, SHIFT(23),
-  [457] = {.entry = {.count = 1, .reusable = true}}, SHIFT(87),
+  [445] = {.entry = {.count = 2, .reusable = true}}, REDUCE(sym_slash_keyword, 1, 0, 0), REDUCE(sym_decl_kind, 1, 0, 0),
+  [448] = {.entry = {.count = 1, .reusable = true}}, SHIFT(147),
+  [450] = {.entry = {.count = 1, .reusable = true}}, SHIFT(85),
+  [452] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_cap_kind, 1, 0, 0),
+  [454] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_decl_kind, 1, 0, 0),
+  [456] = {.entry = {.count = 1, .reusable = true}}, SHIFT(23),
+  [458] = {.entry = {.count = 1, .reusable = true}}, SHIFT(87),
 };
 
 #ifdef __cplusplus

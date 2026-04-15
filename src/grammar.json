@@ -25,11 +25,11 @@
           },
           {
             "type": "SYMBOL",
-            "name": "struct_declaration"
+            "name": "slash_declaration"
           },
           {
             "type": "SYMBOL",
-            "name": "slash_declaration"
+            "name": "struct_declaration"
           },
           {
             "type": "SYMBOL",
@@ -1127,6 +1127,10 @@
       "members": [
         {
           "type": "STRING",
+          "value": "psyche"
+        },
+        {
+          "type": "STRING",
           "value": "skill"
         },
         {
@@ -1136,10 +1140,6 @@
         {
           "type": "STRING",
           "value": "slash"
-        },
-        {
-          "type": "STRING",
-          "value": "psyche"
         }
       ]
     },
@@ -1148,11 +1148,15 @@
       "members": [
         {
           "type": "STRING",
+          "value": "psyche"
+        },
+        {
+          "type": "STRING",
           "value": "service"
         },
         {
           "type": "STRING",
-          "value": "psyche"
+          "value": "slash"
         }
       ]
     },
@@ -1237,6 +1241,10 @@
   "conflicts": [
     [
       "thunk_body"
+    ],
+    [
+      "slash_keyword",
+      "decl_kind"
     ]
   ],
   "precedences": [],
