@@ -175,6 +175,26 @@ struct ReviewFinding:
             array: (array_suffix)))
         (newline)))))
 
+========================
+Slash Without Parameters
+========================
+slash review:
+  Review the current request directly.
+
+---
+
+(source_file
+  (slash_declaration
+    header: (slash_header
+      keyword: (slash_keyword)
+      name: (identifier)
+      colon: (colon)
+      (newline))
+    body: (slash_body
+      (body_line
+        text: (body_text)
+        (newline)))))
+
 =============================
 Thunk With Full Directives
 =============================

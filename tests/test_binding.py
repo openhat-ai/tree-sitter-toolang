@@ -69,6 +69,21 @@ def test_fixtures_can_parse_without_any_thunks():
         assert thunk_count == 0, fixture_name
 
 
+def test_slash_only_fixture_parses_slash_without_parameters():
+    parser = _parser()
+    source = (FIXTURES_DIR / "slash_only.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    slash_decl = root.named_children[0]
+
+    assert slash_decl.type == "slash_declaration"
+
+    header = slash_decl.child_by_field_name("header")
+    assert header is not None
+    assert header.child_by_field_name("parameters") is None
+
+
 def test_fenced_declarations_fixture_covers_supported_kinds():
     parser = _parser()
     source = (FIXTURES_DIR / "fenced_declarations.too").read_bytes()

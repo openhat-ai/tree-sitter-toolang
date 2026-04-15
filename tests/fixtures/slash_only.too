@@ -1,3 +1,2 @@
-slash review(path, focus?):
-  Review {{path}} carefully.
-  {{focus}}
+slash review:
+  Review the current request directly.
