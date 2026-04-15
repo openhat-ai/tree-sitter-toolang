@@ -64,8 +64,6 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "blank_line",
         "fenced_declaration",
         "blank_line",
-        "fenced_declaration",
-        "blank_line",
         "struct_declaration",
         "struct_declaration",
         "slash_declaration",

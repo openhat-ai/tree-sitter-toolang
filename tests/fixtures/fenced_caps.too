@@ -5,7 +5,3 @@ Use this service when the agent needs GitHub access.
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
-
-stash session: ```json
-{}
-```

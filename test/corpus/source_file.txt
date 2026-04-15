@@ -41,28 +41,9 @@ psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
-stash session: ```json
-{}
-```
-
 ---
 
 (source_file
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (fence_body
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
   (fenced_declaration
     header: (declaration_header
       kind: (decl_kind)

@@ -1081,10 +1081,6 @@
     "named": false
   },
   {
-    "type": "stash",
-    "named": false
-  },
-  {
     "type": "struct_keyword",
     "named": true
   },

@@ -221,7 +221,7 @@ module.exports = grammar({
     fence_close: () => seq("```", /\r?\n/),
 
     cap_kind: () => choice("skill", "service", "slash", "psyche"),
-    decl_kind: () => choice("service", "psyche", "stash"),
+    decl_kind: () => choice("service", "psyche"),
     collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
 

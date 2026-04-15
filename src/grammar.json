@@ -1153,10 +1153,6 @@
         {
           "type": "STRING",
           "value": "psyche"
-        },
-        {
-          "type": "STRING",
-          "value": "stash"
         }
       ]
     },
