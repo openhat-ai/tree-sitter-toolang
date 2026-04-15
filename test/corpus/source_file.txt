@@ -1,13 +1,18 @@
-====================
-Use And Declarations
-====================
+===========================
+Use Statements And Structs
+===========================
 use skill briceyan/pdf-processing
-prompt summarize(style, audience?): ```md
-Summarize {{input}}
-```
-struct WorkspaceSummary: ```json
-{}
-```
+use slash openhat/review
+
+struct ReviewFinding
+  path: string
+  line: number?
+  tags: string[]
+
+struct ReviewResult
+  summary: string
+  findings: ReviewFinding[]
+  patch: artifact?
 
 ---
 
@@ -17,9 +22,106 @@ struct WorkspaceSummary: ```json
     kind: (cap_kind)
     reference: (reference)
     (newline))
-  (declaration
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline))
+  (blank_line
+    (newline))
+  (struct_declaration
+    header: (struct_header
+      keyword: (struct_keyword)
+      name: (identifier)
+      (newline))
+    body: (struct_body
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            optional: (question)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            array: (array_suffix)))
+        (newline))
+      (blank_line
+        (newline))))
+  (struct_declaration
+    header: (struct_header
+      keyword: (struct_keyword)
+      name: (identifier)
+      (newline))
+    body: (struct_body
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            array: (array_suffix)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            optional: (question)))
+        (newline)))))
+
+====================
+Slash And Fenced Cap
+====================
+service github: ```md
+Use this service when the agent needs GitHub access.
+```
+
+slash review(path, focus?)
+  Review {{path}} carefully.
+  {{focus}}
+
+---
+
+(source_file
+  (fenced_declaration
     header: (declaration_header
       kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (slash_declaration
+    header: (slash_header
+      keyword: (slash_keyword)
       name: (identifier)
       parameters: (parameter_list
         (lparen)
@@ -30,37 +132,26 @@ struct WorkspaceSummary: ```json
           name: (identifier)
           optional: (question))
         (rparen))
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
       (newline))
-    body: (fence_body
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (fence_body
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close)))
+    body: (slash_body
+      (body_line
+        text: (body_text)
+        (newline))
+      (body_line
+        text: (body_text)
+        (newline)))))
 
-=====================
-Thunk With Directives
-=====================
-thunk summarize(user) => WorkspaceSummary:
-    model = gpt-5
-    skills = briceyan/pdf-processing, anthropic/create-skill
+===========================
+Thunk With Types And Directives
+===========================
+thunk deploy(input, env, version?, dry_run?: boolean) -> ReviewResult
+  model = gpt-5
+  psyches = rigorous
+  skills += review, patch
+  services -= github
+  tools = shell, service_use
 
-    Turn the input into a workspace summary.
+  Deploy the current project.
 
 ---
 
@@ -69,32 +160,101 @@ thunk summarize(user) => WorkspaceSummary:
     header: (thunk_header
       keyword: (thunk_keyword)
       name: (identifier)
-      input: (thunk_input
+      parameters: (parameter_list
         (lparen)
-        value: (identifier)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
         (rparen))
       arrow: (arrow)
-      output: (identifier)
-      colon: (colon)
+      returns: (type_expression
+        name: (identifier))
       (newline))
-    (directive_line
-      (model_directive
-        subject: (model_subject)
-        operator: (assign_operator)
-        values: (directive_values
-          value: (directive_value)))
+    body: (thunk_body
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (add_assign_operator)
+          values: (directive_values
+            value: (directive_value)
+            (comma)
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (remove_assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)
+            (comma)
+            value: (directive_value)))
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
+        (newline)))))
+
+======================
+Default Main Thunk
+======================
+thunk(input, target?: path)
+  Use the message and target together.
+
+---
+
+(source_file
+  (thunk
+    header: (thunk_header
+      keyword: (thunk_keyword)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (identifier))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (rparen))
       (newline))
-    (directive_line
-      (collection_directive
-        subject: (collection_subject)
-        operator: (assign_operator)
-        values: (directive_values
-          value: (directive_value)
-          (comma)
-          value: (directive_value)))
-      (newline))
-    (blank_line
-      (newline))
-    (prompt_line
-      text: (prompt_text)
-      (newline))))
+    body: (thunk_body
+      (body_line
+        text: (body_text)
+        (newline)))))

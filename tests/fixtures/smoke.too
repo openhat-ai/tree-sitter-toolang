@@ -1,4 +1,18 @@
-use skill a/b
-prompt summarize(style, audience?): ```md
-Summarize {{input}}
-```
+use skill briceyan/pdf-processing
+use slash openhat/review
+
+struct WorkspaceSummary
+  title: string
+  summary: string
+  tags: string[]
+
+slash summarize(style, audience?)
+  Summarize the request in a {{style}} style.
+  Audience: {{audience}}
+  {{input}}
+
+thunk summarize(input, style?, strict?: boolean) -> WorkspaceSummary
+  model = gpt-5
+  skills += review, patch
+
+  Produce a concise workspace summary.

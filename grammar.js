@@ -2,8 +2,6 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-  conflicts: ($) => [[$.thunk]],
-
   rules: {
     source_file: ($) =>
       repeat(
@@ -11,7 +9,9 @@ module.exports = grammar({
           $.comment,
           $.blank_line,
           $.use_statement,
-          $.declaration,
+          $.fenced_declaration,
+          $.struct_declaration,
+          $.slash_declaration,
           $.thunk,
         ),
       ),
@@ -29,7 +29,7 @@ module.exports = grammar({
         $.newline,
       ),
 
-    declaration: ($) =>
+    fenced_declaration: ($) =>
       seq(
         field("header", $.declaration_header),
         optional(field("body", $.fence_body)),
@@ -48,10 +48,62 @@ module.exports = grammar({
         $.newline,
       ),
 
+    struct_declaration: ($) =>
+      seq(
+        field("header", $.struct_header),
+        field("body", $.struct_body),
+      ),
+
+    struct_header: ($) =>
+      seq(
+        field("keyword", $.struct_keyword),
+        field("name", $.identifier),
+        optional($.inline_comment),
+        $.newline,
+      ),
+
+    struct_field_line: ($) =>
+      seq(
+        field("field", $.struct_field),
+        optional($.inline_comment),
+        $.newline,
+      ),
+
+    struct_body: ($) => prec.right(repeat1(choice($.struct_field_line, $.blank_line, $.comment))),
+
+    struct_field: ($) =>
+      seq(
+        field("name", $.identifier),
+        field("colon", $.colon),
+        field("type", $.type_expression),
+      ),
+
+    slash_declaration: ($) =>
+      seq(
+        field("header", $.slash_header),
+        field("body", $.slash_body),
+      ),
+
+    slash_header: ($) =>
+      seq(
+        field("keyword", $.slash_keyword),
+        field("name", $.identifier),
+        optional(field("parameters", $.parameter_list)),
+        optional($.inline_comment),
+        $.newline,
+      ),
+
+    slash_body: ($) => prec.right(repeat1(choice($.body_line, $.blank_line, $.comment))),
+
     parameter_list: ($) =>
       seq(
         $.lparen,
-        seq(field("parameter", $.parameter), repeat(seq($.comma, field("parameter", $.parameter)))),
+        optional(
+          seq(
+            field("parameter", $.parameter),
+            repeat(seq($.comma, field("parameter", $.parameter))),
+          ),
+        ),
         $.rparen,
       ),
 
@@ -59,27 +111,38 @@ module.exports = grammar({
       seq(
         field("name", $.identifier),
         optional(field("optional", $.question)),
+        optional(seq(field("colon", $.colon), field("type", $.type_expression))),
       ),
+
+    type_expression: ($) =>
+      prec.right(
+        seq(
+          field("name", $.identifier),
+          repeat(field("array", $.array_suffix)),
+          optional(field("optional", $.question)),
+        ),
+      ),
+
+    array_suffix: () => "[]",
 
     thunk: ($) =>
       seq(
         field("header", $.thunk_header),
-        repeat(choice($.directive_line, $.prompt_line, $.blank_line)),
+        field("body", $.thunk_body),
       ),
 
     thunk_header: ($) =>
       seq(
         field("keyword", $.thunk_keyword),
         optional(field("name", $.identifier)),
-        optional(field("input", $.thunk_input)),
-        optional(seq(field("arrow", $.arrow), field("output", $.identifier))),
-        field("colon", $.colon),
+        optional(field("parameters", $.parameter_list)),
+        optional(seq(field("arrow", $.arrow), field("returns", $.type_expression))),
         optional($.inline_comment),
         $.newline,
       ),
 
-    thunk_input: ($) =>
-      seq($.lparen, field("value", $.identifier), $.rparen),
+    thunk_body: ($) =>
+      prec.right(repeat1(choice($.directive_line, $.body_line, $.blank_line, $.comment))),
 
     directive_line: ($) =>
       seq(
@@ -91,7 +154,10 @@ module.exports = grammar({
     collection_directive: ($) =>
       seq(
         field("subject", $.collection_subject),
-        field("operator", choice($.assign_operator, $.remove_operator)),
+        field(
+          "operator",
+          choice($.assign_operator, $.add_assign_operator, $.remove_assign_operator),
+        ),
         optional(field("values", $.directive_values)),
       ),
 
@@ -108,9 +174,9 @@ module.exports = grammar({
         repeat(seq($.comma, field("value", $.directive_value))),
       ),
 
-    prompt_line: ($) =>
+    body_line: ($) =>
       seq(
-        field("text", $.prompt_text),
+        field("text", $.body_text),
         optional($.inline_comment),
         $.newline,
       ),
@@ -126,10 +192,13 @@ module.exports = grammar({
     inline_comment: () => token(seq("#", /[^\n]*/)),
 
     use_keyword: () => "use",
+    struct_keyword: () => "struct",
+    slash_keyword: () => "slash",
     thunk_keyword: () => "thunk",
     assign_operator: () => "=",
-    remove_operator: () => "-",
-    arrow: () => "=>",
+    add_assign_operator: () => "+=",
+    remove_assign_operator: () => "-=",
+    arrow: () => "->",
     colon: () => ":",
     lparen: () => "(",
     rparen: () => ")",
@@ -138,16 +207,16 @@ module.exports = grammar({
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),
 
-    cap_kind: () => choice("skill", "service", "prompt", "psyche"),
-    decl_kind: () => choice("service", "prompt", "psyche", "struct", "stash"),
-    collection_subject: () => choice("skills", "services", "tools", "thunks"),
+    cap_kind: () => choice("skill", "service", "slash", "psyche"),
+    decl_kind: () => choice("service", "psyche", "stash"),
+    collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
 
     identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
-    reference: () => token(/[A-Za-z0-9_./-]+/),
+    reference: () => token(/[A-Za-z0-9_./:-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
-    directive_value: () => token(/[A-Za-z0-9_./-]+/),
-    prompt_text: () => token(prec(-1, /[^\n#][^\n]*/)),
+    directive_value: () => token(/[A-Za-z0-9_./:-]+/),
+    body_text: () => token(prec(-1, /[^\n#][^\n]*/)),
     fence_text: () => token(/[^`\n][^\n]*/),
   },
 });

@@ -1,7 +1,9 @@
-struct WorkspaceSummary: ```json
-{}
-```
+struct WorkspaceSummary
+  title: string
+  summary: string
 
-thunk summarize(user) => WorkspaceSummary:
-    model = gpt-5
-    Turn the input into a workspace summary.
+thunk summarize(input, style?) -> WorkspaceSummary
+  model = gpt-5
+  skills = review
+
+  Produce a concise workspace summary.

@@ -8,6 +8,12 @@ import tree_sitter_toolang
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
 
 
+def _parser() -> Parser:
+    language = Language(tree_sitter_toolang.language())
+    parser = Parser(language)
+    return parser
+
+
 def test_language_capsule_builds_language():
     language = Language(tree_sitter_toolang.language())
 
@@ -16,23 +22,34 @@ def test_language_capsule_builds_language():
     assert language.field_count > 0
 
 
-def test_parser_can_parse_toolang_source():
-    language = Language(tree_sitter_toolang.language())
-    parser = Parser(language)
+def test_parser_can_parse_all_fixtures():
+    parser = _parser()
+
+    for source_path in sorted(FIXTURES_DIR.glob("*.too")):
+        tree = parser.parse(source_path.read_bytes())
+        root = tree.root_node
+
+        assert root.type == "source_file", source_path.name
+        assert root.has_error is False, source_path.name
+        assert root.named_child_count > 0, source_path.name
+
+
+def test_smoke_fixture_covers_new_program_constructs():
+    parser = _parser()
     source = (FIXTURES_DIR / "smoke.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
-    first_child = root.named_child(0)
-    second_child = root.named_child(1)
+    child_types = [child.type for child in root.named_children]
 
-    assert root.type == "source_file"
-    assert root.has_error is False
-    assert first_child is not None
-    assert second_child is not None
-    assert first_child.type == "use_statement"
-    assert second_child.type == "declaration"
-    assert second_child.child_by_field_name("header").type == "declaration_header"
+    assert child_types == [
+        "use_statement",
+        "use_statement",
+        "blank_line",
+        "struct_declaration",
+        "slash_declaration",
+        "thunk",
+    ]
 
 
 def test_queries_are_packaged():
