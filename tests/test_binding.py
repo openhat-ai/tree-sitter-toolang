@@ -34,9 +34,20 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_minimal_fixture_parses_one_thunk():
+def test_minimal_run_fixture_parses_one_thunk():
     parser = _parser()
-    source = (FIXTURES_DIR / "minimal.too").read_bytes()
+    source = (FIXTURES_DIR / "minimal_run.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    child_types = [child.type for child in root.named_children]
+
+    assert child_types == ["thunk"]
+
+
+def test_minimal_invoke_fixture_parses_one_thunk():
+    parser = _parser()
+    source = (FIXTURES_DIR / "minimal_invoke.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
