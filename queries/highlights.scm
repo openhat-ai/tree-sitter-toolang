@@ -5,6 +5,7 @@
 (inline_comment) @comment
 
 (use_keyword) @keyword
+(struct_keyword) @keyword
 (thunk_keyword) @keyword
 (decl_kind) @keyword
 
@@ -13,8 +14,9 @@
 (model_subject) @property
 (language) @property
 
-(assign_operator) @keyword
-(remove_operator) @operator
+(assign_operator) @operator
+(add_assign_operator) @operator
+(remove_assign_operator) @operator
 (arrow) @operator
 
 (colon) @punctuation.delimiter
@@ -22,44 +24,49 @@
 (lparen) @punctuation.delimiter
 (rparen) @punctuation.delimiter
 (question) @punctuation.special
+(array_suffix) @punctuation.special
 (fence_open) @punctuation.special
 (fence_close) @punctuation.special
 
 (reference) @constant
-(prompt_text) @string
+(body_text) @string
 (fence_text) @string
 
 (collection_directive
-  operator: (assign_operator)
   values: (directive_values
     (directive_value) @constant))
-
-(collection_directive
-  operator: (remove_operator)
-  values: (directive_values
-    (directive_value) @string.special))
 
 (model_directive
   values: (directive_values
     (directive_value) @type))
 
 (declaration_header
-  name: (identifier) @type)
+  kind: (decl_kind) @_kind
+  name: (identifier) @function
+  (#eq? @_kind "slash"))
 
 (declaration_header
-  language: (language) @property)
+  kind: (decl_kind) @_kind
+  name: (identifier) @type
+  (#any-of? @_kind "psyche" "service"))
 
-(parameter
-  name: (identifier) @property)
+(struct_header
+  name: (identifier) @type)
 
 (thunk_header
   name: (identifier) @function)
 
-(thunk_header
-  output: (identifier) @type)
+(struct_field
+  name: (identifier) @property)
 
-(thunk_input
-  value: (identifier) @variable)
+(parameter
+  name: (named_identifier) @property)
+
+(parameter
+  name: (underscore) @property)
+
+(type_expression
+  name: (identifier) @type)
 
 (use_statement
   reference: (reference) @constant)

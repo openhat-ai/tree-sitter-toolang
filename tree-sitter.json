@@ -14,7 +14,7 @@
     }
   ],
   "metadata": {
-    "version": "0.0.6",
+    "version": "0.0.7",
     "license": "MIT",
     "description": "toolang grammar for tree-sitter",
     "links": {

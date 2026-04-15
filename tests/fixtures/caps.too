@@ -1,0 +1,38 @@
+service github: ```md
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
+Use this service when the agent needs GitHub access.
+```
+
+service linear: ```md
+---
+transport: stdio
+command: npx
+args:
+  - -y
+  - mcp-remote
+  - https://mcp.linear.app/sse
+env: LINEAR_API_KEY, API_KEY=NOT_THE_SAME_NAME
+cwd: /work/tools
+---
+
+Use this service when the agent needs Linear access.
+```
+
+psyche reviewer: ```md
+Prefer concrete findings and direct language.
+```
+
+slash review: ```md
+---
+params: path, focus?
+---
+
+Review {{path}} carefully.
+{{focus}}
+```

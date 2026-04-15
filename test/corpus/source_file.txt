@@ -1,13 +1,10 @@
-====================
-Use And Declarations
-====================
+==================
+Use Selectors
+==================
+use psyche toolang.ai/reviewer
 use skill briceyan/pdf-processing
-prompt summarize(style, audience?): ```md
-Summarize {{input}}
-```
-struct WorkspaceSummary: ```json
-{}
-```
+use service github://briceyan/caps/services/github@main
+use slash https://toolang.ai/review
 
 ---
 
@@ -17,29 +14,107 @@ struct WorkspaceSummary: ```json
     kind: (cap_kind)
     reference: (reference)
     (newline))
-  (declaration
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline))
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline))
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline)))
+
+===================================
+Fenced Cap Declarations With Metadata
+===================================
+psyche reviewer: ```md
+Prefer concrete findings and direct language.
+```
+
+service github: ```md
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
+Use this service when the agent needs GitHub access.
+```
+
+slash review: ```md
+---
+params: path, focus?
+---
+
+Review {{path}} carefully.
+{{focus}}
+```
+
+---
+
+(source_file
+  (fenced_declaration
     header: (declaration_header
       kind: (decl_kind)
       name: (identifier)
-      parameters: (parameter_list
-        (lparen)
-        parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (rparen))
       colon: (colon)
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
+    body: (psyche_fence_body
+      (non_frontmatter_fence_content_line
+        text: (non_frontmatter_fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (service_fence_body
+      frontmatter: (service_frontmatter
+        (http_service_frontmatter
+          (frontmatter_delimiter)
+          (newline)
+          (http_transport_line
+            (colon)
+            value: (http_transport_value)
+            (newline))
+          (http_url_line
+            (colon)
+            value: (frontmatter_scalar)
+            (newline))
+          (http_headers_block
+            (colon)
+            (newline)
+            (header_map_entry_line
+              name: (frontmatter_header_name)
+              (colon)
+              value: (frontmatter_scalar)
+              (newline)))
+          (frontmatter_delimiter)
+          (newline)))
+      (fence_content_line
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline)))
     close: (fence_close))
-  (declaration
+  (blank_line
+    (newline))
+  (fenced_declaration
     header: (declaration_header
       kind: (decl_kind)
       name: (identifier)
@@ -47,20 +122,214 @@ struct WorkspaceSummary: ```json
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline)))
     close: (fence_close)))
 
-=====================
-Thunk With Directives
-=====================
-thunk summarize(user) => WorkspaceSummary:
-    model = gpt-5
-    skills = briceyan/pdf-processing, anthropic/create-skill
+===========================================
+Fenced Slash With Frontmatter And Struct
+===========================================
+slash review: ```md
+---
+params: path, focus?
+---
 
-    Turn the input into a workspace summary.
+Review {{path}} carefully.
+{{focus}}
+```
+
+struct ReviewFinding:
+  path: string
+  line: number?
+  tags: string[]
+
+---
+
+(source_file
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (struct_declaration
+    header: (struct_header
+      keyword: (struct_keyword)
+      name: (identifier)
+      colon: (colon)
+      (newline))
+    body: (struct_body
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            optional: (question)))
+        (newline))
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)
+            array: (array_suffix)))
+        (newline)))))
+
+==============================
+Fenced Slash Without Parameters
+==============================
+slash review: ```md
+Review the current request directly.
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (slash_fence_body
+      (non_frontmatter_fence_content_line
+        text: (non_frontmatter_fence_text)
+        (newline)))
+    close: (fence_close)))
+
+=====================================
+Invalid Parameterized Fenced Declaration
+=====================================
+slash summarize(style): ```md
+Summarize the request in a concise style.
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    (declaration_header
+      (decl_kind)
+      (identifier)
+      (ERROR
+        (lparen)
+        (UNEXPECTED 'y')
+        (rparen))
+      (colon)
+      (fence_open)
+      (language)
+      (newline))
+    (slash_fence_body
+      (non_frontmatter_fence_content_line
+        (non_frontmatter_fence_text)
+        (newline)))
+    (fence_close)))
+
+=============================
+Slash With Frontmatter Params
+=============================
+slash summarize: ```md
+---
+params: style, audience?
+---
+
+Summarize the request in a {{style}} voice.
+Audience: {{audience}}
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    (declaration_header
+      (decl_kind)
+      (identifier)
+      (colon)
+      (fence_open)
+      (language)
+      (newline))
+    (slash_fence_body
+      (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        (fence_text)
+        (newline))
+      (fence_content_line
+        (fence_text)
+        (newline)))
+    (fence_close)))
+
+=============================
+Thunk With Full Directives
+=============================
+thunk review(_, path?: path, focus?) -> ReviewResult:
+  model = gpt-5
+  psyches = reviewer, concise
+  skills += review, patch
+  services -= linear
+  tools = shell, service_use
+
+  Review the target carefully.
+
+  Return a precise result.
 
 ---
 
@@ -69,32 +338,287 @@ thunk summarize(user) => WorkspaceSummary:
     header: (thunk_header
       keyword: (thunk_keyword)
       name: (identifier)
-      input: (thunk_input
+      parameters: (parameter_list
         (lparen)
-        value: (identifier)
+        parameter: (parameter
+          name: (underscore))
+        (comma)
+        parameter: (parameter
+          name: (named_identifier)
+          optional: (question)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (comma)
+        parameter: (parameter
+          name: (named_identifier)
+          optional: (question))
         (rparen))
       arrow: (arrow)
-      output: (identifier)
+      returns: (type_expression
+        name: (identifier))
       colon: (colon)
       (newline))
-    (directive_line
-      (model_directive
-        subject: (model_subject)
-        operator: (assign_operator)
-        values: (directive_values
-          value: (directive_value)))
+    body: (thunk_body
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)
+            (comma)
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (add_assign_operator)
+          values: (directive_values
+            value: (directive_value)
+            (comma)
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (remove_assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (directive_line
+        (collection_directive
+          subject: (collection_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)
+            (comma)
+            value: (directive_value)))
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
+        (newline)))))
+
+======================================
+Thunk Requires Blank Line After Directives
+======================================
+thunk summarize(_) -> text:
+  model = gpt-5
+  Produce a concise workspace summary.
+
+---
+
+(source_file
+  (thunk
+    header: (thunk_header
+      keyword: (thunk_keyword)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (underscore))
+        (rparen))
+      arrow: (arrow)
+      returns: (type_expression
+        name: (identifier))
+      colon: (colon)
       (newline))
-    (directive_line
-      (collection_directive
-        subject: (collection_subject)
-        operator: (assign_operator)
-        values: (directive_values
-          value: (directive_value)
-          (comma)
-          value: (directive_value)))
+    body: (thunk_body
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (ERROR
+        (UNEXPECTED 'P'))
+      (blank_line
+        (newline))
+      (blank_line
+        (newline
+          (MISSING "newline_token1"))))))
+
+==========================
+Top-Level And Inline Comments
+==========================
+# top-level file comment
+use skill briceyan/pdf-processing # inline use comment
+
+service github: ```md # inline declaration header comment
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
+Use this service when the agent needs GitHub access.
+```
+
+struct ReviewResult:
+  summary: string # inline struct field comment
+
+slash review: ```md # inline slash header comment
+---
+params: path, focus?
+---
+
+Review {{path}} carefully.
+{{focus}}
+```
+
+thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
+  model = gpt-5 # inline directive comment
+
+  Review the target carefully. # inline thunk body comment
+
+---
+
+(source_file
+  (comment)
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (inline_comment)
+    (newline))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (inline_comment)
       (newline))
-    (blank_line
+    body: (service_fence_body
+      frontmatter: (service_frontmatter
+        (http_service_frontmatter
+          (frontmatter_delimiter)
+          (newline)
+          (http_transport_line
+            (colon)
+            value: (http_transport_value)
+            (newline))
+          (http_url_line
+            (colon)
+            value: (frontmatter_scalar)
+            (newline))
+          (http_headers_block
+            (colon)
+            (newline)
+            (header_map_entry_line
+              name: (frontmatter_header_name)
+              (colon)
+              value: (frontmatter_scalar)
+              (newline)))
+          (frontmatter_delimiter)
+          (newline)))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (struct_declaration
+    header: (struct_header
+      keyword: (struct_keyword)
+      name: (identifier)
+      colon: (colon)
       (newline))
-    (prompt_line
-      text: (prompt_text)
-      (newline))))
+    body: (struct_body
+      (struct_field_line
+        field: (struct_field
+          name: (identifier)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (inline_comment)
+        (newline))
+      (blank_line
+        (newline))))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (inline_comment)
+      (newline))
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline))
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (thunk
+    header: (thunk_header
+      keyword: (thunk_keyword)
+      name: (identifier)
+      parameters: (parameter_list
+        (lparen)
+        parameter: (parameter
+          name: (underscore))
+        (comma)
+        parameter: (parameter
+          name: (named_identifier)
+          optional: (question)
+          colon: (colon)
+          type: (type_expression
+            name: (identifier)))
+        (rparen))
+      arrow: (arrow)
+      returns: (type_expression
+        name: (identifier))
+      colon: (colon)
+      (inline_comment)
+      (newline))
+    body: (thunk_body
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (inline_comment)
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
+        (inline_comment)
+        (newline)))))

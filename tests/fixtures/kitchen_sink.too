@@ -1,0 +1,69 @@
+# top-level file comment
+use psyche toolang.ai/reviewer
+use skill briceyan/pdf-processing # inline use comment
+use service github://briceyan/caps/services/github@main
+use slash https://toolang.ai/review
+
+psyche reviewer: ```md
+Prefer concrete findings and direct language.
+```
+
+service github: ```md # inline declaration header comment
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
+Use this service when the agent needs GitHub access.
+```
+
+slash review: ```md # inline slash header comment
+---
+params: path, focus?
+---
+
+Review {{path}} carefully.
+{{focus}}
+```
+
+struct ReviewFinding:
+  path: string
+  line: number? # inline struct field comment
+
+struct ReviewResult:
+  summary: string
+  findings: ReviewFinding[]
+
+thunk: # inline thunk header comment
+  Respond directly. # inline thunk body comment
+
+thunk summarize:
+  Summarize the current workspace in a concise style.
+
+thunk inspect() -> ReviewResult:
+  Return a precise result.
+
+thunk echo(_):
+  Repeat the current message directly.
+
+thunk review(_, path: path, focus?) -> ReviewResult:
+  model = gpt-5 # inline directive comment
+  psyches = reviewer, concise
+  skills += review, patch
+  services -= linear
+  tools = shell, service_use
+
+  Review the target carefully.
+
+  Return a precise result.
+
+thunk classify(style?, strict?: boolean):
+  model = gpt-5
+  skills = review
+
+  Classify the current workspace in the requested style.
+
+thunk render(style, audience?: string):
+  Render the current workspace for the target audience.

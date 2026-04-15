@@ -5,6 +5,10 @@
   name: (identifier) @name
 ) @item
 
+(struct_header
+  name: (identifier) @name
+) @item
+
 (declaration_header
   name: (identifier) @name
 ) @item

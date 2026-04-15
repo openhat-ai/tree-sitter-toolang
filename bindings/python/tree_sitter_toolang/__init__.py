@@ -1,5 +1,6 @@
 """Toolang grammar for tree-sitter."""
 
+from pathlib import Path as _Path
 from importlib.resources import files as _files
 
 from ._binding import language
@@ -16,8 +17,13 @@ __all__ = ["language", *_QUERY_FILES]
 
 
 def _get_query(name: str) -> str:
-    query = _files(f"{__package__}.queries") / _QUERY_FILES[name]
-    contents = query.read_text()
+    filename = _QUERY_FILES[name]
+    try:
+        query = _files(f"{__package__}.queries") / filename
+        contents = query.read_text()
+    except ModuleNotFoundError:
+        query = _Path(__file__).resolve().parents[3] / "queries" / filename
+        contents = query.read_text()
     globals()[name] = contents
     return contents
 

@@ -1,0 +1,22 @@
+slash review: ```md
+Review the current request directly.
+```
+
+slash summarize: ```md
+---
+params: style, audience?
+---
+
+Summarize the request in a {{style}} voice.
+Audience: {{audience}}
+```
+
+slash rewrite: ```md
+---
+params: tone?
+---
+
+Rewrite the request in a {{tone}} tone.
+
+Keep the meaning intact.
+```
