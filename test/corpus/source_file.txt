@@ -2,8 +2,8 @@
 Use Selectors
 ==================
 use psyche toolang.ai/reviewer
-use skill by3gus/pdf-processing
-use service github://openhat/caps/services/github@main
+use skill briceyan/pdf-processing
+use service github://briceyan/caps/services/github@main
 use slash https://toolang.ai/review
 
 ---
@@ -334,7 +334,7 @@ thunk summarize(_) -> text:
 Top-Level And Inline Comments
 ==========================
 # top-level file comment
-use skill by3gus/pdf-processing # inline use comment
+use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
 Use this service when the agent needs GitHub access.

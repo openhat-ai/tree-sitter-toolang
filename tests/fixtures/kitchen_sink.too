@@ -1,12 +1,11 @@
 # top-level file comment
 use psyche toolang.ai/reviewer
-use skill by3gus/pdf-processing # inline use comment
-use service github://openhat/caps/services/github@main
+use skill briceyan/pdf-processing # inline use comment
+use service github://briceyan/caps/services/github@main
 use slash https://toolang.ai/review
 
 psyche reviewer: ```md
-  Prefer concrete findings and direct language.
-
+Prefer concrete findings and direct language.
 ```
 
 service github: ```md # inline declaration header comment

@@ -1,5 +1,5 @@
 # top-level file comment
-use skill by3gus/pdf-processing # inline use comment
+use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
 Use this service when the agent needs GitHub access.
