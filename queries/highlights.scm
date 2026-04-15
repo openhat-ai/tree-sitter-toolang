@@ -60,7 +60,10 @@
   name: (identifier) @property)
 
 (parameter
-  name: (identifier) @property)
+  name: (named_identifier) @property)
+
+(parameter
+  name: (underscore) @property)
 
 (type_expression
   name: (identifier) @type)

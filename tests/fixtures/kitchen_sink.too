@@ -9,10 +9,21 @@ Prefer concrete findings and direct language.
 ```
 
 service github: ```md # inline declaration header comment
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
 Use this service when the agent needs GitHub access.
 ```
 
-slash review(path, focus?): ```md # inline slash header comment
+slash review: ```md # inline slash header comment
+---
+params: path, focus?
+---
+
 Review {{path}} carefully.
 {{focus}}
 ```
@@ -37,7 +48,7 @@ thunk inspect() -> ReviewResult:
 thunk echo(_):
   Repeat the current message directly.
 
-thunk review(_, path?: path, focus?) -> ReviewResult:
+thunk review(_, path: path, focus?) -> ReviewResult:
   model = gpt-5 # inline directive comment
   psyches = reviewer, concise
   skills += review, patch
@@ -53,3 +64,6 @@ thunk classify(style?, strict?: boolean):
   skills = review
 
   Classify the current workspace in the requested style.
+
+thunk render(style, audience?: string):
+  Render the current workspace for the target audience.

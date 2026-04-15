@@ -10,7 +10,9 @@ module.exports = grammar({
           $.comment,
           $.blank_line,
           $.use_statement,
-          $.fenced_declaration,
+          alias($.psyche_declaration, $.fenced_declaration),
+          alias($.service_declaration, $.fenced_declaration),
+          alias($.slash_declaration, $.fenced_declaration),
           $.struct_declaration,
           $.thunk,
         ),
@@ -29,21 +31,56 @@ module.exports = grammar({
         $.newline,
       ),
 
-    fenced_declaration: ($) =>
+    psyche_declaration: ($) =>
       seq(
-        field("header", $.declaration_header),
-        optional(field("body", $.fence_body)),
+        field("header", alias($.psyche_header, $.declaration_header)),
+        field("body", $.psyche_fence_body),
         field("close", $.fence_close),
       ),
 
-    declaration_header: ($) =>
+    service_declaration: ($) =>
       seq(
-        field("kind", $.decl_kind),
+        field("header", alias($.service_header, $.declaration_header)),
+        field("body", $.service_fence_body),
+        field("close", $.fence_close),
+      ),
+
+    slash_declaration: ($) =>
+      seq(
+        field("header", alias($.slash_header, $.declaration_header)),
+        field("body", $.slash_fence_body),
+        field("close", $.fence_close),
+      ),
+
+    psyche_header: ($) =>
+      seq(
+        field("kind", alias($.psyche_keyword, $.decl_kind)),
         field("name", $.identifier),
-        optional(field("parameters", $.parameter_list)),
         field("colon", $.colon),
         field("open", $.fence_open),
-        optional(field("language", $.language)),
+        field("language", alias($.markdown_language, $.language)),
+        optional($.inline_comment),
+        $.newline,
+      ),
+
+    service_header: ($) =>
+      seq(
+        field("kind", alias($.service_keyword, $.decl_kind)),
+        field("name", $.identifier),
+        field("colon", $.colon),
+        field("open", $.fence_open),
+        field("language", alias($.markdown_language, $.language)),
+        optional($.inline_comment),
+        $.newline,
+      ),
+
+    slash_header: ($) =>
+      seq(
+        field("kind", alias($.slash_keyword, $.decl_kind)),
+        field("name", $.identifier),
+        field("colon", $.colon),
+        field("open", $.fence_open),
+        field("language", alias($.markdown_language, $.language)),
         optional($.inline_comment),
         $.newline,
       ),
@@ -79,22 +116,45 @@ module.exports = grammar({
         field("type", $.type_expression),
       ),
 
-    parameter_list: ($) =>
+    parameter_list: ($) => seq($.lparen, optional($._parameter_sequence), $.rparen),
+
+    _parameter_sequence: ($) =>
+      choice($._unnamed_then_named_parameters, $._named_parameters),
+
+    _unnamed_then_named_parameters: ($) =>
       seq(
-        $.lparen,
-        optional(
-          seq(
-            field("parameter", $.parameter),
-            repeat(seq($.comma, field("parameter", $.parameter))),
-          ),
-        ),
-        $.rparen,
+        field("parameter", alias($.unnamed_parameter, $.parameter)),
+        optional(seq($.comma, $._named_parameters)),
       ),
 
-    parameter: ($) =>
+    _named_parameters: ($) =>
+      choice($._required_then_optional_named_parameters, $._optional_named_parameters),
+
+    _required_then_optional_named_parameters: ($) =>
       seq(
-        field("name", $.identifier),
-        optional(field("optional", $.question)),
+        field("parameter", alias($.required_named_parameter, $.parameter)),
+        repeat(seq($.comma, field("parameter", alias($.required_named_parameter, $.parameter)))),
+        optional(seq($.comma, $._optional_named_parameters)),
+      ),
+
+    _optional_named_parameters: ($) =>
+      seq(
+        field("parameter", alias($.optional_named_parameter, $.parameter)),
+        repeat(seq($.comma, field("parameter", alias($.optional_named_parameter, $.parameter)))),
+      ),
+
+    unnamed_parameter: ($) => field("name", $.underscore),
+
+    required_named_parameter: ($) =>
+      seq(
+        field("name", $.named_identifier),
+        optional(seq(field("colon", $.colon), field("type", $.type_expression))),
+      ),
+
+    optional_named_parameter: ($) =>
+      seq(
+        field("name", $.named_identifier),
+        field("optional", $.question),
         optional(seq(field("colon", $.colon), field("type", $.type_expression))),
       ),
 
@@ -175,7 +235,83 @@ module.exports = grammar({
         $.newline,
       ),
 
-    fence_body: ($) => repeat1($.fence_content_line),
+    psyche_fence_body: ($) =>
+      seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
+
+    service_fence_body: ($) =>
+      seq(field("frontmatter", $.service_frontmatter), repeat($.fence_content_line)),
+
+    slash_fence_body: ($) =>
+      choice(
+        seq(field("frontmatter", $.slash_frontmatter), repeat($.fence_content_line)),
+        seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
+      ),
+
+    service_frontmatter: ($) => choice($.http_service_frontmatter, $.stdio_service_frontmatter),
+
+    http_service_frontmatter: ($) =>
+      seq(
+        $.frontmatter_delimiter,
+        $.newline,
+        $.http_transport_line,
+        $.http_url_line,
+        optional($.http_headers_block),
+        $.frontmatter_delimiter,
+        $.newline,
+      ),
+
+    stdio_service_frontmatter: ($) =>
+      seq(
+        $.frontmatter_delimiter,
+        $.newline,
+        $.stdio_transport_line,
+        $.stdio_command_line,
+        repeat(choice($.stdio_args_block, $.stdio_env_line, $.stdio_cwd_line)),
+        $.frontmatter_delimiter,
+        $.newline,
+      ),
+
+    slash_frontmatter: ($) =>
+      seq(
+        $.frontmatter_delimiter,
+        $.newline,
+        $.slash_params_line,
+        $.frontmatter_delimiter,
+        $.newline,
+      ),
+
+    http_transport_line: ($) =>
+      seq("transport", $.colon, field("value", $.http_transport_value), $.newline),
+
+    stdio_transport_line: ($) =>
+      seq("transport", $.colon, field("value", $.stdio_transport_value), $.newline),
+
+    http_url_line: ($) =>
+      seq("url", $.colon, field("value", $.frontmatter_scalar), $.newline),
+
+    http_headers_block: ($) =>
+      seq("headers", $.colon, $.newline, repeat1($.header_map_entry_line)),
+
+    header_map_entry_line: ($) =>
+      seq(field("name", $.frontmatter_header_name), $.colon, field("value", $.frontmatter_scalar), $.newline),
+
+    stdio_command_line: ($) =>
+      seq("command", $.colon, field("value", $.frontmatter_scalar), $.newline),
+
+    stdio_args_block: ($) =>
+      seq("args", $.colon, $.newline, repeat1($.frontmatter_list_item_line)),
+
+    frontmatter_list_item_line: ($) =>
+      seq("-", field("value", $.frontmatter_scalar), $.newline),
+
+    stdio_env_line: ($) =>
+      seq("env", $.colon, field("value", $.frontmatter_scalar), $.newline),
+
+    stdio_cwd_line: ($) =>
+      seq("cwd", $.colon, field("value", $.frontmatter_scalar), $.newline),
+
+    slash_params_line: ($) =>
+      seq("params", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
     fence_content_line: ($) =>
       seq(
@@ -183,11 +319,20 @@ module.exports = grammar({
         $.newline,
       ),
 
+    non_frontmatter_fence_content_line: ($) =>
+      seq(field("text", $.non_frontmatter_fence_text), $.newline),
+
+    empty_fence_content_line: ($) => $.newline,
+
     inline_comment: () => token(seq("#", /[^\n]*/)),
 
     use_keyword: () => "use",
+    psyche_keyword: () => "psyche",
+    service_keyword: () => "service",
+    slash_keyword: () => "slash",
     struct_keyword: () => "struct",
     thunk_keyword: () => "thunk",
+    markdown_language: () => "md",
     assign_operator: () => "=",
     add_assign_operator: () => "+=",
     remove_assign_operator: () => "-=",
@@ -197,19 +342,31 @@ module.exports = grammar({
     rparen: () => ")",
     comma: () => ",",
     question: () => "?",
+    underscore: () => "_",
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),
+    frontmatter_delimiter: () => "---",
 
     cap_kind: () => choice("psyche", "skill", "service", "slash"),
     decl_kind: () => choice("psyche", "service", "slash"),
     collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
+    http_transport_value: () => "http",
+    stdio_transport_value: () => "stdio",
 
     identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
+    named_identifier: () =>
+      token(choice(/[A-Za-z][A-Za-z0-9_-]*/, /_[A-Za-z0-9-][A-Za-z0-9_-]*/)),
     reference: () => token(/[A-Za-z0-9_./:@-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
     directive_value: () => token(/[A-Za-z0-9_./:@-]+/),
     body_text: () => token(prec(-1, /[^\n#][^\n#]*/)),
     fence_text: () => token(/[^`\n][^\n]*/),
+    non_frontmatter_fence_text: () =>
+      token(
+        /(?:[^`\n-][^\n]*|-[^-\n][^\n]*|--[^-\n][^\n]*|---[^-\n][^\n]*|----[^\n]*)/,
+      ),
+    frontmatter_header_name: () => token(/[A-Za-z0-9_-]+/),
+    frontmatter_scalar: () => token(/[^\n]+/),
   },
 });

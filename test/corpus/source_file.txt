@@ -30,18 +30,29 @@ use slash https://toolang.ai/review
     reference: (reference)
     (newline)))
 
-=====================
-Fenced Cap Declarations
-=====================
+===================================
+Fenced Cap Declarations With Metadata
+===================================
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
 service github: ```md
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
 Use this service when the agent needs GitHub access.
 ```
 
-slash review(path, focus?): ```md
+slash review: ```md
+---
+params: path, focus?
+---
+
 Review {{path}} carefully.
 {{focus}}
 ```
@@ -57,7 +68,46 @@ Review {{path}} carefully.
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
+    body: (psyche_fence_body
+      (non_frontmatter_fence_content_line
+        text: (non_frontmatter_fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (service_fence_body
+      frontmatter: (service_frontmatter
+        (http_service_frontmatter
+          (frontmatter_delimiter)
+          (newline)
+          (http_transport_line
+            (colon)
+            value: (http_transport_value)
+            (newline))
+          (http_url_line
+            (colon)
+            value: (frontmatter_scalar)
+            (newline))
+          (http_headers_block
+            (colon)
+            (newline)
+            (header_map_entry_line
+              name: (frontmatter_header_name)
+              (colon)
+              value: (frontmatter_scalar)
+              (newline)))
+          (frontmatter_delimiter)
+          (newline)))
+      (fence_content_line
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline)))
@@ -72,31 +122,18 @@ Review {{path}} carefully.
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
       (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      parameters: (parameter_list
-        (lparen)
-        parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (rparen))
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (fence_body
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline))
@@ -105,10 +142,14 @@ Review {{path}} carefully.
         (newline)))
     close: (fence_close)))
 
-========================
-Fenced Slash And Struct
-========================
-slash review(path, focus?): ```md
+===========================================
+Fenced Slash With Frontmatter And Struct
+===========================================
+slash review: ```md
+---
+params: path, focus?
+---
+
 Review {{path}} carefully.
 {{focus}}
 ```
@@ -125,20 +166,22 @@ struct ReviewFinding:
     header: (declaration_header
       kind: (decl_kind)
       name: (identifier)
-      parameters: (parameter_list
-        (lparen)
-        parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (rparen))
       colon: (colon)
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline))
@@ -197,11 +240,82 @@ Review the current request directly.
       open: (fence_open)
       language: (language)
       (newline))
-    body: (fence_body
-      (fence_content_line
-        text: (fence_text)
+    body: (slash_fence_body
+      (non_frontmatter_fence_content_line
+        text: (non_frontmatter_fence_text)
         (newline)))
     close: (fence_close)))
+
+=====================================
+Invalid Parameterized Fenced Declaration
+=====================================
+slash summarize(style): ```md
+Summarize the request in a concise style.
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    (declaration_header
+      (decl_kind)
+      (identifier)
+      (ERROR
+        (lparen)
+        (UNEXPECTED 'y')
+        (rparen))
+      (colon)
+      (fence_open)
+      (language)
+      (newline))
+    (slash_fence_body
+      (non_frontmatter_fence_content_line
+        (non_frontmatter_fence_text)
+        (newline)))
+    (fence_close)))
+
+=============================
+Slash With Frontmatter Params
+=============================
+slash summarize: ```md
+---
+params: style, audience?
+---
+
+Summarize the request in a {{style}} voice.
+Audience: {{audience}}
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    (declaration_header
+      (decl_kind)
+      (identifier)
+      (colon)
+      (fence_open)
+      (language)
+      (newline))
+    (slash_fence_body
+      (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
+      (fence_content_line
+        (fence_text)
+        (newline))
+      (fence_content_line
+        (fence_text)
+        (newline)))
+    (fence_close)))
 
 =============================
 Thunk With Full Directives
@@ -227,17 +341,17 @@ thunk review(_, path?: path, focus?) -> ReviewResult:
       parameters: (parameter_list
         (lparen)
         parameter: (parameter
-          name: (identifier))
+          name: (underscore))
         (comma)
         parameter: (parameter
-          name: (identifier)
+          name: (named_identifier)
           optional: (question)
           colon: (colon)
           type: (type_expression
             name: (identifier)))
         (comma)
         parameter: (parameter
-          name: (identifier)
+          name: (named_identifier)
           optional: (question))
         (rparen))
       arrow: (arrow)
@@ -315,7 +429,7 @@ thunk summarize(_) -> text:
       parameters: (parameter_list
         (lparen)
         parameter: (parameter
-          name: (identifier))
+          name: (underscore))
         (rparen))
       arrow: (arrow)
       returns: (type_expression
@@ -345,13 +459,24 @@ Top-Level And Inline Comments
 use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
 Use this service when the agent needs GitHub access.
 ```
 
 struct ReviewResult:
   summary: string # inline struct field comment
 
-slash review(path, focus?): ```md # inline slash header comment
+slash review: ```md # inline slash header comment
+---
+params: path, focus?
+---
+
 Review {{path}} carefully.
 {{focus}}
 ```
@@ -382,7 +507,31 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
       language: (language)
       (inline_comment)
       (newline))
-    body: (fence_body
+    body: (service_fence_body
+      frontmatter: (service_frontmatter
+        (http_service_frontmatter
+          (frontmatter_delimiter)
+          (newline)
+          (http_transport_line
+            (colon)
+            value: (http_transport_value)
+            (newline))
+          (http_url_line
+            (colon)
+            value: (frontmatter_scalar)
+            (newline))
+          (http_headers_block
+            (colon)
+            (newline)
+            (header_map_entry_line
+              name: (frontmatter_header_name)
+              (colon)
+              value: (frontmatter_scalar)
+              (newline)))
+          (frontmatter_delimiter)
+          (newline)))
+      (fence_content_line
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline)))
@@ -410,21 +559,23 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
     header: (declaration_header
       kind: (decl_kind)
       name: (identifier)
-      parameters: (parameter_list
-        (lparen)
-        parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (rparen))
       colon: (colon)
       open: (fence_open)
       language: (language)
       (inline_comment)
       (newline))
-    body: (fence_body
+    body: (slash_fence_body
+      frontmatter: (slash_frontmatter
+        (frontmatter_delimiter)
+        (newline)
+        (slash_params_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (frontmatter_delimiter)
+        (newline))
+      (fence_content_line
+        (newline))
       (fence_content_line
         text: (fence_text)
         (newline))
@@ -441,10 +592,10 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
       parameters: (parameter_list
         (lparen)
         parameter: (parameter
-          name: (identifier))
+          name: (underscore))
         (comma)
         parameter: (parameter
-          name: (identifier)
+          name: (named_identifier)
           optional: (question)
           colon: (colon)
           type: (type_expression

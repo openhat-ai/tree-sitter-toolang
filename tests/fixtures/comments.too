@@ -2,13 +2,24 @@
 use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
+---
+transport: http
+url: https://mcp.github.com/mcp
+headers:
+  Authorization: Bearer $GITHUB_TOKEN
+---
+
 Use this service when the agent needs GitHub access.
 ```
 
 struct ReviewResult:
   summary: string # inline struct field comment
 
-slash review(path, focus?): ```md # inline slash header comment
+slash review: ```md # inline slash header comment
+---
+params: path, focus?
+---
+
 Review {{path}} carefully.
 {{focus}}
 ```
