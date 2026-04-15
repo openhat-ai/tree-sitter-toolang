@@ -59,7 +59,7 @@ def test_minimal_invoke_fixture_parses_one_thunk():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("fenced_caps.too", "slash_only.too", "use_statements.too"):
+    for fixture_name in ("caps.too", "slashes.too", "uses.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         root = tree.root_node
@@ -69,24 +69,41 @@ def test_fixtures_can_parse_without_any_thunks():
         assert thunk_count == 0, fixture_name
 
 
-def test_slash_only_fixture_parses_slash_without_parameters():
+def test_slashes_fixture_covers_supported_slash_forms():
     parser = _parser()
-    source = (FIXTURES_DIR / "slash_only.too").read_bytes()
+    source = (FIXTURES_DIR / "slashes.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
-    slash_decl = root.named_children[0]
+    child_types = [child.type for child in root.named_children]
 
-    assert slash_decl.type == "slash_declaration"
+    assert child_types == [
+        "slash_declaration",
+        "slash_declaration",
+        "fenced_declaration",
+        "blank_line",
+        "fenced_declaration",
+    ]
 
-    header = slash_decl.child_by_field_name("header")
-    assert header is not None
-    assert header.child_by_field_name("parameters") is None
+    first_header = root.named_children[0].child_by_field_name("header")
+    second_header = root.named_children[1].child_by_field_name("header")
+    third_header = root.named_children[2].child_by_field_name("header")
+    fourth_header = root.named_children[4].child_by_field_name("header")
+
+    assert first_header is not None
+    assert second_header is not None
+    assert third_header is not None
+    assert fourth_header is not None
+
+    assert first_header.child_by_field_name("parameters") is None
+    assert second_header.child_by_field_name("parameters") is not None
+    assert third_header.child_by_field_name("parameters") is None
+    assert fourth_header.child_by_field_name("parameters") is not None
 
 
-def test_use_statements_fixture_contains_only_use_statements():
+def test_uses_fixture_contains_only_use_statements():
     parser = _parser()
-    source = (FIXTURES_DIR / "use_statements.too").read_bytes()
+    source = (FIXTURES_DIR / "uses.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -100,9 +117,9 @@ def test_use_statements_fixture_contains_only_use_statements():
     ]
 
 
-def test_fenced_caps_fixture_covers_supported_kinds():
+def test_caps_fixture_covers_supported_kinds():
     parser = _parser()
-    source = (FIXTURES_DIR / "fenced_caps.too").read_bytes()
+    source = (FIXTURES_DIR / "caps.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node

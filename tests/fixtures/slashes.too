@@ -1,0 +1,16 @@
+slash review:
+  Review the current request directly.
+
+slash summarize(style, audience?):
+  Summarize the request in a {{style}} voice.
+  Audience: {{audience}}
+
+slash greet: ```md
+Greet the user directly.
+```
+
+slash classify(style, strict?): ```md
+Classify the current request.
+Style: {{style}}
+Strict: {{strict}}
+```
