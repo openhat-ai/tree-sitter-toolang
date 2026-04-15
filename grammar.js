@@ -2,6 +2,7 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
+  conflicts: ($) => [[$.thunk_body]],
   rules: {
     source_file: ($) =>
       repeat(
@@ -58,6 +59,7 @@ module.exports = grammar({
       seq(
         field("keyword", $.struct_keyword),
         field("name", $.identifier),
+        field("colon", $.colon),
         optional($.inline_comment),
         $.newline,
       ),
@@ -69,7 +71,7 @@ module.exports = grammar({
         $.newline,
       ),
 
-    struct_body: ($) => prec.right(repeat1(choice($.struct_field_line, $.blank_line, $.comment))),
+    struct_body: ($) => prec.right(repeat1(choice($.struct_field_line, $.blank_line))),
 
     struct_field: ($) =>
       seq(
@@ -89,11 +91,12 @@ module.exports = grammar({
         field("keyword", $.slash_keyword),
         field("name", $.identifier),
         optional(field("parameters", $.parameter_list)),
+        field("colon", $.colon),
         optional($.inline_comment),
         $.newline,
       ),
 
-    slash_body: ($) => prec.right(repeat1(choice($.body_line, $.blank_line, $.comment))),
+    slash_body: ($) => prec.right(repeat1(choice($.body_line, $.blank_line))),
 
     parameter_list: ($) =>
       seq(
@@ -137,12 +140,22 @@ module.exports = grammar({
         optional(field("name", $.identifier)),
         optional(field("parameters", $.parameter_list)),
         optional(seq(field("arrow", $.arrow), field("returns", $.type_expression))),
+        field("colon", $.colon),
         optional($.inline_comment),
         $.newline,
       ),
 
     thunk_body: ($) =>
-      prec.right(repeat1(choice($.directive_line, $.body_line, $.blank_line, $.comment))),
+      choice(
+        prec.right(
+          seq(
+            repeat1($.directive_line),
+            repeat1($.blank_line),
+            repeat1(choice($.body_line, $.blank_line)),
+          ),
+        ),
+        prec.right(repeat1(choice($.body_line, $.blank_line))),
+      ),
 
     directive_line: ($) =>
       seq(
@@ -213,9 +226,9 @@ module.exports = grammar({
     model_subject: () => "model",
 
     identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
-    reference: () => token(/[A-Za-z0-9_./:-]+/),
+    reference: () => token(/[A-Za-z0-9_./:@-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
-    directive_value: () => token(/[A-Za-z0-9_./:-]+/),
+    directive_value: () => token(/[A-Za-z0-9_./:@-]+/),
     body_text: () => token(prec(-1, /[^\n#][^\n]*/)),
     fence_text: () => token(/[^`\n][^\n]*/),
   },

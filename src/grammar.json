@@ -274,6 +274,14 @@
           }
         },
         {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
           "type": "CHOICE",
           "members": [
             {
@@ -335,10 +343,6 @@
             {
               "type": "SYMBOL",
               "name": "blank_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "comment"
             }
           ]
         }
@@ -430,6 +434,14 @@
           ]
         },
         {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
           "type": "CHOICE",
           "members": [
             {
@@ -462,10 +474,6 @@
             {
               "type": "SYMBOL",
               "name": "blank_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "comment"
             }
           ]
         }
@@ -725,6 +733,14 @@
           ]
         },
         {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
           "type": "CHOICE",
           "members": [
             {
@@ -743,32 +759,68 @@
       ]
     },
     "thunk_body": {
-      "type": "PREC_RIGHT",
-      "value": 0,
-      "content": {
-        "type": "REPEAT1",
-        "content": {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "directive_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "body_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "blank_line"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "comment"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "REPEAT1",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "directive_line"
+                }
+              },
+              {
+                "type": "REPEAT1",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "blank_line"
+                }
+              },
+              {
+                "type": "REPEAT1",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "body_line"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "blank_line"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "REPEAT1",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "body_line"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "blank_line"
+                }
+              ]
             }
-          ]
+          }
         }
-      }
+      ]
     },
     "directive_line": {
       "type": "SEQ",
@@ -1144,7 +1196,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[A-Za-z0-9_./:-]+"
+        "value": "[A-Za-z0-9_./:@-]+"
       }
     },
     "language": {
@@ -1158,7 +1210,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[A-Za-z0-9_./:-]+"
+        "value": "[A-Za-z0-9_./:@-]+"
       }
     },
     "body_text": {
@@ -1186,7 +1238,11 @@
       "value": "[ \\t\\f]"
     }
   ],
-  "conflicts": [],
+  "conflicts": [
+    [
+      "thunk_body"
+    ]
+  ],
   "precedences": [],
   "externals": [],
   "inline": [],

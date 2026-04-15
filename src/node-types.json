@@ -469,10 +469,6 @@
         {
           "type": "body_line",
           "named": true
-        },
-        {
-          "type": "comment",
-          "named": true
         }
       ]
     }
@@ -507,6 +503,16 @@
     "type": "slash_header",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
@@ -608,10 +614,6 @@
       "types": [
         {
           "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "comment",
           "named": true
         },
         {
@@ -717,6 +719,16 @@
     "type": "struct_header",
     "named": true,
     "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
       "keyword": {
         "multiple": false,
         "required": true,
@@ -796,10 +808,6 @@
           "named": true
         },
         {
-          "type": "comment",
-          "named": true
-        },
-        {
           "type": "directive_line",
           "named": true
         }
@@ -816,6 +824,16 @@
         "types": [
           {
             "type": "arrow",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
             "named": true
           }
         ]

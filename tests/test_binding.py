@@ -34,9 +34,9 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_smoke_fixture_covers_new_program_constructs():
+def test_full_program_fixture_covers_core_program_constructs():
     parser = _parser()
-    source = (FIXTURES_DIR / "smoke.too").read_bytes()
+    source = (FIXTURES_DIR / "full_program.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -45,7 +45,14 @@ def test_smoke_fixture_covers_new_program_constructs():
     assert child_types == [
         "use_statement",
         "use_statement",
+        "use_statement",
+        "use_statement",
         "blank_line",
+        "fenced_declaration",
+        "blank_line",
+        "fenced_declaration",
+        "blank_line",
+        "struct_declaration",
         "struct_declaration",
         "slash_declaration",
         "thunk",

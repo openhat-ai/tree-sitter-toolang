@@ -1,18 +1,10 @@
-===========================
-Use Statements And Structs
-===========================
-use skill briceyan/pdf-processing
-use slash openhat/review
-
-struct ReviewFinding
-  path: string
-  line: number?
-  tags: string[]
-
-struct ReviewResult
-  summary: string
-  findings: ReviewFinding[]
-  patch: artifact?
+==================
+Use Selectors
+==================
+use skill by3gus/pdf-processing
+use service github://openhat/caps/services/github@main
+use slash https://toolang.ai/review
+use psyche toolang.ai/reviewer
 
 ---
 
@@ -27,12 +19,99 @@ struct ReviewResult
     kind: (cap_kind)
     reference: (reference)
     (newline))
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline))
+  (use_statement
+    keyword: (use_keyword)
+    kind: (cap_kind)
+    reference: (reference)
+    (newline)))
+
+=====================
+Fenced Cap Declarations
+=====================
+service github: ```md
+Use this service when the agent needs GitHub access.
+```
+
+psyche reviewer: ```md
+Prefer concrete findings and direct language.
+```
+
+stash session: ```json
+{}
+```
+
+---
+
+(source_file
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
   (blank_line
     (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close))
+  (blank_line
+    (newline))
+  (fenced_declaration
+    header: (declaration_header
+      kind: (decl_kind)
+      name: (identifier)
+      colon: (colon)
+      open: (fence_open)
+      language: (language)
+      (newline))
+    body: (fence_body
+      (fence_content_line
+        text: (fence_text)
+        (newline)))
+    close: (fence_close)))
+
+=================
+Struct And Slash
+=================
+struct ReviewFinding:
+  path: string
+  line: number?
+  tags: string[]
+
+slash review(path, focus?):
+  Review {{path}} carefully.
+  {{focus}}
+
+---
+
+(source_file
   (struct_declaration
     header: (struct_header
       keyword: (struct_keyword)
       name: (identifier)
+      colon: (colon)
       (newline))
     body: (struct_body
       (struct_field_line
@@ -60,65 +139,6 @@ struct ReviewResult
         (newline))
       (blank_line
         (newline))))
-  (struct_declaration
-    header: (struct_header
-      keyword: (struct_keyword)
-      name: (identifier)
-      (newline))
-    body: (struct_body
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
-        (newline))
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)
-            array: (array_suffix)))
-        (newline))
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)
-            optional: (question)))
-        (newline)))))
-
-====================
-Slash And Fenced Cap
-====================
-service github: ```md
-Use this service when the agent needs GitHub access.
-```
-
-slash review(path, focus?)
-  Review {{path}} carefully.
-  {{focus}}
-
----
-
-(source_file
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (fence_body
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
   (slash_declaration
     header: (slash_header
       keyword: (slash_keyword)
@@ -132,6 +152,7 @@ slash review(path, focus?)
           name: (identifier)
           optional: (question))
         (rparen))
+      colon: (colon)
       (newline))
     body: (slash_body
       (body_line
@@ -141,17 +162,19 @@ slash review(path, focus?)
         text: (body_text)
         (newline)))))
 
-===========================
-Thunk With Types And Directives
-===========================
-thunk deploy(input, env, version?, dry_run?: boolean) -> ReviewResult
+=============================
+Thunk With Full Directives
+=============================
+thunk review(input, path?: path, focus?) -> ReviewResult:
   model = gpt-5
-  psyches = rigorous
+  psyches = reviewer, concise
   skills += review, patch
-  services -= github
+  services -= linear
   tools = shell, service_use
 
-  Deploy the current project.
+  Review the target carefully.
+
+  Return a precise result.
 
 ---
 
@@ -166,22 +189,20 @@ thunk deploy(input, env, version?, dry_run?: boolean) -> ReviewResult
           name: (identifier))
         (comma)
         parameter: (parameter
-          name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question))
-        (comma)
-        parameter: (parameter
           name: (identifier)
           optional: (question)
           colon: (colon)
           type: (type_expression
             name: (identifier)))
+        (comma)
+        parameter: (parameter
+          name: (identifier)
+          optional: (question))
         (rparen))
       arrow: (arrow)
       returns: (type_expression
         name: (identifier))
+      colon: (colon)
       (newline))
     body: (thunk_body
       (directive_line
@@ -196,6 +217,8 @@ thunk deploy(input, env, version?, dry_run?: boolean) -> ReviewResult
           subject: (collection_subject)
           operator: (assign_operator)
           values: (directive_values
+            value: (directive_value)
+            (comma)
             value: (directive_value)))
         (newline))
       (directive_line
@@ -227,13 +250,19 @@ thunk deploy(input, env, version?, dry_run?: boolean) -> ReviewResult
         (newline))
       (body_line
         text: (body_text)
+        (newline))
+      (blank_line
+        (newline))
+      (body_line
+        text: (body_text)
         (newline)))))
 
-======================
-Default Main Thunk
-======================
-thunk(input, target?: path)
-  Use the message and target together.
+======================================
+Thunk Requires Blank Line After Directives
+======================================
+thunk summarize(input) -> text:
+  model = gpt-5
+  Produce a concise workspace summary.
 
 ---
 
@@ -241,20 +270,29 @@ thunk(input, target?: path)
   (thunk
     header: (thunk_header
       keyword: (thunk_keyword)
+      name: (identifier)
       parameters: (parameter_list
         (lparen)
         parameter: (parameter
           name: (identifier))
-        (comma)
-        parameter: (parameter
-          name: (identifier)
-          optional: (question)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
         (rparen))
+      arrow: (arrow)
+      returns: (type_expression
+        name: (identifier))
+      colon: (colon)
       (newline))
     body: (thunk_body
-      (body_line
-        text: (body_text)
-        (newline)))))
+      (directive_line
+        (model_directive
+          subject: (model_subject)
+          operator: (assign_operator)
+          values: (directive_values
+            value: (directive_value)))
+        (newline))
+      (ERROR
+        (UNEXPECTED 'P'))
+      (blank_line
+        (newline))
+      (blank_line
+        (newline
+          (MISSING "newline_token1"))))))

@@ -3,11 +3,6 @@ use service github://openhat/caps/services/github@main
 use slash https://toolang.ai/review
 use psyche toolang.ai/reviewer
 
-struct WorkspaceSummary:
-  title: string
-  summary: string
-  tags: string[]
-
 service github: ```md
 Use this service when the agent needs GitHub access.
 ```
@@ -16,18 +11,25 @@ psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
-slash summarize(style, audience?):
-  Summarize the request in a {{style}} style.
-  Audience: {{audience}}
-  {{input}}
+struct ReviewFinding:
+  path: string
+  line: number?
 
-thunk summarize(input, style?, strict?: boolean) -> WorkspaceSummary:
+struct ReviewResult:
+  summary: string
+  findings: ReviewFinding[]
+
+slash review(path, focus?):
+  Review {{path}} carefully.
+  {{focus}}
+
+thunk review(input, path?: path, focus?) -> ReviewResult:
   model = gpt-5
   psyches = reviewer
   skills += review, patch
   services -= linear
   tools = shell, service_use
 
-  Produce a concise workspace summary.
+  Review the target carefully.
 
-  Keep the result compact.
+  Return a precise result.
