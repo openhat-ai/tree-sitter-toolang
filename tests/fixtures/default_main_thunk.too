@@ -1,2 +1,2 @@
-thunk(input, target?: path):
+thunk(_, target?: path):
   Use the current message and target together.

@@ -146,7 +146,7 @@ struct ReviewFinding:
 =============================
 Thunk With Full Directives
 =============================
-thunk review(input, path?: path, focus?) -> ReviewResult:
+thunk review(_, path?: path, focus?) -> ReviewResult:
   model = gpt-5
   psyches = reviewer, concise
   skills += review, patch
@@ -241,7 +241,7 @@ thunk review(input, path?: path, focus?) -> ReviewResult:
 ======================================
 Thunk Requires Blank Line After Directives
 ======================================
-thunk summarize(input) -> text:
+thunk summarize(_) -> text:
   model = gpt-5
   Produce a concise workspace summary.
 
@@ -294,7 +294,7 @@ struct ReviewResult:
 slash review(path, focus?): # inline slash header comment
   Review {{path}} carefully. # inline slash body comment
 
-thunk review(input, path?: path) -> ReviewResult: # inline thunk header comment
+thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
   model = gpt-5 # inline directive comment
 
   Review the target carefully. # inline thunk body comment

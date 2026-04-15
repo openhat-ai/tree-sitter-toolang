@@ -11,7 +11,7 @@ struct ReviewResult:
 slash review(path, focus?): # inline slash header comment
   Review {{path}} carefully. # inline slash body comment
 
-thunk review(input, path?: path) -> ReviewResult: # inline thunk header comment
+thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
   model = gpt-5 # inline directive comment
 
   Review the target carefully. # inline thunk body comment

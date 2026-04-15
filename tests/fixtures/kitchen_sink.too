@@ -34,7 +34,10 @@ thunk summarize:
 thunk inspect() -> ReviewResult:
   Return a precise result.
 
-thunk review(input: message, path?: path, focus?) -> ReviewResult:
+thunk echo(_):
+  Repeat the current message directly.
+
+thunk review(_, path?: path, focus?) -> ReviewResult:
   model = gpt-5 # inline directive comment
   psyches = reviewer, concise
   skills += review, patch
@@ -45,7 +48,7 @@ thunk review(input: message, path?: path, focus?) -> ReviewResult:
 
   Return a precise result.
 
-thunk classify(input: message, style?, strict?: boolean):
+thunk classify(style?, strict?: boolean):
   model = gpt-5
   skills = review
 

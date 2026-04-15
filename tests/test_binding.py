@@ -96,6 +96,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "thunk",
         "thunk",
         "thunk",
+        "thunk",
     ]
 
 
