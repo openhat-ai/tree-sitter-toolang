@@ -43,7 +43,7 @@
 (declaration_header
   kind: (decl_kind) @_kind
   name: (identifier) @function
-  (#eq? @_kind "slash"))
+  (#eq? @_kind "prompt"))
 
 (declaration_header
   kind: (decl_kind) @_kind

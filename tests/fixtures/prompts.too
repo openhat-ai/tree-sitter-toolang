@@ -1,8 +1,8 @@
-slash review: ```md
+prompt review: ```md
 Review the current request directly.
 ```
 
-slash summarize: ```md
+prompt summarize: ```md
 ---
 params: style, audience?
 ---
@@ -11,7 +11,7 @@ Summarize the request in a {{style}} voice.
 Audience: {{audience}}
 ```
 
-slash rewrite: ```md
+prompt rewrite: ```md
 ---
 params: tone?
 ---

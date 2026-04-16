@@ -28,7 +28,7 @@ psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
-slash review: ```md
+prompt review: ```md
 ---
 params: path, focus?
 ---

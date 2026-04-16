@@ -12,7 +12,7 @@ module.exports = grammar({
           $.use_statement,
           alias($.psyche_declaration, $.fenced_declaration),
           alias($.service_declaration, $.fenced_declaration),
-          alias($.slash_declaration, $.fenced_declaration),
+          alias($.prompt_declaration, $.fenced_declaration),
           $.struct_declaration,
           $.thunk,
         ),
@@ -45,10 +45,10 @@ module.exports = grammar({
         field("close", $.fence_close),
       ),
 
-    slash_declaration: ($) =>
+    prompt_declaration: ($) =>
       seq(
-        field("header", alias($.slash_header, $.declaration_header)),
-        field("body", $.slash_fence_body),
+        field("header", alias($.prompt_header, $.declaration_header)),
+        field("body", $.prompt_fence_body),
         field("close", $.fence_close),
       ),
 
@@ -74,9 +74,9 @@ module.exports = grammar({
         $.newline,
       ),
 
-    slash_header: ($) =>
+    prompt_header: ($) =>
       seq(
-        field("kind", alias($.slash_keyword, $.decl_kind)),
+        field("kind", alias($.prompt_keyword, $.decl_kind)),
         field("name", $.identifier),
         field("colon", $.colon),
         field("open", $.fence_open),
@@ -241,9 +241,9 @@ module.exports = grammar({
     service_fence_body: ($) =>
       seq(field("frontmatter", $.service_frontmatter), repeat($.fence_content_line)),
 
-    slash_fence_body: ($) =>
+    prompt_fence_body: ($) =>
       choice(
-        seq(field("frontmatter", $.slash_frontmatter), repeat($.fence_content_line)),
+        seq(field("frontmatter", $.prompt_frontmatter), repeat($.fence_content_line)),
         seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
       ),
 
@@ -271,11 +271,11 @@ module.exports = grammar({
         $.newline,
       ),
 
-    slash_frontmatter: ($) =>
+    prompt_frontmatter: ($) =>
       seq(
         $.frontmatter_delimiter,
         $.newline,
-        $.slash_params_line,
+        $.prompt_params_line,
         $.frontmatter_delimiter,
         $.newline,
       ),
@@ -310,7 +310,7 @@ module.exports = grammar({
     stdio_cwd_line: ($) =>
       seq("cwd", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
-    slash_params_line: ($) =>
+    prompt_params_line: ($) =>
       seq("params", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
     fence_content_line: ($) =>
@@ -329,7 +329,7 @@ module.exports = grammar({
     use_keyword: () => "use",
     psyche_keyword: () => "psyche",
     service_keyword: () => "service",
-    slash_keyword: () => "slash",
+    prompt_keyword: () => "prompt",
     struct_keyword: () => "struct",
     thunk_keyword: () => "thunk",
     markdown_language: () => "md",
@@ -347,8 +347,8 @@ module.exports = grammar({
     fence_close: () => seq("```", /\r?\n/),
     frontmatter_delimiter: () => "---",
 
-    cap_kind: () => choice("psyche", "skill", "service", "slash"),
-    decl_kind: () => choice("psyche", "service", "slash"),
+    cap_kind: () => choice("psyche", "skill", "service", "prompt"),
+    decl_kind: () => choice("psyche", "service", "prompt"),
     collection_subject: () => choice("psyches", "skills", "services", "tools"),
     model_subject: () => "model",
     http_transport_value: () => "http",
