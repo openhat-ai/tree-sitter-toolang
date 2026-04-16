@@ -18,6 +18,14 @@ def _text(source: bytes, node) -> str:
     return source[node.start_byte : node.end_byte].decode("utf-8")
 
 
+def _fixture_text(name: str) -> str:
+    return (FIXTURES_DIR / name).read_text(encoding="utf-8")
+
+
+def _normalize_newlines(text: str) -> str:
+    return text.replace("\r\n", "\n")
+
+
 def test_language_capsule_builds_language():
     language = Language(tree_sitter_toolang.language())
 
@@ -194,8 +202,12 @@ def test_caps_fixture_covers_service_transports_and_slash_frontmatter():
     assert "https://mcp.linear.app/sse" in service_bodies[1]
     assert "env: LINEAR_API_KEY, API_KEY=NOT_THE_SAME_NAME" in service_bodies[1]
     assert "cwd: /work/tools" in service_bodies[1]
-    assert slash_bodies == ["---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"]
-    assert psyche_bodies == ["Prefer concrete findings and direct language.\n"]
+    assert [_normalize_newlines(body) for body in slash_bodies] == [
+        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
+    ]
+    assert [_normalize_newlines(body) for body in psyche_bodies] == [
+        "Prefer concrete findings and direct language.\n"
+    ]
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():
@@ -377,6 +389,43 @@ def test_slash_frontmatter_parses_with_crlf_line_endings():
     body = declaration.child_by_field_name("body")
     assert body is not None
     assert body.child_by_field_name("frontmatter") is not None
+    assert _normalize_newlines(_text(source, body)) == (
+        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
+    )
+
+
+def test_caps_fixture_body_assertions_are_line_ending_agnostic():
+    parser = _parser()
+    source = _fixture_text("caps.too").replace("\n", "\r\n").encode("utf-8")
+
+    tree = parser.parse(source)
+    root = tree.root_node
+
+    slash_bodies: list[str] = []
+    psyche_bodies: list[str] = []
+
+    for child in root.named_children:
+        if child.type != "fenced_declaration":
+            continue
+        header = child.child_by_field_name("header")
+        body = child.child_by_field_name("body")
+        assert header is not None
+        assert body is not None
+        kind = header.child_by_field_name("kind")
+        assert kind is not None
+        kind_text = _text(source, kind)
+        body_text = _text(source, body)
+        if kind_text == "slash":
+            slash_bodies.append(body_text)
+        elif kind_text == "psyche":
+            psyche_bodies.append(body_text)
+
+    assert [_normalize_newlines(body) for body in slash_bodies] == [
+        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
+    ]
+    assert [_normalize_newlines(body) for body in psyche_bodies] == [
+        "Prefer concrete findings and direct language.\n"
+    ]
 
 
 def test_queries_are_packaged():
