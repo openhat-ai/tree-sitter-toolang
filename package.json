@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-toolang",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Toolang grammar for tree-sitter",
   "author": "Brice Yan",
   "license": "MIT",

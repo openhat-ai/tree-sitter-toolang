@@ -291,15 +291,15 @@
         "required": true,
         "types": [
           {
+            "type": "prompt_fence_body",
+            "named": true
+          },
+          {
             "type": "psyche_fence_body",
             "named": true
           },
           {
             "type": "service_fence_body",
-            "named": true
-          },
-          {
-            "type": "slash_fence_body",
             "named": true
           }
         ]
@@ -658,6 +658,93 @@
     }
   },
   {
+    "type": "prompt_fence_body",
+    "named": true,
+    "fields": {
+      "frontmatter": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "prompt_frontmatter",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "empty_fence_content_line",
+          "named": true
+        },
+        {
+          "type": "fence_content_line",
+          "named": true
+        },
+        {
+          "type": "non_frontmatter_fence_content_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "prompt_frontmatter",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "frontmatter_delimiter",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "prompt_params_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "prompt_params_line",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_scalar",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "psyche_fence_body",
     "named": true,
     "fields": {},
@@ -725,93 +812,6 @@
         },
         {
           "type": "stdio_service_frontmatter",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "slash_fence_body",
-    "named": true,
-    "fields": {
-      "frontmatter": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "slash_frontmatter",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "empty_fence_content_line",
-          "named": true
-        },
-        {
-          "type": "fence_content_line",
-          "named": true
-        },
-        {
-          "type": "non_frontmatter_fence_content_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "slash_frontmatter",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "frontmatter_delimiter",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        },
-        {
-          "type": "slash_params_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "slash_params_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
           "named": true
         }
       ]
@@ -1524,6 +1524,10 @@
     "named": false
   },
   {
+    "type": "prompt",
+    "named": false
+  },
+  {
     "type": "psyche",
     "named": false
   },
@@ -1557,10 +1561,6 @@
   },
   {
     "type": "skills",
-    "named": false
-  },
-  {
-    "type": "slash",
     "named": false
   },
   {

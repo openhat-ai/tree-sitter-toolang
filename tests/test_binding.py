@@ -79,7 +79,7 @@ def test_minimal_invoke_fixture_parses_one_thunk():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("caps.too", "slashes.too", "uses.too"):
+    for fixture_name in ("caps.too", "prompts.too", "uses.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         root = tree.root_node
@@ -89,9 +89,9 @@ def test_fixtures_can_parse_without_any_thunks():
         assert thunk_count == 0, fixture_name
 
 
-def test_slashes_fixture_covers_supported_slash_forms():
+def test_prompts_fixture_covers_supported_prompt_forms():
     parser = _parser()
-    source = (FIXTURES_DIR / "slashes.too").read_bytes()
+    source = (FIXTURES_DIR / "prompts.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -157,10 +157,10 @@ def test_caps_fixture_covers_supported_kinds():
         assert kind is not None
         kinds.append(source[kind.start_byte : kind.end_byte].decode("utf-8"))
 
-    assert kinds == ["service", "service", "psyche", "slash"]
+    assert kinds == ["service", "service", "psyche", "prompt"]
 
 
-def test_caps_fixture_covers_service_transports_and_slash_frontmatter():
+def test_caps_fixture_covers_service_transports_and_prompt_frontmatter():
     parser = _parser()
     source = (FIXTURES_DIR / "caps.too").read_bytes()
 
@@ -168,7 +168,7 @@ def test_caps_fixture_covers_service_transports_and_slash_frontmatter():
     root = tree.root_node
 
     service_bodies: list[str] = []
-    slash_bodies: list[str] = []
+    prompt_bodies: list[str] = []
     psyche_bodies: list[str] = []
 
     for child in root.named_children:
@@ -186,9 +186,9 @@ def test_caps_fixture_covers_service_transports_and_slash_frontmatter():
         if kind_text == "service":
             assert body.child_by_field_name("frontmatter") is not None
             service_bodies.append(body_text)
-        elif kind_text == "slash":
+        elif kind_text == "prompt":
             assert body.child_by_field_name("frontmatter") is not None
-            slash_bodies.append(body_text)
+            prompt_bodies.append(body_text)
         elif kind_text == "psyche":
             assert body.child_by_field_name("frontmatter") is None
             psyche_bodies.append(body_text)
@@ -202,7 +202,7 @@ def test_caps_fixture_covers_service_transports_and_slash_frontmatter():
     assert "https://mcp.linear.app/sse" in service_bodies[1]
     assert "env: LINEAR_API_KEY, API_KEY=NOT_THE_SAME_NAME" in service_bodies[1]
     assert "cwd: /work/tools" in service_bodies[1]
-    assert [_normalize_newlines(body) for body in slash_bodies] == [
+    assert [_normalize_newlines(body) for body in prompt_bodies] == [
         "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
     ]
     assert [_normalize_newlines(body) for body in psyche_bodies] == [
@@ -261,20 +261,20 @@ def test_kitchen_sink_declarations_keep_metadata_in_fence_bodies():
         assert header.child_by_field_name("parameters") is None
 
     service_body_node = declarations[1].child_by_field_name("body")
-    slash_body_node = declarations[2].child_by_field_name("body")
+    prompt_body_node = declarations[2].child_by_field_name("body")
     assert service_body_node is not None
-    assert slash_body_node is not None
+    assert prompt_body_node is not None
     service_body = _text(source, service_body_node)
-    slash_body = _text(source, slash_body_node)
+    prompt_body = _text(source, prompt_body_node)
 
     assert "transport: http" in service_body
     assert "headers:" in service_body
-    assert "params: path, focus?" in slash_body
+    assert "params: path, focus?" in prompt_body
 
 
 def test_fenced_declaration_headers_reject_parameter_lists():
     parser = _parser()
-    source = b"slash summarize(style): ```md\nSummarize the request in a concise style.\n```\n"
+    source = b"prompt summarize(style): ```md\nSummarize the request in a concise style.\n```\n"
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -355,10 +355,10 @@ def test_service_frontmatter_rejects_unknown_fields():
     assert root.has_error is True
 
 
-def test_slash_frontmatter_rejects_unknown_fields():
+def test_prompt_frontmatter_rejects_unknown_fields():
     parser = _parser()
     source = (
-        b"slash review: ```md\n---\nparams: path, focus?\ndescription: Review the target.\n"
+        b"prompt review: ```md\n---\nparams: path, focus?\ndescription: Review the target.\n"
         b"---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
     )
 
@@ -368,10 +368,10 @@ def test_slash_frontmatter_rejects_unknown_fields():
     assert root.has_error is True
 
 
-def test_slash_frontmatter_parses_with_crlf_line_endings():
+def test_prompt_frontmatter_parses_with_crlf_line_endings():
     parser = _parser()
     source = (
-        b"slash review: ```md\r\n"
+        b"prompt review: ```md\r\n"
         b"---\r\n"
         b"params: path, focus?\r\n"
         b"---\r\n"
@@ -401,7 +401,7 @@ def test_caps_fixture_body_assertions_are_line_ending_agnostic():
     tree = parser.parse(source)
     root = tree.root_node
 
-    slash_bodies: list[str] = []
+    prompt_bodies: list[str] = []
     psyche_bodies: list[str] = []
 
     for child in root.named_children:
@@ -415,12 +415,12 @@ def test_caps_fixture_body_assertions_are_line_ending_agnostic():
         assert kind is not None
         kind_text = _text(source, kind)
         body_text = _text(source, body)
-        if kind_text == "slash":
-            slash_bodies.append(body_text)
+        if kind_text == "prompt":
+            prompt_bodies.append(body_text)
         elif kind_text == "psyche":
             psyche_bodies.append(body_text)
 
-    assert [_normalize_newlines(body) for body in slash_bodies] == [
+    assert [_normalize_newlines(body) for body in prompt_bodies] == [
         "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
     ]
     assert [_normalize_newlines(body) for body in psyche_bodies] == [

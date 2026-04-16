@@ -2,7 +2,7 @@
 use psyche toolang.ai/reviewer
 use skill briceyan/pdf-processing # inline use comment
 use service github://briceyan/caps/services/github@main
-use slash https://toolang.ai/review
+use prompt https://toolang.ai/review
 
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
@@ -19,7 +19,7 @@ headers:
 Use this service when the agent needs GitHub access.
 ```
 
-slash review: ```md # inline slash header comment
+prompt review: ```md # inline prompt header comment
 ---
 params: path, focus?
 ---

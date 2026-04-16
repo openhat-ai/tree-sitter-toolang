@@ -53,7 +53,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.0.9"
+tree-sitter-toolang = "0.0.10"
 ```
 
 ```rust
@@ -114,7 +114,7 @@ Release checklist:
 1. Bump the version in `package.json`, `pyproject.toml`, and `Cargo.toml`.
 2. Confirm CI is green.
 3. Push the version commit to `main`.
-4. Create and push a matching tag such as `v0.0.9`.
+4. Create and push a matching tag such as `v0.0.10`.
 5. GitHub Actions publishes npm and PyPI automatically.
 6. GitHub Actions also publishes the Rust crate when `CRATES_IO_TOKEN` is set.
 

@@ -41,7 +41,7 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
-              "name": "slash_declaration"
+              "name": "prompt_declaration"
             },
             "named": true,
             "value": "fenced_declaration"
@@ -198,7 +198,7 @@
         }
       ]
     },
-    "slash_declaration": {
+    "prompt_declaration": {
       "type": "SEQ",
       "members": [
         {
@@ -208,7 +208,7 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
-              "name": "slash_header"
+              "name": "prompt_header"
             },
             "named": true,
             "value": "declaration_header"
@@ -219,7 +219,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "slash_fence_body"
+            "name": "prompt_fence_body"
           }
         },
         {
@@ -374,7 +374,7 @@
         }
       ]
     },
-    "slash_header": {
+    "prompt_header": {
       "type": "SEQ",
       "members": [
         {
@@ -384,7 +384,7 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
-              "name": "slash_keyword"
+              "name": "prompt_keyword"
             },
             "named": true,
             "value": "decl_kind"
@@ -1345,7 +1345,7 @@
         }
       ]
     },
-    "slash_fence_body": {
+    "prompt_fence_body": {
       "type": "CHOICE",
       "members": [
         {
@@ -1356,7 +1356,7 @@
               "name": "frontmatter",
               "content": {
                 "type": "SYMBOL",
-                "name": "slash_frontmatter"
+                "name": "prompt_frontmatter"
               }
             },
             {
@@ -1498,7 +1498,7 @@
         }
       ]
     },
-    "slash_frontmatter": {
+    "prompt_frontmatter": {
       "type": "SEQ",
       "members": [
         {
@@ -1511,7 +1511,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "slash_params_line"
+          "name": "prompt_params_line"
         },
         {
           "type": "SYMBOL",
@@ -1771,7 +1771,7 @@
         }
       ]
     },
-    "slash_params_line": {
+    "prompt_params_line": {
       "type": "SEQ",
       "members": [
         {
@@ -1870,9 +1870,9 @@
       "type": "STRING",
       "value": "service"
     },
-    "slash_keyword": {
+    "prompt_keyword": {
       "type": "STRING",
-      "value": "slash"
+      "value": "prompt"
     },
     "struct_keyword": {
       "type": "STRING",
@@ -1964,7 +1964,7 @@
         },
         {
           "type": "STRING",
-          "value": "slash"
+          "value": "prompt"
         }
       ]
     },
@@ -1981,7 +1981,7 @@
         },
         {
           "type": "STRING",
-          "value": "slash"
+          "value": "prompt"
         }
       ]
     },

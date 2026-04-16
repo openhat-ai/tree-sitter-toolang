@@ -15,7 +15,7 @@ Use this service when the agent needs GitHub access.
 struct ReviewResult:
   summary: string # inline struct field comment
 
-slash review: ```md # inline slash header comment
+prompt review: ```md # inline prompt header comment
 ---
 params: path, focus?
 ---

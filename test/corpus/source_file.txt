@@ -4,7 +4,7 @@ Use Selectors
 use psyche toolang.ai/reviewer
 use skill briceyan/pdf-processing
 use service github://briceyan/caps/services/github@main
-use slash https://toolang.ai/review
+use prompt https://toolang.ai/review
 
 ---
 
@@ -48,7 +48,7 @@ headers:
 Use this service when the agent needs GitHub access.
 ```
 
-slash review: ```md
+prompt review: ```md
 ---
 params: path, focus?
 ---
@@ -122,11 +122,11 @@ Review {{path}} carefully.
       open: (fence_open)
       language: (language)
       (newline))
-    body: (slash_fence_body
-      frontmatter: (slash_frontmatter
+    body: (prompt_fence_body
+      frontmatter: (prompt_frontmatter
         (frontmatter_delimiter)
         (newline)
-        (slash_params_line
+        (prompt_params_line
           (colon)
           value: (frontmatter_scalar)
           (newline))
@@ -143,9 +143,9 @@ Review {{path}} carefully.
     close: (fence_close)))
 
 ===========================================
-Fenced Slash With Frontmatter And Struct
+Fenced Prompt With Frontmatter And Struct
 ===========================================
-slash review: ```md
+prompt review: ```md
 ---
 params: path, focus?
 ---
@@ -170,11 +170,11 @@ struct ReviewFinding:
       open: (fence_open)
       language: (language)
       (newline))
-    body: (slash_fence_body
-      frontmatter: (slash_frontmatter
+    body: (prompt_fence_body
+      frontmatter: (prompt_frontmatter
         (frontmatter_delimiter)
         (newline)
-        (slash_params_line
+        (prompt_params_line
           (colon)
           value: (frontmatter_scalar)
           (newline))
@@ -223,9 +223,9 @@ struct ReviewFinding:
         (newline)))))
 
 ==============================
-Fenced Slash Without Parameters
+Fenced Prompt Without Parameters
 ==============================
-slash review: ```md
+prompt review: ```md
 Review the current request directly.
 ```
 
@@ -240,7 +240,7 @@ Review the current request directly.
       open: (fence_open)
       language: (language)
       (newline))
-    body: (slash_fence_body
+    body: (prompt_fence_body
       (non_frontmatter_fence_content_line
         text: (non_frontmatter_fence_text)
         (newline)))
@@ -249,7 +249,7 @@ Review the current request directly.
 =====================================
 Invalid Parameterized Fenced Declaration
 =====================================
-slash summarize(style): ```md
+prompt summarize(style): ```md
 Summarize the request in a concise style.
 ```
 
@@ -268,16 +268,16 @@ Summarize the request in a concise style.
       (fence_open)
       (language)
       (newline))
-    (slash_fence_body
+    (prompt_fence_body
       (non_frontmatter_fence_content_line
         (non_frontmatter_fence_text)
         (newline)))
     (fence_close)))
 
 =============================
-Slash With Frontmatter Params
+Prompt With Frontmatter Params
 =============================
-slash summarize: ```md
+prompt summarize: ```md
 ---
 params: style, audience?
 ---
@@ -297,11 +297,11 @@ Audience: {{audience}}
       (fence_open)
       (language)
       (newline))
-    (slash_fence_body
-      (slash_frontmatter
+    (prompt_fence_body
+      (prompt_frontmatter
         (frontmatter_delimiter)
         (newline)
-        (slash_params_line
+        (prompt_params_line
           (colon)
           (frontmatter_scalar)
           (newline))
@@ -472,7 +472,7 @@ Use this service when the agent needs GitHub access.
 struct ReviewResult:
   summary: string # inline struct field comment
 
-slash review: ```md # inline slash header comment
+prompt review: ```md # inline prompt header comment
 ---
 params: path, focus?
 ---
@@ -564,11 +564,11 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
       language: (language)
       (inline_comment)
       (newline))
-    body: (slash_fence_body
-      frontmatter: (slash_frontmatter
+    body: (prompt_fence_body
+      frontmatter: (prompt_frontmatter
         (frontmatter_delimiter)
         (newline)
-        (slash_params_line
+        (prompt_params_line
           (colon)
           value: (frontmatter_scalar)
           (newline))

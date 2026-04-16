@@ -7,7 +7,7 @@
   body: [
     (psyche_fence_body)
     (service_fence_body)
-    (slash_fence_body)
+    (prompt_fence_body)
   ] @injection.content)
   (#any-of? @_language "md" "markdown")
   (#set! injection.language "markdown"))
