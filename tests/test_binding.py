@@ -18,6 +18,10 @@ def _text(source: bytes, node) -> str:
     return source[node.start_byte : node.end_byte].decode("utf-8")
 
 
+def _fixture_text(name: str) -> str:
+    return (FIXTURES_DIR / name).read_text(encoding="utf-8")
+
+
 def _normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n")
 
@@ -392,7 +396,7 @@ def test_slash_frontmatter_parses_with_crlf_line_endings():
 
 def test_caps_fixture_body_assertions_are_line_ending_agnostic():
     parser = _parser()
-    source = (FIXTURES_DIR / "caps.too").read_bytes().replace(b"\n", b"\r\n")
+    source = _fixture_text("caps.too").replace("\n", "\r\n").encode("utf-8")
 
     tree = parser.parse(source)
     root = tree.root_node
