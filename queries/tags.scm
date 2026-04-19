@@ -1,6 +1,6 @@
 ; Source of truth for Toolang Tree-sitter tags queries.
 
-(thunk_header
+(thunk_signature
   name: (identifier) @name) @definition.function
 
 (struct_header

@@ -55,9 +55,9 @@ def test_minimal_run_fixture_parses_one_thunk():
     child_types = [child.type for child in root.named_children]
 
     assert child_types == ["thunk"]
-    header = root.named_children[0].child_by_field_name("header")
-    assert header is not None
-    assert header.child_by_field_name("parameters") is None
+    signature = root.named_children[0].child_by_field_name("signature")
+    assert signature is not None
+    assert signature.child_by_field_name("params") is None
 
 
 def test_minimal_invoke_fixture_parses_one_thunk():
@@ -69,11 +69,12 @@ def test_minimal_invoke_fixture_parses_one_thunk():
     child_types = [child.type for child in root.named_children]
 
     assert child_types == ["thunk"]
-    header = root.named_children[0].child_by_field_name("header")
-    assert header is not None
-    parameters = header.child_by_field_name("parameters")
-    assert parameters is not None
-    assert parameters.children_by_field_name("parameter") == []
+    signature = root.named_children[0].child_by_field_name("signature")
+    assert signature is not None
+    params = signature.child_by_field_name("params")
+    assert params is not None
+    assert params.child_by_field_name("input") is None
+    assert params.children_by_field_name("param") == []
 
 
 def test_fixtures_can_parse_without_any_thunks():
@@ -240,6 +241,8 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "thunk",
         "thunk",
         "thunk",
+        "thunk",
+        "thunk",
     ]
 
 
@@ -320,6 +323,42 @@ def test_thunk_named_parameters_without_unnamed_message_parse_cleanly():
     root = tree.root_node
 
     assert root.has_error is False
+
+
+def test_kitchen_sink_fixture_covers_signature_overlay_and_message_nodes():
+    parser = _parser()
+    source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+
+    thunks = [child for child in root.named_children if child.type == "thunk"]
+    rewrite = next(
+        child
+        for child in thunks
+        if (signature := child.child_by_field_name("signature")) is not None
+        and (name := signature.child_by_field_name("name")) is not None
+        and _text(source, name) == "rewrite"
+    )
+    signature = rewrite.child_by_field_name("signature")
+    body = rewrite.child_by_field_name("body")
+    assert signature is not None
+    assert body is not None
+    params = signature.child_by_field_name("params")
+    assert params is not None
+    assert params.child_by_field_name("input") is not None
+    assert [param.child_by_field_name("name") and _text(source, param.child_by_field_name("name")) for param in params.children_by_field_name("param")] == [
+        "tone"
+    ]
+
+    overlays = [child for child in body.named_children if child.type == "overlay_line"]
+    messages = [child for child in body.named_children if child.type == "message"]
+    assert len(overlays) == 2
+    assert len(messages) == 2
+    assert [_text(source, message.child_by_field_name("kind")).strip() for message in messages] == [
+        "system",
+        "user",
+    ]
 
 
 def test_psyche_frontmatter_is_rejected():

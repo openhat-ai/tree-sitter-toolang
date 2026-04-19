@@ -2,7 +2,7 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-  conflicts: ($) => [[$.thunk_body]],
+  conflicts: ($) => [[$._implicit_message]],
   rules: {
     source_file: ($) =>
       repeat(
@@ -119,28 +119,28 @@ module.exports = grammar({
     parameter_list: ($) => seq($.lparen, optional($._parameter_sequence), $.rparen),
 
     _parameter_sequence: ($) =>
-      choice($._unnamed_then_named_parameters, $._named_parameters),
+      choice($._input_then_params, $._params),
 
-    _unnamed_then_named_parameters: ($) =>
+    _input_then_params: ($) =>
       seq(
-        field("parameter", alias($.unnamed_parameter, $.parameter)),
-        optional(seq($.comma, $._named_parameters)),
+        field("input", alias($.unnamed_parameter, $.input)),
+        optional(seq($.comma, $._params)),
       ),
 
-    _named_parameters: ($) =>
-      choice($._required_then_optional_named_parameters, $._optional_named_parameters),
+    _params: ($) =>
+      choice($._required_then_optional_params, $._optional_params),
 
-    _required_then_optional_named_parameters: ($) =>
+    _required_then_optional_params: ($) =>
       seq(
-        field("parameter", alias($.required_named_parameter, $.parameter)),
-        repeat(seq($.comma, field("parameter", alias($.required_named_parameter, $.parameter)))),
-        optional(seq($.comma, $._optional_named_parameters)),
+        field("param", alias($.required_named_parameter, $.param)),
+        repeat(seq($.comma, field("param", alias($.required_named_parameter, $.param)))),
+        optional(seq($.comma, $._optional_params)),
       ),
 
-    _optional_named_parameters: ($) =>
+    _optional_params: ($) =>
       seq(
-        field("parameter", alias($.optional_named_parameter, $.parameter)),
-        repeat(seq($.comma, field("parameter", alias($.optional_named_parameter, $.parameter)))),
+        field("param", alias($.optional_named_parameter, $.param)),
+        repeat(seq($.comma, field("param", alias($.optional_named_parameter, $.param)))),
       ),
 
     unnamed_parameter: ($) => field("name", $.underscore),
@@ -171,16 +171,16 @@ module.exports = grammar({
 
     thunk: ($) =>
       seq(
-        field("header", $.thunk_header),
+        field("signature", $.thunk_signature),
         field("body", $.thunk_body),
       ),
 
-    thunk_header: ($) =>
+    thunk_signature: ($) =>
       seq(
         field("keyword", $.thunk_keyword),
         optional(field("name", $.identifier)),
-        optional(field("parameters", $.parameter_list)),
-        optional(seq(field("arrow", $.arrow), field("returns", $.type_expression))),
+        optional(field("params", $.parameter_list)),
+        optional(seq(field("arrow", $.arrow), field("output", $.type_expression))),
         field("colon", $.colon),
         optional($.inline_comment),
         $.newline,
@@ -190,47 +190,75 @@ module.exports = grammar({
       choice(
         prec.right(
           seq(
-            repeat1($.directive_line),
+            repeat1($.overlay_line),
             repeat1($.blank_line),
-            repeat1(choice($.body_line, $.blank_line)),
+            repeat1(alias($._explicit_message, $.message)),
           ),
         ),
-        prec.right(repeat1(choice($.body_line, $.blank_line))),
+        seq(
+          repeat1($.overlay_line),
+          repeat1($.blank_line),
+          alias($._implicit_message, $.message),
+        ),
+        prec.right(repeat1(alias($._explicit_message, $.message))),
+        alias($._implicit_message, $.message),
       ),
 
-    directive_line: ($) =>
+    _explicit_message: ($) =>
+      prec.right(
+        seq(
+          field("kind", $.message_kind),
+          field("colon", $.colon),
+          optional(field("inline", $.message_text)),
+          optional($.inline_comment),
+          $.newline,
+          repeat(choice($.message_continuation_line, $.blank_line)),
+        ),
+      ),
+
+    _implicit_message: ($) =>
+      prec.right(
+        seq(
+          repeat($.blank_line),
+          $.message_line,
+          repeat(seq(repeat($.blank_line), $.message_line)),
+          repeat($.blank_line),
+        ),
+      ),
+
+    overlay_line: ($) =>
       seq(
-        choice($.collection_directive, $.model_directive),
+        field("overlay", $.thunk_overlay),
         optional($.inline_comment),
         $.newline,
       ),
 
-    collection_directive: ($) =>
+    thunk_overlay: ($) =>
       seq(
-        field("subject", $.collection_subject),
+        field("subject", $.overlay_subject),
         field(
           "operator",
           choice($.assign_operator, $.add_assign_operator, $.remove_assign_operator),
         ),
-        optional(field("values", $.directive_values)),
+        optional(field("values", $.overlay_values)),
       ),
 
-    model_directive: ($) =>
+    overlay_values: ($) =>
       seq(
-        field("subject", $.model_subject),
-        field("operator", $.assign_operator),
-        optional(field("values", $.directive_values)),
+        field("value", $.overlay_value),
+        repeat(seq($.comma, field("value", $.overlay_value))),
       ),
 
-    directive_values: ($) =>
+    message_line: ($) =>
       seq(
-        field("value", $.directive_value),
-        repeat(seq($.comma, field("value", $.directive_value))),
+        field("text", $.message_text),
+        optional($.inline_comment),
+        $.newline,
       ),
 
-    body_line: ($) =>
+    message_continuation_line: ($) =>
       seq(
-        field("text", $.body_text),
+        field("text", $.indented_message_text),
         optional($.inline_comment),
         $.newline,
       ),
@@ -349,8 +377,9 @@ module.exports = grammar({
 
     cap_kind: () => choice("psyche", "skill", "service", "prompt"),
     decl_kind: () => choice("psyche", "service", "prompt"),
-    collection_subject: () => choice("psyches", "skills", "services", "tools"),
-    model_subject: () => "model",
+    overlay_subject: () =>
+      choice("models", "psyche", "psyches", "skill", "skills", "service", "services", "tool", "tools"),
+    message_kind: () => choice("system", "user", "assistant", "tool"),
     http_transport_value: () => "http",
     stdio_transport_value: () => "stdio",
 
@@ -359,8 +388,9 @@ module.exports = grammar({
       token(choice(/[A-Za-z][A-Za-z0-9_-]*/, /_[A-Za-z0-9-][A-Za-z0-9_-]*/)),
     reference: () => token(/[A-Za-z0-9_./:@-]+/),
     language: () => token(/[A-Za-z0-9_-]+/),
-    directive_value: () => token(/[A-Za-z0-9_./:@-]+/),
-    body_text: () => token(prec(-1, /[^\r\n#][^\r\n#]*/)),
+    overlay_value: () => token(/[A-Za-z0-9_./:@-]+/),
+    message_text: () => token(prec(-1, /[^\r\n#][^\r\n#]*/)),
+    indented_message_text: () => token(prec(-1, /[ \t][^\r\n#]*/)),
     fence_text: () => token(/[^`\r\n][^\r\n]*/),
     non_frontmatter_fence_text: () =>
       token(

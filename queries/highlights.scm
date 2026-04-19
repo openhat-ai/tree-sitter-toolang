@@ -10,8 +10,8 @@
 (decl_kind) @keyword
 
 (cap_kind) @type
-(collection_subject) @property
-(model_subject) @property
+(overlay_subject) @property
+(message_kind) @keyword
 (language) @property
 
 (assign_operator) @operator
@@ -29,16 +29,21 @@
 (fence_close) @punctuation.special
 
 (reference) @constant
-(body_text) @string
+(message_text) @string
+(indented_message_text) @string
 (fence_text) @string
 
-(collection_directive
-  values: (directive_values
-    (directive_value) @constant))
+(thunk_overlay
+  subject: (overlay_subject) @_subject
+  values: (overlay_values
+    (overlay_value) @type)
+  (#eq? @_subject "models"))
 
-(model_directive
-  values: (directive_values
-    (directive_value) @type))
+(thunk_overlay
+  subject: (overlay_subject) @_subject
+  values: (overlay_values
+    (overlay_value) @constant)
+  (#not-eq? @_subject "models"))
 
 (declaration_header
   kind: (decl_kind) @_kind
@@ -53,16 +58,16 @@
 (struct_header
   name: (identifier) @type)
 
-(thunk_header
+(thunk_signature
   name: (identifier) @function)
 
 (struct_field
   name: (identifier) @property)
 
-(parameter
+(param
   name: (named_identifier) @property)
 
-(parameter
+(input
   name: (underscore) @property)
 
 (type_expression
