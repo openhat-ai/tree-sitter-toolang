@@ -25,6 +25,6 @@ Review {{path}} carefully.
 ```
 
 thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
-  model = gpt-5 # inline directive comment
+  models = gpt-5 # inline directive comment
 
   Review the target carefully. # inline thunk body comment

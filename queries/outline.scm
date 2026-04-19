@@ -1,7 +1,7 @@
 ; Source of truth for Toolang Tree-sitter outline queries.
 ; Maintain this file in this repository and consume it from tooling.
 
-(thunk_header
+(thunk_signature
   name: (identifier) @name
 ) @item
 

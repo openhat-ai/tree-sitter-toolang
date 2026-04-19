@@ -321,7 +321,7 @@ Audience: {{audience}}
 Thunk With Full Directives
 =============================
 thunk review(_, path?: path, focus?) -> ReviewResult:
-  model = gpt-5
+  models = gpt-5
   psyches = reviewer, concise
   skills += review, patch
   services -= linear
@@ -335,122 +335,119 @@ thunk review(_, path?: path, focus?) -> ReviewResult:
 
 (source_file
   (thunk
-    header: (thunk_header
+    signature: (thunk_signature
       keyword: (thunk_keyword)
       name: (identifier)
-      parameters: (parameter_list
+      params: (parameter_list
         (lparen)
-        parameter: (parameter
+        input: (input
           name: (underscore))
         (comma)
-        parameter: (parameter
+        param: (param
           name: (named_identifier)
           optional: (question)
           colon: (colon)
           type: (type_expression
             name: (identifier)))
         (comma)
-        parameter: (parameter
+        param: (param
           name: (named_identifier)
           optional: (question))
         (rparen))
       arrow: (arrow)
-      returns: (type_expression
+      output: (type_expression
         name: (identifier))
       colon: (colon)
       (newline))
     body: (thunk_body
-      (directive_line
-        (model_directive
-          subject: (model_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (assign_operator)
-          values: (directive_values
-            value: (directive_value)))
+          values: (overlay_values
+            value: (overlay_value)))
         (newline))
-      (directive_line
-        (collection_directive
-          subject: (collection_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (assign_operator)
-          values: (directive_values
-            value: (directive_value)
+          values: (overlay_values
+            value: (overlay_value)
             (comma)
-            value: (directive_value)))
+            value: (overlay_value)))
         (newline))
-      (directive_line
-        (collection_directive
-          subject: (collection_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (add_assign_operator)
-          values: (directive_values
-            value: (directive_value)
+          values: (overlay_values
+            value: (overlay_value)
             (comma)
-            value: (directive_value)))
+            value: (overlay_value)))
         (newline))
-      (directive_line
-        (collection_directive
-          subject: (collection_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (remove_assign_operator)
-          values: (directive_values
-            value: (directive_value)))
+          values: (overlay_values
+            value: (overlay_value)))
         (newline))
-      (directive_line
-        (collection_directive
-          subject: (collection_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (assign_operator)
-          values: (directive_values
-            value: (directive_value)
+          values: (overlay_values
+            value: (overlay_value)
             (comma)
-            value: (directive_value)))
+            value: (overlay_value)))
         (newline))
       (blank_line
         (newline))
-      (body_line
-        text: (body_text)
-        (newline))
-      (blank_line
-        (newline))
-      (body_line
-        text: (body_text)
-        (newline)))))
+      (message
+        (message_line
+          text: (message_text)
+          (newline))
+        (blank_line
+          (newline))
+        (message_line
+          text: (message_text)
+          (newline))))))
 
 ======================================
 Thunk Requires Blank Line After Directives
 ======================================
 thunk summarize(_) -> text:
-  model = gpt-5
+  models = gpt-5
   Produce a concise workspace summary.
 
 ---
 
 (source_file
-  (thunk
-    header: (thunk_header
+  (ERROR
+    (thunk_signature
       keyword: (thunk_keyword)
       name: (identifier)
-      parameters: (parameter_list
+      params: (parameter_list
         (lparen)
-        parameter: (parameter
+        input: (input
           name: (underscore))
         (rparen))
       arrow: (arrow)
-      returns: (type_expression
+      output: (type_expression
         name: (identifier))
       colon: (colon)
       (newline))
-    body: (thunk_body
-      (directive_line
-        (model_directive
-          subject: (model_subject)
-          operator: (assign_operator)
-          values: (directive_values
-            value: (directive_value)))
-        (newline))
-      (ERROR
-        (UNEXPECTED 'P'))
-      (blank_line
-        (newline))
-      (blank_line
-        (newline
-          (MISSING "newline_token1"))))))
+    (overlay_line
+      overlay: (thunk_overlay
+        subject: (overlay_subject)
+        operator: (assign_operator)
+        values: (overlay_values
+          value: (overlay_value)))
+      (newline))
+    (ERROR
+      (UNEXPECTED 'P'))
+    (blank_line
+      (newline))))
 
 ==========================
 Top-Level And Inline Comments
@@ -482,7 +479,7 @@ Review {{path}} carefully.
 ```
 
 thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
-  model = gpt-5 # inline directive comment
+  models = gpt-5 # inline directive comment
 
   Review the target carefully. # inline thunk body comment
 
@@ -586,15 +583,15 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
   (blank_line
     (newline))
   (thunk
-    header: (thunk_header
+    signature: (thunk_signature
       keyword: (thunk_keyword)
       name: (identifier)
-      parameters: (parameter_list
+      params: (parameter_list
         (lparen)
-        parameter: (parameter
+        input: (input
           name: (underscore))
         (comma)
-        parameter: (parameter
+        param: (param
           name: (named_identifier)
           optional: (question)
           colon: (colon)
@@ -602,23 +599,92 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
             name: (identifier)))
         (rparen))
       arrow: (arrow)
-      returns: (type_expression
+      output: (type_expression
         name: (identifier))
       colon: (colon)
       (inline_comment)
       (newline))
     body: (thunk_body
-      (directive_line
-        (model_directive
-          subject: (model_subject)
+      (overlay_line
+        overlay: (thunk_overlay
+          subject: (overlay_subject)
           operator: (assign_operator)
-          values: (directive_values
-            value: (directive_value)))
+          values: (overlay_values
+            value: (overlay_value)))
         (inline_comment)
         (newline))
       (blank_line
         (newline))
-      (body_line
-        text: (body_text)
-        (inline_comment)
-        (newline)))))
+      (message
+        (message_line
+          text: (message_text)
+          (inline_comment)
+          (newline))))))
+
+=================================
+Thunk With Explicit Message Blocks
+=================================
+thunk rewrite(_, tone?: string):
+  models = gpt-5
+  skills = review
+
+  system:
+    Rewrite the input for the requested tone.
+
+  user:
+    Rewrite the message faithfully.
+
+---
+
+(source_file
+  (thunk
+    (thunk_signature
+      (thunk_keyword)
+      (identifier)
+      (parameter_list
+        (lparen)
+        (input
+          (underscore))
+        (comma)
+        (param
+          (named_identifier)
+          (question)
+          (colon)
+          (type_expression
+            (identifier)))
+        (rparen))
+      (colon)
+      (newline))
+    (thunk_body
+      (overlay_line
+        (thunk_overlay
+          (overlay_subject)
+          (assign_operator)
+          (overlay_values
+            (overlay_value)))
+        (newline))
+      (overlay_line
+        (thunk_overlay
+          (overlay_subject)
+          (assign_operator)
+          (overlay_values
+            (overlay_value)))
+        (newline))
+      (blank_line
+        (newline))
+      (message
+        (message_kind)
+        (colon)
+        (newline)
+        (message_continuation_line
+          (indented_message_text)
+          (newline))
+        (blank_line
+          (newline)))
+      (message
+        (message_kind)
+        (colon)
+        (newline)
+        (message_continuation_line
+          (indented_message_text)
+          (newline))))))

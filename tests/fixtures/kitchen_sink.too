@@ -49,7 +49,7 @@ thunk echo(_):
   Repeat the current message directly.
 
 thunk review(_, path: path, focus?) -> ReviewResult:
-  model = gpt-5 # inline directive comment
+  models = gpt-5 # inline directive comment
   psyches = reviewer, concise
   skills += review, patch
   services -= linear
@@ -60,10 +60,26 @@ thunk review(_, path: path, focus?) -> ReviewResult:
   Return a precise result.
 
 thunk classify(style?, strict?: boolean):
-  model = gpt-5
+  models = gpt-5
   skills = review
 
   Classify the current workspace in the requested style.
 
 thunk render(style, audience?: string):
   Render the current workspace for the target audience.
+
+thunk rewrite(_, tone?: string):
+  models = gpt-5
+  skills = review
+
+  system:
+    Rewrite the input for the requested tone.
+
+  user:
+    Rewrite the message faithfully.
+
+thunk chat:
+  skills += review
+
+  system:
+    Ask clarifying questions when needed.
