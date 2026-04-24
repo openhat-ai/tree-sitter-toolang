@@ -705,19 +705,26 @@
     }
   },
   {
-    "type": "service_env_block",
+    "type": "service_env_line",
     "named": true,
-    "fields": {},
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_scalar",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
           "type": "colon",
-          "named": true
-        },
-        {
-          "type": "header_map_entry_line",
           "named": true
         },
         {
@@ -774,7 +781,7 @@
           "named": true
         },
         {
-          "type": "service_env_block",
+          "type": "service_env_line",
           "named": true
         },
         {

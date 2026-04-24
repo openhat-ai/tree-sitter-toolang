@@ -1564,7 +1564,7 @@
               },
               {
                 "type": "SYMBOL",
-                "name": "service_env_block"
+                "name": "service_env_line"
               }
             ]
           }
@@ -1732,7 +1732,7 @@
         }
       ]
     },
-    "service_env_block": {
+    "service_env_line": {
       "type": "SEQ",
       "members": [
         {
@@ -1744,15 +1744,16 @@
           "name": "colon"
         },
         {
-          "type": "SYMBOL",
-          "name": "newline"
-        },
-        {
-          "type": "REPEAT1",
+          "type": "FIELD",
+          "name": "value",
           "content": {
             "type": "SYMBOL",
-            "name": "header_map_entry_line"
+            "name": "frontmatter_scalar"
           }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
         }
       ]
     },

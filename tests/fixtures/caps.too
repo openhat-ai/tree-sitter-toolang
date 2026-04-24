@@ -15,9 +15,7 @@ service linear: ```md
 description: Use when the agent needs Linear MCP access.
 transport: stdio
 target: npx -y mcp-remote https://mcp.linear.app/sse
-env:
-  LINEAR_API_KEY: $LINEAR_API_KEY
-  API_KEY: $NOT_THE_SAME_NAME
+env: LINEAR_API_KEY, API_KEY
 ---
 
 Use this service when the agent needs Linear access.
