@@ -195,14 +195,16 @@ def test_caps_fixture_covers_service_transports_and_prompt_frontmatter():
             psyche_bodies.append(body_text)
 
     assert len(service_bodies) == 2
+    assert "description: Use when the agent needs GitHub MCP access." in service_bodies[0]
     assert "transport: http" in service_bodies[0]
-    assert "url: https://mcp.github.com/mcp" in service_bodies[0]
+    assert "target: https://mcp.github.com/mcp" in service_bodies[0]
     assert "Authorization: Bearer $GITHUB_TOKEN" in service_bodies[0]
+    assert "description: Use when the agent needs Linear MCP access." in service_bodies[1]
     assert "transport: stdio" in service_bodies[1]
-    assert "command: npx" in service_bodies[1]
+    assert "target: npx -y mcp-remote https://mcp.linear.app/sse" in service_bodies[1]
     assert "https://mcp.linear.app/sse" in service_bodies[1]
-    assert "env: LINEAR_API_KEY, API_KEY=NOT_THE_SAME_NAME" in service_bodies[1]
-    assert "cwd: /work/tools" in service_bodies[1]
+    assert "LINEAR_API_KEY: $LINEAR_API_KEY" in service_bodies[1]
+    assert "API_KEY: $NOT_THE_SAME_NAME" in service_bodies[1]
     assert [_normalize_newlines(body) for body in prompt_bodies] == [
         "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
     ]
@@ -270,6 +272,7 @@ def test_kitchen_sink_declarations_keep_metadata_in_fence_bodies():
     service_body = _text(source, service_body_node)
     prompt_body = _text(source, prompt_body_node)
 
+    assert "description: Use when the agent needs GitHub MCP access." in service_body
     assert "transport: http" in service_body
     assert "headers:" in service_body
     assert "params: path, focus?" in prompt_body
@@ -384,7 +387,8 @@ def test_service_requires_frontmatter():
 def test_service_frontmatter_rejects_unknown_fields():
     parser = _parser()
     source = (
-        b"service github: ```md\n---\ntransport: http\nurl: https://mcp.github.com/mcp\n"
+        b"service github: ```md\n---\ndescription: Use when the agent needs GitHub MCP access.\n"
+        b"transport: http\ntarget: https://mcp.github.com/mcp\n"
         b"token: $GITHUB_TOKEN\n---\n\nUse this service when the agent needs GitHub access.\n```\n"
     )
 

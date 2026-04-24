@@ -1,7 +1,8 @@
 service github: ```md
 ---
+description: Use when the agent needs GitHub MCP access.
 transport: http
-url: https://mcp.github.com/mcp
+target: https://mcp.github.com/mcp
 headers:
   Authorization: Bearer $GITHUB_TOKEN
 ---
@@ -11,14 +12,12 @@ Use this service when the agent needs GitHub access.
 
 service linear: ```md
 ---
+description: Use when the agent needs Linear MCP access.
 transport: stdio
-command: npx
-args:
-  - -y
-  - mcp-remote
-  - https://mcp.linear.app/sse
-env: LINEAR_API_KEY, API_KEY=NOT_THE_SAME_NAME
-cwd: /work/tools
+target: npx -y mcp-remote https://mcp.linear.app/sse
+env:
+  LINEAR_API_KEY: $LINEAR_API_KEY
+  API_KEY: $NOT_THE_SAME_NAME
 ---
 
 Use this service when the agent needs Linear access.

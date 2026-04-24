@@ -275,26 +275,14 @@ module.exports = grammar({
         seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
       ),
 
-    service_frontmatter: ($) => choice($.http_service_frontmatter, $.stdio_service_frontmatter),
-
-    http_service_frontmatter: ($) =>
+    service_frontmatter: ($) =>
       seq(
         $.frontmatter_delimiter,
         $.newline,
-        $.http_transport_line,
-        $.http_url_line,
-        optional($.http_headers_block),
-        $.frontmatter_delimiter,
-        $.newline,
-      ),
-
-    stdio_service_frontmatter: ($) =>
-      seq(
-        $.frontmatter_delimiter,
-        $.newline,
-        $.stdio_transport_line,
-        $.stdio_command_line,
-        repeat(choice($.stdio_args_block, $.stdio_env_line, $.stdio_cwd_line)),
+        $.service_description_line,
+        $.service_transport_line,
+        $.service_target_line,
+        repeat(choice($.service_headers_block, $.service_env_block)),
         $.frontmatter_delimiter,
         $.newline,
       ),
@@ -308,35 +296,23 @@ module.exports = grammar({
         $.newline,
       ),
 
-    http_transport_line: ($) =>
-      seq("transport", $.colon, field("value", $.http_transport_value), $.newline),
+    service_description_line: ($) =>
+      seq("description", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
-    stdio_transport_line: ($) =>
-      seq("transport", $.colon, field("value", $.stdio_transport_value), $.newline),
+    service_transport_line: ($) =>
+      seq("transport", $.colon, field("value", $.service_transport_value), $.newline),
 
-    http_url_line: ($) =>
-      seq("url", $.colon, field("value", $.frontmatter_scalar), $.newline),
+    service_target_line: ($) =>
+      seq("target", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
-    http_headers_block: ($) =>
+    service_headers_block: ($) =>
       seq("headers", $.colon, $.newline, repeat1($.header_map_entry_line)),
 
     header_map_entry_line: ($) =>
       seq(field("name", $.frontmatter_header_name), $.colon, field("value", $.frontmatter_scalar), $.newline),
 
-    stdio_command_line: ($) =>
-      seq("command", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    stdio_args_block: ($) =>
-      seq("args", $.colon, $.newline, repeat1($.frontmatter_list_item_line)),
-
-    frontmatter_list_item_line: ($) =>
-      seq("-", field("value", $.frontmatter_scalar), $.newline),
-
-    stdio_env_line: ($) =>
-      seq("env", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    stdio_cwd_line: ($) =>
-      seq("cwd", $.colon, field("value", $.frontmatter_scalar), $.newline),
+    service_env_block: ($) =>
+      seq("env", $.colon, $.newline, repeat1($.header_map_entry_line)),
 
     prompt_params_line: ($) =>
       seq("params", $.colon, field("value", $.frontmatter_scalar), $.newline),
@@ -380,8 +356,7 @@ module.exports = grammar({
     overlay_subject: () =>
       choice("models", "psyche", "psyches", "skill", "skills", "service", "services", "tool", "tools"),
     message_kind: () => choice("system", "user", "assistant", "tool"),
-    http_transport_value: () => "http",
-    stdio_transport_value: () => "stdio",
+    service_transport_value: () => choice("http", "stdio"),
 
     identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
     named_identifier: () =>

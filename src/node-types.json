@@ -190,32 +190,6 @@
     }
   },
   {
-    "type": "frontmatter_list_item_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "header_map_entry_line",
     "named": true,
     "fields": {
@@ -229,120 +203,6 @@
           }
         ]
       },
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "http_headers_block",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "header_map_entry_line",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "http_service_frontmatter",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "frontmatter_delimiter",
-          "named": true
-        },
-        {
-          "type": "http_headers_block",
-          "named": true
-        },
-        {
-          "type": "http_transport_line",
-          "named": true
-        },
-        {
-          "type": "http_url_line",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "http_transport_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "http_transport_value",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "http_url_line",
-    "named": true,
-    "fields": {
       "value": {
         "multiple": false,
         "required": true,
@@ -815,6 +675,59 @@
     "fields": {}
   },
   {
+    "type": "service_description_line",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_scalar",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "service_env_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "header_map_entry_line",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "service_fence_body",
     "named": true,
     "fields": {
@@ -845,19 +758,127 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
-          "type": "http_service_frontmatter",
+          "type": "frontmatter_delimiter",
           "named": true
         },
         {
-          "type": "stdio_service_frontmatter",
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "service_description_line",
+          "named": true
+        },
+        {
+          "type": "service_env_block",
+          "named": true
+        },
+        {
+          "type": "service_headers_block",
+          "named": true
+        },
+        {
+          "type": "service_target_line",
+          "named": true
+        },
+        {
+          "type": "service_transport_line",
           "named": true
         }
       ]
     }
+  },
+  {
+    "type": "service_headers_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "header_map_entry_line",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "service_target_line",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "frontmatter_scalar",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "service_transport_line",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "service_transport_value",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "service_transport_value",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "source_file",
@@ -890,188 +911,6 @@
         },
         {
           "type": "use_statement",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_args_block",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "frontmatter_list_item_line",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_command_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_cwd_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_env_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "frontmatter_scalar",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_service_frontmatter",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "frontmatter_delimiter",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        },
-        {
-          "type": "stdio_args_block",
-          "named": true
-        },
-        {
-          "type": "stdio_command_line",
-          "named": true
-        },
-        {
-          "type": "stdio_cwd_line",
-          "named": true
-        },
-        {
-          "type": "stdio_env_line",
-          "named": true
-        },
-        {
-          "type": "stdio_transport_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stdio_transport_line",
-    "named": true,
-    "fields": {
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "stdio_transport_value",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "newline",
           "named": true
         }
       ]
@@ -1498,20 +1337,12 @@
     }
   },
   {
-    "type": "-",
-    "named": false
-  },
-  {
     "type": "```",
     "named": false
   },
   {
     "type": "add_assign_operator",
     "named": true
-  },
-  {
-    "type": "args",
-    "named": false
   },
   {
     "type": "array_suffix",
@@ -1538,15 +1369,11 @@
     "named": true
   },
   {
-    "type": "command",
-    "named": false
-  },
-  {
     "type": "comment",
     "named": true
   },
   {
-    "type": "cwd",
+    "type": "description",
     "named": false
   },
   {
@@ -1574,8 +1401,8 @@
     "named": false
   },
   {
-    "type": "http_transport_value",
-    "named": true
+    "type": "http",
+    "named": false
   },
   {
     "type": "identifier",
@@ -1658,8 +1485,8 @@
     "named": false
   },
   {
-    "type": "stdio_transport_value",
-    "named": true
+    "type": "stdio",
+    "named": false
   },
   {
     "type": "struct_keyword",
@@ -1667,6 +1494,10 @@
   },
   {
     "type": "system",
+    "named": false
+  },
+  {
+    "type": "target",
     "named": false
   },
   {
@@ -1688,10 +1519,6 @@
   {
     "type": "underscore",
     "named": true
-  },
-  {
-    "type": "url",
-    "named": false
   },
   {
     "type": "use_keyword",
