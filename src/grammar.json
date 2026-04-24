@@ -1531,19 +1531,6 @@
       ]
     },
     "service_frontmatter": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "http_service_frontmatter"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "stdio_service_frontmatter"
-        }
-      ]
-    },
-    "http_service_frontmatter": {
       "type": "SEQ",
       "members": [
         {
@@ -1556,52 +1543,15 @@
         },
         {
           "type": "SYMBOL",
-          "name": "http_transport_line"
+          "name": "service_description_line"
         },
         {
           "type": "SYMBOL",
-          "name": "http_url_line"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "http_headers_block"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
+          "name": "service_transport_line"
         },
         {
           "type": "SYMBOL",
-          "name": "frontmatter_delimiter"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "stdio_service_frontmatter": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "frontmatter_delimiter"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "stdio_transport_line"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "stdio_command_line"
+          "name": "service_target_line"
         },
         {
           "type": "REPEAT",
@@ -1610,15 +1560,11 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "stdio_args_block"
+                "name": "service_headers_block"
               },
               {
                 "type": "SYMBOL",
-                "name": "stdio_env_line"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "stdio_cwd_line"
+                "name": "service_env_block"
               }
             ]
           }
@@ -1658,62 +1604,12 @@
         }
       ]
     },
-    "http_transport_line": {
+    "service_description_line": {
       "type": "SEQ",
       "members": [
         {
           "type": "STRING",
-          "value": "transport"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "colon"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "http_transport_value"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "stdio_transport_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "transport"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "colon"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "stdio_transport_value"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "http_url_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "url"
+          "value": "description"
         },
         {
           "type": "SYMBOL",
@@ -1733,7 +1629,57 @@
         }
       ]
     },
-    "http_headers_block": {
+    "service_transport_line": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "transport"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "colon"
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "SYMBOL",
+            "name": "service_transport_value"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
+        }
+      ]
+    },
+    "service_target_line": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "target"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "colon"
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "SYMBOL",
+            "name": "frontmatter_scalar"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
+        }
+      ]
+    },
+    "service_headers_block": {
       "type": "SEQ",
       "members": [
         {
@@ -1786,37 +1732,12 @@
         }
       ]
     },
-    "stdio_command_line": {
+    "service_env_block": {
       "type": "SEQ",
       "members": [
         {
           "type": "STRING",
-          "value": "command"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "colon"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "frontmatter_scalar"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "stdio_args_block": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "args"
+          "value": "env"
         },
         {
           "type": "SYMBOL",
@@ -1830,79 +1751,8 @@
           "type": "REPEAT1",
           "content": {
             "type": "SYMBOL",
-            "name": "frontmatter_list_item_line"
+            "name": "header_map_entry_line"
           }
-        }
-      ]
-    },
-    "frontmatter_list_item_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "-"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "frontmatter_scalar"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "stdio_env_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "env"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "colon"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "frontmatter_scalar"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
-    },
-    "stdio_cwd_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "cwd"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "colon"
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "frontmatter_scalar"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
         }
       ]
     },
@@ -2182,13 +2032,18 @@
         }
       ]
     },
-    "http_transport_value": {
-      "type": "STRING",
-      "value": "http"
-    },
-    "stdio_transport_value": {
-      "type": "STRING",
-      "value": "stdio"
+    "service_transport_value": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "http"
+        },
+        {
+          "type": "STRING",
+          "value": "stdio"
+        }
+      ]
     },
     "identifier": {
       "type": "TOKEN",

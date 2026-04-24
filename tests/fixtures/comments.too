@@ -3,8 +3,9 @@ use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
 ---
+description: Use when the agent needs GitHub MCP access.
 transport: http
-url: https://mcp.github.com/mcp
+target: https://mcp.github.com/mcp
 headers:
   Authorization: Bearer $GITHUB_TOKEN
 ---

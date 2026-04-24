@@ -39,8 +39,9 @@ Prefer concrete findings and direct language.
 
 service github: ```md
 ---
+description: Use when the agent needs GitHub MCP access.
 transport: http
-url: https://mcp.github.com/mcp
+target: https://mcp.github.com/mcp
 headers:
   Authorization: Bearer $GITHUB_TOKEN
 ---
@@ -85,27 +86,30 @@ Review {{path}} carefully.
       (newline))
     body: (service_fence_body
       frontmatter: (service_frontmatter
-        (http_service_frontmatter
-          (frontmatter_delimiter)
+        (frontmatter_delimiter)
+        (newline)
+        (service_description_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (service_transport_line
+          (colon)
+          value: (service_transport_value)
+          (newline))
+        (service_target_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (service_headers_block
+          (colon)
           (newline)
-          (http_transport_line
-            (colon)
-            value: (http_transport_value)
-            (newline))
-          (http_url_line
+          (header_map_entry_line
+            name: (frontmatter_header_name)
             (colon)
             value: (frontmatter_scalar)
-            (newline))
-          (http_headers_block
-            (colon)
-            (newline)
-            (header_map_entry_line
-              name: (frontmatter_header_name)
-              (colon)
-              value: (frontmatter_scalar)
-              (newline)))
-          (frontmatter_delimiter)
-          (newline)))
+            (newline)))
+        (frontmatter_delimiter)
+        (newline))
       (fence_content_line
         (newline))
       (fence_content_line
@@ -457,8 +461,9 @@ use skill briceyan/pdf-processing # inline use comment
 
 service github: ```md # inline declaration header comment
 ---
+description: Use when the agent needs GitHub MCP access.
 transport: http
-url: https://mcp.github.com/mcp
+target: https://mcp.github.com/mcp
 headers:
   Authorization: Bearer $GITHUB_TOKEN
 ---
@@ -506,27 +511,30 @@ thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
       (newline))
     body: (service_fence_body
       frontmatter: (service_frontmatter
-        (http_service_frontmatter
-          (frontmatter_delimiter)
+        (frontmatter_delimiter)
+        (newline)
+        (service_description_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (service_transport_line
+          (colon)
+          value: (service_transport_value)
+          (newline))
+        (service_target_line
+          (colon)
+          value: (frontmatter_scalar)
+          (newline))
+        (service_headers_block
+          (colon)
           (newline)
-          (http_transport_line
-            (colon)
-            value: (http_transport_value)
-            (newline))
-          (http_url_line
+          (header_map_entry_line
+            name: (frontmatter_header_name)
             (colon)
             value: (frontmatter_scalar)
-            (newline))
-          (http_headers_block
-            (colon)
-            (newline)
-            (header_map_entry_line
-              name: (frontmatter_header_name)
-              (colon)
-              value: (frontmatter_scalar)
-              (newline)))
-          (frontmatter_delimiter)
-          (newline)))
+            (newline)))
+        (frontmatter_delimiter)
+        (newline))
       (fence_content_line
         (newline))
       (fence_content_line
