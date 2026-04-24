@@ -203,8 +203,7 @@ def test_caps_fixture_covers_service_transports_and_prompt_frontmatter():
     assert "transport: stdio" in service_bodies[1]
     assert "target: npx -y mcp-remote https://mcp.linear.app/sse" in service_bodies[1]
     assert "https://mcp.linear.app/sse" in service_bodies[1]
-    assert "LINEAR_API_KEY: $LINEAR_API_KEY" in service_bodies[1]
-    assert "API_KEY: $NOT_THE_SAME_NAME" in service_bodies[1]
+    assert "env: LINEAR_API_KEY, API_KEY" in service_bodies[1]
     assert [_normalize_newlines(body) for body in prompt_bodies] == [
         "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
     ]

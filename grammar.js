@@ -282,7 +282,7 @@ module.exports = grammar({
         $.service_description_line,
         $.service_transport_line,
         $.service_target_line,
-        repeat(choice($.service_headers_block, $.service_env_block)),
+        repeat(choice($.service_headers_block, $.service_env_line)),
         $.frontmatter_delimiter,
         $.newline,
       ),
@@ -311,8 +311,8 @@ module.exports = grammar({
     header_map_entry_line: ($) =>
       seq(field("name", $.frontmatter_header_name), $.colon, field("value", $.frontmatter_scalar), $.newline),
 
-    service_env_block: ($) =>
-      seq("env", $.colon, $.newline, repeat1($.header_map_entry_line)),
+    service_env_line: ($) =>
+      seq("env", $.colon, field("value", $.frontmatter_scalar), $.newline),
 
     prompt_params_line: ($) =>
       seq("params", $.colon, field("value", $.frontmatter_scalar), $.newline),
