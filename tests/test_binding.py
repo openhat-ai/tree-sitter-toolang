@@ -110,7 +110,7 @@ def test_syntax_variants_fixture_parses_empty_params():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("caps.too", "uses.too"):
+    for fixture_name in ("caps_fenced.too", "caps_indented.too", "uses.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         item_types = [_item_child(item).type for item in _items(tree.root_node)]
@@ -128,9 +128,9 @@ def test_uses_fixture_contains_only_use_items():
     assert item_types == ["use", "use", "use", "use"]
 
 
-def test_caps_fixture_covers_prompt_markdown_forms():
+def test_caps_fenced_fixture_covers_prompt_markdown_forms():
     parser = _parser()
-    source = (FIXTURES_DIR / "caps.too").read_bytes()
+    source = (FIXTURES_DIR / "caps_fenced.too").read_bytes()
 
     tree = parser.parse(source)
     prompts = [
@@ -140,18 +140,16 @@ def test_caps_fixture_covers_prompt_markdown_forms():
     ]
     bodies = [prompt.child_by_field_name("body") for prompt in prompts]
 
-    assert [prompt.type for prompt in prompts] == ["prompt", "prompt", "prompt"]
+    assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is None
     assert bodies[1].named_children[0].child_by_field_name("frontmatter") is not None
     assert "params: path, focus" in _text(source, bodies[1])
-    assert bodies[2].named_children[0].type == "cap_indented"
-    assert "params = tone" in _text(source, bodies[2])
 
 
-def test_caps_fixture_covers_supported_kinds_and_frontmatter():
+def test_caps_fenced_fixture_covers_supported_kinds_and_frontmatter():
     parser = _parser()
-    source = (FIXTURES_DIR / "caps.too").read_bytes()
+    source = (FIXTURES_DIR / "caps_fenced.too").read_bytes()
 
     tree = parser.parse(source)
     caps = [_item_child(item) for item in _items(tree.root_node)]
@@ -161,30 +159,45 @@ def test_caps_fixture_covers_supported_kinds_and_frontmatter():
     assert kinds == [
         "service",
         "service",
-        "service",
-        "skill",
         "skill",
         "psyche",
-        "psyche",
-        "prompt",
         "prompt",
         "prompt",
     ]
     assert all(body is not None for body in bodies)
+    assert all(body.named_children[0].type == "cap_markdown" for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is not None
-    assert bodies[2].named_children[0].type == "cap_indented"
-    assert bodies[3].named_children[0].child_by_field_name("frontmatter") is not None
-    assert bodies[4].named_children[0].type == "cap_indented"
-    assert bodies[5].named_children[0].child_by_field_name("frontmatter") is None
-    assert bodies[6].named_children[0].type == "cap_indented"
+    assert bodies[2].named_children[0].child_by_field_name("frontmatter") is not None
+    assert bodies[3].named_children[0].child_by_field_name("frontmatter") is None
     assert "protocol: http" in _text(source, bodies[0])
     assert "target: https://mcp.github.com/mcp" in _text(source, bodies[0])
-    assert "target = http://localhost:3000/mcp" in _text(source, bodies[2])
-    assert "source: by3gus/review" in _text(source, bodies[3])
-    assert "source = by3gus/rewrite" in _text(source, bodies[4])
-    assert [_normalize_newlines(_text(source, bodies[8]))] == [
+    assert "source: by3gus/review" in _text(source, bodies[2])
+    assert [_normalize_newlines(_text(source, bodies[5]))] == [
         "```md\n---\nparams: path, focus\n---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
     ]
+
+
+def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
+    parser = _parser()
+    source = (FIXTURES_DIR / "caps_indented.too").read_bytes()
+
+    tree = parser.parse(source)
+    caps = [_item_child(item) for item in _items(tree.root_node)]
+    kinds = [cap.type for cap in caps]
+    bodies = [cap.child_by_field_name("body") for cap in caps]
+
+    assert kinds == [
+        "service",
+        "skill",
+        "psyche",
+        "prompt",
+    ]
+    assert all(body is not None for body in bodies)
+    assert all(body.named_children[0].type == "cap_indented" for body in bodies)
+    assert "target = http://localhost:3000/mcp" in _text(source, bodies[0])
+    assert "source = by3gus/rewrite" in _text(source, bodies[1])
+    assert "Prefer concrete findings." in _text(source, bodies[2])
+    assert "params = tone" in _text(source, bodies[3])
 
 
 def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
