@@ -179,7 +179,7 @@ module.exports = grammar({
     thunk: ($) =>
       seq(
         field("keyword", $.thunk_keyword),
-        optional(field("name", $.thunk_name)),
+        field("name", $.thunk_name),
         optional(field("params", $.params)),
         optional(seq(field("arrow", $.arrow), field("output", $.type))),
         field("colon", $.colon),

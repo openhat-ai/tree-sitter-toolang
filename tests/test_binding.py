@@ -75,7 +75,7 @@ def test_script_thunks_fixture_covers_signature_variations():
     ]
 
     assert [thunk.type for thunk in thunks] == ["thunk"] * 7
-    assert names == [None, "echo", "summarize", "classify", "decide", "score", "render"]
+    assert names == ["respond", "echo", "summarize", "classify", "decide", "score", "render"]
     assert [None if output is None else _text(source, output) for output in outputs] == [
         None,
         "Text",
@@ -415,6 +415,15 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
 def test_parameter_types_are_required():
     parser = _parser()
     source = b"thunk bad(input: Message, focus):\n  system: none\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
+
+
+def test_thunk_name_is_required():
+    parser = _parser()
+    source = b"thunk:\n  system: none\n"
 
     tree = parser.parse(source)
 
