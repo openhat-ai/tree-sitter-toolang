@@ -54,15 +54,40 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_script_fixture_parses_one_thunk_without_params():
+def test_script_thunks_fixture_covers_signature_variations():
     parser = _parser()
-    source = (FIXTURES_DIR / "script.too").read_bytes()
+    source = (FIXTURES_DIR / "script_thunks.too").read_bytes()
 
     tree = parser.parse(source)
-    thunk = _item_child(_items(tree.root_node)[0])
+    thunks = [_item_child(item) for item in _items(tree.root_node)]
+    names = [
+        _text(source, name)
+        if (name := thunk.child_by_field_name("name")) is not None
+        else None
+        for thunk in thunks
+    ]
+    outputs = [thunk.child_by_field_name("output") for thunk in thunks]
+    param_counts = [
+        len(params.children_by_field_name("param"))
+        if (params := thunk.child_by_field_name("params")) is not None
+        else None
+        for thunk in thunks
+    ]
 
-    assert thunk.type == "thunk"
-    assert thunk.child_by_field_name("params") is None
+    assert [thunk.type for thunk in thunks] == ["thunk"] * 7
+    assert names == [None, "echo", "summarize", "classify", "decide", "score", "render"]
+    assert [None if output is None else _text(source, output) for output in outputs] == [
+        None,
+        "Text",
+        "Text",
+        "Json",
+        "Boolean",
+        "Number",
+        "Message",
+    ]
+    assert param_counts == [None, 0, 1, 2, 1, 2, 3]
+    assert "type_suffix" in str(thunks[3].child_by_field_name("params"))
+    assert "block_fenced" in str(thunks[-1].child_by_field_name("body"))
 
 
 def test_syntax_variants_fixture_parses_empty_params():
@@ -243,6 +268,59 @@ def test_comments_fixture_preserves_hash_lines_inside_fenced_blocks():
     assert "# prompt frontmatter hash line" in _text(source, bodies[1])
     assert "# prompt body hash line" in _text(source, bodies[1])
     assert "frontmatter_comment" in str(bodies[0])
+
+
+def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
+    parser = _parser()
+    source = (FIXTURES_DIR / "agent_thunks.too").read_bytes()
+
+    tree = parser.parse(source)
+    thunks = [_item_child(item) for item in _items(tree.root_node)]
+    names = [_text(source, thunk.child_by_field_name("name")) for thunk in thunks]
+
+    assert tree.root_node.has_error is False
+    assert names == ["chat", "task", "chore"]
+
+    chat_body = thunks[0].child_by_field_name("body")
+    task_body = thunks[1].child_by_field_name("body")
+    chore_body = thunks[2].child_by_field_name("body")
+    assert chat_body is not None
+    assert task_body is not None
+    assert chore_body is not None
+
+    chat_directive_keys = [
+        _text(source, directive.child_by_field_name("key")).strip()
+        for directive in chat_body.named_children
+        if directive.type == "directive"
+    ]
+    task_directive_keys = [
+        _text(source, directive.child_by_field_name("key")).strip()
+        for directive in task_body.named_children
+        if directive.type == "directive"
+    ]
+    chore_block_kinds = [
+        _text(source, block.child_by_field_name("kind")).strip()
+        for block in chore_body.named_children
+        if block.type == "block"
+    ]
+
+    assert chat_directive_keys == [
+        "models",
+        "tools",
+        "delegates",
+    ]
+    assert task_directive_keys == [
+        "models",
+        "tools",
+        "skills",
+        "services",
+        "delegates",
+        "handoffs",
+    ]
+    assert chore_block_kinds == [
+        "system",
+        "user",
+    ]
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():
