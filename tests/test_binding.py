@@ -135,6 +135,68 @@ def test_caps_fixture_covers_supported_kinds_and_frontmatter():
     ]
 
 
+def test_forms_fixture_covers_indented_caps_docs_and_fenced_blocks():
+    parser = _parser()
+    source = (FIXTURES_DIR / "forms.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    items = [_item_child(item) for item in _items(root)]
+
+    assert root.has_error is False
+    assert [child.type for child in root.named_children[:5]] == [
+        "comment_line",
+        "blank_line",
+        "comment_line",
+        "blank_line",
+        "comment_line",
+    ]
+    assert [item.type for item in items] == [
+        "skill",
+        "service",
+        "prompt",
+        "psyche",
+        "struct",
+        "instruct",
+        "thunk",
+    ]
+
+    for cap in items[:4]:
+        body = cap.child_by_field_name("body")
+        assert body is not None
+        assert body.named_children[0].type == "cap_indented"
+
+    struct = items[4]
+    fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
+    assert [_text(source, field.child_by_field_name("name")) for field in fields] == [
+        "summary",
+        "count",
+        "ok",
+        "payload",
+        "messages",
+        "findings",
+    ]
+    assert fields[1].child_by_field_name("optional") is not None
+    assert "type_suffix" in str(fields[4].child_by_field_name("type"))
+    assert "user_type" in str(fields[5].child_by_field_name("type"))
+
+    instruct = items[5]
+    assert instruct.child_by_field_name("name") is not None
+    assert "block_fenced" in str(instruct.child_by_field_name("body"))
+
+    thunk = items[6]
+    body = thunk.child_by_field_name("body")
+    assert body is not None
+    blocks = [child for child in body.named_children if child.type == "block"]
+    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
+        "instruct",
+        "system",
+        "user",
+    ]
+    assert "block_fenced" in str(blocks[2].child_by_field_name("value"))
+    assert "block_content_inline" in str(blocks[1].child_by_field_name("value"))
+
+
 def test_kitchen_sink_fixture_covers_core_program_constructs():
     parser = _parser()
     source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
