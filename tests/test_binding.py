@@ -115,11 +115,13 @@ def test_caps_fixture_covers_prompt_markdown_forms():
     ]
     bodies = [prompt.child_by_field_name("body") for prompt in prompts]
 
-    assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
+    assert [prompt.type for prompt in prompts] == ["prompt", "prompt", "prompt"]
     assert all(body is not None for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is None
     assert bodies[1].named_children[0].child_by_field_name("frontmatter") is not None
     assert "params: path, focus" in _text(source, bodies[1])
+    assert bodies[2].named_children[0].type == "cap_indented"
+    assert "params = tone" in _text(source, bodies[2])
 
 
 def test_caps_fixture_covers_supported_kinds_and_frontmatter():
@@ -131,15 +133,31 @@ def test_caps_fixture_covers_supported_kinds_and_frontmatter():
     kinds = [cap.type for cap in caps]
     bodies = [cap.child_by_field_name("body") for cap in caps]
 
-    assert kinds == ["service", "service", "skill", "psyche", "prompt", "prompt"]
+    assert kinds == [
+        "service",
+        "service",
+        "service",
+        "skill",
+        "skill",
+        "psyche",
+        "psyche",
+        "prompt",
+        "prompt",
+        "prompt",
+    ]
     assert all(body is not None for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is not None
-    assert bodies[2].named_children[0].child_by_field_name("frontmatter") is not None
-    assert bodies[3].named_children[0].child_by_field_name("frontmatter") is None
+    assert bodies[2].named_children[0].type == "cap_indented"
+    assert bodies[3].named_children[0].child_by_field_name("frontmatter") is not None
+    assert bodies[4].named_children[0].type == "cap_indented"
+    assert bodies[5].named_children[0].child_by_field_name("frontmatter") is None
+    assert bodies[6].named_children[0].type == "cap_indented"
     assert "protocol: http" in _text(source, bodies[0])
     assert "target: https://mcp.github.com/mcp" in _text(source, bodies[0])
-    assert "source: by3gus/review" in _text(source, bodies[2])
-    assert [_normalize_newlines(_text(source, bodies[5]))] == [
+    assert "target = http://localhost:3000/mcp" in _text(source, bodies[2])
+    assert "source: by3gus/review" in _text(source, bodies[3])
+    assert "source = by3gus/rewrite" in _text(source, bodies[4])
+    assert [_normalize_newlines(_text(source, bodies[8]))] == [
         "```md\n---\nparams: path, focus\n---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
     ]
 

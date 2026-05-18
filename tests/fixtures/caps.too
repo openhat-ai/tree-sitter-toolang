@@ -16,6 +16,12 @@ target: npx -y mcp-remote https://mcp.linear.app/sse
 Use this service when the agent needs Linear access.
 ```
 
+service local:
+  protocol = http
+  target = http://localhost:3000/mcp
+
+  Use this service for local MCP testing.
+
 skill review: ```md
 ---
 source: by3gus/review
@@ -25,9 +31,18 @@ description: Review support
 Use this skill for review workflows.
 ```
 
+skill rewrite:
+  source = by3gus/rewrite
+  description = Rewrite support
+
+  Use this skill for rewrite workflows.
+
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
+
+psyche rigorous:
+  Prefer concrete findings.
 
 prompt direct: ```md
 Review the current request directly.
@@ -41,3 +56,8 @@ params: path, focus
 Review {{path}} carefully.
 {{focus}}
 ```
+
+prompt compact:
+  params = tone
+
+  Rewrite in a compact {{tone}} tone.
