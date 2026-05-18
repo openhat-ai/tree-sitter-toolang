@@ -1,31 +1,29 @@
 # top-level file comment
 use skill briceyan/pdf-processing # inline use comment
 
-service github: ```md # inline declaration header comment
+service github: ```md # inline cap header comment
 ---
-description: Use when the agent needs GitHub MCP access.
-transport: http
+protocol: http
 target: https://mcp.github.com/mcp
-headers:
-  Authorization: Bearer $GITHUB_TOKEN
 ---
 
 Use this service when the agent needs GitHub access.
 ```
 
 struct ReviewResult:
-  summary: string # inline struct field comment
+  summary: Text # inline struct field comment
 
 prompt review: ```md # inline prompt header comment
 ---
-params: path, focus?
+params: path, focus
 ---
 
 Review {{path}} carefully.
 {{focus}}
 ```
 
-thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
+thunk review(input: Message, focus?: Text) -> ReviewResult: # inline thunk header comment
   models = gpt-5 # inline directive comment
 
-  Review the target carefully. # inline thunk body comment
+  system:
+    Review the target carefully. # literal block content

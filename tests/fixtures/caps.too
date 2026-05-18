@@ -1,10 +1,7 @@
 service github: ```md
 ---
-description: Use when the agent needs GitHub MCP access.
-transport: http
+protocol: http
 target: https://mcp.github.com/mcp
-headers:
-  Authorization: Bearer $GITHUB_TOKEN
 ---
 
 Use this service when the agent needs GitHub access.
@@ -12,10 +9,8 @@ Use this service when the agent needs GitHub access.
 
 service linear: ```md
 ---
-description: Use when the agent needs Linear MCP access.
-transport: stdio
+protocol: stdio
 target: npx -y mcp-remote https://mcp.linear.app/sse
-env: LINEAR_API_KEY, API_KEY
 ---
 
 Use this service when the agent needs Linear access.
@@ -27,7 +22,7 @@ Prefer concrete findings and direct language.
 
 prompt review: ```md
 ---
-params: path, focus?
+params: path, focus
 ---
 
 Review {{path}} carefully.

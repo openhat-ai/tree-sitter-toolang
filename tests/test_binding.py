@@ -10,8 +10,7 @@ FIXTURES_DIR = Path(__file__).with_name("fixtures")
 
 def _parser() -> Parser:
     language = Language(tree_sitter_toolang.language())
-    parser = Parser(language)
-    return parser
+    return Parser(language)
 
 
 def _text(source: bytes, node) -> str:
@@ -24,6 +23,15 @@ def _fixture_text(name: str) -> str:
 
 def _normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n")
+
+
+def _items(root):
+    return [child for child in root.named_children if child.type == "item"]
+
+
+def _item_child(item):
+    assert item.named_child_count == 1
+    return item.named_children[0]
 
 
 def test_language_capsule_builds_language():
@@ -46,34 +54,27 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_minimal_run_fixture_parses_one_thunk():
+def test_minimal_run_fixture_parses_one_thunk_without_params():
     parser = _parser()
     source = (FIXTURES_DIR / "minimal_run.too").read_bytes()
 
     tree = parser.parse(source)
-    root = tree.root_node
-    child_types = [child.type for child in root.named_children]
+    thunk = _item_child(_items(tree.root_node)[0])
 
-    assert child_types == ["thunk"]
-    signature = root.named_children[0].child_by_field_name("signature")
-    assert signature is not None
-    assert signature.child_by_field_name("params") is None
+    assert thunk.type == "thunk"
+    assert thunk.child_by_field_name("params") is None
 
 
-def test_minimal_invoke_fixture_parses_one_thunk():
+def test_minimal_invoke_fixture_parses_empty_params():
     parser = _parser()
     source = (FIXTURES_DIR / "minimal_invoke.too").read_bytes()
 
     tree = parser.parse(source)
-    root = tree.root_node
-    child_types = [child.type for child in root.named_children]
+    thunk = _item_child(_items(tree.root_node)[0])
+    params = thunk.child_by_field_name("params")
 
-    assert child_types == ["thunk"]
-    signature = root.named_children[0].child_by_field_name("signature")
-    assert signature is not None
-    params = signature.child_by_field_name("params")
+    assert thunk.type == "thunk"
     assert params is not None
-    assert params.child_by_field_name("input") is None
     assert params.children_by_field_name("param") == []
 
 
@@ -83,132 +84,54 @@ def test_fixtures_can_parse_without_any_thunks():
     for fixture_name in ("caps.too", "prompts.too", "uses.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
-        root = tree.root_node
+        item_types = [_item_child(item).type for item in _items(tree.root_node)]
 
-        thunk_count = sum(1 for child in root.named_children if child.type == "thunk")
-
-        assert thunk_count == 0, fixture_name
+        assert "thunk" not in item_types, fixture_name
 
 
-def test_prompts_fixture_covers_supported_prompt_forms():
-    parser = _parser()
-    source = (FIXTURES_DIR / "prompts.too").read_bytes()
-
-    tree = parser.parse(source)
-    root = tree.root_node
-    child_types = [child.type for child in root.named_children]
-
-    assert child_types == [
-        "fenced_declaration",
-        "blank_line",
-        "fenced_declaration",
-        "blank_line",
-        "fenced_declaration",
-    ]
-
-    headers = []
-    bodies = []
-    for child in root.named_children:
-        if child.type != "fenced_declaration":
-            continue
-        header = child.child_by_field_name("header")
-        body = child.child_by_field_name("body")
-        assert header is not None
-        assert body is not None
-        headers.append(header)
-        bodies.append(_text(source, body))
-
-    assert len(headers) == 3
-    assert all(header.child_by_field_name("parameters") is None for header in headers)
-    assert "params:" not in bodies[0]
-    assert "params: style, audience?" in bodies[1]
-    assert "params: tone?" in bodies[2]
-
-
-def test_uses_fixture_contains_only_use_statements():
+def test_uses_fixture_contains_only_use_items():
     parser = _parser()
     source = (FIXTURES_DIR / "uses.too").read_bytes()
 
     tree = parser.parse(source)
-    root = tree.root_node
-    child_types = [child.type for child in root.named_children]
+    item_types = [_item_child(item).type for item in _items(tree.root_node)]
 
-    assert child_types == [
-        "use_statement",
-        "use_statement",
-        "use_statement",
-        "use_statement",
-    ]
+    assert item_types == ["use", "use", "use", "use"]
 
 
-def test_caps_fixture_covers_supported_kinds():
+def test_prompts_fixture_covers_markdown_frontmatter_forms():
+    parser = _parser()
+    source = (FIXTURES_DIR / "prompts.too").read_bytes()
+
+    tree = parser.parse(source)
+    prompts = [_item_child(item) for item in _items(tree.root_node)]
+    bodies = [prompt.child_by_field_name("body") for prompt in prompts]
+
+    assert [prompt.type for prompt in prompts] == ["prompt", "prompt", "prompt"]
+    assert all(body is not None for body in bodies)
+    assert bodies[0].named_children[0].child_by_field_name("frontmatter") is None
+    assert bodies[1].named_children[0].child_by_field_name("frontmatter") is not None
+    assert "params: style, audience" in _text(source, bodies[1])
+    assert "params: tone" in _text(source, bodies[2])
+
+
+def test_caps_fixture_covers_supported_kinds_and_frontmatter():
     parser = _parser()
     source = (FIXTURES_DIR / "caps.too").read_bytes()
 
     tree = parser.parse(source)
-    root = tree.root_node
-
-    kinds: list[str] = []
-    for child in root.named_children:
-        if child.type != "fenced_declaration":
-            continue
-        header = child.child_by_field_name("header")
-        assert header is not None
-        kind = header.child_by_field_name("kind")
-        assert kind is not None
-        kinds.append(source[kind.start_byte : kind.end_byte].decode("utf-8"))
+    caps = [_item_child(item) for item in _items(tree.root_node)]
+    kinds = [cap.type for cap in caps]
+    bodies = [cap.child_by_field_name("body") for cap in caps]
 
     assert kinds == ["service", "service", "psyche", "prompt"]
-
-
-def test_caps_fixture_covers_service_transports_and_prompt_frontmatter():
-    parser = _parser()
-    source = (FIXTURES_DIR / "caps.too").read_bytes()
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    service_bodies: list[str] = []
-    prompt_bodies: list[str] = []
-    psyche_bodies: list[str] = []
-
-    for child in root.named_children:
-        if child.type != "fenced_declaration":
-            continue
-        header = child.child_by_field_name("header")
-        body = child.child_by_field_name("body")
-        assert header is not None
-        assert body is not None
-        assert header.child_by_field_name("parameters") is None
-        kind = header.child_by_field_name("kind")
-        assert kind is not None
-        kind_text = _text(source, kind)
-        body_text = _text(source, body)
-        if kind_text == "service":
-            assert body.child_by_field_name("frontmatter") is not None
-            service_bodies.append(body_text)
-        elif kind_text == "prompt":
-            assert body.child_by_field_name("frontmatter") is not None
-            prompt_bodies.append(body_text)
-        elif kind_text == "psyche":
-            assert body.child_by_field_name("frontmatter") is None
-            psyche_bodies.append(body_text)
-
-    assert len(service_bodies) == 2
-    assert "description: Use when the agent needs GitHub MCP access." in service_bodies[0]
-    assert "transport: http" in service_bodies[0]
-    assert "target: https://mcp.github.com/mcp" in service_bodies[0]
-    assert "Authorization: Bearer $GITHUB_TOKEN" in service_bodies[0]
-    assert "description: Use when the agent needs Linear MCP access." in service_bodies[1]
-    assert "transport: stdio" in service_bodies[1]
-    assert "target: npx -y mcp-remote https://mcp.linear.app/sse" in service_bodies[1]
-    assert "https://mcp.linear.app/sse" in service_bodies[1]
-    assert "env: LINEAR_API_KEY, API_KEY" in service_bodies[1]
-    assert [_normalize_newlines(body) for body in prompt_bodies] == [
-        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
-    ]
-    assert [_normalize_newlines(body) for body in psyche_bodies] == [
-        "Prefer concrete findings and direct language.\n"
+    assert all(body is not None for body in bodies)
+    assert bodies[0].named_children[0].child_by_field_name("frontmatter") is not None
+    assert bodies[2].named_children[0].child_by_field_name("frontmatter") is None
+    assert "protocol: http" in _text(source, bodies[0])
+    assert "target: https://mcp.github.com/mcp" in _text(source, bodies[0])
+    assert [_normalize_newlines(_text(source, bodies[3]))] == [
+        "```md\n---\nparams: path, focus\n---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
     ]
 
 
@@ -219,26 +142,20 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
     tree = parser.parse(source)
     root = tree.root_node
     child_types = [child.type for child in root.named_children]
+    item_types = [_item_child(item).type for item in _items(root)]
 
-    assert child_types == [
-        "comment",
-        "use_statement",
-        "use_statement",
-        "use_statement",
-        "use_statement",
-        "blank_line",
-        "fenced_declaration",
-        "blank_line",
-        "fenced_declaration",
-        "blank_line",
-        "fenced_declaration",
-        "blank_line",
-        "struct_declaration",
-        "struct_declaration",
-        "thunk",
-        "thunk",
-        "thunk",
-        "thunk",
+    assert child_types[0] == "comment_line"
+    assert item_types == [
+        "use",
+        "use",
+        "use",
+        "use",
+        "psyche",
+        "service",
+        "prompt",
+        "struct",
+        "struct",
+        "instruct",
         "thunk",
         "thunk",
         "thunk",
@@ -247,175 +164,88 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
     ]
 
 
-def test_kitchen_sink_declarations_keep_metadata_in_fence_bodies():
+def test_kitchen_sink_thunk_signature_directives_and_blocks():
     parser = _parser()
     source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
 
     tree = parser.parse(source)
-    root = tree.root_node
-
-    declarations = [child for child in root.named_children if child.type == "fenced_declaration"]
-    assert len(declarations) == 3
-
-    for declaration in declarations:
-        header = declaration.child_by_field_name("header")
-        body = declaration.child_by_field_name("body")
-        assert header is not None
-        assert body is not None
-        assert header.child_by_field_name("parameters") is None
-
-    service_body_node = declarations[1].child_by_field_name("body")
-    prompt_body_node = declarations[2].child_by_field_name("body")
-    assert service_body_node is not None
-    assert prompt_body_node is not None
-    service_body = _text(source, service_body_node)
-    prompt_body = _text(source, prompt_body_node)
-
-    assert "description: Use when the agent needs GitHub MCP access." in service_body
-    assert "transport: http" in service_body
-    assert "headers:" in service_body
-    assert "params: path, focus?" in prompt_body
-
-
-def test_fenced_declaration_headers_reject_parameter_lists():
-    parser = _parser()
-    source = b"prompt summarize(style): ```md\nSummarize the request in a concise style.\n```\n"
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    assert root.has_error is True
-
-
-def test_thunk_unnamed_parameter_must_be_first():
-    parser = _parser()
-    source = b"thunk bad(path, _):\n  Respond directly.\n"
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    assert root.has_error is True
-
-
-def test_thunk_unnamed_parameter_cannot_repeat():
-    parser = _parser()
-    source = b"thunk bad(_, _):\n  Respond directly.\n"
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    assert root.has_error is True
-
-
-def test_thunk_optional_named_parameters_must_trail_required_named_parameters():
-    parser = _parser()
-    source = b"thunk bad(_, focus?, path: path):\n  Respond directly.\n"
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    assert root.has_error is True
-
-
-def test_thunk_named_parameters_without_unnamed_message_parse_cleanly():
-    parser = _parser()
-    source = b"thunk render(style, audience?: string):\n  Render the current workspace.\n"
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    assert root.has_error is False
-
-
-def test_kitchen_sink_fixture_covers_signature_overlay_and_message_nodes():
-    parser = _parser()
-    source = (FIXTURES_DIR / "kitchen_sink.too").read_bytes()
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    thunks = [child for child in root.named_children if child.type == "thunk"]
-    rewrite = next(
-        child
-        for child in thunks
-        if (signature := child.child_by_field_name("signature")) is not None
-        and (name := signature.child_by_field_name("name")) is not None
-        and _text(source, name) == "rewrite"
+    thunks = [
+        _item_child(item)
+        for item in _items(tree.root_node)
+        if _item_child(item).type == "thunk"
+    ]
+    review = next(
+        thunk
+        for thunk in thunks
+        if (name := thunk.child_by_field_name("name")) is not None
+        and _text(source, name) == "review"
     )
-    signature = rewrite.child_by_field_name("signature")
-    body = rewrite.child_by_field_name("body")
-    assert signature is not None
-    assert body is not None
-    params = signature.child_by_field_name("params")
-    assert params is not None
-    assert params.child_by_field_name("input") is not None
-    assert [param.child_by_field_name("name") and _text(source, param.child_by_field_name("name")) for param in params.children_by_field_name("param")] == [
-        "tone"
-    ]
+    params = review.child_by_field_name("params")
+    body = review.child_by_field_name("body")
 
-    overlays = [child for child in body.named_children if child.type == "overlay_line"]
-    messages = [child for child in body.named_children if child.type == "message"]
-    assert len(overlays) == 2
-    assert len(messages) == 2
-    assert [_text(source, message.child_by_field_name("kind")).strip() for message in messages] == [
+    assert params is not None
+    assert [ _text(source, param.child_by_field_name("name")) for param in params.children_by_field_name("param") ] == [
+        "input",
+        "path",
+        "focus",
+    ]
+    assert body is not None
+    assert len([child for child in body.named_children if child.type == "directive"]) == 5
+    blocks = [child for child in body.named_children if child.type == "block"]
+    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
+        "instruct",
         "system",
         "user",
     ]
 
 
-def test_psyche_frontmatter_is_rejected():
+def test_parameter_types_are_required():
     parser = _parser()
-    source = b"psyche reviewer: ```md\n---\nmode: strict\n---\n\nPrefer concrete findings.\n```\n"
+    source = b"thunk bad(input: Message, focus):\n  system: none\n"
 
     tree = parser.parse(source)
-    root = tree.root_node
 
-    assert root.has_error is True
+    assert tree.root_node.has_error is True
 
 
-def test_service_requires_frontmatter():
+def test_lowercase_builtin_type_is_rejected():
     parser = _parser()
-    source = b"service github: ```md\nUse this service when the agent needs GitHub access.\n```\n"
+    source = b"struct ReviewResult:\n  summary: string\n"
 
     tree = parser.parse(source)
-    root = tree.root_node
 
-    assert root.has_error is True
+    assert tree.root_node.has_error is True
 
 
-def test_service_frontmatter_rejects_unknown_fields():
+def test_none_is_parsed_as_user_type_not_builtin_type():
     parser = _parser()
-    source = (
-        b"service github: ```md\n---\ndescription: Use when the agent needs GitHub MCP access.\n"
-        b"transport: http\ntarget: https://mcp.github.com/mcp\n"
-        b"token: $GITHUB_TOKEN\n---\n\nUse this service when the agent needs GitHub access.\n```\n"
-    )
+    source = b"struct ReviewResult:\n  summary: None\n"
 
     tree = parser.parse(source)
-    root = tree.root_node
+    field = _item_child(_items(tree.root_node)[0]).child_by_field_name("body").named_children[0]
+    type_node = field.child_by_field_name("type")
 
-    assert root.has_error is True
+    assert tree.root_node.has_error is False
+    assert type_node is not None
+    assert "user_type" in str(type_node)
+    assert "builtin_type" not in str(type_node)
 
 
-def test_prompt_frontmatter_rejects_unknown_fields():
+def test_bare_text_is_not_allowed_in_thunk_body():
     parser = _parser()
-    source = (
-        b"prompt review: ```md\n---\nparams: path, focus?\ndescription: Review the target.\n"
-        b"---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
-    )
+    source = b"thunk bad:\n  Return directly.\n"
 
     tree = parser.parse(source)
-    root = tree.root_node
 
-    assert root.has_error is True
+    assert tree.root_node.has_error is True
 
 
-def test_prompt_frontmatter_parses_with_crlf_line_endings():
+def test_cap_frontmatter_parses_with_crlf_line_endings():
     parser = _parser()
     source = (
         b"prompt review: ```md\r\n"
         b"---\r\n"
-        b"params: path, focus?\r\n"
+        b"params: path, focus\r\n"
         b"---\r\n"
         b"\r\n"
         b"Review {{path}} carefully.\r\n"
@@ -425,49 +255,13 @@ def test_prompt_frontmatter_parses_with_crlf_line_endings():
 
     tree = parser.parse(source)
     root = tree.root_node
+    prompt = _item_child(_items(root)[0])
+    body = prompt.child_by_field_name("body")
 
     assert root.has_error is False
-    declaration = root.named_children[0]
-    body = declaration.child_by_field_name("body")
     assert body is not None
-    assert body.child_by_field_name("frontmatter") is not None
-    assert _normalize_newlines(_text(source, body)) == (
-        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
-    )
-
-
-def test_caps_fixture_body_assertions_are_line_ending_agnostic():
-    parser = _parser()
-    source = _fixture_text("caps.too").replace("\n", "\r\n").encode("utf-8")
-
-    tree = parser.parse(source)
-    root = tree.root_node
-
-    prompt_bodies: list[str] = []
-    psyche_bodies: list[str] = []
-
-    for child in root.named_children:
-        if child.type != "fenced_declaration":
-            continue
-        header = child.child_by_field_name("header")
-        body = child.child_by_field_name("body")
-        assert header is not None
-        assert body is not None
-        kind = header.child_by_field_name("kind")
-        assert kind is not None
-        kind_text = _text(source, kind)
-        body_text = _text(source, body)
-        if kind_text == "prompt":
-            prompt_bodies.append(body_text)
-        elif kind_text == "psyche":
-            psyche_bodies.append(body_text)
-
-    assert [_normalize_newlines(body) for body in prompt_bodies] == [
-        "---\nparams: path, focus?\n---\n\nReview {{path}} carefully.\n{{focus}}\n"
-    ]
-    assert [_normalize_newlines(body) for body in psyche_bodies] == [
-        "Prefer concrete findings and direct language.\n"
-    ]
+    assert body.named_children[0].child_by_field_name("frontmatter") is not None
+    assert "params: path, focus" in _normalize_newlines(_text(source, body))
 
 
 def test_queries_are_packaged():

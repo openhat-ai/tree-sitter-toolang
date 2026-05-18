@@ -4,7 +4,7 @@ Review the current request directly.
 
 prompt summarize: ```md
 ---
-params: style, audience?
+params: style, audience
 ---
 
 Summarize the request in a {{style}} voice.
@@ -13,7 +13,7 @@ Audience: {{audience}}
 
 prompt rewrite: ```md
 ---
-params: tone?
+params: tone
 ---
 
 Rewrite the request in a {{tone}} tone.

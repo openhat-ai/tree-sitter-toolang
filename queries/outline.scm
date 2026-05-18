@@ -1,14 +1,25 @@
 ; Source of truth for Toolang Tree-sitter outline queries.
 ; Maintain this file in this repository and consume it from tooling.
 
-(thunk_signature
-  name: (identifier) @name
-) @item
+(thunk
+  name: (thunk_name
+    (value_name) @name)) @item
 
-(struct_header
-  name: (identifier) @name
-) @item
+(struct
+  name: (struct_name
+    (type_name) @name)) @item
 
-(declaration_header
-  name: (identifier) @name
-) @item
+[
+  (psyche
+    name: (cap_name
+      (value_name) @name))
+  (skill
+    name: (cap_name
+      (value_name) @name))
+  (service
+    name: (cap_name
+      (value_name) @name))
+  (prompt
+    name: (cap_name
+      (value_name) @name))
+] @item
