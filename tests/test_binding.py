@@ -277,9 +277,21 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
     tree = parser.parse(source)
     thunks = [_item_child(item) for item in _items(tree.root_node)]
     names = [_text(source, thunk.child_by_field_name("name")) for thunk in thunks]
+    params = [thunk.child_by_field_name("params") for thunk in thunks]
+    outputs = [thunk.child_by_field_name("output") for thunk in thunks]
 
     assert tree.root_node.has_error is False
     assert names == ["chat", "task", "chore"]
+    assert params[0] is None
+    assert outputs[0] is None
+    assert params[1] is not None
+    assert [
+        _text(source, param.child_by_field_name("name"))
+        for param in params[1].children_by_field_name("param")
+    ] == ["input"]
+    assert _text(source, outputs[1]) == "Message"
+    assert params[2] is None
+    assert outputs[2] is None
 
     chat_body = thunks[0].child_by_field_name("body")
     task_body = thunks[1].child_by_field_name("body")

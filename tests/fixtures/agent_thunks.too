@@ -1,4 +1,4 @@
-thunk chat(input: Message) -> Message:
+thunk chat:
   models = gpt-5
   tools += shell
   delegates += summarize
@@ -11,7 +11,7 @@ thunk chat(input: Message) -> Message:
   user:
     {{input}}
 
-thunk task(input: Message, goal: Text, context?: Json) -> Json:
+thunk task(input: Message) -> Message:
   models = gpt-5
   tools += shell, filesystem
   skills += review
@@ -23,10 +23,9 @@ thunk task(input: Message, goal: Text, context?: Json) -> Json:
     Complete the requested task and return structured progress.
 
   user:
-    Goal: {{goal}}
-    Context: {{context}}
+    {{input}}
 
-thunk chore() -> Text:
+thunk chore:
   models = gpt-5
   tools += shell
   handoffs = support, billing
