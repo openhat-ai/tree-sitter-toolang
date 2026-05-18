@@ -121,10 +121,11 @@ cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
 cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
 cap_content ::= raw_text
 
-frontmatter ::= "---" newline property_colon* "---" newline
+frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
 
 property_eq ::= property_key "=" property_value line_end
 property_colon ::= property_key ":" property_value line_end
+frontmatter_comment ::= "#" line_text newline
 property_key ::= value_name
 property_value ::= inline_text
 ```
@@ -135,6 +136,8 @@ Rules:
 - Both body forms may contain zero or more properties before body text.
 - Markdown fenced bodies store properties in frontmatter using `key: value`
   lines.
+- Frontmatter may include `#` comment lines; they are preserved as frontmatter
+  content.
 - Indented bodies store properties using `key = value` lines.
 - Runtime validates property keys and cap-specific property constraints.
 - Indented cap properties use only `=`; `+=` and `-=` are thunk directive
@@ -271,9 +274,10 @@ cap_body ::= cap_indented | cap_markdown
 cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
 cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
 cap_content ::= raw_text
-frontmatter ::= "---" newline property_colon* "---" newline
+frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
 property_eq ::= property_key "=" property_value line_end
 property_colon ::= property_key ":" property_value line_end
+frontmatter_comment ::= "#" line_text newline
 property_key ::= value_name
 property_value ::= inline_text
 

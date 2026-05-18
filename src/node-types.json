@@ -484,6 +484,11 @@
     }
   },
   {
+    "type": "comment_line",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "directive",
     "named": true,
     "fields": {
@@ -648,6 +653,10 @@
       "required": true,
       "types": [
         {
+          "type": "frontmatter_comment",
+          "named": true
+        },
+        {
           "type": "frontmatter_delimiter",
           "named": true
         },
@@ -661,6 +670,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "frontmatter_comment",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "instruct",
@@ -1649,10 +1663,6 @@
   },
   {
     "type": "comma",
-    "named": true
-  },
-  {
-    "type": "comment_line",
     "named": true
   },
   {

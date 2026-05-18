@@ -125,7 +125,7 @@ module.exports = grammar({
       seq(
         $.frontmatter_delimiter,
         $.newline,
-        repeat($.property_colon),
+        repeat(choice($.property_colon, $.frontmatter_comment)),
         $.frontmatter_delimiter,
         $.newline,
       ),
@@ -144,6 +144,7 @@ module.exports = grammar({
         field("value", $.property_value),
         $.newline,
       ),
+    frontmatter_comment: () => token(seq("#", /[^\r\n]*/, /\r?\n/)),
     property_key: ($) => $.value_name,
     property_value: ($) => $.inline_text,
 

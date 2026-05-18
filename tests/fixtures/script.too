@@ -1,3 +1,5 @@
-thunk():
+#!/usr/bin/env toolang
+
+thunk:
   system:
     Respond directly.

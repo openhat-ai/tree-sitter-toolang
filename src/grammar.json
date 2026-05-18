@@ -684,8 +684,17 @@
         {
           "type": "REPEAT",
           "content": {
-            "type": "SYMBOL",
-            "name": "property_colon"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "property_colon"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "frontmatter_comment"
+              }
+            ]
           }
         },
         {
@@ -763,6 +772,26 @@
           "name": "newline"
         }
       ]
+    },
+    "frontmatter_comment": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "#"
+          },
+          {
+            "type": "PATTERN",
+            "value": "[^\\r\\n]*"
+          },
+          {
+            "type": "PATTERN",
+            "value": "\\r?\\n"
+          }
+        ]
+      }
     },
     "property_key": {
       "type": "SYMBOL",

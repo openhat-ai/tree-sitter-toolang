@@ -54,9 +54,9 @@ def test_parser_can_parse_all_fixtures():
         assert root.named_child_count > 0, source_path.name
 
 
-def test_minimal_run_fixture_parses_one_thunk_without_params():
+def test_script_fixture_parses_one_thunk_without_params():
     parser = _parser()
-    source = (FIXTURES_DIR / "minimal_run.too").read_bytes()
+    source = (FIXTURES_DIR / "script.too").read_bytes()
 
     tree = parser.parse(source)
     thunk = _item_child(_items(tree.root_node)[0])
@@ -65,12 +65,16 @@ def test_minimal_run_fixture_parses_one_thunk_without_params():
     assert thunk.child_by_field_name("params") is None
 
 
-def test_minimal_invoke_fixture_parses_empty_params():
+def test_syntax_variants_fixture_parses_empty_params():
     parser = _parser()
-    source = (FIXTURES_DIR / "minimal_invoke.too").read_bytes()
+    source = (FIXTURES_DIR / "syntax_variants.too").read_bytes()
 
     tree = parser.parse(source)
-    thunk = _item_child(_items(tree.root_node)[0])
+    thunk = next(
+        _item_child(item)
+        for item in _items(tree.root_node)
+        if _item_child(item).type == "thunk"
+    )
     params = thunk.child_by_field_name("params")
 
     assert thunk.type == "thunk"
@@ -81,7 +85,7 @@ def test_minimal_invoke_fixture_parses_empty_params():
 def test_fixtures_can_parse_without_any_thunks():
     parser = _parser()
 
-    for fixture_name in ("caps.too", "prompts.too", "uses.too"):
+    for fixture_name in ("caps.too", "uses.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
         item_types = [_item_child(item).type for item in _items(tree.root_node)]
@@ -99,20 +103,23 @@ def test_uses_fixture_contains_only_use_items():
     assert item_types == ["use", "use", "use", "use"]
 
 
-def test_prompts_fixture_covers_markdown_frontmatter_forms():
+def test_caps_fixture_covers_prompt_markdown_forms():
     parser = _parser()
-    source = (FIXTURES_DIR / "prompts.too").read_bytes()
+    source = (FIXTURES_DIR / "caps.too").read_bytes()
 
     tree = parser.parse(source)
-    prompts = [_item_child(item) for item in _items(tree.root_node)]
+    prompts = [
+        _item_child(item)
+        for item in _items(tree.root_node)
+        if _item_child(item).type == "prompt"
+    ]
     bodies = [prompt.child_by_field_name("body") for prompt in prompts]
 
-    assert [prompt.type for prompt in prompts] == ["prompt", "prompt", "prompt"]
+    assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is None
     assert bodies[1].named_children[0].child_by_field_name("frontmatter") is not None
-    assert "params: style, audience" in _text(source, bodies[1])
-    assert "params: tone" in _text(source, bodies[2])
+    assert "params: path, focus" in _text(source, bodies[1])
 
 
 def test_caps_fixture_covers_supported_kinds_and_frontmatter():
@@ -124,20 +131,22 @@ def test_caps_fixture_covers_supported_kinds_and_frontmatter():
     kinds = [cap.type for cap in caps]
     bodies = [cap.child_by_field_name("body") for cap in caps]
 
-    assert kinds == ["service", "service", "psyche", "prompt"]
+    assert kinds == ["service", "service", "skill", "psyche", "prompt", "prompt"]
     assert all(body is not None for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is not None
-    assert bodies[2].named_children[0].child_by_field_name("frontmatter") is None
+    assert bodies[2].named_children[0].child_by_field_name("frontmatter") is not None
+    assert bodies[3].named_children[0].child_by_field_name("frontmatter") is None
     assert "protocol: http" in _text(source, bodies[0])
     assert "target: https://mcp.github.com/mcp" in _text(source, bodies[0])
-    assert [_normalize_newlines(_text(source, bodies[3]))] == [
+    assert "source: by3gus/review" in _text(source, bodies[2])
+    assert [_normalize_newlines(_text(source, bodies[5]))] == [
         "```md\n---\nparams: path, focus\n---\n\nReview {{path}} carefully.\n{{focus}}\n```\n"
     ]
 
 
-def test_forms_fixture_covers_indented_caps_docs_and_fenced_blocks():
+def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     parser = _parser()
-    source = (FIXTURES_DIR / "forms.too").read_bytes()
+    source = (FIXTURES_DIR / "syntax_variants.too").read_bytes()
 
     tree = parser.parse(source)
     root = tree.root_node
@@ -195,6 +204,27 @@ def test_forms_fixture_covers_indented_caps_docs_and_fenced_blocks():
     ]
     assert "block_fenced" in str(blocks[2].child_by_field_name("value"))
     assert "block_content_inline" in str(blocks[1].child_by_field_name("value"))
+
+
+def test_comments_fixture_preserves_hash_lines_inside_fenced_blocks():
+    parser = _parser()
+    source = (FIXTURES_DIR / "comments.too").read_bytes()
+
+    tree = parser.parse(source)
+    caps = [
+        _item_child(item)
+        for item in _items(tree.root_node)
+        if _item_child(item).type in {"service", "prompt"}
+    ]
+    bodies = [cap.child_by_field_name("body") for cap in caps]
+
+    assert tree.root_node.has_error is False
+    assert all(body is not None for body in bodies)
+    assert "# frontmatter hash line is literal metadata text" in _text(source, bodies[0])
+    assert "# body hash line is literal block text" in _text(source, bodies[0])
+    assert "# prompt frontmatter hash line" in _text(source, bodies[1])
+    assert "# prompt body hash line" in _text(source, bodies[1])
+    assert "frontmatter_comment" in str(bodies[0])
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():

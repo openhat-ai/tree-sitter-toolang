@@ -3,6 +3,7 @@
 
 (comment_line) @comment
 (inline_comment) @comment
+(frontmatter_comment) @comment
 
 (use_keyword) @keyword
 (struct_keyword) @keyword
