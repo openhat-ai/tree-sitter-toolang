@@ -1,0 +1,36 @@
+thunk chat:
+  models = gpt-5
+  tools += shell
+  delegates += summarize
+
+  instruct: default
+
+  system:
+    Keep the conversation grounded and ask clarifying questions when needed.
+
+  user:
+    {{input}}
+
+thunk task(input: Message) -> Message:
+  models = gpt-5
+  tools += shell, filesystem
+  skills += review
+  services += github
+  delegates += plan, execute
+  handoffs = support
+
+  system:
+    Complete the requested task and return structured progress.
+
+  user:
+    {{input}}
+
+thunk chore:
+  models = gpt-5
+  tools += shell
+  handoffs = support, billing
+
+  system: default
+
+  user:
+    Run the scheduled maintenance chore and report the result.

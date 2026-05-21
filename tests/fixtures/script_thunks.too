@@ -1,0 +1,34 @@
+#!/usr/bin/env toolang
+
+thunk respond:
+  system:
+    Respond directly.
+
+thunk echo() -> Text:
+  user:
+    Echo the current input.
+
+thunk summarize(input: Message) -> Text:
+  user:
+    Summarize {{input}}.
+
+thunk classify(input: Message, labels: Text[]) -> Json:
+  models = gpt-5
+
+  user:
+    Classify {{input}} into {{labels}}.
+
+thunk decide(strict?: Boolean) -> Boolean:
+  user:
+    Decide whether the request should proceed.
+
+thunk score(input: Message, rubric?: Json) -> Number:
+  user:
+    Score {{input}} using {{rubric}}.
+
+thunk render(template: Text, data: Json, notes?: Message[]) -> Message:
+  system: default
+  user: ```md
+Render {{template}} with {{data}}.
+{{notes}}
+```

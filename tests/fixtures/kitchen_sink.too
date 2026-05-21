@@ -8,13 +8,10 @@ psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
-service github: ```md # inline declaration header comment
+service github: ```md # inline cap header comment
 ---
-description: Use when the agent needs GitHub MCP access.
-transport: http
+protocol: http
 target: https://mcp.github.com/mcp
-headers:
-  Authorization: Bearer $GITHUB_TOKEN
 ---
 
 Use this service when the agent needs GitHub access.
@@ -22,7 +19,7 @@ Use this service when the agent needs GitHub access.
 
 prompt review: ```md # inline prompt header comment
 ---
-params: path, focus?
+params: path, focus
 ---
 
 Review {{path}} carefully.
@@ -30,57 +27,45 @@ Review {{path}} carefully.
 ```
 
 struct ReviewFinding:
-  path: string
-  line: number? # inline struct field comment
+  path: Text
+  line?: Number # inline struct field comment
 
 struct ReviewResult:
-  summary: string
+  summary: Text
   findings: ReviewFinding[]
 
-thunk: # inline thunk header comment
-  Respond directly. # inline thunk body comment
+instruct:
+  You are running {{thunk.name}}.
+
+thunk respond:
+  system:
+    Respond directly.
 
 thunk summarize:
-  Summarize the current workspace in a concise style.
+  user:
+    Summarize the current workspace in a concise style.
 
 thunk inspect() -> ReviewResult:
-  Return a precise result.
+  user:
+    Return a precise result.
 
-thunk echo(_):
-  Repeat the current message directly.
-
-thunk review(_, path: path, focus?) -> ReviewResult:
+thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5 # inline directive comment
-  psyches = reviewer, concise
+  psyches += reviewer
   skills += review, patch
   services -= linear
-  tools = shell, service_use
+  tools = shell, filesystem
 
-  Review the target carefully.
-
-  Return a precise result.
-
-thunk classify(style?, strict?: boolean):
-  models = gpt-5
-  skills = review
-
-  Classify the current workspace in the requested style.
-
-thunk render(style, audience?: string):
-  Render the current workspace for the target audience.
-
-thunk rewrite(_, tone?: string):
-  models = gpt-5
-  skills = review
+  instruct: default
 
   system:
-    Rewrite the input for the requested tone.
+    Review correctness issues only.
 
   user:
-    Rewrite the message faithfully.
+    Review {{path}} carefully.
+    {{focus}}
 
-thunk chat:
-  skills += review
-
-  system:
-    Ask clarifying questions when needed.
+thunk raw:
+  instruct: none
+  system: none
+  user: none

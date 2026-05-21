@@ -1,10 +1,24 @@
 ; Source of truth for Toolang Tree-sitter tags queries.
 
-(thunk_signature
-  name: (identifier) @name) @definition.function
+(thunk
+  name: (thunk_name
+    (value_name) @name)) @definition.function
 
-(struct_header
-  name: (identifier) @name) @definition.class
+(struct
+  name: (struct_name
+    (type_name) @name)) @definition.class
 
-(declaration_header
-  name: (identifier) @name) @definition.class
+[
+  (psyche
+    name: (cap_name
+      (value_name) @name))
+  (skill
+    name: (cap_name
+      (value_name) @name))
+  (service
+    name: (cap_name
+      (value_name) @name))
+  (prompt
+    name: (cap_name
+      (value_name) @name))
+] @definition.class

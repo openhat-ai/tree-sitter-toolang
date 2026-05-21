@@ -1,0 +1,19 @@
+service local:
+  protocol = http
+  target = http://localhost:3000/mcp
+
+  Use this service for local MCP testing.
+
+skill rewrite:
+  source = by3gus/rewrite
+  description = Rewrite support
+
+  Use this skill for rewrite workflows.
+
+psyche rigorous:
+  Prefer concrete findings.
+
+prompt compact:
+  params = tone
+
+  Rewrite in a compact {{tone}} tone.

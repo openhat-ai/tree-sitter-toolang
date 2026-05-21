@@ -1,5 +1,5 @@
 ==================
-Use Selectors
+Use Items
 ==================
 use psyche toolang.ai/reviewer
 use skill briceyan/pdf-processing
@@ -9,690 +9,379 @@ use prompt https://toolang.ai/review
 ---
 
 (source_file
-  (use_statement
-    keyword: (use_keyword)
-    kind: (cap_kind)
-    reference: (reference)
-    (newline))
-  (use_statement
-    keyword: (use_keyword)
-    kind: (cap_kind)
-    reference: (reference)
-    (newline))
-  (use_statement
-    keyword: (use_keyword)
-    kind: (cap_kind)
-    reference: (reference)
-    (newline))
-  (use_statement
-    keyword: (use_keyword)
-    kind: (cap_kind)
-    reference: (reference)
-    (newline)))
+  (item
+    (use
+      (use_keyword)
+      (cap_kind)
+      (cap_ref
+        (cap_shorthand))
+      (line_end
+        (newline))))
+  (item
+    (use
+      (use_keyword)
+      (cap_kind)
+      (cap_ref
+        (cap_shorthand))
+      (line_end
+        (newline))))
+  (item
+    (use
+      (use_keyword)
+      (cap_kind)
+      (cap_ref
+        (cap_uri))
+      (line_end
+        (newline))))
+  (item
+    (use
+      (use_keyword)
+      (cap_kind)
+      (cap_ref
+        (cap_uri))
+      (line_end
+        (newline)))))
 
-===================================
-Fenced Cap Declarations With Metadata
-===================================
+==================
+Cap Items
+==================
+service github: ```md
+---
+protocol: http
+target: https://mcp.github.com/mcp
+---
+
+Use this service when the agent needs GitHub access.
+```
+
 psyche reviewer: ```md
 Prefer concrete findings and direct language.
 ```
 
-service github: ```md
----
-description: Use when the agent needs GitHub MCP access.
-transport: http
-target: https://mcp.github.com/mcp
-headers:
-  Authorization: Bearer $GITHUB_TOKEN
----
+prompt review:
+  params = path, focus
 
-Use this service when the agent needs GitHub access.
-```
-
-prompt review: ```md
----
-params: path, focus?
----
-
-Review {{path}} carefully.
-{{focus}}
-```
+  Review {{path}} carefully.
 
 ---
 
 (source_file
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (psyche_fence_body
-      (non_frontmatter_fence_content_line
-        text: (non_frontmatter_fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (service_fence_body
-      frontmatter: (service_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (service_description_line
-          (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (service_transport_line
-          (colon)
-          value: (service_transport_value)
-          (newline))
-        (service_target_line
-          (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (service_headers_block
-          (colon)
-          (newline)
-          (header_map_entry_line
-            name: (frontmatter_header_name)
-            (colon)
-            value: (frontmatter_scalar)
-            (newline)))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (prompt_fence_body
-      frontmatter: (prompt_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (prompt_params_line
-          (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close)))
-
-===========================================
-Fenced Prompt With Frontmatter And Struct
-===========================================
-prompt review: ```md
----
-params: path, focus?
----
-
-Review {{path}} carefully.
-{{focus}}
-```
-
-struct ReviewFinding:
-  path: string
-  line: number?
-  tags: string[]
-
----
-
-(source_file
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (prompt_fence_body
-      frontmatter: (prompt_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (prompt_params_line
-          (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (struct_declaration
-    header: (struct_header
-      keyword: (struct_keyword)
-      name: (identifier)
-      colon: (colon)
-      (newline))
-    body: (struct_body
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
-        (newline))
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)
-            optional: (question)))
-        (newline))
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)
-            array: (array_suffix)))
-        (newline)))))
-
-==============================
-Fenced Prompt Without Parameters
-==============================
-prompt review: ```md
-Review the current request directly.
-```
-
----
-
-(source_file
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (newline))
-    body: (prompt_fence_body
-      (non_frontmatter_fence_content_line
-        text: (non_frontmatter_fence_text)
-        (newline)))
-    close: (fence_close)))
-
-=====================================
-Invalid Parameterized Fenced Declaration
-=====================================
-prompt summarize(style): ```md
-Summarize the request in a concise style.
-```
-
----
-
-(source_file
-  (fenced_declaration
-    (declaration_header
-      (decl_kind)
-      (identifier)
-      (ERROR
-        (lparen)
-        (UNEXPECTED 'y')
-        (rparen))
+  (item
+    (service
+      (service_keyword)
+      (cap_name
+        (value_name))
       (colon)
-      (fence_open)
-      (language)
-      (newline))
-    (prompt_fence_body
-      (non_frontmatter_fence_content_line
-        (non_frontmatter_fence_text)
-        (newline)))
-    (fence_close)))
-
-=============================
-Prompt With Frontmatter Params
-=============================
-prompt summarize: ```md
----
-params: style, audience?
----
-
-Summarize the request in a {{style}} voice.
-Audience: {{audience}}
-```
-
----
-
-(source_file
-  (fenced_declaration
-    (declaration_header
-      (decl_kind)
-      (identifier)
+      (cap_body
+        (cap_markdown
+          (fence_open)
+          (block_language)
+          (line_end
+            (newline))
+          (frontmatter
+            (frontmatter_delimiter)
+            (newline)
+            (property_colon
+              (property_key
+                (value_name))
+              (colon)
+              (property_value
+                (inline_text))
+              (newline))
+            (property_colon
+              (property_key
+                (value_name))
+              (colon)
+              (property_value
+                (inline_text))
+              (newline))
+            (frontmatter_delimiter)
+            (newline))
+          (cap_fenced_content_line
+            (newline))
+          (cap_fenced_content_line
+            (fenced_raw_text)
+            (newline))
+          (fence_close)))))
+  (blank_line
+    (newline))
+  (item
+    (psyche
+      (psyche_keyword)
+      (cap_name
+        (value_name))
       (colon)
-      (fence_open)
-      (language)
-      (newline))
-    (prompt_fence_body
-      (prompt_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (prompt_params_line
-          (colon)
-          (frontmatter_scalar)
-          (newline))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        (fence_text)
-        (newline))
-      (fence_content_line
-        (fence_text)
-        (newline)))
-    (fence_close)))
+      (cap_body
+        (cap_markdown
+          (fence_open)
+          (block_language)
+          (line_end
+            (newline))
+          (cap_fenced_content_line
+            (fenced_raw_text)
+            (newline))
+          (fence_close)))))
+  (blank_line
+    (newline))
+  (item
+    (prompt
+      (prompt_keyword)
+      (cap_name
+        (value_name))
+      (colon)
+      (cap_body
+        (cap_indented
+          (line_end
+            (newline))
+          (property_eq
+            (property_key
+              (value_name))
+            (assign_operator)
+            (property_value
+              (inline_text))
+            (line_end
+              (newline)))
+          (blank_line
+            (newline))
+          (cap_indented_content_line
+            (indented_raw_text)
+            (newline)))))))
 
-=============================
-Thunk With Full Directives
-=============================
-thunk review(_, path?: path, focus?) -> ReviewResult:
-  models = gpt-5
-  psyches = reviewer, concise
-  skills += review, patch
-  services -= linear
-  tools = shell, service_use
-
-  Review the target carefully.
-
-  Return a precise result.
-
----
-
-(source_file
-  (thunk
-    signature: (thunk_signature
-      keyword: (thunk_keyword)
-      name: (identifier)
-      params: (parameter_list
-        (lparen)
-        input: (input
-          name: (underscore))
-        (comma)
-        param: (param
-          name: (named_identifier)
-          optional: (question)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
-        (comma)
-        param: (param
-          name: (named_identifier)
-          optional: (question))
-        (rparen))
-      arrow: (arrow)
-      output: (type_expression
-        name: (identifier))
-      colon: (colon)
-      (newline))
-    body: (thunk_body
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (assign_operator)
-          values: (overlay_values
-            value: (overlay_value)))
-        (newline))
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (assign_operator)
-          values: (overlay_values
-            value: (overlay_value)
-            (comma)
-            value: (overlay_value)))
-        (newline))
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (add_assign_operator)
-          values: (overlay_values
-            value: (overlay_value)
-            (comma)
-            value: (overlay_value)))
-        (newline))
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (remove_assign_operator)
-          values: (overlay_values
-            value: (overlay_value)))
-        (newline))
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (assign_operator)
-          values: (overlay_values
-            value: (overlay_value)
-            (comma)
-            value: (overlay_value)))
-        (newline))
-      (blank_line
-        (newline))
-      (message
-        (message_line
-          text: (message_text)
-          (newline))
-        (blank_line
-          (newline))
-        (message_line
-          text: (message_text)
-          (newline))))))
-
-======================================
-Thunk Requires Blank Line After Directives
-======================================
-thunk summarize(_) -> text:
-  models = gpt-5
-  Produce a concise workspace summary.
-
----
-
-(source_file
-  (ERROR
-    (thunk_signature
-      keyword: (thunk_keyword)
-      name: (identifier)
-      params: (parameter_list
-        (lparen)
-        input: (input
-          name: (underscore))
-        (rparen))
-      arrow: (arrow)
-      output: (type_expression
-        name: (identifier))
-      colon: (colon)
-      (newline))
-    (overlay_line
-      overlay: (thunk_overlay
-        subject: (overlay_subject)
-        operator: (assign_operator)
-        values: (overlay_values
-          value: (overlay_value)))
-      (newline))
-    (ERROR
-      (UNEXPECTED 'P'))
-    (blank_line
-      (newline))))
-
-==========================
-Top-Level And Inline Comments
-==========================
-# top-level file comment
-use skill briceyan/pdf-processing # inline use comment
-
-service github: ```md # inline declaration header comment
----
-description: Use when the agent needs GitHub MCP access.
-transport: http
-target: https://mcp.github.com/mcp
-headers:
-  Authorization: Bearer $GITHUB_TOKEN
----
-
-Use this service when the agent needs GitHub access.
-```
-
+==================
+Struct And Instruct
+==================
 struct ReviewResult:
-  summary: string # inline struct field comment
+  summary: Text
+  findings: Finding[]
 
-prompt review: ```md # inline prompt header comment
----
-params: path, focus?
----
-
-Review {{path}} carefully.
-{{focus}}
-```
-
-thunk review(_, path?: path) -> ReviewResult: # inline thunk header comment
-  models = gpt-5 # inline directive comment
-
-  Review the target carefully. # inline thunk body comment
+instruct:
+  You are running {{thunk.name}}.
 
 ---
 
 (source_file
-  (comment)
-  (use_statement
-    keyword: (use_keyword)
-    kind: (cap_kind)
-    reference: (reference)
-    (inline_comment)
-    (newline))
-  (blank_line
-    (newline))
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (inline_comment)
-      (newline))
-    body: (service_fence_body
-      frontmatter: (service_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (service_description_line
+  (item
+    (struct
+      (struct_keyword)
+      (struct_name
+        (type_name))
+      (colon)
+      (line_end
+        (newline))
+      (struct_body
+        (field
+          (field_name
+            (value_name))
           (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (service_transport_line
-          (colon)
-          value: (service_transport_value)
-          (newline))
-        (service_target_line
-          (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (service_headers_block
-          (colon)
-          (newline)
-          (header_map_entry_line
-            name: (frontmatter_header_name)
-            (colon)
-            value: (frontmatter_scalar)
+          (type
+            (base_type
+              (builtin_type)))
+          (line_end
             (newline)))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (struct_declaration
-    header: (struct_header
-      keyword: (struct_keyword)
-      name: (identifier)
-      colon: (colon)
-      (newline))
-    body: (struct_body
-      (struct_field_line
-        field: (struct_field
-          name: (identifier)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
-        (inline_comment)
-        (newline))
-      (blank_line
-        (newline))))
-  (fenced_declaration
-    header: (declaration_header
-      kind: (decl_kind)
-      name: (identifier)
-      colon: (colon)
-      open: (fence_open)
-      language: (language)
-      (inline_comment)
-      (newline))
-    body: (prompt_fence_body
-      frontmatter: (prompt_frontmatter
-        (frontmatter_delimiter)
-        (newline)
-        (prompt_params_line
+        (field
+          (field_name
+            (value_name))
           (colon)
-          value: (frontmatter_scalar)
-          (newline))
-        (frontmatter_delimiter)
-        (newline))
-      (fence_content_line
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline))
-      (fence_content_line
-        text: (fence_text)
-        (newline)))
-    close: (fence_close))
-  (blank_line
-    (newline))
-  (thunk
-    signature: (thunk_signature
-      keyword: (thunk_keyword)
-      name: (identifier)
-      params: (parameter_list
-        (lparen)
-        input: (input
-          name: (underscore))
-        (comma)
-        param: (param
-          name: (named_identifier)
-          optional: (question)
-          colon: (colon)
-          type: (type_expression
-            name: (identifier)))
-        (rparen))
-      arrow: (arrow)
-      output: (type_expression
-        name: (identifier))
-      colon: (colon)
-      (inline_comment)
-      (newline))
-    body: (thunk_body
-      (overlay_line
-        overlay: (thunk_overlay
-          subject: (overlay_subject)
-          operator: (assign_operator)
-          values: (overlay_values
-            value: (overlay_value)))
-        (inline_comment)
-        (newline))
-      (blank_line
-        (newline))
-      (message
-        (message_line
-          text: (message_text)
-          (inline_comment)
-          (newline))))))
+          (type
+            (base_type
+              (user_type
+                (type_name)))
+            (type_suffix
+              (array_suffix)))
+          (line_end
+            (newline)))
+        (blank_line
+          (newline)))))
+  (item
+    (instruct
+      (instruct_keyword)
+      (colon)
+      (instruct_body
+        (block_indented
+          (line_end
+            (newline))
+          (block_indented_content_line
+            (indented_raw_text)
+            (newline)))))))
 
-=================================
-Thunk With Explicit Message Blocks
-=================================
-thunk rewrite(_, tone?: string):
+==================
+Thunk With Directives And Blocks
+==================
+thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
-  skills = review
+  tools += shell, filesystem
+  delegates += summarize
+
+  instruct: default
 
   system:
-    Rewrite the input for the requested tone.
+    Review correctness issues only.
 
   user:
-    Rewrite the message faithfully.
+    Review {{path}} carefully.
+    {{focus}}
 
 ---
 
 (source_file
-  (thunk
-    (thunk_signature
+  (item
+    (thunk
       (thunk_keyword)
-      (identifier)
-      (parameter_list
+      (thunk_name
+        (value_name))
+      (params
         (lparen)
-        (input
-          (underscore))
+        (param
+          (param_name
+            (value_name))
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
         (comma)
         (param
-          (named_identifier)
-          (question)
+          (param_name
+            (value_name))
           (colon)
-          (type_expression
-            (identifier)))
+          (type
+            (base_type
+              (builtin_type))))
+        (comma)
+        (param
+          (param_name
+            (value_name))
+          (optional_marker)
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
         (rparen))
+      (arrow)
+      (type
+        (base_type
+          (user_type
+            (type_name))))
       (colon)
-      (newline))
-    (thunk_body
-      (overlay_line
-        (thunk_overlay
-          (overlay_subject)
-          (assign_operator)
-          (overlay_values
-            (overlay_value)))
+      (line_end
         (newline))
-      (overlay_line
-        (thunk_overlay
-          (overlay_subject)
-          (assign_operator)
-          (overlay_values
-            (overlay_value)))
-        (newline))
-      (blank_line
-        (newline))
-      (message
-        (message_kind)
-        (colon)
-        (newline)
-        (message_continuation_line
-          (indented_message_text)
-          (newline))
+      (thunk_body
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value)
+            (comma)
+            (bare_value))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value))
+          (line_end
+            (newline)))
         (blank_line
-          (newline)))
-      (message
-        (message_kind)
-        (colon)
-        (newline)
-        (message_continuation_line
-          (indented_message_text)
-          (newline))))))
+          (newline))
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_inline
+              (block_name)
+              (line_end
+                (newline)))))
+        (blank_line
+          (newline))
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_indented
+              (line_end
+                (newline))
+              (block_indented_content_line
+                (indented_raw_text)
+                (newline))
+              (blank_line
+                (newline)))))
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_indented
+              (line_end
+                (newline))
+              (block_indented_content_line
+                (indented_raw_text)
+                (newline))
+              (block_indented_content_line
+                (indented_raw_text)
+                (newline)))))))))
+
+==================
+Comments
+==================
+# top-level comment
+use skill briceyan/pdf-processing # inline comment
+
+thunk raw:
+  instruct: none
+  system: none
+  user: none
+
+---
+
+(source_file
+  (comment_line)
+  (item
+    (use
+      (use_keyword)
+      (cap_kind)
+      (cap_ref
+        (cap_shorthand))
+      (line_end
+        (inline_comment)
+        (newline))))
+  (blank_line
+    (newline))
+  (item
+    (thunk
+      (thunk_keyword)
+      (thunk_name
+        (value_name))
+      (colon)
+      (line_end
+        (newline))
+      (thunk_body
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_inline
+              (block_name)
+              (line_end
+                (newline)))))
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_inline
+              (block_name)
+              (line_end
+                (newline)))))
+        (block
+          (block_kind)
+          (colon)
+          (block_value
+            (block_inline
+              (block_name)
+              (line_end
+                (newline)))))))))

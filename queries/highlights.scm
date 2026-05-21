@@ -1,77 +1,74 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
 ; Maintain this file in this repository and consume it from tooling.
 
-(comment) @comment
+(comment_line) @comment
 (inline_comment) @comment
+(frontmatter_comment) @comment
 
 (use_keyword) @keyword
 (struct_keyword) @keyword
+(psyche_keyword) @keyword
+(skill_keyword) @keyword
+(service_keyword) @keyword
+(prompt_keyword) @keyword
+(instruct_keyword) @keyword
 (thunk_keyword) @keyword
-(decl_kind) @keyword
 
 (cap_kind) @type
-(overlay_subject) @property
-(message_kind) @keyword
-(language) @property
+(directive_key) @property
+(block_kind) @keyword
+(block_language) @property
 
 (assign_operator) @operator
-(add_assign_operator) @operator
-(remove_assign_operator) @operator
+(directive_op) @operator
 (arrow) @operator
 
 (colon) @punctuation.delimiter
 (comma) @punctuation.delimiter
 (lparen) @punctuation.delimiter
 (rparen) @punctuation.delimiter
-(question) @punctuation.special
+(optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
 (fence_open) @punctuation.special
 (fence_close) @punctuation.special
+(frontmatter_delimiter) @punctuation.special
 
-(reference) @constant
-(message_text) @string
-(indented_message_text) @string
-(fence_text) @string
+(cap_uri) @constant
+(cap_shorthand) @constant
+(bare_value) @constant
 
-(thunk_overlay
-  subject: (overlay_subject) @_subject
-  values: (overlay_values
-    (overlay_value) @type)
-  (#eq? @_subject "models"))
+(property_value) @string
+(block_content_inline) @string
+(fenced_raw_text) @string
+(indented_raw_text) @string
 
-(thunk_overlay
-  subject: (overlay_subject) @_subject
-  values: (overlay_values
-    (overlay_value) @constant)
-  (#not-eq? @_subject "models"))
+(struct
+  name: (struct_name
+    (type_name) @type))
 
-(declaration_header
-  kind: (decl_kind) @_kind
-  name: (identifier) @function
-  (#eq? @_kind "prompt"))
+(thunk
+  name: (thunk_name
+    (value_name) @function))
 
-(declaration_header
-  kind: (decl_kind) @_kind
-  name: (identifier) @type
-  (#any-of? @_kind "psyche" "service"))
+(prompt
+  name: (cap_name
+    (value_name) @function))
 
-(struct_header
-  name: (identifier) @type)
-
-(thunk_signature
-  name: (identifier) @function)
-
-(struct_field
-  name: (identifier) @property)
+[
+  (psyche)
+  (skill)
+  (service)
+] @type
 
 (param
-  name: (named_identifier) @property)
+  name: (param_name
+    (value_name) @property))
 
-(input
-  name: (underscore) @property)
+(field
+  name: (field_name
+    (value_name) @property))
 
-(type_expression
-  name: (identifier) @type)
-
-(use_statement
-  reference: (reference) @constant)
+(type
+  (base_type
+    (user_type
+      (type_name) @type)))

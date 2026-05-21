@@ -1,0 +1,48 @@
+#!/usr/bin/env toolang
+
+##! Program documentation.
+
+## Review skill documentation.
+skill review:
+  source = by3gus/review
+  description = Review support
+
+  Use this skill for review workflows.
+
+service github:
+  protocol = http
+  target = https://mcp.github.com/mcp
+
+  Use GitHub for repository operations.
+
+prompt rewrite:
+  params = tone
+
+  Rewrite the input in the requested tone.
+
+psyche rigorous:
+  Prefer concrete findings.
+
+## Review result documentation.
+struct ReviewResult:
+  ## Summary field documentation.
+  summary: Text
+  count?: Number
+  ok: Boolean
+  payload: Json
+  messages: Message[]
+  findings: Finding[]
+
+instruct strict-json: ```md
+Return only JSON.
+```
+
+thunk report() -> Text:
+  handoffs = support, billing
+  delegates += summarize
+
+  instruct: strict-json
+  system: You write concise reports.
+  user: ```md
+Generate a concise report.
+```

@@ -2,376 +2,265 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-  conflicts: ($) => [[$._implicit_message]],
+
   rules: {
     source_file: ($) =>
-      repeat(
-        choice(
-          $.comment,
-          $.blank_line,
-          $.use_statement,
-          alias($.psyche_declaration, $.fenced_declaration),
-          alias($.service_declaration, $.fenced_declaration),
-          alias($.prompt_declaration, $.fenced_declaration),
-          $.struct_declaration,
-          $.thunk,
-        ),
+      repeat(choice($.comment_line, $.blank_line, $.item)),
+
+    item: ($) =>
+      choice(
+        $.use,
+        $.struct,
+        $.psyche,
+        $.skill,
+        $.service,
+        $.prompt,
+        $.instruct,
+        $.thunk,
       ),
 
     newline: () => /\r?\n/,
     blank_line: ($) => $.newline,
-    comment: () => token(seq("#", /[^\n]*/, /\r?\n/)),
+    comment_line: () => token(seq("#", /[^\r\n]*/, /\r?\n/)),
+    inline_comment: () => token(seq("#", /[^\r\n]*/)),
+    line_end: ($) => seq(optional($.inline_comment), $.newline),
 
-    use_statement: ($) =>
+    use: ($) =>
       seq(
         field("keyword", $.use_keyword),
         field("kind", $.cap_kind),
-        field("reference", $.reference),
-        optional($.inline_comment),
-        $.newline,
+        field("reference", $.cap_ref),
+        $.line_end,
       ),
 
-    psyche_declaration: ($) =>
+    type: ($) =>
       seq(
-        field("header", alias($.psyche_header, $.declaration_header)),
-        field("body", $.psyche_fence_body),
-        field("close", $.fence_close),
+        field("base", $.base_type),
+        repeat(field("suffix", $.type_suffix)),
       ),
 
-    service_declaration: ($) =>
-      seq(
-        field("header", alias($.service_header, $.declaration_header)),
-        field("body", $.service_fence_body),
-        field("close", $.fence_close),
-      ),
+    base_type: ($) => choice($.builtin_type, $.user_type),
+    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Message"),
+    user_type: ($) => $.type_name,
+    type_suffix: ($) => $.array_suffix,
+    array_suffix: () => "[]",
 
-    prompt_declaration: ($) =>
+    struct: ($) =>
       seq(
-        field("header", alias($.prompt_header, $.declaration_header)),
-        field("body", $.prompt_fence_body),
-        field("close", $.fence_close),
-      ),
-
-    psyche_header: ($) =>
-      seq(
-        field("kind", alias($.psyche_keyword, $.decl_kind)),
-        field("name", $.identifier),
+        field("keyword", $.struct_keyword),
+        field("name", $.struct_name),
         field("colon", $.colon),
-        field("open", $.fence_open),
-        field("language", alias($.markdown_language, $.language)),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
-    service_header: ($) =>
-      seq(
-        field("kind", alias($.service_keyword, $.decl_kind)),
-        field("name", $.identifier),
-        field("colon", $.colon),
-        field("open", $.fence_open),
-        field("language", alias($.markdown_language, $.language)),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
-    prompt_header: ($) =>
-      seq(
-        field("kind", alias($.prompt_keyword, $.decl_kind)),
-        field("name", $.identifier),
-        field("colon", $.colon),
-        field("open", $.fence_open),
-        field("language", alias($.markdown_language, $.language)),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
-    struct_declaration: ($) =>
-      seq(
-        field("header", $.struct_header),
+        $.line_end,
         field("body", $.struct_body),
       ),
 
-    struct_header: ($) =>
+    struct_name: ($) => $.type_name,
+    struct_body: ($) =>
+      prec.right(repeat1(choice($.field, $.comment_line, $.blank_line))),
+    field: ($) =>
       seq(
-        field("keyword", $.struct_keyword),
-        field("name", $.identifier),
+        field("name", $.field_name),
+        optional(field("optional", $.optional_marker)),
         field("colon", $.colon),
-        optional($.inline_comment),
+        field("type", $.type),
+        $.line_end,
+      ),
+    field_name: ($) => $.value_name,
+
+    psyche: ($) =>
+      seq(
+        field("kind", $.psyche_keyword),
+        field("name", $.cap_name),
+        field("colon", $.colon),
+        field("body", $.cap_body),
+      ),
+
+    skill: ($) =>
+      seq(
+        field("kind", $.skill_keyword),
+        field("name", $.cap_name),
+        field("colon", $.colon),
+        field("body", $.cap_body),
+      ),
+
+    service: ($) =>
+      seq(
+        field("kind", $.service_keyword),
+        field("name", $.cap_name),
+        field("colon", $.colon),
+        field("body", $.cap_body),
+      ),
+
+    prompt: ($) =>
+      seq(
+        field("kind", $.prompt_keyword),
+        field("name", $.cap_name),
+        field("colon", $.colon),
+        field("body", $.cap_body),
+      ),
+
+    cap_name: ($) => $.value_name,
+    cap_ref: ($) => choice($.cap_uri, $.cap_shorthand),
+
+    cap_body: ($) => choice($.cap_indented, $.cap_markdown),
+    cap_indented: ($) =>
+      prec.right(seq(
+        $.line_end,
+        repeat(choice($.property_eq, $.cap_indented_content_line, $.blank_line)),
+      )),
+    cap_markdown: ($) =>
+      seq(
+        $.fence_open,
+        optional(field("language", $.block_language)),
+        $.line_end,
+        optional(field("frontmatter", $.frontmatter)),
+        repeat($.cap_fenced_content_line),
+        field("close", $.fence_close),
+      ),
+    cap_content: ($) => $.raw_text,
+    cap_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
+    cap_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
+
+    frontmatter: ($) =>
+      seq(
+        $.frontmatter_delimiter,
+        $.newline,
+        repeat(choice($.property_colon, $.frontmatter_comment)),
+        $.frontmatter_delimiter,
         $.newline,
       ),
 
-    struct_field_line: ($) =>
+    property_eq: ($) =>
       seq(
-        field("field", $.struct_field),
-        optional($.inline_comment),
+        field("key", $.property_key),
+        field("operator", $.assign_operator),
+        field("value", $.property_value),
+        $.line_end,
+      ),
+    property_colon: ($) =>
+      seq(
+        field("key", $.property_key),
+        field("colon", $.colon),
+        field("value", $.property_value),
         $.newline,
       ),
+    frontmatter_comment: () => token(seq("#", /[^\r\n]*/, /\r?\n/)),
+    property_key: ($) => $.value_name,
+    property_value: ($) => $.inline_text,
 
-    struct_body: ($) => prec.right(repeat1(choice($.struct_field_line, $.blank_line))),
-
-    struct_field: ($) =>
+    instruct: ($) =>
       seq(
-        field("name", $.identifier),
+        field("keyword", $.instruct_keyword),
+        optional(field("name", $.instruct_name)),
         field("colon", $.colon),
-        field("type", $.type_expression),
+        field("body", $.instruct_body),
       ),
+    instruct_name: ($) => $.value_name,
+    instruct_body: ($) => choice($.block_indented, $.block_fenced),
 
-    parameter_list: ($) => seq($.lparen, optional($._parameter_sequence), $.rparen),
-
-    _parameter_sequence: ($) =>
-      choice($._input_then_params, $._params),
-
-    _input_then_params: ($) =>
+    block_indented: ($) =>
+      prec.right(seq(
+        $.line_end,
+        repeat(choice($.block_indented_content_line, $.blank_line)),
+      )),
+    block_fenced: ($) =>
       seq(
-        field("input", alias($.unnamed_parameter, $.input)),
-        optional(seq($.comma, $._params)),
+        $.fence_open,
+        optional(field("language", $.block_language)),
+        $.line_end,
+        repeat($.block_fenced_content_line),
+        field("close", $.fence_close),
       ),
-
-    _params: ($) =>
-      choice($._required_then_optional_params, $._optional_params),
-
-    _required_then_optional_params: ($) =>
-      seq(
-        field("param", alias($.required_named_parameter, $.param)),
-        repeat(seq($.comma, field("param", alias($.required_named_parameter, $.param)))),
-        optional(seq($.comma, $._optional_params)),
-      ),
-
-    _optional_params: ($) =>
-      seq(
-        field("param", alias($.optional_named_parameter, $.param)),
-        repeat(seq($.comma, field("param", alias($.optional_named_parameter, $.param)))),
-      ),
-
-    unnamed_parameter: ($) => field("name", $.underscore),
-
-    required_named_parameter: ($) =>
-      seq(
-        field("name", $.named_identifier),
-        optional(seq(field("colon", $.colon), field("type", $.type_expression))),
-      ),
-
-    optional_named_parameter: ($) =>
-      seq(
-        field("name", $.named_identifier),
-        field("optional", $.question),
-        optional(seq(field("colon", $.colon), field("type", $.type_expression))),
-      ),
-
-    type_expression: ($) =>
-      prec.right(
-        seq(
-          field("name", $.identifier),
-          repeat(field("array", $.array_suffix)),
-          optional(field("optional", $.question)),
-        ),
-      ),
-
-    array_suffix: () => "[]",
+    block_content: ($) => $.raw_text,
+    block_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
+    block_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
+    block_language: () => "md",
 
     thunk: ($) =>
       seq(
-        field("signature", $.thunk_signature),
+        field("keyword", $.thunk_keyword),
+        optional(field("name", $.thunk_name)),
+        optional(field("params", $.params)),
+        optional(seq(field("arrow", $.arrow), field("output", $.type))),
+        field("colon", $.colon),
+        $.line_end,
         field("body", $.thunk_body),
       ),
-
-    thunk_signature: ($) =>
-      seq(
-        field("keyword", $.thunk_keyword),
-        optional(field("name", $.identifier)),
-        optional(field("params", $.parameter_list)),
-        optional(seq(field("arrow", $.arrow), field("output", $.type_expression))),
-        field("colon", $.colon),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
+    thunk_name: ($) => $.value_name,
     thunk_body: ($) =>
-      choice(
-        prec.right(
-          seq(
-            repeat1($.overlay_line),
-            repeat1($.blank_line),
-            repeat1(alias($._explicit_message, $.message)),
-          ),
-        ),
-        seq(
-          repeat1($.overlay_line),
-          repeat1($.blank_line),
-          alias($._implicit_message, $.message),
-        ),
-        prec.right(repeat1(alias($._explicit_message, $.message))),
-        alias($._implicit_message, $.message),
-      ),
+      prec.right(repeat1(choice($.directive, $.block, $.comment_line, $.blank_line))),
 
-    _explicit_message: ($) =>
-      prec.right(
-        seq(
-          field("kind", $.message_kind),
-          field("colon", $.colon),
-          optional(field("inline", $.message_text)),
-          optional($.inline_comment),
-          $.newline,
-          repeat(choice($.message_continuation_line, $.blank_line)),
-        ),
-      ),
-
-    _implicit_message: ($) =>
-      prec.right(
-        seq(
-          repeat($.blank_line),
-          $.message_line,
-          repeat(seq(repeat($.blank_line), $.message_line)),
-          repeat($.blank_line),
-        ),
-      ),
-
-    overlay_line: ($) =>
+    params: ($) =>
       seq(
-        field("overlay", $.thunk_overlay),
-        optional($.inline_comment),
-        $.newline,
+        $.lparen,
+        optional(seq(field("param", $.param), repeat(seq($.comma, field("param", $.param))))),
+        $.rparen,
       ),
-
-    thunk_overlay: ($) =>
+    param: ($) =>
       seq(
-        field("subject", $.overlay_subject),
-        field(
-          "operator",
-          choice($.assign_operator, $.add_assign_operator, $.remove_assign_operator),
-        ),
-        optional(field("values", $.overlay_values)),
+        field("name", $.param_name),
+        optional(field("optional", $.optional_marker)),
+        field("colon", $.colon),
+        field("type", $.type),
       ),
+    param_name: ($) => $.value_name,
 
-    overlay_values: ($) =>
+    directive: ($) =>
       seq(
-        field("value", $.overlay_value),
-        repeat(seq($.comma, field("value", $.overlay_value))),
+        field("key", $.directive_key),
+        field("operator", $.directive_op),
+        field("values", $.directive_csv),
+        $.line_end,
       ),
+    directive_key: () =>
+      choice("models", "tools", "skills", "services", "psyches", "handoffs", "delegates"),
+    directive_op: () => choice("=", "+=", "-="),
+    directive_csv: ($) =>
+      seq($.bare_value, repeat(seq($.comma, $.bare_value))),
 
-    message_line: ($) =>
+    block: ($) =>
       seq(
-        field("text", $.message_text),
-        optional($.inline_comment),
-        $.newline,
+        field("kind", $.block_kind),
+        field("colon", $.colon),
+        field("value", $.block_value),
       ),
-
-    message_continuation_line: ($) =>
-      seq(
-        field("text", $.indented_message_text),
-        optional($.inline_comment),
-        $.newline,
-      ),
-
-    psyche_fence_body: ($) =>
-      seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
-
-    service_fence_body: ($) =>
-      seq(field("frontmatter", $.service_frontmatter), repeat($.fence_content_line)),
-
-    prompt_fence_body: ($) =>
-      choice(
-        seq(field("frontmatter", $.prompt_frontmatter), repeat($.fence_content_line)),
-        seq(choice($.non_frontmatter_fence_content_line, $.empty_fence_content_line), repeat($.fence_content_line)),
-      ),
-
-    service_frontmatter: ($) =>
-      seq(
-        $.frontmatter_delimiter,
-        $.newline,
-        $.service_description_line,
-        $.service_transport_line,
-        $.service_target_line,
-        repeat(choice($.service_headers_block, $.service_env_line)),
-        $.frontmatter_delimiter,
-        $.newline,
-      ),
-
-    prompt_frontmatter: ($) =>
-      seq(
-        $.frontmatter_delimiter,
-        $.newline,
-        $.prompt_params_line,
-        $.frontmatter_delimiter,
-        $.newline,
-      ),
-
-    service_description_line: ($) =>
-      seq("description", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    service_transport_line: ($) =>
-      seq("transport", $.colon, field("value", $.service_transport_value), $.newline),
-
-    service_target_line: ($) =>
-      seq("target", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    service_headers_block: ($) =>
-      seq("headers", $.colon, $.newline, repeat1($.header_map_entry_line)),
-
-    header_map_entry_line: ($) =>
-      seq(field("name", $.frontmatter_header_name), $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    service_env_line: ($) =>
-      seq("env", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    prompt_params_line: ($) =>
-      seq("params", $.colon, field("value", $.frontmatter_scalar), $.newline),
-
-    fence_content_line: ($) =>
-      seq(
-        optional(field("text", $.fence_text)),
-        $.newline,
-      ),
-
-    non_frontmatter_fence_content_line: ($) =>
-      seq(field("text", $.non_frontmatter_fence_text), $.newline),
-
-    empty_fence_content_line: ($) => $.newline,
-
-    inline_comment: () => token(seq("#", /[^\n]*/)),
+    block_kind: () => choice("instruct", "system", "user"),
+    block_value: ($) => choice($.block_inline, $.block_indented, $.block_fenced),
+    block_inline: ($) =>
+      seq(choice(field("name", $.block_name), field("content", $.block_content_inline)), $.line_end),
+    block_name: ($) => choice("default", "none", $.value_name),
+    block_content_inline: ($) => $.inline_text,
 
     use_keyword: () => "use",
+    struct_keyword: () => "struct",
     psyche_keyword: () => "psyche",
+    skill_keyword: () => "skill",
     service_keyword: () => "service",
     prompt_keyword: () => "prompt",
-    struct_keyword: () => "struct",
+    instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
-    markdown_language: () => "md",
+
+    optional_marker: () => "?",
     assign_operator: () => "=",
-    add_assign_operator: () => "+=",
-    remove_assign_operator: () => "-=",
     arrow: () => "->",
     colon: () => ":",
     lparen: () => "(",
     rparen: () => ")",
     comma: () => ",",
-    question: () => "?",
-    underscore: () => "_",
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),
     frontmatter_delimiter: () => "---",
 
     cap_kind: () => choice("psyche", "skill", "service", "prompt"),
-    decl_kind: () => choice("psyche", "service", "prompt"),
-    overlay_subject: () =>
-      choice("models", "psyche", "psyches", "skill", "skills", "service", "services", "tool", "tools"),
-    message_kind: () => choice("system", "user", "assistant", "tool"),
-    service_transport_value: () => choice("http", "stdio"),
+    cap_uri: () => token(/[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s#]+/),
+    cap_shorthand: () => token(/[A-Za-z0-9_@-][A-Za-z0-9_./:@-]*/),
+    bare_value: () => token(/[A-Za-z0-9_./:@-]+/),
 
-    identifier: () => token(/[A-Za-z_][A-Za-z0-9_-]*/),
-    named_identifier: () =>
-      token(choice(/[A-Za-z][A-Za-z0-9_-]*/, /_[A-Za-z0-9-][A-Za-z0-9_-]*/)),
-    reference: () => token(/[A-Za-z0-9_./:@-]+/),
-    language: () => token(/[A-Za-z0-9_-]+/),
-    overlay_value: () => token(/[A-Za-z0-9_./:@-]+/),
-    message_text: () => token(prec(-1, /[^\r\n#][^\r\n#]*/)),
-    indented_message_text: () => token(prec(-1, /[ \t][^\r\n#]*/)),
-    fence_text: () => token(/[^`\r\n][^\r\n]*/),
-    non_frontmatter_fence_text: () =>
-      token(
-        /(?:[^`\r\n-][^\r\n]*|-[^-\r\n][^\r\n]*|--[^-\r\n][^\r\n]*|---[^-\r\n][^\r\n]*|----[^\r\n]*)/,
-      ),
-    frontmatter_header_name: () => token(/[A-Za-z0-9_-]+/),
-    frontmatter_scalar: () => token(/[^\r\n]+/),
+    type_name: () => token(/[A-Z][A-Za-z0-9]*/),
+    value_name: () => token(/[a-z][a-z0-9_-]*/),
+    inline_text: () => token(prec(-1, /[^#\r\n]+/)),
+    raw_text: () => token(prec(-1, /[^\r\n]*/)),
+    indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
+    fenced_raw_text: () => token(prec(-1, /[^`\r\n][^\r\n]*/)),
   },
 });
