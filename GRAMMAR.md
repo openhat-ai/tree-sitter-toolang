@@ -172,7 +172,7 @@ Rules:
 ## Thunk
 
 ```ebnf
-thunk ::= "thunk" thunk_name params? output_type? ":" line_end INDENT thunk_body DEDENT
+thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
 thunk_name ::= value_name
 thunk_body ::= directive* block*
 params ::= "(" (param ("," param)*)? ")"
@@ -195,13 +195,13 @@ block_content_inline ::= inline_text
 
 Defaults:
 
+- Omitted name defaults semantically to `default`.
 - Omitted params imply `(input: Message)`.
 - Omitted output implies `Message`.
 - Parentheses mean exact parameters; no implicit input is added.
 
 Rules:
 
-- Thunk names are required.
 - Parameters require explicit types.
 - `input` is reserved.
 - If `input` appears, it must be first.
@@ -289,7 +289,7 @@ block_fenced ::= "```" block_language? line_end block_content? "```" newline
 block_content ::= raw_text
 block_language ::= "md"
 
-thunk ::= "thunk" thunk_name params? output_type? ":" line_end INDENT thunk_body DEDENT
+thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
 thunk_name ::= value_name
 thunk_body ::= directive* block*
 params ::= "(" (param ("," param)*)? ")"

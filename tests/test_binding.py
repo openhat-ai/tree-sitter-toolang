@@ -421,13 +421,15 @@ def test_parameter_types_are_required():
     assert tree.root_node.has_error is True
 
 
-def test_thunk_name_is_required():
+def test_thunk_name_can_be_omitted():
     parser = _parser()
     source = b"thunk:\n  system: none\n"
 
     tree = parser.parse(source)
+    thunk = _item_child(_items(tree.root_node)[0])
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
+    assert thunk.child_by_field_name("name") is None
 
 
 def test_lowercase_builtin_type_is_rejected():
