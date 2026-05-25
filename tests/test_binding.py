@@ -332,14 +332,14 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
     assert chat_directive_keys == [
         "models",
         "tools",
-        "delegates",
+        "hands",
     ]
     assert task_directive_keys == [
         "models",
         "tools",
         "skills",
         "services",
-        "delegates",
+        "hands",
         "handoffs",
     ]
     assert chore_block_kinds == [

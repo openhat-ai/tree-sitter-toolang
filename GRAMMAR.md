@@ -181,7 +181,7 @@ param_name ::= value_name
 output_type ::= "->" type
 
 directive ::= directive_key directive_op directive_csv line_end
-directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "handoffs" | "delegates"
+directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 
@@ -207,8 +207,8 @@ Rules:
 - If `input` appears, it must be first.
 - `models` supports only `=`.
 - Runtime validates referenced names.
-- `handoffs` declares allowed ownership transfer or routing targets.
-- `delegates` declares allowed subtask-call targets.
+- `hands` declares sub-thunks this thunk may call.
+- `handoffs` declares thunks this thunk may transfer control to.
 - No bare text is allowed directly in `thunk_body`.
 - Thunk-local blocks cannot have custom names.
 - If an inline block value matches `block_name`, parse it as a
@@ -297,7 +297,7 @@ param ::= param_name optional_marker? ":" type
 param_name ::= value_name
 output_type ::= "->" type
 directive ::= directive_key directive_op directive_csv line_end
-directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "handoffs" | "delegates"
+directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 block ::= block_kind ":" block_value

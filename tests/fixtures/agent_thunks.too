@@ -1,7 +1,7 @@
 thunk chat:
   models = gpt-5
   tools += shell
-  delegates += summarize
+  hands += summarize
 
   instruct: default
 
@@ -16,11 +16,11 @@ thunk task(input: Message) -> Message:
   tools += shell, filesystem
   skills += review
   services += github
-  delegates += plan, execute
+  hands += plan, execute
   handoffs = support
 
   system:
-    Complete the requested task and return structured progress.
+        Complete the requested task and return structured progress.
 
   user:
     {{input}}

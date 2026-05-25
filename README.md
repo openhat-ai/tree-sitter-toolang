@@ -2,6 +2,8 @@
 
 Tree-sitter grammar for Toolang.
 
+User-facing language documentation is available in [docs/index.md](docs/index.md).
+
 This repository publishes:
 
 - the npm grammar package `tree-sitter-toolang`

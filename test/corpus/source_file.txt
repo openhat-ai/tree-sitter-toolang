@@ -210,7 +210,7 @@ Thunk With Directives And Blocks
 thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
-  delegates += summarize
+  hands += summarize
 
   instruct: default
 
@@ -385,3 +385,27 @@ thunk raw:
               (block_name)
               (line_end
                 (newline)))))))))
+
+==================
+Delegates Is Rejected
+==================
+thunk bad:
+  delegates += summarize
+
+---
+
+(source_file
+  (item
+    (thunk
+      (thunk_keyword)
+      (thunk_name
+        (value_name))
+      (colon)
+      (line_end
+        (newline))
+      (ERROR
+        (UNEXPECTED 'l')
+        (UNEXPECTED 'u'))
+      (thunk_body
+        (blank_line
+          (newline))))))
