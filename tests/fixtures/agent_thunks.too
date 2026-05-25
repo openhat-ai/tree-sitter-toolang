@@ -20,7 +20,7 @@ thunk task(input: Message) -> Message:
   handoffs = support
 
   system:
-        Complete the requested task and return structured progress.
+    Complete the requested task and return structured progress.
 
   user:
     {{input}}
