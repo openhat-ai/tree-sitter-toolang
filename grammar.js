@@ -213,7 +213,7 @@ module.exports = grammar({
         $.line_end,
       ),
     directive_key: () =>
-      choice("models", "tools", "skills", "services", "psyches", "handoffs", "delegates"),
+      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs"),
     directive_op: () => choice("=", "+=", "-="),
     directive_csv: ($) =>
       seq($.bare_value, repeat(seq($.comma, $.bare_value))),

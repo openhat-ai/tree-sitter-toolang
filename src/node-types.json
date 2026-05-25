@@ -1670,10 +1670,6 @@
     "named": false
   },
   {
-    "type": "delegates",
-    "named": false
-  },
-  {
     "type": "fenced_raw_text",
     "named": true
   },
@@ -1683,6 +1679,10 @@
   },
   {
     "type": "handoffs",
+    "named": false
+  },
+  {
+    "type": "hands",
     "named": false
   },
   {

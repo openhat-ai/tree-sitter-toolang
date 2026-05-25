@@ -39,7 +39,7 @@ Return only JSON.
 
 thunk report() -> Text:
   handoffs = support, billing
-  delegates += summarize
+  hands += summarize
 
   instruct: strict-json
   system: You write concise reports.

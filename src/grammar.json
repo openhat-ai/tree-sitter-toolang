@@ -1273,11 +1273,11 @@
         },
         {
           "type": "STRING",
-          "value": "handoffs"
+          "value": "hands"
         },
         {
           "type": "STRING",
-          "value": "delegates"
+          "value": "handoffs"
         }
       ]
     },
