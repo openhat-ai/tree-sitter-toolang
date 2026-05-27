@@ -5,6 +5,12 @@
 Write documentation, comments, commit messages, and code in English unless a
 task explicitly asks for another language.
 
+## GitHub Publishing
+
+- Always use semantic commit messages.
+- Always use semantic pull request titles.
+- Create ready-for-review pull requests by default.
+
 ## Grammar Updates
 
 - Keep `GRAMMAR.md`, `grammar.js`, generated parser artifacts, fixtures, and
