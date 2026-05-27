@@ -37,8 +37,11 @@ struct ReviewResult:
 instruct:
   You are running {{thunk.name}}.
 
+context:
+  Use the current run context when preparing the final user message.
+
 thunk respond:
-  system:
+  instruct:
     Respond directly.
 
 thunk summarize:
@@ -55,11 +58,12 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
   skills += review, patch
   services -= linear
   tools = shell, filesystem
+  recall = history, memory
 
-  instruct: default
-
-  system:
+  instruct:
     Review correctness issues only.
+
+  context: default
 
   user:
     Review {{path}} carefully.
@@ -67,5 +71,5 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
 
 thunk raw:
   instruct: none
-  system: none
+  context: none
   user: none

@@ -78,7 +78,7 @@ array_suffix ::= "[]"
 
 ```ebnf
 program ::= (item | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | instruct | thunk
+item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk
 ```
 
 ## Use
@@ -163,30 +163,54 @@ Defaults:
 
 Rules:
 
-- Top-level `instruct` uses an unnamed indented or fenced body.
+- Top-level `instruct` uses an unnamed or named indented or fenced body.
 - `instruct` does not contain properties.
 - Indented bodies remove common content indentation, trim outer blank lines, and
   preserve inner blank lines and relative indentation.
 - Fenced bodies preserve content after fence-indent dedent.
+
+## Context
+
+```ebnf
+context ::= "context" context_name? ":" context_body
+context_name ::= value_name
+context_body ::= block_indented | block_fenced
+```
+
+Defaults:
+
+- An omitted name defaults semantically to `default`.
+
+Rules:
+
+- Top-level `context` uses an unnamed or named indented or fenced body.
+- `context` does not contain properties.
+- `context` bodies use the same indentation, trimming, and fenced-body rules as
+  `instruct` bodies.
+- Runtime uses context templates to construct the context prompt that is
+  prepended to the final user message.
 
 ## Thunk
 
 ```ebnf
 thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
 thunk_name ::= value_name
-thunk_body ::= directive* block*
+thunk_body ::= directive* template_block_section? message_block*
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? ":" type
 param_name ::= value_name
 output_type ::= "->" type
 
 directive ::= directive_key directive_op directive_csv line_end
-directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs"
+directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs" | "recall"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 
-block ::= block_kind ":" block_value
-block_kind ::= "instruct" | "system" | "user"
+template_block_section ::= context_block instruct_block? | instruct_block context_block?
+context_block ::= "context" ":" block_value
+instruct_block ::= "instruct" ":" block_value
+message_block ::= message_block_kind ":" block_value
+message_block_kind ::= "user" | "assistant" | "tool"
 block_value ::= block_inline | block_indented | block_fenced
 block_inline ::= (block_name | block_content_inline) line_end
 block_name ::= "default" | "none" | value_name
@@ -209,15 +233,50 @@ Rules:
 - Runtime validates referenced names.
 - `hands` declares sub-thunks this thunk may call.
 - `handoffs` declares thunks this thunk may transfer control to.
+- `recall` controls which retrieved message sources are prepended before
+  thunk-local messages. It supports only `=`. Valid semantic values are
+  `none`, `default`, `history`, `memory`, or a CSV containing `history` and
+  `memory`, for example `recall = history, memory`.
 - No bare text is allowed directly in `thunk_body`.
 - Thunk-local blocks cannot have custom names.
 - If an inline block value matches `block_name`, parse it as a
   name-like value.
 - Otherwise, parse it as literal inline text.
 - Inline values trim surrounding whitespace.
-- One thunk should have at most one `instruct`, one `system`, and one `user`.
-- Runtime decides defaults for omitted `instruct`, `system`, and `user`.
+- Thunk-local `context` and `instruct` blocks belong to the template section,
+  which must appear after directives and before message blocks.
+- One thunk may have at most one thunk-local `context` and at most one
+  thunk-local `instruct`.
+- A thunk may contain zero or more `user`, `assistant`, and `tool` message
+  blocks, in declaration order.
+- Thunk-local `context` and `instruct` values may be `none`, `default`, a named
+  top-level template reference, inline text, an indented block, or a fenced
+  block.
+- Runtime decides defaults for omitted `context`, `instruct`, and messages.
 - Runtime decides the semantics of `default` and `none`.
+
+## Model Call Assembly
+
+The runtime assembles a thunk call into `tools`, `instructions`, and
+`messages` for the model adapter.
+
+- `tools` is derived from available tool declarations and thunk capability
+  directives.
+- `instructions` is generated from the selected `instruct` template. The
+  selection can be `default`, a named top-level `instruct`, `none`, or
+  thunk-local inline/block text. Template rendering receives the run context.
+- `messages` starts with retrieved history according to `recall`, then appends
+  thunk-local `user`, `assistant`, and `tool` blocks.
+- The final user message is formed by prepending a rendered context prompt to
+  the user input. The context prompt is generated from `default`, a named
+  top-level `context`, `none`, or thunk-local inline/block text. Template
+  rendering receives the run context.
+- `recall = none` disables history retrieval. `recall = default` delegates to
+  runtime policy. `recall = history`, `recall = memory`, and
+  `recall = history, memory` select explicit retrieval sources.
+- This design lets a thunk run an isolated model-call experiment by combining
+  `recall = none` or `recall = memory` with explicit thunk-local
+  `user`/`assistant`/`tool` messages.
 
 ## Comments
 
@@ -253,7 +312,7 @@ Doc comments:
 
 ```ebnf
 program ::= (item | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | instruct | thunk
+item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk
 
 use ::= "use" cap_kind cap_ref line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
@@ -289,19 +348,26 @@ block_fenced ::= "```" block_language? line_end block_content? "```" newline
 block_content ::= raw_text
 block_language ::= "md"
 
+context ::= "context" context_name? ":" context_body
+context_name ::= value_name
+context_body ::= block_indented | block_fenced
+
 thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
 thunk_name ::= value_name
-thunk_body ::= directive* block*
+thunk_body ::= directive* template_block_section? message_block*
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? ":" type
 param_name ::= value_name
 output_type ::= "->" type
 directive ::= directive_key directive_op directive_csv line_end
-directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs"
+directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs" | "recall"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
-block ::= block_kind ":" block_value
-block_kind ::= "instruct" | "system" | "user"
+template_block_section ::= context_block instruct_block? | instruct_block context_block?
+context_block ::= "context" ":" block_value
+instruct_block ::= "instruct" ":" block_value
+message_block ::= message_block_kind ":" block_value
+message_block_kind ::= "user" | "assistant" | "tool"
 block_value ::= block_inline | block_indented | block_fenced
 block_inline ::= (block_name | block_content_inline) line_end
 block_name ::= "default" | "none" | value_name

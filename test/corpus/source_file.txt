@@ -148,7 +148,7 @@ prompt review:
             (newline)))))))
 
 ==================
-Struct And Instruct
+Struct, Instruct, And Context
 ==================
 struct ReviewResult:
   summary: Text
@@ -156,6 +156,9 @@ struct ReviewResult:
 
 instruct:
   You are running {{thunk.name}}.
+
+context:
+  Add current workspace context to the final user message.
 
 ---
 
@@ -202,6 +205,19 @@ instruct:
             (newline))
           (block_indented_content_line
             (indented_raw_text)
+            (newline))
+          (blank_line
+            (newline))))))
+  (item
+    (context
+      (context_keyword)
+      (colon)
+      (context_body
+        (block_indented
+          (line_end
+            (newline))
+          (block_indented_content_line
+            (indented_raw_text)
             (newline)))))))
 
 ==================
@@ -211,11 +227,12 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
   hands += summarize
+  recall = history, memory
 
-  instruct: default
-
-  system:
+  instruct:
     Review correctness issues only.
+
+  context: default
 
   user:
     Review {{path}} carefully.
@@ -288,20 +305,19 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
             (bare_value))
           (line_end
             (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value)
+            (comma)
+            (bare_value))
+          (line_end
+            (newline)))
         (blank_line
           (newline))
         (block
-          (block_kind)
-          (colon)
-          (block_value
-            (block_inline
-              (block_name)
-              (line_end
-                (newline)))))
-        (blank_line
-          (newline))
-        (block
-          (block_kind)
+          (instruct_block_kind)
           (colon)
           (block_value
             (block_indented
@@ -313,7 +329,17 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
               (blank_line
                 (newline)))))
         (block
-          (block_kind)
+          (context_block_kind)
+          (colon)
+          (block_value
+            (block_inline
+              (block_name)
+              (line_end
+                (newline)))))
+        (blank_line
+          (newline))
+        (block
+          (message_block_kind)
           (colon)
           (block_value
             (block_indented
@@ -334,7 +360,7 @@ use skill briceyan/pdf-processing # inline comment
 
 thunk raw:
   instruct: none
-  system: none
+  context: none
   user: none
 
 ---
@@ -362,7 +388,7 @@ thunk raw:
         (newline))
       (thunk_body
         (block
-          (block_kind)
+          (instruct_block_kind)
           (colon)
           (block_value
             (block_inline
@@ -370,7 +396,7 @@ thunk raw:
               (line_end
                 (newline)))))
         (block
-          (block_kind)
+          (context_block_kind)
           (colon)
           (block_value
             (block_inline
@@ -378,7 +404,7 @@ thunk raw:
               (line_end
                 (newline)))))
         (block
-          (block_kind)
+          (message_block_kind)
           (colon)
           (block_value
             (block_inline
@@ -387,10 +413,10 @@ thunk raw:
                 (newline)))))))))
 
 ==================
-Delegates Is Rejected
+Recall Directive
 ==================
-thunk bad:
-  delegates += summarize
+thunk recall:
+  recall = history, memory
 
 ---
 
@@ -403,9 +429,13 @@ thunk bad:
       (colon)
       (line_end
         (newline))
-      (ERROR
-        (UNEXPECTED 'l')
-        (UNEXPECTED 'u'))
       (thunk_body
-        (blank_line
-          (newline))))))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value)
+            (comma)
+            (bare_value))
+          (line_end
+            (newline)))))))

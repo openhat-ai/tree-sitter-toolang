@@ -22,4 +22,10 @@
   (prompt
     name: (cap_name
       (value_name) @name))
+  (context
+    name: (context_name
+      (value_name) @name))
+  (instruct
+    name: (instruct_name
+      (value_name) @name))
 ] @item

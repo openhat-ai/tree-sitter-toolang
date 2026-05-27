@@ -11,12 +11,15 @@
 (skill_keyword) @keyword
 (service_keyword) @keyword
 (prompt_keyword) @keyword
+(context_keyword) @keyword
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
-(block_kind) @keyword
+(context_block_kind) @keyword
+(instruct_block_kind) @keyword
+(message_block_kind) @keyword
 (block_language) @property
 
 (assign_operator) @operator
@@ -52,6 +55,14 @@
 
 (prompt
   name: (cap_name
+    (value_name) @function))
+
+(context
+  name: (context_name
+    (value_name) @function))
+
+(instruct
+  name: (instruct_name
     (value_name) @function))
 
 [
