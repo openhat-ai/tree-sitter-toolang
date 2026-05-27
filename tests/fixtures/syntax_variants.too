@@ -37,12 +37,16 @@ instruct strict-json: ```md
 Return only JSON.
 ```
 
+context report:
+  Include relevant report context before the user request.
+
 thunk report() -> Text:
   handoffs = support, billing
   hands += summarize
+  recall = memory
 
   instruct: strict-json
-  system: You write concise reports.
+  context: report
   user: ```md
 Generate a concise report.
 ```

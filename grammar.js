@@ -15,6 +15,7 @@ module.exports = grammar({
         $.skill,
         $.service,
         $.prompt,
+        $.context,
         $.instruct,
         $.thunk,
       ),
@@ -158,6 +159,16 @@ module.exports = grammar({
     instruct_name: ($) => $.value_name,
     instruct_body: ($) => choice($.block_indented, $.block_fenced),
 
+    context: ($) =>
+      seq(
+        field("keyword", $.context_keyword),
+        optional(field("name", $.context_name)),
+        field("colon", $.colon),
+        field("body", $.context_body),
+      ),
+    context_name: ($) => $.value_name,
+    context_body: ($) => choice($.block_indented, $.block_fenced),
+
     block_indented: ($) =>
       prec.right(seq(
         $.line_end,
@@ -188,7 +199,19 @@ module.exports = grammar({
       ),
     thunk_name: ($) => $.value_name,
     thunk_body: ($) =>
-      prec.right(repeat1(choice($.directive, $.block, $.comment_line, $.blank_line))),
+      prec.right(choice(
+        seq(
+          repeat(choice($.directive, $.comment_line, $.blank_line)),
+          $._template_block_section,
+          repeat(choice($._message_block, $.comment_line, $.blank_line)),
+        ),
+        seq(
+          repeat(choice($.directive, $.comment_line, $.blank_line)),
+          $._message_block,
+          repeat(choice($._message_block, $.comment_line, $.blank_line)),
+        ),
+        repeat1(choice($.directive, $.comment_line, $.blank_line)),
+      )),
 
     params: ($) =>
       seq(
@@ -213,18 +236,47 @@ module.exports = grammar({
         $.line_end,
       ),
     directive_key: () =>
-      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs"),
+      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs", "recall"),
     directive_op: () => choice("=", "+=", "-="),
     directive_csv: ($) =>
       seq($.bare_value, repeat(seq($.comma, $.bare_value))),
 
-    block: ($) =>
+    _template_block_section: ($) =>
+      prec.right(choice(
+        seq(
+          alias($.context_block, $.block),
+          repeat(choice($.comment_line, $.blank_line)),
+          optional(alias($.instruct_block, $.block)),
+        ),
+        seq(
+          alias($.instruct_block, $.block),
+          repeat(choice($.comment_line, $.blank_line)),
+          optional(alias($.context_block, $.block)),
+        ),
+      )),
+    _message_block: ($) => alias($.message_block, $.block),
+
+    context_block: ($) =>
       seq(
-        field("kind", $.block_kind),
+        field("kind", $.context_block_kind),
         field("colon", $.colon),
         field("value", $.block_value),
       ),
-    block_kind: () => choice("instruct", "system", "user"),
+    instruct_block: ($) =>
+      seq(
+        field("kind", $.instruct_block_kind),
+        field("colon", $.colon),
+        field("value", $.block_value),
+      ),
+    message_block: ($) =>
+      seq(
+        field("kind", $.message_block_kind),
+        field("colon", $.colon),
+        field("value", $.block_value),
+      ),
+    context_block_kind: () => "context",
+    instruct_block_kind: () => "instruct",
+    message_block_kind: () => choice("user", "assistant", "tool"),
     block_value: ($) => choice($.block_inline, $.block_indented, $.block_fenced),
     block_inline: ($) =>
       seq(choice(field("name", $.block_name), field("content", $.block_content_inline)), $.line_end),
@@ -237,6 +289,7 @@ module.exports = grammar({
     skill_keyword: () => "skill",
     service_keyword: () => "service",
     prompt_keyword: () => "prompt",
+    context_keyword: () => "context",
     instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
 

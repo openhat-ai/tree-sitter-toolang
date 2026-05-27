@@ -1,7 +1,7 @@
 #!/usr/bin/env toolang
 
 thunk respond:
-  system:
+  instruct:
     Respond directly.
 
 thunk echo() -> Text:
@@ -27,7 +27,7 @@ thunk score(input: Message, rubric?: Json) -> Number:
     Score {{input}} using {{rubric}}.
 
 thunk render(template: Text, data: Json, notes?: Message[]) -> Message:
-  system: default
+  instruct: default
   user: ```md
 Render {{template}} with {{data}}.
 {{notes}}

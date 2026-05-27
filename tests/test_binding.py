@@ -223,6 +223,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
         "psyche",
         "struct",
         "instruct",
+        "context",
         "thunk",
     ]
 
@@ -249,17 +250,21 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     assert instruct.child_by_field_name("name") is not None
     assert "block_fenced" in str(instruct.child_by_field_name("body"))
 
-    thunk = items[6]
+    context = items[6]
+    assert context.child_by_field_name("name") is not None
+    assert "block_indented" in str(context.child_by_field_name("body"))
+
+    thunk = items[7]
     body = thunk.child_by_field_name("body")
     assert body is not None
     blocks = [child for child in body.named_children if child.type == "block"]
     assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
         "instruct",
-        "system",
+        "context",
         "user",
     ]
     assert "block_fenced" in str(blocks[2].child_by_field_name("value"))
-    assert "block_content_inline" in str(blocks[1].child_by_field_name("value"))
+    assert "block_name" in str(blocks[1].child_by_field_name("value"))
 
 
 def test_comments_fixture_preserves_hash_lines_inside_fenced_blocks():
@@ -343,7 +348,7 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
         "handoffs",
     ]
     assert chore_block_kinds == [
-        "system",
+        "instruct",
         "user",
     ]
 
@@ -369,6 +374,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "struct",
         "struct",
         "instruct",
+        "context",
         "thunk",
         "thunk",
         "thunk",
@@ -403,18 +409,18 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
         "focus",
     ]
     assert body is not None
-    assert len([child for child in body.named_children if child.type == "directive"]) == 5
+    assert len([child for child in body.named_children if child.type == "directive"]) == 6
     blocks = [child for child in body.named_children if child.type == "block"]
     assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
         "instruct",
-        "system",
+        "context",
         "user",
     ]
 
 
 def test_parameter_types_are_required():
     parser = _parser()
-    source = b"thunk bad(input: Message, focus):\n  system: none\n"
+    source = b"thunk bad(input: Message, focus):\n  instruct: none\n"
 
     tree = parser.parse(source)
 
@@ -423,13 +429,56 @@ def test_parameter_types_are_required():
 
 def test_thunk_name_can_be_omitted():
     parser = _parser()
-    source = b"thunk:\n  system: none\n"
+    source = b"thunk:\n  instruct: none\n"
 
     tree = parser.parse(source)
     thunk = _item_child(_items(tree.root_node)[0])
 
     assert tree.root_node.has_error is False
     assert thunk.child_by_field_name("name") is None
+
+
+def test_thunk_template_blocks_must_precede_message_blocks():
+    parser = _parser()
+    source = b"thunk bad:\n  user: hello\n  instruct: default\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
+
+
+def test_thunk_directives_must_precede_template_blocks():
+    parser = _parser()
+    source = b"thunk bad:\n  instruct: default\n  recall = none\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
+
+
+def test_thunk_context_and_instruct_are_each_allowed_once():
+    parser = _parser()
+    source = b"thunk bad:\n  context: default\n  instruct: default\n  context: none\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
+
+
+def test_thunk_message_blocks_support_user_assistant_and_tool():
+    parser = _parser()
+    source = b"thunk simulate:\n  recall = none\n  user: hello\n  assistant: hi\n  tool: result\n"
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    blocks = [child for child in body.named_children if child.type == "block"]
+
+    assert tree.root_node.has_error is False
+    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
+        "user",
+        "assistant",
+        "tool",
+    ]
 
 
 def test_lowercase_builtin_type_is_rejected():

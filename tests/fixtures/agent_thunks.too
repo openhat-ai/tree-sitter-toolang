@@ -3,9 +3,7 @@ thunk chat:
   tools += shell
   hands += summarize
 
-  instruct: default
-
-  system:
+  instruct:
     Keep the conversation grounded and ask clarifying questions when needed.
 
   user:
@@ -19,7 +17,7 @@ thunk task(input: Message) -> Message:
   hands += plan, execute
   handoffs = support
 
-  system:
+  instruct:
     Complete the requested task and return structured progress.
 
   user:
@@ -30,7 +28,7 @@ thunk chore:
   tools += shell
   handoffs = support, billing
 
-  system: default
+  instruct: default
 
   user:
     Run the scheduled maintenance chore and report the result.
