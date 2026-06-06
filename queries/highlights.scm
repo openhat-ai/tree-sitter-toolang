@@ -19,7 +19,7 @@
 (directive_key) @property
 (context_block_kind) @keyword
 (instruct_block_kind) @keyword
-(message_block_kind) @keyword
+(roled_message_kind) @keyword
 (block_language) @property
 
 (assign_operator) @operator

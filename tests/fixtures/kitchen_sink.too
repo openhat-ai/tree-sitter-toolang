@@ -52,7 +52,7 @@ thunk inspect() -> ReviewResult:
   user:
     Return a precise result.
 
-thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
+thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5 # inline directive comment
   psyches += reviewer
   skills += review, patch

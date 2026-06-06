@@ -68,11 +68,23 @@ Comments:
 ```ebnf
 type ::= base_type type_suffix*
 base_type ::= builtin_type | user_type
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Message"
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
 user_type ::= type_name
 type_suffix ::= array_suffix
 array_suffix ::= "[]"
 ```
+
+Rules:
+
+- `Text`, `Number`, and `Boolean` are scalar types.
+- `Json` is a dynamic JSON-compatible value.
+- `Part` is a model-visible content part. Runtime part values use short
+  `kind` names such as `text`, `json`, `image`, `audio`, `video`, `file`,
+  `tool_call`, and `tool_result`.
+- A `struct` declaration defines a user-defined Record type. `Record` is a
+  semantic category, not a builtin type name that can be used in signatures.
+- `Message` is a runtime-only Record with a role and `Part[]`. Toolang source
+  does not use `Message` as a normal thunk or flow type.
 
 ## Program
 
@@ -193,24 +205,27 @@ Rules:
 ## Thunk
 
 ```ebnf
-thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
+thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body? DEDENT
 thunk_name ::= value_name
-thunk_body ::= directive* template_block_section? message_block*
+thunk_body ::= directive* instruction_section? (message_section | pass_statement)?
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? ":" type
 param_name ::= value_name
 output_type ::= "->" type
+pass_statement ::= "pass" line_end
 
 directive ::= directive_key directive_op directive_csv line_end
 directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs" | "recall"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 
-template_block_section ::= context_block instruct_block? | instruct_block context_block?
+instruction_section ::= context_block instruct_block? | instruct_block context_block?
 context_block ::= "context" ":" block_value
 instruct_block ::= "instruct" ":" block_value
-message_block ::= message_block_kind ":" block_value
-message_block_kind ::= "user" | "assistant" | "tool"
+message_section ::= (roled_message | unroled_message)+
+roled_message ::= roled_message_kind ":" block_value
+roled_message_kind ::= "user" | "assistant" | "tool"
+unroled_message ::= block_indented
 block_value ::= block_inline | block_indented | block_fenced
 block_inline ::= (block_name | block_content_inline) line_end
 block_name ::= "default" | "none" | value_name
@@ -220,15 +235,22 @@ block_content_inline ::= inline_text
 Defaults:
 
 - Omitted name defaults semantically to `default`.
-- Omitted params imply `(input: Message)`.
-- Omitted output implies `Message`.
-- Parentheses mean exact parameters; no implicit input is added.
+- Omitted params mean the thunk does not accept invocation input.
+- Omitted output delegates to runtime policy.
+- Parentheses mean exact parameters; no implicit `in` is added.
+- If a thunk declares `in` and has no explicit or implicit message block, the
+  runtime supplies `user: {{_}}`.
+- `pass` is an explicit empty statement. It declares an empty body and disables
+  the implicit `user: {{_}}` default for that body.
 
 Rules:
 
 - Parameters require explicit types.
-- `input` is reserved.
-- If `input` appears, it must be first.
+- `in` is reserved as the primary invocation input parameter.
+- If `in` appears, it must be first.
+- A thunk without `in` does not accept invocation input and cannot be used as a
+  user-input entrypoint such as chat, task, or chore.
+- `_` is available in thunk templates as an alias for `in`.
 - `models` supports only `=`.
 - Runtime validates referenced names.
 - `hands` declares sub-thunks this thunk may call.
@@ -237,18 +259,24 @@ Rules:
   thunk-local messages. It supports only `=`. Valid semantic values are
   `none`, `default`, `history`, `memory`, or a CSV containing `history` and
   `memory`, for example `recall = history, memory`.
-- No bare text is allowed directly in `thunk_body`.
+- Bare text in `thunk_body` is an implicit `user` message block.
+- Explicit message blocks and an implicit `user` message block should not be
+  mixed in the same thunk.
 - Thunk-local blocks cannot have custom names.
 - If an inline block value matches `block_name`, parse it as a
   name-like value.
 - Otherwise, parse it as literal inline text.
 - Inline values trim surrounding whitespace.
-- Thunk-local `context` and `instruct` blocks belong to the template section,
+- Thunk-local `context` and `instruct` blocks belong to the instruction section,
   which must appear after directives and before message blocks.
 - One thunk may have at most one thunk-local `context` and at most one
   thunk-local `instruct`.
-- A thunk may contain zero or more `user`, `assistant`, and `tool` message
-  blocks, in declaration order.
+- A thunk may contain one or more roled or unroled messages, in declaration
+  order.
+- `user:`, `assistant:`, and `tool:` are roled messages.
+- Bare indented text is an unroled message. Runtime treats unroled messages as
+  `user` messages.
+- A thunk body may contain `pass` to explicitly do nothing.
 - Thunk-local `context` and `instruct` values may be `none`, `default`, a named
   top-level template reference, inline text, an indented block, or a fenced
   block.
@@ -257,20 +285,26 @@ Rules:
 
 ## Model Call Assembly
 
-The runtime assembles a thunk call into `tools`, `instructions`, and
-`messages` for the model adapter.
+The runtime assembles a thunk call into `tools`, `instructions`, and runtime
+messages for the model adapter. Runtime messages are not Toolang source-level
+types; they are records with a role and `Part[]`.
 
 - `tools` is derived from available tool declarations and thunk capability
   directives.
 - `instructions` is generated from the selected `instruct` template. The
   selection can be `default`, a named top-level `instruct`, `none`, or
   thunk-local inline/block text. Template rendering receives the run context.
-- `messages` starts with retrieved history according to `recall`, then appends
-  thunk-local `user`, `assistant`, and `tool` blocks.
+- Runtime messages start with retrieved history according to `recall`, then
+  append thunk-local `user`, `assistant`, and `tool` blocks.
 - The final user message is formed by prepending a rendered context prompt to
-  the user input. The context prompt is generated from `default`, a named
+  the invocation input referenced by the user block. The context prompt is
+  generated from `default`, a named
   top-level `context`, `none`, or thunk-local inline/block text. Template
   rendering receives the run context.
+- Only values referenced by message blocks are sent to the model call. Referenced
+  values are promoted to parts according to their type: `Text` to a text part,
+  `Number`, `Boolean`, `Json`, and user-defined Record values to JSON parts,
+  and `Part` or `Part[]` values to parts directly.
 - `recall = none` disables history retrieval. `recall = default` delegates to
   runtime policy. `recall = history`, `recall = memory`, and
   `recall = history, memory` select explicit retrieval sources.
@@ -352,22 +386,25 @@ context ::= "context" context_name? ":" context_body
 context_name ::= value_name
 context_body ::= block_indented | block_fenced
 
-thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body DEDENT
+thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_body? DEDENT
 thunk_name ::= value_name
-thunk_body ::= directive* template_block_section? message_block*
+thunk_body ::= directive* instruction_section? (message_section | pass_statement)?
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? ":" type
 param_name ::= value_name
 output_type ::= "->" type
+pass_statement ::= "pass" line_end
 directive ::= directive_key directive_op directive_csv line_end
 directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs" | "recall"
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
-template_block_section ::= context_block instruct_block? | instruct_block context_block?
+instruction_section ::= context_block instruct_block? | instruct_block context_block?
 context_block ::= "context" ":" block_value
 instruct_block ::= "instruct" ":" block_value
-message_block ::= message_block_kind ":" block_value
-message_block_kind ::= "user" | "assistant" | "tool"
+message_section ::= (roled_message | unroled_message)+
+roled_message ::= roled_message_kind ":" block_value
+roled_message_kind ::= "user" | "assistant" | "tool"
+unroled_message ::= block_indented
 block_value ::= block_inline | block_indented | block_fenced
 block_inline ::= (block_name | block_content_inline) line_end
 block_name ::= "default" | "none" | value_name

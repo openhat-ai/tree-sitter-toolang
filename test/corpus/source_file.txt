@@ -223,7 +223,7 @@ context:
 ==================
 Thunk With Directives And Blocks
 ==================
-thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
+thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
   hands += summarize
@@ -254,7 +254,9 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
           (colon)
           (type
             (base_type
-              (builtin_type))))
+              (builtin_type))
+            (type_suffix
+              (array_suffix))))
         (comma)
         (param
           (param_name
@@ -316,41 +318,45 @@ thunk review(input: Message, path: Text, focus?: Text) -> ReviewResult:
             (newline)))
         (blank_line
           (newline))
-        (block
-          (instruct_block_kind)
-          (colon)
-          (block_value
-            (block_indented
-              (line_end
-                (newline))
-              (block_indented_content_line
-                (indented_raw_text)
-                (newline))
-              (blank_line
-                (newline)))))
-        (block
-          (context_block_kind)
-          (colon)
-          (block_value
-            (block_inline
-              (block_name)
-              (line_end
-                (newline)))))
+        (instruction_section
+          (block
+            (instruct_block_kind)
+            (colon)
+            (block_value
+              (block_indented
+                (line_end
+                  (newline))
+                (block_indented_content_line
+                  (indented_raw_text)
+                  (newline))
+                (blank_line
+                  (newline)))))
+          (block
+            (context_block_kind)
+            (colon)
+            (block_value
+              (block_inline
+                (block_name)
+                (line_end
+                  (newline))))))
         (blank_line
           (newline))
-        (block
-          (message_block_kind)
-          (colon)
-          (block_value
-            (block_indented
-              (line_end
-                (newline))
-              (block_indented_content_line
-                (indented_raw_text)
-                (newline))
-              (block_indented_content_line
-                (indented_raw_text)
-                (newline)))))))))
+        (thunk_tail
+          (message_section
+            (roled_message
+              (block
+                (roled_message_kind)
+                (colon)
+                (block_value
+                  (block_indented
+                    (line_end
+                      (newline))
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline))
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline))))))))))))
 
 ==================
 Comments
@@ -387,30 +393,34 @@ thunk raw:
       (line_end
         (newline))
       (thunk_body
-        (block
-          (instruct_block_kind)
-          (colon)
-          (block_value
-            (block_inline
-              (block_name)
-              (line_end
-                (newline)))))
-        (block
-          (context_block_kind)
-          (colon)
-          (block_value
-            (block_inline
-              (block_name)
-              (line_end
-                (newline)))))
-        (block
-          (message_block_kind)
-          (colon)
-          (block_value
-            (block_inline
-              (block_name)
-              (line_end
-                (newline)))))))))
+        (instruction_section
+          (block
+            (instruct_block_kind)
+            (colon)
+            (block_value
+              (block_inline
+                (block_name)
+                (line_end
+                  (newline)))))
+          (block
+            (context_block_kind)
+            (colon)
+            (block_value
+              (block_inline
+                (block_name)
+                (line_end
+                  (newline))))))
+        (thunk_tail
+          (message_section
+            (roled_message
+              (block
+                (roled_message_kind)
+                (colon)
+                (block_value
+                  (block_inline
+                    (block_name)
+                    (line_end
+                      (newline))))))))))))
 
 ==================
 Recall Directive

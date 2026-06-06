@@ -26,7 +26,7 @@ Review {{path}} carefully.
 {{focus}}
 ```
 
-thunk review(input: Message, focus?: Text) -> ReviewResult: # inline thunk header comment
+thunk review(in: Part[], focus?: Text) -> ReviewResult: # inline thunk header comment
   models = gpt-5 # inline directive comment
 
   instruct:

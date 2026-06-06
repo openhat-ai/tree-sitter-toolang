@@ -44,7 +44,7 @@
     "fields": {
       "colon": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "colon",
@@ -54,7 +54,7 @@
       },
       "kind": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "context_block_kind",
@@ -65,7 +65,7 @@
             "named": true
           },
           {
-            "type": "message_block_kind",
+            "type": "roled_message_kind",
             "named": true
           }
         ]
@@ -74,6 +74,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "block_indented_implicit",
+            "named": true
+          },
           {
             "type": "block_value",
             "named": true
@@ -211,6 +215,25 @@
       "types": [
         {
           "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "block_indented_implicit",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "block_indented_content_line",
           "named": true
         }
       ]
@@ -860,6 +883,29 @@
     }
   },
   {
+    "type": "instruction_section",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "item",
     "named": true,
     "fields": {},
@@ -926,9 +972,31 @@
     }
   },
   {
-    "type": "message_block_kind",
+    "type": "message_section",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "roled_message",
+          "named": true
+        },
+        {
+          "type": "unroled_message",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "newline",
@@ -1025,6 +1093,32 @@
         },
         {
           "type": "rparen",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "pass_statement",
+    "named": true,
+    "fields": {
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "pass_keyword",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -1251,6 +1345,26 @@
   },
   {
     "type": "psyche_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "roled_message",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "roled_message_kind",
     "named": true,
     "fields": {}
   },
@@ -1490,7 +1604,7 @@
       },
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "thunk_body",
@@ -1563,17 +1677,34 @@
   {
     "type": "thunk_body",
     "named": true,
-    "fields": {},
+    "fields": {
+      "instruction": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "instruction_section",
+            "named": true
+          }
+        ]
+      },
+      "tail": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "thunk_tail",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "block",
           "named": true
         },
         {
@@ -1597,6 +1728,40 @@
       "types": [
         {
           "type": "value_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "thunk_tail",
+    "named": true,
+    "fields": {
+      "messages": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "message_section",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "pass_statement",
           "named": true
         }
       ]
@@ -1638,6 +1803,21 @@
       "types": [
         {
           "type": "array_suffix",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "unroled_message",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "block",
           "named": true
         }
       ]
@@ -1725,11 +1905,11 @@
     "named": false
   },
   {
-    "type": "Message",
+    "type": "Number",
     "named": false
   },
   {
-    "type": "Number",
+    "type": "Part",
     "named": false
   },
   {
@@ -1830,6 +2010,10 @@
   },
   {
     "type": "optional_marker",
+    "named": true
+  },
+  {
+    "type": "pass_keyword",
     "named": true
   },
   {
