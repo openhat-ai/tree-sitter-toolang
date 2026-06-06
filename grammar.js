@@ -2,7 +2,6 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
-
   rules: {
     source_file: ($) =>
       repeat(choice($.comment_line, $.blank_line, $.item)),
@@ -41,7 +40,7 @@ module.exports = grammar({
       ),
 
     base_type: ($) => choice($.builtin_type, $.user_type),
-    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Message"),
+    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Part"),
     user_type: ($) => $.type_name,
     type_suffix: ($) => $.array_suffix,
     array_suffix: () => "[]",
@@ -188,29 +187,36 @@ module.exports = grammar({
     block_language: () => "md",
 
     thunk: ($) =>
-      seq(
+      prec.right(seq(
         field("keyword", $.thunk_keyword),
         optional(field("name", $.thunk_name)),
         optional(field("params", $.params)),
         optional(seq(field("arrow", $.arrow), field("output", $.type))),
         field("colon", $.colon),
         $.line_end,
-        field("body", $.thunk_body),
-      ),
+        optional(field("body", $.thunk_body)),
+      )),
     thunk_name: ($) => $.value_name,
     thunk_body: ($) =>
       prec.right(choice(
         seq(
+          $.directive,
           repeat(choice($.directive, $.comment_line, $.blank_line)),
-          $._template_block_section,
-          repeat(choice($._message_block, $.comment_line, $.blank_line)),
+          field("instruction", $.instruction_section),
+          repeat(choice($.comment_line, $.blank_line)),
+          optional(field("tail", $.thunk_tail)),
         ),
         seq(
+          $.directive,
           repeat(choice($.directive, $.comment_line, $.blank_line)),
-          $._message_block,
-          repeat(choice($._message_block, $.comment_line, $.blank_line)),
+          optional(field("tail", $.thunk_tail)),
         ),
-        repeat1(choice($.directive, $.comment_line, $.blank_line)),
+        seq(
+          field("instruction", $.instruction_section),
+          repeat(choice($.comment_line, $.blank_line)),
+          optional(field("tail", $.thunk_tail)),
+        ),
+        field("tail", $.thunk_tail),
       )),
 
     params: ($) =>
@@ -241,7 +247,7 @@ module.exports = grammar({
     directive_csv: ($) =>
       seq($.bare_value, repeat(seq($.comma, $.bare_value))),
 
-    _template_block_section: ($) =>
+    instruction_section: ($) =>
       prec.right(choice(
         seq(
           alias($.context_block, $.block),
@@ -254,7 +260,28 @@ module.exports = grammar({
           optional(alias($.context_block, $.block)),
         ),
       )),
-    _message_block: ($) => alias($.message_block, $.block),
+    message_section: ($) =>
+      prec.right(seq(
+        choice($.roled_message, $.unroled_message),
+        repeat(choice($.roled_message, $.unroled_message, $.comment_line, $.blank_line)),
+      )),
+    thunk_tail: ($) =>
+      prec.right(choice(
+        field("messages", $.message_section),
+        seq(
+          $.pass_statement,
+          repeat(choice($.comment_line, $.blank_line)),
+        ),
+      )),
+    roled_message: ($) => alias($.roled_message_block, $.block),
+    unroled_message: ($) => alias($.unroled_message_block, $.block),
+    unroled_message_block: ($) =>
+      seq(field("value", $.block_indented_implicit)),
+    block_indented_implicit: ($) =>
+      prec.right(seq(
+        $.block_indented_content_line,
+        repeat(choice($.block_indented_content_line, $.blank_line)),
+      )),
 
     context_block: ($) =>
       seq(
@@ -268,15 +295,17 @@ module.exports = grammar({
         field("colon", $.colon),
         field("value", $.block_value),
       ),
-    message_block: ($) =>
+    roled_message_block: ($) =>
       seq(
-        field("kind", $.message_block_kind),
+        field("kind", $.roled_message_kind),
         field("colon", $.colon),
         field("value", $.block_value),
       ),
+    pass_statement: ($) =>
+      seq(field("keyword", $.pass_keyword), $.line_end),
     context_block_kind: () => "context",
     instruct_block_kind: () => "instruct",
-    message_block_kind: () => choice("user", "assistant", "tool"),
+    roled_message_kind: () => choice("user", "assistant", "tool"),
     block_value: ($) => choice($.block_inline, $.block_indented, $.block_fenced),
     block_inline: ($) =>
       seq(choice(field("name", $.block_name), field("content", $.block_content_inline)), $.line_end),
@@ -292,6 +321,7 @@ module.exports = grammar({
     context_keyword: () => "context",
     instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
+    pass_keyword: () => "pass",
 
     optional_marker: () => "?",
     assign_operator: () => "=",

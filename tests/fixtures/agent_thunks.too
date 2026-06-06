@@ -1,15 +1,13 @@
-thunk chat:
+thunk chat(in: Part[]) -> Part[]:
   models = gpt-5
   tools += shell
   hands += summarize
 
-  instruct:
-    Keep the conversation grounded and ask clarifying questions when needed.
+  instruct: Keep the conversation grounded and ask clarifying questions when needed.
 
-  user:
-    {{input}}
+  {{_}}
 
-thunk task(input: Message) -> Message:
+thunk task(in: Part[]) -> Part[]:
   models = gpt-5
   tools += shell, filesystem
   skills += review
@@ -21,7 +19,7 @@ thunk task(input: Message) -> Message:
     Complete the requested task and return structured progress.
 
   user:
-    {{input}}
+    {{_}}
 
 thunk chore:
   models = gpt-5

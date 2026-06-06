@@ -30,7 +30,7 @@ struct ReviewResult:
   count?: Number
   ok: Boolean
   payload: Json
-  messages: Message[]
+  messages: Part[]
   findings: Finding[]
 
 instruct strict-json: ```md

@@ -83,11 +83,18 @@ def test_script_thunks_fixture_covers_signature_variations():
         "Json",
         "Boolean",
         "Number",
-        "Message",
+        "Part[]",
     ]
-    assert param_counts == [None, 0, 1, 2, 1, 2, 3]
+    assert param_counts == [None, 1, 1, 2, 1, 2, 3]
+    assert "pass_statement" in str(thunks[0].child_by_field_name("body"))
     assert "type_suffix" in str(thunks[3].child_by_field_name("params"))
     assert "block_fenced" in str(thunks[-1].child_by_field_name("body"))
+    echo_body = thunks[1].child_by_field_name("body")
+    assert echo_body is not None
+    echo_blocks = [child for child in echo_body.named_children if child.type == "block"]
+    assert len(echo_blocks) == 1
+    assert echo_blocks[0].child_by_field_name("kind") is None
+    assert "Echo the current input:" in _text(source, echo_blocks[0])
 
 
 def test_syntax_variants_fixture_parses_empty_params():
@@ -300,14 +307,18 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
 
     assert tree.root_node.has_error is False
     assert names == ["chat", "task", "chore"]
-    assert params[0] is None
-    assert outputs[0] is None
+    assert params[0] is not None
+    assert [
+        _text(source, param.child_by_field_name("name"))
+        for param in params[0].children_by_field_name("param")
+    ] == ["in"]
+    assert _text(source, outputs[0]) == "Part[]"
     assert params[1] is not None
     assert [
         _text(source, param.child_by_field_name("name"))
         for param in params[1].children_by_field_name("param")
-    ] == ["input"]
-    assert _text(source, outputs[1]) == "Message"
+    ] == ["in"]
+    assert _text(source, outputs[1]) == "Part[]"
     assert params[2] is None
     assert outputs[2] is None
 
@@ -332,6 +343,13 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
         _text(source, block.child_by_field_name("kind")).strip()
         for block in chore_body.named_children
         if block.type == "block"
+        and block.child_by_field_name("kind") is not None
+    ]
+    chat_unroled_messages = [
+        block
+        for block in chat_body.named_children
+        if block.type == "block"
+        and block.child_by_field_name("kind") is None
     ]
 
     assert chat_directive_keys == [
@@ -351,6 +369,8 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
         "instruct",
         "user",
     ]
+    assert len(chat_unroled_messages) == 1
+    assert "{{_}}" in _text(source, chat_unroled_messages[0])
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():
@@ -404,7 +424,7 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
 
     assert params is not None
     assert [ _text(source, param.child_by_field_name("name")) for param in params.children_by_field_name("param") ] == [
-        "input",
+        "in",
         "path",
         "focus",
     ]
@@ -420,7 +440,7 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
 
 def test_parameter_types_are_required():
     parser = _parser()
-    source = b"thunk bad(input: Message, focus):\n  instruct: none\n"
+    source = b"thunk bad(in: Part[], focus):\n  instruct: none\n"
 
     tree = parser.parse(source)
 
@@ -438,7 +458,7 @@ def test_thunk_name_can_be_omitted():
     assert thunk.child_by_field_name("name") is None
 
 
-def test_thunk_template_blocks_must_precede_message_blocks():
+def test_thunk_instruction_blocks_must_precede_messages():
     parser = _parser()
     source = b"thunk bad:\n  user: hello\n  instruct: default\n"
 
@@ -447,13 +467,13 @@ def test_thunk_template_blocks_must_precede_message_blocks():
     assert tree.root_node.has_error is True
 
 
-def test_thunk_directives_must_precede_template_blocks():
+def test_directive_like_bare_text_after_instruction_block_is_allowed():
     parser = _parser()
     source = b"thunk bad:\n  instruct: default\n  recall = none\n"
 
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
 
 
 def test_thunk_context_and_instruct_are_each_allowed_once():
@@ -465,7 +485,7 @@ def test_thunk_context_and_instruct_are_each_allowed_once():
     assert tree.root_node.has_error is True
 
 
-def test_thunk_message_blocks_support_user_assistant_and_tool():
+def test_thunk_roled_messages_support_user_assistant_and_tool():
     parser = _parser()
     source = b"thunk simulate:\n  recall = none\n  user: hello\n  assistant: hi\n  tool: result\n"
 
@@ -504,13 +524,18 @@ def test_none_is_parsed_as_user_type_not_builtin_type():
     assert "builtin_type" not in str(type_node)
 
 
-def test_bare_text_is_not_allowed_in_thunk_body():
+def test_bare_text_is_parsed_as_unroled_message():
     parser = _parser()
-    source = b"thunk bad:\n  Return directly.\n"
+    source = b"thunk reply(in: Text) -> Text:\n  Return directly.\n"
 
     tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    blocks = [child for child in body.named_children if child.type == "block"]
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
+    assert len(blocks) == 1
+    assert blocks[0].child_by_field_name("kind") is None
+    assert "Return directly." in _text(source, blocks[0])
 
 
 def test_cap_frontmatter_parses_with_crlf_line_endings():
