@@ -27,6 +27,8 @@ inline_text ::= /[^#\r\n]+/
 raw_text ::= /raw block or fence content/
 
 comment_line ::= "#" line_text newline
+program_doc_comment ::= "##!" line_text newline
+doc_comment ::= "##" line_text newline
 inline_comment ::= "#" line_text
 line_end ::= inline_comment? newline
 
@@ -89,8 +91,8 @@ Rules:
 ## Program
 
 ```ebnf
-program ::= (item | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk
+program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
+item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
 ```
 
 ## Use
@@ -110,7 +112,7 @@ Rules:
 ```ebnf
 struct ::= "struct" struct_name ":" line_end INDENT struct_body DEDENT
 struct_name ::= type_name
-struct_body ::= field+
+struct_body ::= (field | doc_comment | comment_line | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= value_name
 ```
@@ -283,6 +285,90 @@ Rules:
 - Runtime decides defaults for omitted `context`, `instruct`, and messages.
 - Runtime decides the semantics of `default` and `none`.
 
+## Flow
+
+```ebnf
+flow ::= "flow" flow_name? params? output_type? ":" line_end flow_body?
+flow_name ::= value_name
+flow_body ::= (directive | flow_entry | doc_comment | comment_line | blank_line | pass_statement)+
+
+flow_entry ::= flow_transform_step
+             | flow_map_step
+             | flow_case_step
+             | flow_block_step
+             | flow_repeat_until
+
+flow_transform_step ::= flow_transform_keyword flow_step_args line_end
+                      | flow_transform_keyword ":" flow_inline_body line_end
+                      | flow_transform_keyword ":" line_end block_indented_implicit?
+flow_transform_keyword ::= "do" | "get" | "ask" | "unfold" | "filter" | "rank" | "fold"
+
+flow_map_step ::= "map" flow_step_args line_end
+                | "map" ":" flow_inline_body line_end
+                | "map" ":" line_end flow_nested_body?
+
+flow_block_step ::= "block" ":" line_end flow_nested_body?
+
+flow_case_step ::= "case" ":" line_end flow_case_body
+flow_case_body ::= flow_case_arm+ flow_else_arm
+flow_case_arm ::= flow_condition ":" line_end flow_nested_body?
+flow_else_arm ::= "else" ":" line_end flow_nested_body?
+
+flow_repeat_until ::= "repeat" "until" ":" flow_inline_text line_end
+                    | "repeat" "until" ":" line_end block_indented_implicit
+
+flow_nested_body ::= (flow_entry | flow_text_block | doc_comment | comment_line | blank_line | pass_statement)+
+flow_inline_body ::= flow_call_list | flow_inline_text
+flow_call_list ::= "do"? flow_arg ("," "do"? flow_arg)*
+flow_step_args ::= flow_arg ("," flow_arg)*
+flow_arg ::= bare_value
+flow_condition ::= /[^:#\r\n][^:#\r\n]*/
+flow_inline_text ::= /[^#\r\n]+/
+flow_text_block ::= block_indented_implicit
+```
+
+Defaults:
+
+- Omitted name defaults semantically to `default`.
+- Omitted params mean the flow does not accept invocation input.
+- Omitted output delegates to runtime policy.
+- Parentheses mean exact parameters; no implicit `in` is added.
+
+Rules:
+
+- A `flow` describes a workflow as an ordered tree of executable steps.
+- The runtime's primary flow execution unit is a step.
+- `flow` signatures reuse thunk parameter and output type syntax.
+- Parameters require explicit types.
+- `in` is reserved as the primary invocation input parameter. If `in` appears,
+  it must be first.
+- Flow directives reuse thunk directive syntax.
+- `do`, `get`, `ask`, `unfold`, `filter`, `rank`, and `fold` are transform
+  steps.
+- `map` is a transform step that may contain an inline call list or nested
+  steps.
+- `case` is a control step. It must include an explicit `else:` arm, even when
+  the else arm is empty.
+- `block` groups nested steps.
+- `repeat until:` is a block marker step. Runtime attaches it to the surrounding
+  block and evaluates its condition after the block body runs.
+- A text body on `filter`, `fold`, or another non-`map` transform step lowers to
+  an anonymous thunk-like task owned by the flow runtime.
+- A `case` condition and a `repeat until:` condition lower to anonymous
+  predicate tasks owned by the flow runtime.
+- The three map forms below are semantically equivalent:
+
+```too
+map:
+  do a
+  do b
+  do c
+
+map: do a, b, c
+
+map: a, b, c
+```
+
 ## Model Call Assembly
 
 The runtime assembles a thunk call into `tools`, `instructions`, and runtime
@@ -345,8 +431,8 @@ Doc comments:
 ## Grammar Summary
 
 ```ebnf
-program ::= (item | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk
+program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
+item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
 
 use ::= "use" cap_kind cap_ref line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
@@ -354,7 +440,7 @@ cap_ref ::= cap_uri | cap_shorthand
 
 struct ::= "struct" struct_name ":" line_end INDENT struct_body DEDENT
 struct_name ::= type_name
-struct_body ::= field+
+struct_body ::= (field | doc_comment | comment_line | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= value_name
 
@@ -409,4 +495,31 @@ block_value ::= block_inline | block_indented | block_fenced
 block_inline ::= (block_name | block_content_inline) line_end
 block_name ::= "default" | "none" | value_name
 block_content_inline ::= inline_text
+
+flow ::= "flow" flow_name? params? output_type? ":" line_end flow_body?
+flow_name ::= value_name
+flow_body ::= (directive | flow_entry | doc_comment | comment_line | blank_line | pass_statement)+
+flow_entry ::= flow_transform_step | flow_map_step | flow_case_step | flow_block_step | flow_repeat_until
+flow_transform_step ::= flow_transform_keyword flow_step_args line_end
+                      | flow_transform_keyword ":" flow_inline_body line_end
+                      | flow_transform_keyword ":" line_end block_indented_implicit?
+flow_transform_keyword ::= "do" | "get" | "ask" | "unfold" | "filter" | "rank" | "fold"
+flow_map_step ::= "map" flow_step_args line_end
+                | "map" ":" flow_inline_body line_end
+                | "map" ":" line_end flow_nested_body?
+flow_block_step ::= "block" ":" line_end flow_nested_body?
+flow_case_step ::= "case" ":" line_end flow_case_body
+flow_case_body ::= flow_case_arm+ flow_else_arm
+flow_case_arm ::= flow_condition ":" line_end flow_nested_body?
+flow_else_arm ::= "else" ":" line_end flow_nested_body?
+flow_repeat_until ::= "repeat" "until" ":" flow_inline_text line_end
+                    | "repeat" "until" ":" line_end block_indented_implicit
+flow_nested_body ::= (flow_entry | flow_text_block | doc_comment | comment_line | blank_line | pass_statement)+
+flow_inline_body ::= flow_call_list | flow_inline_text
+flow_call_list ::= "do"? flow_arg ("," "do"? flow_arg)*
+flow_step_args ::= flow_arg ("," flow_arg)*
+flow_arg ::= bare_value
+flow_condition ::= /[^:#\r\n][^:#\r\n]*/
+flow_inline_text ::= /[^#\r\n]+/
+flow_text_block ::= block_indented_implicit
 ```

@@ -2,6 +2,8 @@
 ; Maintain this file in this repository and consume it from tooling.
 
 (comment_line) @comment
+(program_doc_comment) @comment.documentation
+(doc_comment) @comment.documentation
 (inline_comment) @comment
 (frontmatter_comment) @comment
 
@@ -14,6 +16,14 @@
 (context_keyword) @keyword
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
+(flow_keyword) @keyword
+(flow_transform_keyword) @keyword
+(flow_map_keyword) @keyword
+(flow_block_keyword) @keyword
+(flow_case_keyword) @keyword
+(flow_else_keyword) @keyword
+(flow_repeat_keyword) @keyword
+(flow_until_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
@@ -51,6 +61,10 @@
 
 (thunk
   name: (thunk_name
+    (value_name) @function))
+
+(flow
+  name: (flow_name
     (value_name) @function))
 
 (prompt

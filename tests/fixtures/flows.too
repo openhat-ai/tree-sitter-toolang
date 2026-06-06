@@ -1,0 +1,33 @@
+##! Flow syntax fixture.
+
+struct SearchJob:
+  query: Text
+  reason?: Text
+
+flow research(in: Part[]) -> Part[]:
+  models = gpt-5
+  tools += web
+
+  ## Plan parallel searches.
+  unfold plan_searches
+  filter:
+    Keep only useful and non-duplicate search jobs.
+
+  map: do search, read, summarize
+  fold:
+    Synthesize all notes into one final response.
+
+flow route(in: Json) -> Json:
+  case:
+    enough evidence:
+      do answer
+    else:
+      ask reviewer
+
+flow revise(in: Text) -> Text:
+  block:
+    do revise
+    repeat until: answer is clear
+
+flow empty:
+  pass

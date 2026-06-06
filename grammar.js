@@ -4,7 +4,7 @@ module.exports = grammar({
   extras: () => [/[ \t\f]/],
   rules: {
     source_file: ($) =>
-      repeat(choice($.comment_line, $.blank_line, $.item)),
+      repeat(choice($.program_doc_comment, $.doc_comment, $.comment_line, $.blank_line, $.item)),
 
     item: ($) =>
       choice(
@@ -17,11 +17,14 @@ module.exports = grammar({
         $.context,
         $.instruct,
         $.thunk,
+        $.flow,
       ),
 
     newline: () => /\r?\n/,
     blank_line: ($) => $.newline,
-    comment_line: () => token(seq("#", /[^\r\n]*/, /\r?\n/)),
+    program_doc_comment: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
+    doc_comment: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
+    comment_line: () => token(prec(0, seq("#", /[^\r\n]*/, /\r?\n/))),
     inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional($.inline_comment), $.newline),
 
@@ -56,7 +59,7 @@ module.exports = grammar({
 
     struct_name: ($) => $.type_name,
     struct_body: ($) =>
-      prec.right(repeat1(choice($.field, $.comment_line, $.blank_line))),
+      prec.right(repeat1(choice($.field, $.doc_comment, $.comment_line, $.blank_line))),
     field: ($) =>
       seq(
         field("name", $.field_name),
@@ -234,6 +237,130 @@ module.exports = grammar({
       ),
     param_name: ($) => $.value_name,
 
+    flow: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_keyword),
+        optional(field("name", $.flow_name)),
+        optional(field("params", $.params)),
+        optional(seq(field("arrow", $.arrow), field("output", $.type))),
+        field("colon", $.colon),
+        $.line_end,
+        optional(field("body", $.flow_body)),
+      )),
+    flow_name: ($) => $.value_name,
+    flow_body: ($) =>
+      prec.right(repeat1(choice(
+        $.directive,
+        $.flow_entry,
+        $.doc_comment,
+        $.comment_line,
+        $.blank_line,
+        $.pass_statement,
+      ))),
+    flow_entry: ($) =>
+      choice(
+        alias($.flow_transform_step, $.step),
+        alias($.flow_map_step, $.step),
+        alias($.flow_case_step, $.step),
+        alias($.flow_block_step, $.step),
+        alias($.flow_repeat_until, $.step),
+      ),
+    flow_transform_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_transform_keyword),
+        choice(
+          seq(field("body", $.flow_step_args), $.line_end),
+          seq(
+            field("colon", $.colon),
+            choice(
+              seq(field("body", $.flow_inline_body), $.line_end),
+              seq($.line_end, optional(field("body", $.block_indented_implicit))),
+            ),
+          ),
+        ),
+      )),
+    flow_map_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_map_keyword),
+        choice(
+          seq(field("body", $.flow_step_args), $.line_end),
+          seq(
+            field("colon", $.colon),
+            choice(
+              seq(field("body", $.flow_inline_body), $.line_end),
+              seq($.line_end, optional(field("body", $.flow_nested_body))),
+            ),
+          ),
+        ),
+      )),
+    flow_block_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_block_keyword),
+        field("colon", $.colon),
+        $.line_end,
+        optional(field("body", $.flow_nested_body)),
+      )),
+    flow_case_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_case_keyword),
+        field("colon", $.colon),
+        $.line_end,
+        field("body", $.flow_case_body),
+      )),
+    flow_case_body: ($) =>
+      prec.right(seq(
+        repeat1(choice($.flow_case_arm, $.doc_comment, $.comment_line, $.blank_line)),
+        field("else", $.flow_else_arm),
+      )),
+    flow_case_arm: ($) =>
+      prec.right(seq(
+        field("condition", $.flow_condition),
+        field("colon", $.colon),
+        $.line_end,
+        optional(field("body", $.flow_nested_body)),
+      )),
+    flow_else_arm: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_else_keyword),
+        field("colon", $.colon),
+        $.line_end,
+        optional(field("body", $.flow_nested_body)),
+      )),
+    flow_repeat_until: ($) =>
+      seq(
+        field("keyword", $.flow_repeat_keyword),
+        field("modifier", $.flow_until_keyword),
+        field("colon", $.colon),
+        choice(
+          seq(field("condition", $.flow_inline_text), $.line_end),
+          seq($.line_end, field("condition", $.block_indented_implicit)),
+        ),
+      ),
+    flow_nested_body: ($) =>
+      prec.right(repeat1(choice(
+        $.flow_entry,
+        $.flow_text_block,
+        $.doc_comment,
+        $.comment_line,
+        $.blank_line,
+        $.pass_statement,
+      ))),
+    flow_inline_body: ($) =>
+      choice($.flow_call_list, $.flow_inline_text),
+    flow_call_list: ($) =>
+      seq(
+        optional($.flow_do_prefix),
+        field("target", $.flow_arg),
+        repeat(seq($.comma, optional($.flow_do_prefix), field("target", $.flow_arg))),
+      ),
+    flow_step_args: ($) =>
+      seq(field("arg", $.flow_arg), repeat(seq($.comma, field("arg", $.flow_arg)))),
+    flow_do_prefix: () => "do",
+    flow_arg: ($) => $.bare_value,
+    flow_condition: () => token(prec(-1, /[^:#\r\n][^:#\r\n]*/)),
+    flow_inline_text: () => token(prec(-1, /[^#\r\n]+/)),
+    flow_text_block: ($) => alias($.block_indented_implicit, $.block),
+
     directive: ($) =>
       seq(
         field("key", $.directive_key),
@@ -321,7 +448,15 @@ module.exports = grammar({
     context_keyword: () => "context",
     instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
+    flow_keyword: () => "flow",
     pass_keyword: () => "pass",
+    flow_transform_keyword: () => choice("do", "get", "ask", "unfold", "filter", "rank", "fold"),
+    flow_map_keyword: () => "map",
+    flow_block_keyword: () => "block",
+    flow_case_keyword: () => "case",
+    flow_else_keyword: () => "else",
+    flow_repeat_keyword: () => "repeat",
+    flow_until_keyword: () => "until",
 
     optional_marker: () => "?",
     assign_operator: () => "=",

@@ -72,7 +72,7 @@
       },
       "value": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "block_indented_implicit",
@@ -84,6 +84,20 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "block_indented_content_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -510,11 +524,6 @@
     }
   },
   {
-    "type": "comment_line",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "context",
     "named": true,
     "fields": {
@@ -761,6 +770,442 @@
     }
   },
   {
+    "type": "flow",
+    "named": true,
+    "fields": {
+      "arrow": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "arrow",
+            "named": true
+          }
+        ]
+      },
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_keyword",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_name",
+            "named": true
+          }
+        ]
+      },
+      "output": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "type",
+            "named": true
+          }
+        ]
+      },
+      "params": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "params",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_arg",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "bare_value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "directive",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "flow_entry",
+          "named": true
+        },
+        {
+          "type": "pass_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_call_list",
+    "named": true,
+    "fields": {
+      "target": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_arg",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        },
+        {
+          "type": "flow_do_prefix",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_case_arm",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_nested_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_condition",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_case_body",
+    "named": true,
+    "fields": {
+      "else": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_else_arm",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "flow_case_arm",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_do_prefix",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "flow_else_arm",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_nested_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_else_keyword",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_entry",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "step",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_inline_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_call_list",
+          "named": true
+        },
+        {
+          "type": "flow_inline_text",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_inline_text",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "flow_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "value_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_nested_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "flow_entry",
+          "named": true
+        },
+        {
+          "type": "flow_text_block",
+          "named": true
+        },
+        {
+          "type": "pass_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_step_args",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_arg",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_text_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_transform_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "frontmatter",
     "named": true,
     "fields": {},
@@ -788,7 +1233,7 @@
     }
   },
   {
-    "type": "frontmatter_comment",
+    "type": "inline_text",
     "named": true,
     "fields": {}
   },
@@ -915,6 +1360,10 @@
       "types": [
         {
           "type": "context",
+          "named": true
+        },
+        {
+          "type": "flow",
           "named": true
         },
         {
@@ -1488,7 +1937,117 @@
           "named": true
         },
         {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
           "type": "item",
+          "named": true
+        },
+        {
+          "type": "program_doc_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "step",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "block_indented_implicit",
+            "named": true
+          },
+          {
+            "type": "flow_case_body",
+            "named": true
+          },
+          {
+            "type": "flow_inline_body",
+            "named": true
+          },
+          {
+            "type": "flow_nested_body",
+            "named": true
+          },
+          {
+            "type": "flow_step_args",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "block_indented_implicit",
+            "named": true
+          },
+          {
+            "type": "flow_inline_text",
+            "named": true
+          }
+        ]
+      },
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_block_keyword",
+            "named": true
+          },
+          {
+            "type": "flow_case_keyword",
+            "named": true
+          },
+          {
+            "type": "flow_map_keyword",
+            "named": true
+          },
+          {
+            "type": "flow_repeat_keyword",
+            "named": true
+          },
+          {
+            "type": "flow_transform_keyword",
+            "named": true
+          }
+        ]
+      },
+      "modifier": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_until_keyword",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -1564,6 +2123,10 @@
         },
         {
           "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
           "named": true
         },
         {
@@ -1929,6 +2492,10 @@
     "named": true
   },
   {
+    "type": "ask",
+    "named": false
+  },
+  {
     "type": "assistant",
     "named": false
   },
@@ -1957,6 +2524,10 @@
     "named": true
   },
   {
+    "type": "comment_line",
+    "named": true
+  },
+  {
     "type": "context",
     "named": false
   },
@@ -1965,12 +2536,68 @@
     "named": false
   },
   {
+    "type": "do",
+    "named": false
+  },
+  {
+    "type": "doc_comment",
+    "named": true
+  },
+  {
     "type": "fenced_raw_text",
+    "named": true
+  },
+  {
+    "type": "filter",
+    "named": false
+  },
+  {
+    "type": "flow_block_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_case_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_condition",
+    "named": true
+  },
+  {
+    "type": "flow_else_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_map_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_repeat_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_until_keyword",
+    "named": true
+  },
+  {
+    "type": "fold",
+    "named": false
+  },
+  {
+    "type": "frontmatter_comment",
     "named": true
   },
   {
     "type": "frontmatter_delimiter",
     "named": true
+  },
+  {
+    "type": "get",
+    "named": false
   },
   {
     "type": "handoffs",
@@ -1986,10 +2613,6 @@
   },
   {
     "type": "inline_comment",
-    "named": true
-  },
-  {
-    "type": "inline_text",
     "named": true
   },
   {
@@ -2017,6 +2640,10 @@
     "named": true
   },
   {
+    "type": "program_doc_comment",
+    "named": true
+  },
+  {
     "type": "prompt",
     "named": false
   },
@@ -2026,6 +2653,10 @@
   },
   {
     "type": "psyches",
+    "named": false
+  },
+  {
+    "type": "rank",
     "named": false
   },
   {
@@ -2071,6 +2702,10 @@
   {
     "type": "type_name",
     "named": true
+  },
+  {
+    "type": "unfold",
+    "named": false
   },
   {
     "type": "use_keyword",

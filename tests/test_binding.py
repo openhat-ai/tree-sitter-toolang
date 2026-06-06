@@ -50,6 +50,15 @@ def _blocks(node):
     return blocks
 
 
+def _steps(node):
+    steps = []
+    for child in node.named_children:
+        if child.type == "step":
+            steps.append(child)
+        steps.extend(_steps(child))
+    return steps
+
+
 def test_language_capsule_builds_language():
     language = Language(tree_sitter_toolang.language())
 
@@ -235,9 +244,9 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     assert [child.type for child in root.named_children[:5]] == [
         "comment_line",
         "blank_line",
-        "comment_line",
+        "program_doc_comment",
         "blank_line",
-        "comment_line",
+        "doc_comment",
     ]
     assert [item.type for item in items] == [
         "skill",
@@ -415,6 +424,122 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "thunk",
         "thunk",
     ]
+
+
+def test_flows_fixture_covers_signatures_steps_and_doc_comments():
+    parser = _parser()
+    source = (FIXTURES_DIR / "flows.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    items = [_item_child(item) for item in _items(root)]
+    flows = [item for item in items if item.type == "flow"]
+
+    assert root.has_error is False
+    assert root.named_children[0].type == "program_doc_comment"
+    assert [item.type for item in items] == ["struct", "flow", "flow", "flow", "flow"]
+    assert [_text(source, flow.child_by_field_name("name")) for flow in flows] == [
+        "research",
+        "route",
+        "revise",
+        "empty",
+    ]
+
+    research = flows[0]
+    params = research.child_by_field_name("params")
+    output = research.child_by_field_name("output")
+    body = research.child_by_field_name("body")
+
+    assert params is not None
+    assert [
+        _text(source, param.child_by_field_name("name"))
+        for param in params.children_by_field_name("param")
+    ] == ["in"]
+    assert _text(source, output) == "Part[]"
+    assert body is not None
+    assert len([child for child in body.named_children if child.type == "directive"]) == 2
+    assert "doc_comment" in str(body)
+
+    research_steps = _steps(body)
+    assert [
+        _text(source, step.child_by_field_name("keyword")).strip()
+        for step in research_steps
+    ] == ["unfold", "filter", "map", "fold"]
+    assert "Keep only useful" in _text(source, research_steps[1].child_by_field_name("body"))
+    map_body = research_steps[2].child_by_field_name("body")
+    map_call_list = map_body.named_children[0]
+    assert [
+        _text(source, target)
+        for target in map_call_list.children_by_field_name("target")
+    ] == ["search", "read", "summarize"]
+    assert "Synthesize all notes" in _text(source, research_steps[3].child_by_field_name("body"))
+
+    route_steps = _steps(flows[1].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in route_steps] == [
+        "case",
+        "do",
+        "ask",
+    ]
+    case_body = route_steps[0].child_by_field_name("body")
+    assert "flow_else_arm" in str(case_body)
+    assert "enough evidence" in _text(source, case_body)
+
+    revise_steps = _steps(flows[2].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in revise_steps] == [
+        "block",
+        "do",
+        "repeat",
+    ]
+    assert _text(source, revise_steps[2].child_by_field_name("modifier")) == "until"
+    assert "pass_statement" in str(flows[3].child_by_field_name("body"))
+
+
+def test_map_step_accepts_nested_and_inline_equivalent_forms():
+    parser = _parser()
+    source = (
+        b"flow nested:\n"
+        b"  map:\n"
+        b"    do a\n"
+        b"    do b\n"
+        b"    do c\n"
+        b"\n"
+        b"flow explicit:\n"
+        b"  map: do a, b, c\n"
+        b"\n"
+        b"flow shorthand:\n"
+        b"  map: a, b, c\n"
+    )
+
+    tree = parser.parse(source)
+    flows = [_item_child(item) for item in _items(tree.root_node)]
+
+    assert tree.root_node.has_error is False
+    nested_steps = _steps(flows[0].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in nested_steps] == [
+        "map",
+        "do",
+        "do",
+        "do",
+    ]
+
+    for flow in flows[1:]:
+        map_step = _steps(flow.child_by_field_name("body"))[0]
+        body = map_step.child_by_field_name("body")
+        call_list = body.named_children[0]
+        assert [_text(source, target).strip() for target in call_list.children_by_field_name("target")] == [
+            "a",
+            "b",
+            "c",
+        ]
+
+
+def test_case_step_requires_explicit_else_arm():
+    parser = _parser()
+    source = b"flow bad:\n  case:\n    useful:\n      do answer\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
 
 
 def test_kitchen_sink_thunk_signature_directives_and_blocks():

@@ -4,6 +4,10 @@
   name: (thunk_name
     (value_name) @name)) @definition.function
 
+(flow
+  name: (flow_name
+    (value_name) @name)) @definition.function
+
 (struct
   name: (struct_name
     (type_name) @name)) @definition.class
