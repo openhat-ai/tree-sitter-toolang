@@ -486,11 +486,10 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
 
     revise_steps = _steps(flows[2].child_by_field_name("body"))
     assert [_text(source, step.child_by_field_name("keyword")).strip() for step in revise_steps] == [
-        "block",
         "do",
         "repeat",
     ]
-    assert _text(source, revise_steps[2].child_by_field_name("modifier")) == "until"
+    assert _text(source, revise_steps[1].child_by_field_name("modifier")) == "until"
     assert "pass_statement" in str(flows[3].child_by_field_name("body"))
 
 
@@ -540,6 +539,26 @@ def test_case_step_requires_explicit_else_arm():
     tree = parser.parse(source)
 
     assert tree.root_node.has_error is True
+
+
+def test_flow_directives_must_precede_steps():
+    parser = _parser()
+    source = b"flow bad:\n  do start\n  models = gpt-5\n"
+
+    tree = parser.parse(source)
+
+    assert tree.root_node.has_error is True
+
+
+def test_flow_pass_is_required_for_empty_body_and_must_be_last():
+    parser = _parser()
+    empty = b"flow empty:\n"
+    trailing = b"flow bad:\n  pass\n  do next\n"
+    nested_empty = b"flow bad:\n  map:\n"
+
+    assert parser.parse(empty).root_node.has_error is True
+    assert parser.parse(trailing).root_node.has_error is True
+    assert parser.parse(nested_empty).root_node.has_error is True
 
 
 def test_kitchen_sink_thunk_signature_directives_and_blocks():

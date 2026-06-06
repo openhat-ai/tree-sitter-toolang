@@ -72,7 +72,7 @@
       },
       "value": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "block_indented_implicit",
@@ -84,20 +84,6 @@
           }
         ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "block_indented_content_line",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -785,7 +771,7 @@
       },
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "flow_body",
@@ -873,6 +859,47 @@
   {
     "type": "flow_body",
     "named": true,
+    "fields": {
+      "tail": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_body_tail",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "directive",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_body_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_entry",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_body_tail",
+    "named": true,
     "fields": {},
     "children": {
       "multiple": true,
@@ -887,15 +914,11 @@
           "named": true
         },
         {
-          "type": "directive",
-          "named": true
-        },
-        {
           "type": "doc_comment",
           "named": true
         },
         {
-          "type": "flow_entry",
+          "type": "flow_body_statement",
           "named": true
         },
         {
@@ -941,7 +964,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "flow_nested_body",
@@ -1030,7 +1053,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "flow_nested_body",
@@ -1145,15 +1168,26 @@
           "named": true
         },
         {
-          "type": "flow_entry",
-          "named": true
-        },
-        {
-          "type": "flow_text_block",
+          "type": "flow_nested_statement",
           "named": true
         },
         {
           "type": "pass_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_nested_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_entry",
           "named": true
         }
       ]
@@ -1180,21 +1214,6 @@
       "types": [
         {
           "type": "comma",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "flow_text_block",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "block",
           "named": true
         }
       ]
@@ -2010,15 +2029,7 @@
         "required": true,
         "types": [
           {
-            "type": "flow_block_keyword",
-            "named": true
-          },
-          {
             "type": "flow_case_keyword",
-            "named": true
-          },
-          {
-            "type": "flow_map_keyword",
             "named": true
           },
           {
@@ -2312,17 +2323,9 @@
       }
     },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": false,
       "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "comment_line",
-          "named": true
-        },
         {
           "type": "pass_statement",
           "named": true
@@ -2552,10 +2555,6 @@
     "named": false
   },
   {
-    "type": "flow_block_keyword",
-    "named": true
-  },
-  {
     "type": "flow_case_keyword",
     "named": true
   },
@@ -2569,10 +2568,6 @@
   },
   {
     "type": "flow_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_map_keyword",
     "named": true
   },
   {
@@ -2622,6 +2617,10 @@
   {
     "type": "lparen",
     "named": true
+  },
+  {
+    "type": "map",
+    "named": false
   },
   {
     "type": "models",

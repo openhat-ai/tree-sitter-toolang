@@ -18,8 +18,6 @@
 (thunk_keyword) @keyword
 (flow_keyword) @keyword
 (flow_transform_keyword) @keyword
-(flow_map_keyword) @keyword
-(flow_block_keyword) @keyword
 (flow_case_keyword) @keyword
 (flow_else_keyword) @keyword
 (flow_repeat_keyword) @keyword

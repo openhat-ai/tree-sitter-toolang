@@ -245,24 +245,32 @@ module.exports = grammar({
         optional(seq(field("arrow", $.arrow), field("output", $.type))),
         field("colon", $.colon),
         $.line_end,
-        optional(field("body", $.flow_body)),
+        field("body", $.flow_body),
       )),
     flow_name: ($) => $.value_name,
     flow_body: ($) =>
-      prec.right(repeat1(choice(
-        $.directive,
-        $.flow_entry,
-        $.doc_comment,
-        $.comment_line,
-        $.blank_line,
-        $.pass_statement,
-      ))),
+      prec.right(seq(
+        repeat($.directive),
+        field("tail", $.flow_body_tail),
+      )),
+    flow_body_tail: ($) =>
+      prec.right(choice(
+        seq(
+          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
+          $.pass_statement,
+        ),
+        seq(
+          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
+          $.flow_body_statement,
+          repeat(choice($.flow_body_statement, $.doc_comment, $.comment_line, $.blank_line)),
+          optional($.pass_statement),
+        ),
+      )),
+    flow_body_statement: ($) => $.flow_entry,
     flow_entry: ($) =>
       choice(
         alias($.flow_transform_step, $.step),
-        alias($.flow_map_step, $.step),
         alias($.flow_case_step, $.step),
-        alias($.flow_block_step, $.step),
         alias($.flow_repeat_until, $.step),
       ),
     flow_transform_step: ($) =>
@@ -274,31 +282,10 @@ module.exports = grammar({
             field("colon", $.colon),
             choice(
               seq(field("body", $.flow_inline_body), $.line_end),
-              seq($.line_end, optional(field("body", $.block_indented_implicit))),
+              seq($.line_end, field("body", choice($.flow_nested_body, $.block_indented_implicit))),
             ),
           ),
         ),
-      )),
-    flow_map_step: ($) =>
-      prec.right(seq(
-        field("keyword", $.flow_map_keyword),
-        choice(
-          seq(field("body", $.flow_step_args), $.line_end),
-          seq(
-            field("colon", $.colon),
-            choice(
-              seq(field("body", $.flow_inline_body), $.line_end),
-              seq($.line_end, optional(field("body", $.flow_nested_body))),
-            ),
-          ),
-        ),
-      )),
-    flow_block_step: ($) =>
-      prec.right(seq(
-        field("keyword", $.flow_block_keyword),
-        field("colon", $.colon),
-        $.line_end,
-        optional(field("body", $.flow_nested_body)),
       )),
     flow_case_step: ($) =>
       prec.right(seq(
@@ -317,14 +304,14 @@ module.exports = grammar({
         field("condition", $.flow_condition),
         field("colon", $.colon),
         $.line_end,
-        optional(field("body", $.flow_nested_body)),
+        field("body", $.flow_nested_body),
       )),
     flow_else_arm: ($) =>
       prec.right(seq(
         field("keyword", $.flow_else_keyword),
         field("colon", $.colon),
         $.line_end,
-        optional(field("body", $.flow_nested_body)),
+        field("body", $.flow_nested_body),
       )),
     flow_repeat_until: ($) =>
       seq(
@@ -337,14 +324,19 @@ module.exports = grammar({
         ),
       ),
     flow_nested_body: ($) =>
-      prec.right(repeat1(choice(
-        $.flow_entry,
-        $.flow_text_block,
-        $.doc_comment,
-        $.comment_line,
-        $.blank_line,
-        $.pass_statement,
-      ))),
+      prec.right(choice(
+        seq(
+          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
+          $.pass_statement,
+        ),
+        seq(
+          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
+          $.flow_nested_statement,
+          repeat(choice($.flow_nested_statement, $.doc_comment, $.comment_line, $.blank_line)),
+          optional($.pass_statement),
+        ),
+      )),
+    flow_nested_statement: ($) => $.flow_entry,
     flow_inline_body: ($) =>
       choice($.flow_call_list, $.flow_inline_text),
     flow_call_list: ($) =>
@@ -359,7 +351,6 @@ module.exports = grammar({
     flow_arg: ($) => $.bare_value,
     flow_condition: () => token(prec(-1, /[^:#\r\n][^:#\r\n]*/)),
     flow_inline_text: () => token(prec(-1, /[^#\r\n]+/)),
-    flow_text_block: ($) => alias($.block_indented_implicit, $.block),
 
     directive: ($) =>
       seq(
@@ -395,10 +386,7 @@ module.exports = grammar({
     thunk_tail: ($) =>
       prec.right(choice(
         field("messages", $.message_section),
-        seq(
-          $.pass_statement,
-          repeat(choice($.comment_line, $.blank_line)),
-        ),
+        $.pass_statement,
       )),
     roled_message: ($) => alias($.roled_message_block, $.block),
     unroled_message: ($) => alias($.unroled_message_block, $.block),
@@ -450,9 +438,7 @@ module.exports = grammar({
     thunk_keyword: () => "thunk",
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
-    flow_transform_keyword: () => choice("do", "get", "ask", "unfold", "filter", "rank", "fold"),
-    flow_map_keyword: () => "map",
-    flow_block_keyword: () => "block",
+    flow_transform_keyword: () => choice("do", "get", "ask", "unfold", "filter", "rank", "map", "fold"),
     flow_case_keyword: () => "case",
     flow_else_keyword: () => "else",
     flow_repeat_keyword: () => "repeat",

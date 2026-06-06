@@ -25,9 +25,8 @@ flow route(in: Json) -> Json:
       ask reviewer
 
 flow revise(in: Text) -> Text:
-  block:
-    do revise
-    repeat until: answer is clear
+  do revise
+  repeat until: answer is clear
 
 flow empty:
   pass
