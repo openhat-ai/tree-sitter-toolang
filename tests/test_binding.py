@@ -34,6 +34,22 @@ def _item_child(item):
     return item.named_children[0]
 
 
+def _blocks(node):
+    blocks = []
+    for child in node.named_children:
+        if child.type == "block":
+            blocks.append(child)
+        elif child.type in {
+            "instruction_section",
+            "message_section",
+            "roled_message",
+            "thunk_tail",
+            "unroled_message",
+        }:
+            blocks.extend(_blocks(child))
+    return blocks
+
+
 def test_language_capsule_builds_language():
     language = Language(tree_sitter_toolang.language())
 
@@ -91,7 +107,7 @@ def test_script_thunks_fixture_covers_signature_variations():
     assert "block_fenced" in str(thunks[-1].child_by_field_name("body"))
     echo_body = thunks[1].child_by_field_name("body")
     assert echo_body is not None
-    echo_blocks = [child for child in echo_body.named_children if child.type == "block"]
+    echo_blocks = _blocks(echo_body)
     assert len(echo_blocks) == 1
     assert echo_blocks[0].child_by_field_name("kind") is None
     assert "Echo the current input:" in _text(source, echo_blocks[0])
@@ -264,7 +280,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     thunk = items[7]
     body = thunk.child_by_field_name("body")
     assert body is not None
-    blocks = [child for child in body.named_children if child.type == "block"]
+    blocks = _blocks(body)
     assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
         "instruct",
         "context",
@@ -341,15 +357,13 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
     ]
     chore_block_kinds = [
         _text(source, block.child_by_field_name("kind")).strip()
-        for block in chore_body.named_children
-        if block.type == "block"
-        and block.child_by_field_name("kind") is not None
+        for block in _blocks(chore_body)
+        if block.child_by_field_name("kind") is not None
     ]
     chat_unroled_messages = [
         block
-        for block in chat_body.named_children
-        if block.type == "block"
-        and block.child_by_field_name("kind") is None
+        for block in _blocks(chat_body)
+        if block.child_by_field_name("kind") is None
     ]
 
     assert chat_directive_keys == [
@@ -430,7 +444,7 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
     ]
     assert body is not None
     assert len([child for child in body.named_children if child.type == "directive"]) == 6
-    blocks = [child for child in body.named_children if child.type == "block"]
+    blocks = _blocks(body)
     assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
         "instruct",
         "context",
@@ -491,7 +505,7 @@ def test_thunk_roled_messages_support_user_assistant_and_tool():
 
     tree = parser.parse(source)
     body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
-    blocks = [child for child in body.named_children if child.type == "block"]
+    blocks = _blocks(body)
 
     assert tree.root_node.has_error is False
     assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
@@ -530,7 +544,7 @@ def test_bare_text_is_parsed_as_unroled_message():
 
     tree = parser.parse(source)
     body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
-    blocks = [child for child in body.named_children if child.type == "block"]
+    blocks = _blocks(body)
 
     assert tree.root_node.has_error is False
     assert len(blocks) == 1
