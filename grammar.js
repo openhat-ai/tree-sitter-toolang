@@ -43,7 +43,7 @@ module.exports = grammar({
       ),
 
     base_type: ($) => choice($.builtin_type, $.user_type),
-    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Part"),
+    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Part", "Pack"),
     user_type: ($) => $.type_name,
     type_suffix: ($) => $.array_suffix,
     array_suffix: () => "[]",
@@ -266,7 +266,7 @@ module.exports = grammar({
           optional($.pass_statement),
         ),
       )),
-    flow_body_statement: ($) => $.flow_entry,
+    flow_body_statement: ($) => choice($.flow_entry, $.unroled_message),
     flow_entry: ($) =>
       choice(
         alias($.flow_task_step, $.step),
@@ -296,14 +296,12 @@ module.exports = grammar({
         ),
         seq(
           field("keyword", $.flow_repeat_keyword),
-          optional(field("limit", $.flow_repeat_limit)),
+          optional(field("count", $.flow_repeat_count)),
           field("condition_keyword", $.flow_until_keyword),
           field("colon", $.colon),
           field("condition", $.flow_condition_body),
         ),
       ),
-    flow_repeat_limit: ($) =>
-      seq($.lbracket, field("count", $.flow_repeat_count), $.rbracket),
     flow_condition_body: ($) =>
       choice(
         seq(field("text", $.flow_inline_text), $.line_end),
@@ -432,8 +430,6 @@ module.exports = grammar({
     colon: () => ":",
     lparen: () => "(",
     rparen: () => ")",
-    lbracket: () => "[",
-    rbracket: () => "]",
     comma: () => ",",
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),

@@ -284,6 +284,10 @@
         {
           "type": "STRING",
           "value": "Part"
+        },
+        {
+          "type": "STRING",
+          "value": "Pack"
         }
       ]
     },
@@ -1739,8 +1743,17 @@
       }
     },
     "flow_body_statement": {
-      "type": "SYMBOL",
-      "name": "flow_entry"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "flow_entry"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "unroled_message"
+        }
+      ]
     },
     "flow_entry": {
       "type": "CHOICE",
@@ -1903,10 +1916,10 @@
               "members": [
                 {
                   "type": "FIELD",
-                  "name": "limit",
+                  "name": "count",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "flow_repeat_limit"
+                    "name": "flow_repeat_count"
                   }
                 },
                 {
@@ -1939,27 +1952,6 @@
               }
             }
           ]
-        }
-      ]
-    },
-    "flow_repeat_limit": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "lbracket"
-        },
-        {
-          "type": "FIELD",
-          "name": "count",
-          "content": {
-            "type": "SYMBOL",
-            "name": "flow_repeat_count"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "rbracket"
         }
       ]
     },
@@ -2817,14 +2809,6 @@
     "rparen": {
       "type": "STRING",
       "value": ")"
-    },
-    "lbracket": {
-      "type": "STRING",
-      "value": "["
-    },
-    "rbracket": {
-      "type": "STRING",
-      "value": "]"
     },
     "comma": {
       "type": "STRING",

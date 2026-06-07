@@ -70,7 +70,7 @@ Comments:
 ```ebnf
 type ::= base_type type_suffix*
 base_type ::= builtin_type | user_type
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" | "Pack"
 user_type ::= type_name
 type_suffix ::= array_suffix
 array_suffix ::= "[]"
@@ -83,6 +83,10 @@ Rules:
 - `Part` is a model-visible content part. Runtime part values use short
   `kind` names such as `text`, `json`, `image`, `audio`, `video`, `file`,
   `tool_call`, and `tool_result`.
+- `Pack` is a builtin Record equivalent to `{ parts: Part[] }`.
+- `Pack` is one whole value, not an array. Item-wise flow steps such as `keep`,
+  `drop`, `rank`, `each`, and `fold` operate on expanded items, so a flow must
+  `unfold` a `Pack` before processing its contained parts item-wise.
 - A `struct` declaration defines a user-defined Record type. `Record` is a
   semantic category, not a builtin type name that can be used in signatures.
 - `Message` is a runtime-only Record with a role and `Part[]`. Toolang source
@@ -294,7 +298,7 @@ flow_body ::= directive* flow_body_tail
 flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                  | (doc_comment | comment_line | blank_line)* flow_body_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_body_statement ::= flow_entry
+flow_body_statement ::= flow_entry | unroled_message
 
 flow_entry ::= flow_task_step | flow_repeat_step
 
@@ -311,8 +315,7 @@ flow_number_arg ::= /\d+/
 flow_arg ::= /[A-Za-z0-9_./@-]+/
 
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
-                   | "repeat" flow_repeat_limit? "until" ":" flow_condition_body
-flow_repeat_limit ::= "[" flow_repeat_count "]"
+                   | "repeat" flow_repeat_count? "until" ":" flow_condition_body
 flow_repeat_count ::= /\d+/
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit
@@ -350,8 +353,10 @@ Rules:
   `do summarize` or `fold synthesize_answer`.
 - Colon with text is a one-line inline thunk.
 - Colon with an indented body is a multi-line inline thunk.
+- A bare indented block in a flow body is an implicit inline thunk body, matching
+  bare text in `thunk_body`.
 - `repeat N` repeats previous statements at the same indentation level N times.
-- `repeat until:` and `repeat [N] until:` repeat previous statements at the same
+- `repeat until:` and `repeat N until:` repeat previous statements at the same
   indentation level until the predicate succeeds or the runtime repeat limit is
   reached.
 - `repeat` has no nested body.
@@ -381,7 +386,8 @@ types; they are records with a role and `Part[]`.
 - Only values referenced by message blocks are sent to the model call. Referenced
   values are promoted to parts according to their type: `Text` to a text part,
   `Number`, `Boolean`, `Json`, and user-defined Record values to JSON parts,
-  and `Part` or `Part[]` values to parts directly.
+  `Part` or `Part[]` values to parts directly, and `Pack` values to their
+  contained `parts`.
 - `recall = none` disables history retrieval. `recall = default` delegates to
   runtime policy. `recall = history`, `recall = memory`, and
   `recall = history, memory` select explicit retrieval sources.
@@ -493,7 +499,7 @@ flow_body ::= directive* flow_body_tail
 flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                  | (doc_comment | comment_line | blank_line)* flow_body_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_body_statement ::= flow_entry
+flow_body_statement ::= flow_entry | unroled_message
 flow_entry ::= flow_task_step | flow_repeat_step
 flow_task_step ::= flow_step_keyword flow_step_head? line_end
                  | flow_step_keyword flow_step_head? ":" flow_inline_body line_end
@@ -507,8 +513,7 @@ flow_ref_list ::= flow_arg ("," flow_arg)*
 flow_number_arg ::= /\d+/
 flow_arg ::= /[A-Za-z0-9_./@-]+/
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
-                   | "repeat" flow_repeat_limit? "until" ":" flow_condition_body
-flow_repeat_limit ::= "[" flow_repeat_count "]"
+                   | "repeat" flow_repeat_count? "until" ":" flow_condition_body
 flow_repeat_count ::= /\d+/
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit

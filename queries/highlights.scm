@@ -38,8 +38,6 @@
 (comma) @punctuation.delimiter
 (lparen) @punctuation.delimiter
 (rparen) @punctuation.delimiter
-(lbracket) @punctuation.delimiter
-(rbracket) @punctuation.delimiter
 (optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
 (fence_open) @punctuation.special

@@ -40,6 +40,9 @@ def _blocks(node):
         if child.type == "block":
             blocks.append(child)
         elif child.type in {
+            "flow_body",
+            "flow_body_tail",
+            "flow_body_statement",
             "instruction_section",
             "message_section",
             "roled_message",
@@ -452,11 +455,13 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         "flow",
         "flow",
         "flow",
+        "flow",
     ]
     assert [_text(source, flow.child_by_field_name("name")) for flow in flows] == [
         "research",
         "delegate",
         "named",
+        "bare",
         "empty",
     ]
 
@@ -470,6 +475,7 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         _text(source, param.child_by_field_name("name"))
         for param in params.children_by_field_name("param")
     ] == ["in"]
+    assert _text(source, params.children_by_field_name("param")[0].child_by_field_name("type")) == "Pack"
     assert _text(source, output) == "Answer"
     assert body is not None
     assert len([child for child in body.named_children if child.type == "directive"]) == 2
@@ -495,7 +501,7 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
     assert "flow_par_modifier" in str(research_steps[5].child_by_field_name("head"))
     assert "Synthesize all notes" in _text(source, research_steps[6].child_by_field_name("body"))
     assert _text(source, research_steps[7].child_by_field_name("condition_keyword")) == "until"
-    assert "flow_repeat_limit" in str(research_steps[7])
+    assert _text(source, research_steps[7].child_by_field_name("count")) == "3"
 
     delegate_steps = _steps(flows[1].child_by_field_name("body"))
     assert [_text(source, step.child_by_field_name("keyword")).strip() for step in delegate_steps] == [
@@ -513,7 +519,11 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         _text(source, step.child_by_field_name("head"))
         for step in named_steps
     ] == ["plan_searches", "synthesize_answer"]
-    assert "pass_statement" in str(flows[3].child_by_field_name("body"))
+    bare_blocks = _blocks(flows[3].child_by_field_name("body"))
+    assert len(bare_blocks) == 1
+    assert bare_blocks[0].child_by_field_name("kind") is None
+    assert "Use the current input directly." in _text(source, bare_blocks[0])
+    assert "pass_statement" in str(flows[4].child_by_field_name("body"))
 
 
 def test_flow_named_reference_and_inline_thunk_forms():
@@ -554,7 +564,7 @@ def test_flow_repeat_forms():
         b"  do search\n"
         b"  repeat 3\n"
         b"  repeat until: enough evidence\n"
-        b"  repeat [5] until:\n"
+        b"  repeat 5 until:\n"
         b"    answer is complete\n"
     )
 
@@ -570,18 +580,21 @@ def test_flow_repeat_forms():
     ]
     assert _text(source, steps[1].child_by_field_name("count")) == "3"
     assert steps[2].child_by_field_name("condition_keyword") is not None
-    assert steps[2].child_by_field_name("limit") is None
-    assert "flow_repeat_limit" in str(steps[3])
+    assert steps[2].child_by_field_name("count") is None
+    assert _text(source, steps[3].child_by_field_name("count")) == "5"
     assert "block_indented_implicit" in str(steps[3].child_by_field_name("condition"))
 
 
-def test_flow_directives_must_precede_steps():
+def test_flow_directive_nodes_only_parse_at_body_start():
     parser = _parser()
-    source = b"flow bad:\n  do start\n  models = gpt-5\n"
+    source = b"flow body:\n  models = gpt-5\n  do start\n  models = gpt-5\n"
 
     tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
+    assert len([child for child in body.named_children if child.type == "directive"]) == 1
+    assert "models = gpt-5" in _text(source, _blocks(body)[0])
 
 
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():
