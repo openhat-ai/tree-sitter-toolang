@@ -352,6 +352,12 @@ integer_literal ::= /\d+/
 
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
+                   | "repeat" flow_repeat_count? ":" line_end flow_repeat_block_body
+flow_repeat_block_body ::= (doc_comment | comment_line | blank_line)*
+                           flow_body_statement
+                           (flow_body_statement | doc_comment | comment_line | blank_line)*
+                           flow_until_clause?
+flow_until_clause ::= "until" ":" flow_condition_body
 flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit
@@ -406,7 +412,11 @@ Rules:
 - `repeat until:` and `repeat N until:` repeat previous statements at the same
   indentation level until the predicate succeeds or the runtime repeat limit is
   reached.
-- `repeat` has no nested body.
+- `repeat N:` and `repeat:` introduce an explicit nested flow block. The block
+  body is the repeat range. A final `until:` clause may stop the loop early.
+- Short repeat forms have no nested body; block repeat forms do.
+- Short repeat forms require at least one previous executable statement in the
+  same block; this is a semantic validation rule.
 - `pass` is an explicit empty statement. It can only appear as the final body
   entry. If a flow body has no other entries, it must use `pass`.
 - Inline text bodies, indented bodies, and repeat conditions lower to anonymous
@@ -596,6 +606,12 @@ flow_target ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
 integer_literal ::= /\d+/
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
+                   | "repeat" flow_repeat_count? ":" line_end flow_repeat_block_body
+flow_repeat_block_body ::= (doc_comment | comment_line | blank_line)*
+                           flow_body_statement
+                           (flow_body_statement | doc_comment | comment_line | blank_line)*
+                           flow_until_clause?
+flow_until_clause ::= "until" ":" flow_condition_body
 flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit

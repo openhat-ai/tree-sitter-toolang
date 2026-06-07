@@ -130,6 +130,21 @@ flow examples(in: Pack) -> Answer:
   do verify_answer
   repeat 5 until:
     the answer is complete and well-supported
+
+  repeat 5:
+    do collect_evidence
+    do verify_sources
+
+  repeat:
+    do collect_evidence
+    do verify_sources
+    until: enough evidence
+
+  repeat 5:
+    do collect_evidence
+    do verify_sources
+    until:
+      enough evidence
 ```
 
 Notes:
@@ -140,7 +155,10 @@ Notes:
 - A doc comment is not special for splitting; it is a comment line too, and may
   additionally describe the next bare thunk step for UI progress.
 - `repeat` requires at least one previous executable statement in the same
-  block. A flow body cannot start with `repeat`.
+  block when using the short forms without a nested block. A flow body cannot
+  start with a short repeat.
+- `repeat N:` and `repeat:` define an explicit nested flow block. The block body
+  is the repeat range, and a final `until:` clause may stop the loop early.
 - In examples such as `keep useful_filter`, `useful_filter` is a named thunk.
   Named thunk forms do not also define an inline body after `:`.
 - `to Type` belongs to inline thunk forms. Named thunk forms already carry their

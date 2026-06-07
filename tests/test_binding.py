@@ -701,6 +701,44 @@ def test_flow_repeat_forms():
     assert _text(source, steps[3].child_by_field_name("count")) == "5"
     assert "block_indented_implicit" in str(steps[3].child_by_field_name("condition"))
 
+    block_source = (
+        b"flow counted_block:\n"
+        b"  repeat 5:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"\n"
+        b"flow until_block:\n"
+        b"  repeat:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"    until: enough evidence\n"
+        b"\n"
+        b"flow counted_until_block:\n"
+        b"  repeat 5:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"    until:\n"
+        b"      enough evidence\n"
+    )
+
+    block_tree = parser.parse(block_source)
+    flows = [_item_child(item) for item in _items(block_tree.root_node)]
+    repeat_steps = [
+        _steps(flow.child_by_field_name("body"))[0]
+        for flow in flows
+    ]
+
+    assert block_tree.root_node.has_error is False
+    assert _text(block_source, repeat_steps[0].child_by_field_name("count")) == "5"
+    assert "flow_repeat_block_body" in str(repeat_steps[0].child_by_field_name("body"))
+    assert repeat_steps[0].child_by_field_name("body").child_by_field_name("condition") is None
+    assert repeat_steps[1].child_by_field_name("count") is None
+    assert "flow_until_clause" in str(repeat_steps[1].child_by_field_name("body"))
+    assert _text(block_source, repeat_steps[2].child_by_field_name("count")) == "5"
+    assert "block_indented_implicit" in str(
+        repeat_steps[2].child_by_field_name("body").child_by_field_name("condition")
+    )
+
 
 def test_flow_directive_nodes_only_parse_at_body_start():
     parser = _parser()

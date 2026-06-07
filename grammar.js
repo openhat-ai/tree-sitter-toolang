@@ -404,6 +404,26 @@ module.exports = grammar({
           field("colon", $.colon),
           field("condition", $.flow_condition_body),
         ),
+        prec.right(seq(
+          field("keyword", $.flow_repeat_keyword),
+          optional(field("count", $.flow_repeat_count)),
+          field("colon", $.colon),
+          $.line_end,
+          field("body", $.flow_repeat_block_body),
+        )),
+      ),
+    flow_repeat_block_body: ($) =>
+      prec.right(seq(
+        repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
+        field("entry", $.flow_body_statement),
+        repeat(choice($.flow_body_statement, $.doc_comment, $.comment_line, $.blank_line)),
+        optional(field("condition", $.flow_until_clause)),
+      )),
+    flow_until_clause: ($) =>
+      seq(
+        field("keyword", $.flow_until_keyword),
+        field("colon", $.colon),
+        field("condition", $.flow_condition_body),
       ),
     flow_condition_body: ($) =>
       choice(
