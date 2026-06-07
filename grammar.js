@@ -269,23 +269,63 @@ module.exports = grammar({
     flow_body_statement: ($) => choice($.flow_entry, $.unroled_message),
     flow_entry: ($) =>
       choice(
-        alias($.flow_task_step, $.step),
+        alias($.flow_do_step, $.step),
+        alias($.flow_ask_step, $.step),
+        alias($.flow_unfold_step, $.step),
+        alias($.flow_keep_step, $.step),
+        alias($.flow_drop_step, $.step),
+        alias($.flow_rank_step, $.step),
+        alias($.flow_each_step, $.step),
+        alias($.flow_fold_step, $.step),
         alias($.flow_repeat_step, $.step),
       ),
-    flow_task_step: ($) =>
+    flow_do_step: ($) =>
+      seq(
+        field("keyword", $.flow_do_keyword),
+        field("targets", $.flow_target_list),
+        $.line_end,
+      ),
+    flow_ask_step: ($) =>
+      seq(
+        field("keyword", $.flow_ask_keyword),
+        field("target", $.flow_target),
+        $.line_end,
+      ),
+    flow_unfold_step: ($) =>
       prec.right(seq(
-        field("keyword", $.flow_step_keyword),
-        optional(field("head", $.flow_step_head)),
-        choice(
-          $.line_end,
-          seq(
-            field("colon", $.colon),
-            choice(
-              seq(field("body", $.flow_inline_body), $.line_end),
-              seq($.line_end, field("body", $.block_indented_implicit)),
-            ),
-          ),
-        ),
+        field("keyword", $.flow_unfold_keyword),
+        optional(field("head", $.flow_unfold_head)),
+        field("body", $.flow_step_body),
+      )),
+    flow_keep_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_keep_keyword),
+        optional(field("head", $.flow_item_filter_head)),
+        field("body", $.flow_step_body),
+      )),
+    flow_drop_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_drop_keyword),
+        optional(field("head", $.flow_item_filter_head)),
+        field("body", $.flow_step_body),
+      )),
+    flow_rank_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_rank_keyword),
+        optional(field("head", $.flow_rank_head)),
+        field("body", $.flow_step_body),
+      )),
+    flow_each_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_each_keyword),
+        optional(field("head", $.flow_each_head)),
+        field("body", $.flow_step_body),
+      )),
+    flow_fold_step: ($) =>
+      prec.right(seq(
+        field("keyword", $.flow_fold_keyword),
+        optional(field("head", $.flow_fold_head)),
+        field("body", $.flow_step_body),
       )),
     flow_repeat_step: ($) =>
       choice(
@@ -307,29 +347,57 @@ module.exports = grammar({
         seq(field("text", $.flow_inline_text), $.line_end),
         seq($.line_end, field("text", $.block_indented_implicit)),
       ),
-    flow_step_head: ($) =>
-      seq(
-        field("part", $.flow_step_head_part),
-        repeat(field("part", $.flow_step_head_part)),
-      ),
-    flow_step_head_part: ($) =>
+    flow_step_body: ($) =>
       choice(
-        $.flow_to_modifier,
-        $.flow_par_modifier,
-        $.flow_number_arg,
-        $.flow_ref_list,
+        $.line_end,
+        seq(
+          field("colon", $.colon),
+          choice(
+            seq(field("value", $.flow_inline_body), $.line_end),
+            seq($.line_end, field("value", $.block_indented_implicit)),
+          ),
+        ),
       ),
-    flow_to_modifier: ($) =>
+    flow_unfold_head: ($) =>
+      choice($.flow_output_type, $.flow_target),
+    flow_item_filter_head: ($) =>
+      choice(
+        $.flow_parallelism,
+        $.flow_target,
+        seq($.flow_target, $.flow_parallelism),
+        seq($.flow_parallelism, $.flow_target),
+      ),
+    flow_rank_head: ($) =>
+      choice($.flow_rank_limit, $.flow_target),
+    flow_each_head: ($) =>
+      choice(
+        $.flow_output_type,
+        $.flow_parallelism,
+        $.flow_target,
+        seq($.flow_output_type, $.flow_parallelism),
+        seq($.flow_output_type, $.flow_target),
+        seq($.flow_parallelism, $.flow_target),
+        seq($.flow_output_type, $.flow_parallelism, $.flow_target),
+      ),
+    flow_fold_head: ($) =>
+      choice(
+        $.flow_output_type,
+        $.flow_target,
+        seq($.flow_output_type, $.flow_target),
+      ),
+    flow_output_type: ($) =>
       seq(field("keyword", $.flow_to_keyword), field("type", $.type)),
-    flow_par_modifier: ($) =>
-      seq(field("keyword", $.flow_par_keyword), field("count", $.flow_number_arg)),
-    flow_ref_list: ($) =>
-      seq(field("target", $.flow_arg), repeat(seq($.comma, field("target", $.flow_arg)))),
-    flow_number_arg: () => token(/\d+/),
+    flow_parallelism: ($) =>
+      seq(field("keyword", $.flow_par_keyword), field("count", $.integer_literal)),
+    flow_rank_limit: ($) =>
+      field("count", $.integer_literal),
+    flow_target_list: ($) =>
+      seq(field("target", $.flow_target), repeat(seq($.comma, field("target", $.flow_target)))),
     flow_inline_body: ($) =>
       $.flow_inline_text,
-    flow_arg: () => token(/[A-Za-z0-9_./@-]+/),
-    flow_repeat_count: () => token(/\d+/),
+    flow_target: () => token(/[A-Za-z_@][A-Za-z0-9_./@-]*/),
+    flow_repeat_count: ($) => $.integer_literal,
+    integer_literal: () => token(/\d+/),
     flow_inline_text: () => token(prec(-1, /[^#\r\n]+/)),
 
     directive: ($) =>
@@ -418,7 +486,14 @@ module.exports = grammar({
     thunk_keyword: () => "thunk",
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
-    flow_step_keyword: () => choice("do", "ask", "unfold", "keep", "drop", "rank", "each", "fold"),
+    flow_do_keyword: () => "do",
+    flow_ask_keyword: () => "ask",
+    flow_unfold_keyword: () => "unfold",
+    flow_keep_keyword: () => "keep",
+    flow_drop_keyword: () => "drop",
+    flow_rank_keyword: () => "rank",
+    flow_each_keyword: () => "each",
+    flow_fold_keyword: () => "fold",
     flow_repeat_keyword: () => "repeat",
     flow_until_keyword: () => "until",
     flow_to_keyword: () => "to",

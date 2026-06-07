@@ -486,19 +486,19 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         _text(source, step.child_by_field_name("keyword")).strip()
         for step in research_steps
     ] == ["do", "unfold", "keep", "drop", "rank", "each", "fold", "repeat"]
-    do_head = research_steps[0].child_by_field_name("head")
+    do_head = research_steps[0].child_by_field_name("targets")
     assert [
         _text(source, target)
         for target in _field_descendants(do_head, "target")
     ] == ["classify", "normalize"]
-    assert "flow_to_modifier" in str(research_steps[1].child_by_field_name("head"))
+    assert "flow_output_type" in str(research_steps[1].child_by_field_name("head"))
     assert "SearchJob" in _text(source, research_steps[1].child_by_field_name("head"))
-    assert "flow_par_modifier" in str(research_steps[2].child_by_field_name("head"))
+    assert "flow_parallelism" in str(research_steps[2].child_by_field_name("head"))
     assert "Keep only useful" in _text(source, research_steps[2].child_by_field_name("body"))
     assert "Drop duplicate" in _text(source, research_steps[3].child_by_field_name("body"))
-    assert "flow_number_arg" in str(research_steps[4].child_by_field_name("head"))
-    assert "flow_to_modifier" in str(research_steps[5].child_by_field_name("head"))
-    assert "flow_par_modifier" in str(research_steps[5].child_by_field_name("head"))
+    assert "flow_rank_limit" in str(research_steps[4].child_by_field_name("head"))
+    assert "flow_output_type" in str(research_steps[5].child_by_field_name("head"))
+    assert "flow_parallelism" in str(research_steps[5].child_by_field_name("head"))
     assert "Synthesize all notes" in _text(source, research_steps[6].child_by_field_name("body"))
     assert _text(source, research_steps[7].child_by_field_name("condition_keyword")) == "until"
     assert _text(source, research_steps[7].child_by_field_name("count")) == "3"
@@ -544,10 +544,10 @@ def test_flow_named_reference_and_inline_thunk_forms():
     flows = [_item_child(item) for item in _items(tree.root_node)]
 
     assert tree.root_node.has_error is False
-    named_head = _steps(flows[0].child_by_field_name("body"))[0].child_by_field_name("head")
+    named_targets = _steps(flows[0].child_by_field_name("body"))[0].child_by_field_name("targets")
     assert [
         _text(source, target)
-        for target in _field_descendants(named_head, "target")
+        for target in _field_descendants(named_targets, "target")
     ] == ["classify", "normalize", "summarize"]
     inline_step = _steps(flows[1].child_by_field_name("body"))[0]
     assert "flow_inline_body" in str(inline_step.child_by_field_name("body"))
@@ -555,6 +555,48 @@ def test_flow_named_reference_and_inline_thunk_forms():
     block_step = _steps(flows[2].child_by_field_name("body"))[0]
     assert "block_indented_implicit" in str(block_step.child_by_field_name("body"))
     assert "Synthesize final answer." in _text(source, block_step.child_by_field_name("body"))
+
+
+def test_flow_step_heads_are_keyword_specific():
+    parser = _parser()
+    invalid_sources = [
+        b"flow bare:\n  ask alice to Answer\n",
+        b"flow bare:\n  ask to Answer:\n    Delegate.\n",
+        b"flow bare:\n  keep to Note:\n    useful\n",
+        b"flow bare:\n  drop to Note:\n    duplicate\n",
+        b"flow bare:\n  rank to Note:\n    preferred\n",
+        b"flow bare:\n  rank par 5:\n    preferred\n",
+        b"flow bare:\n  do summarize:\n    Run it.\n",
+    ]
+    valid_source = (
+        b"flow ok:\n"
+        b"  keep par 4 useful_filter:\n"
+        b"    useful\n"
+        b"  drop duplicate_filter par 4:\n"
+        b"    duplicate\n"
+        b"  each to Note par 4 search_notes:\n"
+        b"    search\n"
+        b"  fold to Answer synthesize_answer:\n"
+        b"    synthesize\n"
+    )
+
+    for source in invalid_sources:
+        assert parser.parse(source).root_node.has_error is True, source
+
+    valid_tree = parser.parse(valid_source)
+    valid_steps = _steps(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))
+    assert valid_tree.root_node.has_error is False
+    assert [_text(valid_source, step.child_by_field_name("keyword")).strip() for step in valid_steps] == [
+        "keep",
+        "drop",
+        "each",
+        "fold",
+    ]
+    assert "flow_parallelism" in str(valid_steps[0].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[1].child_by_field_name("head"))
+    assert "flow_output_type" in str(valid_steps[2].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[2].child_by_field_name("head"))
+    assert "flow_output_type" in str(valid_steps[3].child_by_field_name("head"))
 
 
 def test_flow_repeat_forms():

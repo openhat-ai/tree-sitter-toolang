@@ -300,23 +300,54 @@ flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
 flow_body_statement ::= flow_entry | unroled_message
 
-flow_entry ::= flow_task_step | flow_repeat_step
+flow_entry ::= flow_do_step
+             | flow_ask_step
+             | flow_unfold_step
+             | flow_keep_step
+             | flow_drop_step
+             | flow_rank_step
+             | flow_each_step
+             | flow_fold_step
+             | flow_repeat_step
 
-flow_task_step ::= flow_step_keyword flow_step_head? line_end
-                 | flow_step_keyword flow_step_head? ":" flow_inline_body line_end
-                 | flow_step_keyword flow_step_head? ":" line_end block_indented_implicit
-flow_step_keyword ::= "do" | "ask" | "unfold" | "keep" | "drop" | "rank" | "each" | "fold"
-flow_step_head ::= flow_step_head_part+
-flow_step_head_part ::= flow_to_modifier | flow_par_modifier | flow_number_arg | flow_ref_list
-flow_to_modifier ::= "to" type
-flow_par_modifier ::= "par" flow_number_arg
-flow_ref_list ::= flow_arg ("," flow_arg)*
-flow_number_arg ::= /\d+/
-flow_arg ::= /[A-Za-z0-9_./@-]+/
+flow_do_step ::= "do" flow_target_list line_end
+flow_ask_step ::= "ask" flow_target line_end
+flow_unfold_step ::= "unfold" flow_unfold_head? flow_step_body
+flow_keep_step ::= "keep" flow_item_filter_head? flow_step_body
+flow_drop_step ::= "drop" flow_item_filter_head? flow_step_body
+flow_rank_step ::= "rank" flow_rank_head? flow_step_body
+flow_each_step ::= "each" flow_each_head? flow_step_body
+flow_fold_step ::= "fold" flow_fold_head? flow_step_body
+
+flow_step_body ::= line_end
+                 | ":" flow_inline_body line_end
+                 | ":" line_end block_indented_implicit
+flow_unfold_head ::= flow_output_type | flow_target
+flow_item_filter_head ::= flow_parallelism
+                        | flow_target
+                        | flow_target flow_parallelism
+                        | flow_parallelism flow_target
+flow_rank_head ::= flow_rank_limit | flow_target
+flow_each_head ::= flow_output_type
+                 | flow_parallelism
+                 | flow_target
+                 | flow_output_type flow_parallelism
+                 | flow_output_type flow_target
+                 | flow_parallelism flow_target
+                 | flow_output_type flow_parallelism flow_target
+flow_fold_head ::= flow_output_type
+                 | flow_target
+                 | flow_output_type flow_target
+flow_output_type ::= "to" type
+flow_parallelism ::= "par" integer_literal
+flow_rank_limit ::= integer_literal
+flow_target_list ::= flow_target ("," flow_target)*
+flow_target ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
+integer_literal ::= /\d+/
 
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
-flow_repeat_count ::= /\d+/
+flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit
 flow_inline_text ::= /[^#\r\n]+/
@@ -342,13 +373,16 @@ Rules:
 - `do` runs a named thunk or flow on the current value.
 - `ask` delegates the current value to an agent.
 - `unfold` expands one value into an array of values.
-- `keep` keeps matching items.
-- `drop` drops matching items.
-- `rank` ranks items and keeps the top N when N is provided.
+- `keep` keeps matching items. It does not support `to Type`.
+- `drop` drops matching items. It does not support `to Type`.
+- `rank` ranks items and keeps the top N when N is provided. It does not
+  support `to Type`.
 - `each` processes every item and collects results.
 - `fold` combines an array of values into one value.
-- `to Type` specifies a step output type.
-- `par N` limits concurrent workers for item-wise steps.
+- `to Type` specifies a step output type and is only supported by `unfold`,
+  `each`, and `fold`.
+- `par N` limits concurrent workers and is only supported by item-wise array
+  steps: `keep`, `drop`, and `each`.
 - No colon means the step body is a named reference, for example
   `do summarize` or `fold synthesize_answer`.
 - Colon with text is a one-line inline thunk.
@@ -500,21 +534,51 @@ flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                  | (doc_comment | comment_line | blank_line)* flow_body_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
 flow_body_statement ::= flow_entry | unroled_message
-flow_entry ::= flow_task_step | flow_repeat_step
-flow_task_step ::= flow_step_keyword flow_step_head? line_end
-                 | flow_step_keyword flow_step_head? ":" flow_inline_body line_end
-                 | flow_step_keyword flow_step_head? ":" line_end block_indented_implicit
-flow_step_keyword ::= "do" | "ask" | "unfold" | "keep" | "drop" | "rank" | "each" | "fold"
-flow_step_head ::= flow_step_head_part+
-flow_step_head_part ::= flow_to_modifier | flow_par_modifier | flow_number_arg | flow_ref_list
-flow_to_modifier ::= "to" type
-flow_par_modifier ::= "par" flow_number_arg
-flow_ref_list ::= flow_arg ("," flow_arg)*
-flow_number_arg ::= /\d+/
-flow_arg ::= /[A-Za-z0-9_./@-]+/
+flow_entry ::= flow_do_step
+             | flow_ask_step
+             | flow_unfold_step
+             | flow_keep_step
+             | flow_drop_step
+             | flow_rank_step
+             | flow_each_step
+             | flow_fold_step
+             | flow_repeat_step
+flow_do_step ::= "do" flow_target_list line_end
+flow_ask_step ::= "ask" flow_target line_end
+flow_unfold_step ::= "unfold" flow_unfold_head? flow_step_body
+flow_keep_step ::= "keep" flow_item_filter_head? flow_step_body
+flow_drop_step ::= "drop" flow_item_filter_head? flow_step_body
+flow_rank_step ::= "rank" flow_rank_head? flow_step_body
+flow_each_step ::= "each" flow_each_head? flow_step_body
+flow_fold_step ::= "fold" flow_fold_head? flow_step_body
+flow_step_body ::= line_end
+                 | ":" flow_inline_body line_end
+                 | ":" line_end block_indented_implicit
+flow_unfold_head ::= flow_output_type | flow_target
+flow_item_filter_head ::= flow_parallelism
+                        | flow_target
+                        | flow_target flow_parallelism
+                        | flow_parallelism flow_target
+flow_rank_head ::= flow_rank_limit | flow_target
+flow_each_head ::= flow_output_type
+                 | flow_parallelism
+                 | flow_target
+                 | flow_output_type flow_parallelism
+                 | flow_output_type flow_target
+                 | flow_parallelism flow_target
+                 | flow_output_type flow_parallelism flow_target
+flow_fold_head ::= flow_output_type
+                 | flow_target
+                 | flow_output_type flow_target
+flow_output_type ::= "to" type
+flow_parallelism ::= "par" integer_literal
+flow_rank_limit ::= integer_literal
+flow_target_list ::= flow_target ("," flow_target)*
+flow_target ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
+integer_literal ::= /\d+/
 flow_repeat_step ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
-flow_repeat_count ::= /\d+/
+flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit
 flow_inline_text ::= /[^#\r\n]+/

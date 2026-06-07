@@ -17,7 +17,14 @@
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
 (flow_keyword) @keyword
-(flow_step_keyword) @keyword
+(flow_do_keyword) @keyword
+(flow_ask_keyword) @keyword
+(flow_unfold_keyword) @keyword
+(flow_keep_keyword) @keyword
+(flow_drop_keyword) @keyword
+(flow_rank_keyword) @keyword
+(flow_each_keyword) @keyword
+(flow_fold_keyword) @keyword
 (flow_repeat_keyword) @keyword
 (flow_until_keyword) @keyword
 (flow_to_keyword) @keyword
