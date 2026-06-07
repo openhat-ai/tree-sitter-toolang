@@ -4,29 +4,50 @@ struct SearchJob:
   query: Text
   reason?: Text
 
-flow research(in: Part[]) -> Part[]:
+struct Note:
+  title: Text
+  summary: Text
+
+struct Answer:
+  text: Text
+
+flow research(in: Part[]) -> Answer:
   models = gpt-5
   tools += web
 
-  ## Plan parallel searches.
-  unfold plan_searches
-  filter:
+  ## Prepare the request.
+  do classify, normalize
+
+  unfold to SearchJob:
+    Create search jobs from the request.
+
+  keep par 8:
     Keep only useful and non-duplicate search jobs.
 
-  map: do search, read, summarize
-  fold:
+  drop par 8:
+    Drop duplicate or low-value jobs.
+
+  rank 5:
+    Prefer specific, diverse, reliable jobs.
+
+  each to Note par 5:
+    Search the web.
+    Read relevant sources.
+    Extract concise notes.
+
+  fold to Answer:
     Synthesize all notes into one final response.
 
-flow route(in: Json) -> Json:
-  case:
-    enough evidence:
-      do answer
-    else:
-      ask reviewer
+  repeat [3] until:
+    the answer is complete and well-supported
 
-flow revise(in: Text) -> Text:
-  do revise
-  repeat until: answer is clear
+flow delegate(in: Part[]) -> Part[]:
+  ask alice
+  repeat 3
+
+flow named:
+  unfold plan_searches
+  fold synthesize_answer
 
 flow empty:
   pass

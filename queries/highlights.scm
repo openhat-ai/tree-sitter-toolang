@@ -17,11 +17,11 @@
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
 (flow_keyword) @keyword
-(flow_transform_keyword) @keyword
-(flow_case_keyword) @keyword
-(flow_else_keyword) @keyword
+(flow_step_keyword) @keyword
 (flow_repeat_keyword) @keyword
 (flow_until_keyword) @keyword
+(flow_to_keyword) @keyword
+(flow_par_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
@@ -38,6 +38,8 @@
 (comma) @punctuation.delimiter
 (lparen) @punctuation.delimiter
 (rparen) @punctuation.delimiter
+(lbracket) @punctuation.delimiter
+(rbracket) @punctuation.delimiter
 (optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
 (fence_open) @punctuation.special

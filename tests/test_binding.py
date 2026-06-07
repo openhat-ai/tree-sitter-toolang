@@ -59,6 +59,13 @@ def _steps(node):
     return steps
 
 
+def _field_descendants(node, field_name):
+    matches = list(node.children_by_field_name(field_name))
+    for child in node.named_children:
+        matches.extend(_field_descendants(child, field_name))
+    return matches
+
+
 def test_language_capsule_builds_language():
     language = Language(tree_sitter_toolang.language())
 
@@ -437,11 +444,19 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
 
     assert root.has_error is False
     assert root.named_children[0].type == "program_doc_comment"
-    assert [item.type for item in items] == ["struct", "flow", "flow", "flow", "flow"]
+    assert [item.type for item in items] == [
+        "struct",
+        "struct",
+        "struct",
+        "flow",
+        "flow",
+        "flow",
+        "flow",
+    ]
     assert [_text(source, flow.child_by_field_name("name")) for flow in flows] == [
         "research",
-        "route",
-        "revise",
+        "delegate",
+        "named",
         "empty",
     ]
 
@@ -455,7 +470,7 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         _text(source, param.child_by_field_name("name"))
         for param in params.children_by_field_name("param")
     ] == ["in"]
-    assert _text(source, output) == "Part[]"
+    assert _text(source, output) == "Answer"
     assert body is not None
     assert len([child for child in body.named_children if child.type == "directive"]) == 2
     assert "doc_comment" in str(body)
@@ -464,81 +479,100 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
     assert [
         _text(source, step.child_by_field_name("keyword")).strip()
         for step in research_steps
-    ] == ["unfold", "filter", "map", "fold"]
-    assert "Keep only useful" in _text(source, research_steps[1].child_by_field_name("body"))
-    map_body = research_steps[2].child_by_field_name("body")
-    map_call_list = map_body.named_children[0]
+    ] == ["do", "unfold", "keep", "drop", "rank", "each", "fold", "repeat"]
+    do_head = research_steps[0].child_by_field_name("head")
     assert [
         _text(source, target)
-        for target in map_call_list.children_by_field_name("target")
-    ] == ["search", "read", "summarize"]
-    assert "Synthesize all notes" in _text(source, research_steps[3].child_by_field_name("body"))
+        for target in _field_descendants(do_head, "target")
+    ] == ["classify", "normalize"]
+    assert "flow_to_modifier" in str(research_steps[1].child_by_field_name("head"))
+    assert "SearchJob" in _text(source, research_steps[1].child_by_field_name("head"))
+    assert "flow_par_modifier" in str(research_steps[2].child_by_field_name("head"))
+    assert "Keep only useful" in _text(source, research_steps[2].child_by_field_name("body"))
+    assert "Drop duplicate" in _text(source, research_steps[3].child_by_field_name("body"))
+    assert "flow_number_arg" in str(research_steps[4].child_by_field_name("head"))
+    assert "flow_to_modifier" in str(research_steps[5].child_by_field_name("head"))
+    assert "flow_par_modifier" in str(research_steps[5].child_by_field_name("head"))
+    assert "Synthesize all notes" in _text(source, research_steps[6].child_by_field_name("body"))
+    assert _text(source, research_steps[7].child_by_field_name("condition_keyword")) == "until"
+    assert "flow_repeat_limit" in str(research_steps[7])
 
-    route_steps = _steps(flows[1].child_by_field_name("body"))
-    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in route_steps] == [
-        "case",
-        "do",
+    delegate_steps = _steps(flows[1].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in delegate_steps] == [
         "ask",
-    ]
-    case_body = route_steps[0].child_by_field_name("body")
-    assert "flow_else_arm" in str(case_body)
-    assert "enough evidence" in _text(source, case_body)
-
-    revise_steps = _steps(flows[2].child_by_field_name("body"))
-    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in revise_steps] == [
-        "do",
         "repeat",
     ]
-    assert _text(source, revise_steps[1].child_by_field_name("modifier")) == "until"
+    assert _text(source, delegate_steps[1].child_by_field_name("count")) == "3"
+
+    named_steps = _steps(flows[2].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in named_steps] == [
+        "unfold",
+        "fold",
+    ]
+    assert [
+        _text(source, step.child_by_field_name("head"))
+        for step in named_steps
+    ] == ["plan_searches", "synthesize_answer"]
     assert "pass_statement" in str(flows[3].child_by_field_name("body"))
 
 
-def test_map_step_accepts_nested_and_inline_equivalent_forms():
+def test_flow_named_reference_and_inline_thunk_forms():
     parser = _parser()
     source = (
-        b"flow nested:\n"
-        b"  map:\n"
-        b"    do a\n"
-        b"    do b\n"
-        b"    do c\n"
+        b"flow named:\n"
+        b"  do classify, normalize, summarize\n"
         b"\n"
-        b"flow explicit:\n"
-        b"  map: do a, b, c\n"
+        b"flow inline:\n"
+        b"  unfold to SearchJob: Create search jobs.\n"
         b"\n"
-        b"flow shorthand:\n"
-        b"  map: a, b, c\n"
+        b"flow block:\n"
+        b"  fold to Answer:\n"
+        b"    Synthesize final answer.\n"
     )
 
     tree = parser.parse(source)
     flows = [_item_child(item) for item in _items(tree.root_node)]
 
     assert tree.root_node.has_error is False
-    nested_steps = _steps(flows[0].child_by_field_name("body"))
-    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in nested_steps] == [
-        "map",
-        "do",
-        "do",
-        "do",
-    ]
-
-    for flow in flows[1:]:
-        map_step = _steps(flow.child_by_field_name("body"))[0]
-        body = map_step.child_by_field_name("body")
-        call_list = body.named_children[0]
-        assert [_text(source, target).strip() for target in call_list.children_by_field_name("target")] == [
-            "a",
-            "b",
-            "c",
-        ]
+    named_head = _steps(flows[0].child_by_field_name("body"))[0].child_by_field_name("head")
+    assert [
+        _text(source, target)
+        for target in _field_descendants(named_head, "target")
+    ] == ["classify", "normalize", "summarize"]
+    inline_step = _steps(flows[1].child_by_field_name("body"))[0]
+    assert "flow_inline_body" in str(inline_step.child_by_field_name("body"))
+    assert "Create search jobs." in _text(source, inline_step.child_by_field_name("body"))
+    block_step = _steps(flows[2].child_by_field_name("body"))[0]
+    assert "block_indented_implicit" in str(block_step.child_by_field_name("body"))
+    assert "Synthesize final answer." in _text(source, block_step.child_by_field_name("body"))
 
 
-def test_case_step_requires_explicit_else_arm():
+def test_flow_repeat_forms():
     parser = _parser()
-    source = b"flow bad:\n  case:\n    useful:\n      do answer\n"
+    source = (
+        b"flow repeats:\n"
+        b"  do search\n"
+        b"  repeat 3\n"
+        b"  repeat until: enough evidence\n"
+        b"  repeat [5] until:\n"
+        b"    answer is complete\n"
+    )
 
     tree = parser.parse(source)
+    steps = _steps(_item_child(_items(tree.root_node)[0]).child_by_field_name("body"))
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in steps] == [
+        "do",
+        "repeat",
+        "repeat",
+        "repeat",
+    ]
+    assert _text(source, steps[1].child_by_field_name("count")) == "3"
+    assert steps[2].child_by_field_name("condition_keyword") is not None
+    assert steps[2].child_by_field_name("limit") is None
+    assert "flow_repeat_limit" in str(steps[3])
+    assert "block_indented_implicit" in str(steps[3].child_by_field_name("condition"))
 
 
 def test_flow_directives_must_precede_steps():
@@ -554,7 +588,7 @@ def test_flow_pass_is_required_for_empty_body_and_must_be_last():
     parser = _parser()
     empty = b"flow empty:\n"
     trailing = b"flow bad:\n  pass\n  do next\n"
-    nested_empty = b"flow bad:\n  map:\n"
+    nested_empty = b"flow bad:\n  fold to Answer:\n"
 
     assert parser.parse(empty).root_node.has_error is True
     assert parser.parse(trailing).root_node.has_error is True

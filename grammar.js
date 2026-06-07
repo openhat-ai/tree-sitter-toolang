@@ -269,87 +269,69 @@ module.exports = grammar({
     flow_body_statement: ($) => $.flow_entry,
     flow_entry: ($) =>
       choice(
-        alias($.flow_transform_step, $.step),
-        alias($.flow_case_step, $.step),
-        alias($.flow_repeat_until, $.step),
+        alias($.flow_task_step, $.step),
+        alias($.flow_repeat_step, $.step),
       ),
-    flow_transform_step: ($) =>
+    flow_task_step: ($) =>
       prec.right(seq(
-        field("keyword", $.flow_transform_keyword),
+        field("keyword", $.flow_step_keyword),
+        optional(field("head", $.flow_step_head)),
         choice(
-          seq(field("body", $.flow_step_args), $.line_end),
+          $.line_end,
           seq(
             field("colon", $.colon),
             choice(
               seq(field("body", $.flow_inline_body), $.line_end),
-              seq($.line_end, field("body", choice($.flow_nested_body, $.block_indented_implicit))),
+              seq($.line_end, field("body", $.block_indented_implicit)),
             ),
           ),
         ),
       )),
-    flow_case_step: ($) =>
-      prec.right(seq(
-        field("keyword", $.flow_case_keyword),
-        field("colon", $.colon),
-        $.line_end,
-        field("body", $.flow_case_body),
-      )),
-    flow_case_body: ($) =>
-      prec.right(seq(
-        repeat1(choice($.flow_case_arm, $.doc_comment, $.comment_line, $.blank_line)),
-        field("else", $.flow_else_arm),
-      )),
-    flow_case_arm: ($) =>
-      prec.right(seq(
-        field("condition", $.flow_condition),
-        field("colon", $.colon),
-        $.line_end,
-        field("body", $.flow_nested_body),
-      )),
-    flow_else_arm: ($) =>
-      prec.right(seq(
-        field("keyword", $.flow_else_keyword),
-        field("colon", $.colon),
-        $.line_end,
-        field("body", $.flow_nested_body),
-      )),
-    flow_repeat_until: ($) =>
-      seq(
-        field("keyword", $.flow_repeat_keyword),
-        field("modifier", $.flow_until_keyword),
-        field("colon", $.colon),
-        choice(
-          seq(field("condition", $.flow_inline_text), $.line_end),
-          seq($.line_end, field("condition", $.block_indented_implicit)),
+    flow_repeat_step: ($) =>
+      choice(
+        seq(
+          field("keyword", $.flow_repeat_keyword),
+          field("count", $.flow_repeat_count),
+          $.line_end,
+        ),
+        seq(
+          field("keyword", $.flow_repeat_keyword),
+          optional(field("limit", $.flow_repeat_limit)),
+          field("condition_keyword", $.flow_until_keyword),
+          field("colon", $.colon),
+          field("condition", $.flow_condition_body),
         ),
       ),
-    flow_nested_body: ($) =>
-      prec.right(choice(
-        seq(
-          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
-          $.pass_statement,
-        ),
-        seq(
-          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
-          $.flow_nested_statement,
-          repeat(choice($.flow_nested_statement, $.doc_comment, $.comment_line, $.blank_line)),
-          optional($.pass_statement),
-        ),
-      )),
-    flow_nested_statement: ($) => $.flow_entry,
+    flow_repeat_limit: ($) =>
+      seq($.lbracket, field("count", $.flow_repeat_count), $.rbracket),
+    flow_condition_body: ($) =>
+      choice(
+        seq(field("text", $.flow_inline_text), $.line_end),
+        seq($.line_end, field("text", $.block_indented_implicit)),
+      ),
+    flow_step_head: ($) =>
+      seq(
+        field("part", $.flow_step_head_part),
+        repeat(field("part", $.flow_step_head_part)),
+      ),
+    flow_step_head_part: ($) =>
+      choice(
+        $.flow_to_modifier,
+        $.flow_par_modifier,
+        $.flow_number_arg,
+        $.flow_ref_list,
+      ),
+    flow_to_modifier: ($) =>
+      seq(field("keyword", $.flow_to_keyword), field("type", $.type)),
+    flow_par_modifier: ($) =>
+      seq(field("keyword", $.flow_par_keyword), field("count", $.flow_number_arg)),
+    flow_ref_list: ($) =>
+      seq(field("target", $.flow_arg), repeat(seq($.comma, field("target", $.flow_arg)))),
+    flow_number_arg: () => token(/\d+/),
     flow_inline_body: ($) =>
-      choice($.flow_call_list, $.flow_inline_text),
-    flow_call_list: ($) =>
-      seq(
-        optional($.flow_do_prefix),
-        field("target", $.flow_arg),
-        repeat(seq($.comma, optional($.flow_do_prefix), field("target", $.flow_arg))),
-      ),
-    flow_step_args: ($) =>
-      seq(field("arg", $.flow_arg), repeat(seq($.comma, field("arg", $.flow_arg)))),
-    flow_do_prefix: () => "do",
-    flow_arg: ($) => $.bare_value,
-    flow_condition: () => token(prec(-1, /[^:#\r\n][^:#\r\n]*/)),
+      $.flow_inline_text,
+    flow_arg: () => token(/[A-Za-z0-9_./@-]+/),
+    flow_repeat_count: () => token(/\d+/),
     flow_inline_text: () => token(prec(-1, /[^#\r\n]+/)),
 
     directive: ($) =>
@@ -438,11 +420,11 @@ module.exports = grammar({
     thunk_keyword: () => "thunk",
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
-    flow_transform_keyword: () => choice("do", "get", "ask", "unfold", "filter", "rank", "map", "fold"),
-    flow_case_keyword: () => "case",
-    flow_else_keyword: () => "else",
+    flow_step_keyword: () => choice("do", "ask", "unfold", "keep", "drop", "rank", "each", "fold"),
     flow_repeat_keyword: () => "repeat",
     flow_until_keyword: () => "until",
+    flow_to_keyword: () => "to",
+    flow_par_keyword: () => "par",
 
     optional_marker: () => "?",
     assign_operator: () => "=",
@@ -450,6 +432,8 @@ module.exports = grammar({
     colon: () => ":",
     lparen: () => "(",
     rparen: () => ")",
+    lbracket: () => "[",
+    rbracket: () => "]",
     comma: () => ",",
     fence_open: () => "```",
     fence_close: () => seq("```", /\r?\n/),

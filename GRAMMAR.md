@@ -296,32 +296,26 @@ flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
 flow_body_statement ::= flow_entry
 
-flow_entry ::= flow_transform_step
-             | flow_case_step
-             | flow_repeat_until
+flow_entry ::= flow_task_step | flow_repeat_step
 
-flow_transform_step ::= flow_transform_keyword flow_step_args line_end
-                      | flow_transform_keyword ":" flow_inline_body line_end
-                      | flow_transform_keyword ":" line_end (flow_nested_body | block_indented_implicit)
-flow_transform_keyword ::= "do" | "get" | "ask" | "unfold" | "filter" | "rank" | "map" | "fold"
+flow_task_step ::= flow_step_keyword flow_step_head? line_end
+                 | flow_step_keyword flow_step_head? ":" flow_inline_body line_end
+                 | flow_step_keyword flow_step_head? ":" line_end block_indented_implicit
+flow_step_keyword ::= "do" | "ask" | "unfold" | "keep" | "drop" | "rank" | "each" | "fold"
+flow_step_head ::= flow_step_head_part+
+flow_step_head_part ::= flow_to_modifier | flow_par_modifier | flow_number_arg | flow_ref_list
+flow_to_modifier ::= "to" type
+flow_par_modifier ::= "par" flow_number_arg
+flow_ref_list ::= flow_arg ("," flow_arg)*
+flow_number_arg ::= /\d+/
+flow_arg ::= /[A-Za-z0-9_./@-]+/
 
-flow_case_step ::= "case" ":" line_end flow_case_body
-flow_case_body ::= flow_case_arm+ flow_else_arm
-flow_case_arm ::= flow_condition ":" line_end flow_nested_body
-flow_else_arm ::= "else" ":" line_end flow_nested_body
-
-flow_repeat_until ::= "repeat" "until" ":" flow_inline_text line_end
-                    | "repeat" "until" ":" line_end block_indented_implicit
-
-flow_nested_body ::= (doc_comment | comment_line | blank_line)* pass_statement
-                   | (doc_comment | comment_line | blank_line)* flow_nested_statement
-                     (flow_nested_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_nested_statement ::= flow_entry
-flow_inline_body ::= flow_call_list | flow_inline_text
-flow_call_list ::= "do"? flow_arg ("," "do"? flow_arg)*
-flow_step_args ::= flow_arg ("," flow_arg)*
-flow_arg ::= bare_value
-flow_condition ::= /[^:#\r\n][^:#\r\n]*/
+flow_repeat_step ::= "repeat" flow_repeat_count line_end
+                   | "repeat" flow_repeat_limit? "until" ":" flow_condition_body
+flow_repeat_limit ::= "[" flow_repeat_count "]"
+flow_repeat_count ::= /\d+/
+flow_condition_body ::= flow_inline_text line_end
+                      | line_end block_indented_implicit
 flow_inline_text ::= /[^#\r\n]+/
 ```
 
@@ -342,33 +336,29 @@ Rules:
   it must be first.
 - Flow directives reuse thunk directive syntax and must appear before any
   non-directive body entry.
-- `do`, `get`, `ask`, `unfold`, `filter`, `rank`, `map`, and `fold` are
-  transform steps.
-- `map` uses the same transform-step grammar as the other transform steps. Its
-  body may be an inline call list or a nested step body.
-- `case` is a control step. It must include an explicit `else:` arm. Use `pass`
-  for an intentionally empty arm.
-- `repeat until:` is a body marker step. Runtime attaches it to the surrounding
-  body and evaluates its condition after that body runs.
+- `do` runs a named thunk or flow on the current value.
+- `ask` delegates the current value to an agent.
+- `unfold` expands one value into an array of values.
+- `keep` keeps matching items.
+- `drop` drops matching items.
+- `rank` ranks items and keeps the top N when N is provided.
+- `each` processes every item and collects results.
+- `fold` combines an array of values into one value.
+- `to Type` specifies a step output type.
+- `par N` limits concurrent workers for item-wise steps.
+- No colon means the step body is a named reference, for example
+  `do summarize` or `fold synthesize_answer`.
+- Colon with text is a one-line inline thunk.
+- Colon with an indented body is a multi-line inline thunk.
+- `repeat N` repeats previous statements at the same indentation level N times.
+- `repeat until:` and `repeat [N] until:` repeat previous statements at the same
+  indentation level until the predicate succeeds or the runtime repeat limit is
+  reached.
+- `repeat` has no nested body.
 - `pass` is an explicit empty statement. It can only appear as the final body
-  entry. If a flow body or nested step body has no other entries, it must use
-  `pass`.
-- A text body on a transform step lowers to an anonymous thunk-like task owned
-  by the flow runtime.
-- A `case` condition and a `repeat until:` condition lower to anonymous
-  predicate tasks owned by the flow runtime.
-- The three map forms below are semantically equivalent:
-
-```too
-map:
-  do a
-  do b
-  do c
-
-map: do a, b, c
-
-map: a, b, c
-```
+  entry. If a flow body has no other entries, it must use `pass`.
+- Inline text bodies, indented bodies, and repeat conditions lower to anonymous
+  thunk-like tasks owned by the flow runtime.
 
 ## Model Call Assembly
 
@@ -504,25 +494,23 @@ flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
                  | (doc_comment | comment_line | blank_line)* flow_body_statement
                    (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
 flow_body_statement ::= flow_entry
-flow_entry ::= flow_transform_step | flow_case_step | flow_repeat_until
-flow_transform_step ::= flow_transform_keyword flow_step_args line_end
-                      | flow_transform_keyword ":" flow_inline_body line_end
-                      | flow_transform_keyword ":" line_end (flow_nested_body | block_indented_implicit)
-flow_transform_keyword ::= "do" | "get" | "ask" | "unfold" | "filter" | "rank" | "map" | "fold"
-flow_case_step ::= "case" ":" line_end flow_case_body
-flow_case_body ::= flow_case_arm+ flow_else_arm
-flow_case_arm ::= flow_condition ":" line_end flow_nested_body
-flow_else_arm ::= "else" ":" line_end flow_nested_body
-flow_repeat_until ::= "repeat" "until" ":" flow_inline_text line_end
-                    | "repeat" "until" ":" line_end block_indented_implicit
-flow_nested_body ::= (doc_comment | comment_line | blank_line)* pass_statement
-                   | (doc_comment | comment_line | blank_line)* flow_nested_statement
-                     (flow_nested_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_nested_statement ::= flow_entry
-flow_inline_body ::= flow_call_list | flow_inline_text
-flow_call_list ::= "do"? flow_arg ("," "do"? flow_arg)*
-flow_step_args ::= flow_arg ("," flow_arg)*
-flow_arg ::= bare_value
-flow_condition ::= /[^:#\r\n][^:#\r\n]*/
+flow_entry ::= flow_task_step | flow_repeat_step
+flow_task_step ::= flow_step_keyword flow_step_head? line_end
+                 | flow_step_keyword flow_step_head? ":" flow_inline_body line_end
+                 | flow_step_keyword flow_step_head? ":" line_end block_indented_implicit
+flow_step_keyword ::= "do" | "ask" | "unfold" | "keep" | "drop" | "rank" | "each" | "fold"
+flow_step_head ::= flow_step_head_part+
+flow_step_head_part ::= flow_to_modifier | flow_par_modifier | flow_number_arg | flow_ref_list
+flow_to_modifier ::= "to" type
+flow_par_modifier ::= "par" flow_number_arg
+flow_ref_list ::= flow_arg ("," flow_arg)*
+flow_number_arg ::= /\d+/
+flow_arg ::= /[A-Za-z0-9_./@-]+/
+flow_repeat_step ::= "repeat" flow_repeat_count line_end
+                   | "repeat" flow_repeat_limit? "until" ":" flow_condition_body
+flow_repeat_limit ::= "[" flow_repeat_count "]"
+flow_repeat_count ::= /\d+/
+flow_condition_body ::= flow_inline_text line_end
+                      | line_end block_indented_implicit
 flow_inline_text ::= /[^#\r\n]+/
 ```
