@@ -13,7 +13,8 @@ flow examples(in: Pack) -> Answer:
 
   This starts a separate bare thunk because it is separated by two blank lines.
 
-  ## This comment also starts a separate bare thunk.
+  # Any comment line also starts a separate bare thunk.
+  ## A doc comment can additionally describe the next step in UI progress.
   Normalize the current value.
 
   ## do: named calls.
@@ -135,8 +136,9 @@ Notes:
 
 - One blank line inside a bare thunk body keeps the text in the same bare thunk.
 - Two or more blank lines split bare thunk bodies into separate bare thunk steps.
-- A comment between bare thunk text blocks also splits them; a doc comment may
-  describe the next bare thunk step for UI progress.
+- Any comment line between bare thunk text blocks also splits them.
+- A doc comment is not special for splitting; it is a comment line too, and may
+  additionally describe the next bare thunk step for UI progress.
 - `repeat` requires at least one previous executable statement in the same
   block. A flow body cannot start with `repeat`.
 - In examples such as `keep useful_filter`, `useful_filter` is a named thunk.

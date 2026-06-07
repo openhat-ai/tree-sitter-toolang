@@ -377,7 +377,9 @@ Rules:
   non-directive body entry.
 - Bare indented text in a flow body defines an inline thunk-like step. One blank
   line keeps adjacent bare text in the same step; two or more blank lines, or a
-  comment, split bare thunk steps.
+  comment line, split bare thunk steps. Doc comments are not a special splitting
+  mechanism; they are comments too, and they may additionally describe the next
+  step for UI progress.
 - `do targets` runs named thunks or flows on the current value.
 - `do: ...` and `do to Type: ...` define an inline thunk-like step. The optional
   `to Type` annotates the inline step output type.
