@@ -532,10 +532,17 @@ def test_flow_named_reference_and_inline_thunk_forms():
         b"flow named:\n"
         b"  do classify, normalize, summarize\n"
         b"\n"
-        b"flow inline:\n"
+        b"flow do_inline:\n"
+        b"  do: Normalize the current value.\n"
+        b"\n"
+        b"flow do_typed:\n"
+        b"  do to Note:\n"
+        b"    Extract one note.\n"
+        b"\n"
+        b"flow unfold_inline:\n"
         b"  unfold to SearchJob: Create search jobs.\n"
         b"\n"
-        b"flow block:\n"
+        b"flow fold_block:\n"
         b"  fold to Answer:\n"
         b"    Synthesize final answer.\n"
     )
@@ -549,10 +556,16 @@ def test_flow_named_reference_and_inline_thunk_forms():
         _text(source, target)
         for target in _field_descendants(named_targets, "target")
     ] == ["classify", "normalize", "summarize"]
-    inline_step = _steps(flows[1].child_by_field_name("body"))[0]
+    do_inline_step = _steps(flows[1].child_by_field_name("body"))[0]
+    assert "flow_inline_body" in str(do_inline_step.child_by_field_name("body"))
+    assert "Normalize the current value." in _text(source, do_inline_step.child_by_field_name("body"))
+    do_typed_step = _steps(flows[2].child_by_field_name("body"))[0]
+    assert "flow_output_type" in str(do_typed_step.child_by_field_name("head"))
+    assert "Extract one note." in _text(source, do_typed_step.child_by_field_name("body"))
+    inline_step = _steps(flows[3].child_by_field_name("body"))[0]
     assert "flow_inline_body" in str(inline_step.child_by_field_name("body"))
     assert "Create search jobs." in _text(source, inline_step.child_by_field_name("body"))
-    block_step = _steps(flows[2].child_by_field_name("body"))[0]
+    block_step = _steps(flows[4].child_by_field_name("body"))[0]
     assert "block_indented_implicit" in str(block_step.child_by_field_name("body"))
     assert "Synthesize final answer." in _text(source, block_step.child_by_field_name("body"))
 

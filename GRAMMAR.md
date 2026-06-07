@@ -311,6 +311,7 @@ flow_entry ::= flow_do_step
              | flow_repeat_step
 
 flow_do_step ::= "do" flow_target_list line_end
+               | "do" flow_output_type? flow_inline_step_body
 flow_ask_step ::= "ask" flow_target line_end
 flow_unfold_step ::= "unfold" flow_unfold_head? flow_step_body
 flow_keep_step ::= "keep" flow_item_filter_head? flow_step_body
@@ -320,8 +321,9 @@ flow_each_step ::= "each" flow_each_head? flow_step_body
 flow_fold_step ::= "fold" flow_fold_head? flow_step_body
 
 flow_step_body ::= line_end
-                 | ":" flow_inline_body line_end
-                 | ":" line_end block_indented_implicit
+                 | flow_inline_step_body
+flow_inline_step_body ::= ":" flow_inline_body line_end
+                        | ":" line_end block_indented_implicit
 flow_unfold_head ::= flow_output_type | flow_target
 flow_item_filter_head ::= flow_parallelism
                         | flow_target
@@ -370,7 +372,9 @@ Rules:
   it must be first.
 - Flow directives reuse thunk directive syntax and must appear before any
   non-directive body entry.
-- `do` runs a named thunk or flow on the current value.
+- `do targets` runs named thunks or flows on the current value.
+- `do: ...` and `do to Type: ...` define an inline thunk-like step. The optional
+  `to Type` annotates the inline step output type.
 - `ask` delegates the current value to an agent.
 - `unfold` expands one value into an array of values.
 - `keep` keeps matching items. It does not support `to Type`.
@@ -544,6 +548,7 @@ flow_entry ::= flow_do_step
              | flow_fold_step
              | flow_repeat_step
 flow_do_step ::= "do" flow_target_list line_end
+               | "do" flow_output_type? flow_inline_step_body
 flow_ask_step ::= "ask" flow_target line_end
 flow_unfold_step ::= "unfold" flow_unfold_head? flow_step_body
 flow_keep_step ::= "keep" flow_item_filter_head? flow_step_body
@@ -552,8 +557,9 @@ flow_rank_step ::= "rank" flow_rank_head? flow_step_body
 flow_each_step ::= "each" flow_each_head? flow_step_body
 flow_fold_step ::= "fold" flow_fold_head? flow_step_body
 flow_step_body ::= line_end
-                 | ":" flow_inline_body line_end
-                 | ":" line_end block_indented_implicit
+                 | flow_inline_step_body
+flow_inline_step_body ::= ":" flow_inline_body line_end
+                        | ":" line_end block_indented_implicit
 flow_unfold_head ::= flow_output_type | flow_target
 flow_item_filter_head ::= flow_parallelism
                         | flow_target

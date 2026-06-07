@@ -1842,27 +1842,73 @@
       ]
     },
     "flow_do_step": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "FIELD",
-          "name": "keyword",
-          "content": {
-            "type": "SYMBOL",
-            "name": "flow_do_keyword"
-          }
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "keyword",
+              "content": {
+                "type": "SYMBOL",
+                "name": "flow_do_keyword"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "targets",
+              "content": {
+                "type": "SYMBOL",
+                "name": "flow_target_list"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
         },
         {
-          "type": "FIELD",
-          "name": "targets",
+          "type": "PREC_RIGHT",
+          "value": 0,
           "content": {
-            "type": "SYMBOL",
-            "name": "flow_target_list"
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "keyword",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "flow_do_keyword"
+                }
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "head",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "flow_output_type"
+                    }
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "FIELD",
+                "name": "body",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "flow_inline_step_body"
+                }
+              }
+            ]
           }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "line_end"
         }
       ]
     },
@@ -2267,52 +2313,56 @@
           "name": "line_end"
         },
         {
-          "type": "SEQ",
+          "type": "SYMBOL",
+          "name": "flow_inline_step_body"
+        }
+      ]
+    },
+    "flow_inline_step_body": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
-              "type": "FIELD",
-              "name": "colon",
-              "content": {
-                "type": "SYMBOL",
-                "name": "colon"
-              }
-            },
-            {
-              "type": "CHOICE",
+              "type": "SEQ",
               "members": [
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "FIELD",
-                      "name": "value",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "flow_inline_body"
-                      }
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "line_end"
-                    }
-                  ]
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "flow_inline_body"
+                  }
                 },
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "line_end"
-                    },
-                    {
-                      "type": "FIELD",
-                      "name": "value",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "block_indented_implicit"
-                      }
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "line_end"
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "line_end"
+                },
+                {
+                  "type": "FIELD",
+                  "name": "value",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "block_indented_implicit"
+                  }
                 }
               ]
             }

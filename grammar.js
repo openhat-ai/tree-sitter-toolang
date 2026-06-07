@@ -280,10 +280,17 @@ module.exports = grammar({
         alias($.flow_repeat_step, $.step),
       ),
     flow_do_step: ($) =>
-      seq(
-        field("keyword", $.flow_do_keyword),
-        field("targets", $.flow_target_list),
-        $.line_end,
+      choice(
+        seq(
+          field("keyword", $.flow_do_keyword),
+          field("targets", $.flow_target_list),
+          $.line_end,
+        ),
+        prec.right(seq(
+          field("keyword", $.flow_do_keyword),
+          optional(field("head", $.flow_output_type)),
+          field("body", $.flow_inline_step_body),
+        )),
       ),
     flow_ask_step: ($) =>
       seq(
@@ -350,12 +357,14 @@ module.exports = grammar({
     flow_step_body: ($) =>
       choice(
         $.line_end,
-        seq(
-          field("colon", $.colon),
-          choice(
-            seq(field("value", $.flow_inline_body), $.line_end),
-            seq($.line_end, field("value", $.block_indented_implicit)),
-          ),
+        $.flow_inline_step_body,
+      ),
+    flow_inline_step_body: ($) =>
+      seq(
+        field("colon", $.colon),
+        choice(
+          seq(field("value", $.flow_inline_body), $.line_end),
+          seq($.line_end, field("value", $.block_indented_implicit)),
         ),
       ),
     flow_unfold_head: ($) =>
