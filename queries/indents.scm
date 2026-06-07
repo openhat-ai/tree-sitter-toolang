@@ -5,4 +5,5 @@
 (context) @indent
 (instruct) @indent
 (thunk) @indent
+(flow) @indent
 (block) @indent

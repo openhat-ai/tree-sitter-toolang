@@ -40,6 +40,9 @@ def _blocks(node):
         if child.type == "block":
             blocks.append(child)
         elif child.type in {
+            "flow_body",
+            "flow_body_tail",
+            "flow_body_statement",
             "instruction_section",
             "message_section",
             "roled_message",
@@ -48,6 +51,22 @@ def _blocks(node):
         }:
             blocks.extend(_blocks(child))
     return blocks
+
+
+def _steps(node):
+    steps = []
+    for child in node.named_children:
+        if child.type == "step":
+            steps.append(child)
+        steps.extend(_steps(child))
+    return steps
+
+
+def _field_descendants(node, field_name):
+    matches = list(node.children_by_field_name(field_name))
+    for child in node.named_children:
+        matches.extend(_field_descendants(child, field_name))
+    return matches
 
 
 def test_language_capsule_builds_language():
@@ -235,9 +254,9 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     assert [child.type for child in root.named_children[:5]] == [
         "comment_line",
         "blank_line",
-        "comment_line",
+        "program_doc_comment",
         "blank_line",
-        "comment_line",
+        "doc_comment",
     ]
     assert [item.type for item in items] == [
         "skill",
@@ -415,6 +434,335 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
         "thunk",
         "thunk",
     ]
+
+
+def test_flows_fixture_covers_signatures_steps_and_doc_comments():
+    parser = _parser()
+    source = (FIXTURES_DIR / "flows.too").read_bytes()
+
+    tree = parser.parse(source)
+    root = tree.root_node
+    items = [_item_child(item) for item in _items(root)]
+    flows = [item for item in items if item.type == "flow"]
+
+    assert root.has_error is False
+    assert root.named_children[0].type == "program_doc_comment"
+    assert [item.type for item in items] == [
+        "struct",
+        "struct",
+        "struct",
+        "flow",
+        "flow",
+        "flow",
+        "flow",
+        "flow",
+    ]
+    assert [_text(source, flow.child_by_field_name("name")) for flow in flows] == [
+        "research",
+        "delegate",
+        "named",
+        "bare",
+        "empty",
+    ]
+
+    research = flows[0]
+    params = research.child_by_field_name("params")
+    output = research.child_by_field_name("output")
+    body = research.child_by_field_name("body")
+
+    assert params is not None
+    assert [
+        _text(source, param.child_by_field_name("name"))
+        for param in params.children_by_field_name("param")
+    ] == ["in"]
+    assert _text(source, params.children_by_field_name("param")[0].child_by_field_name("type")) == "Pack"
+    assert _text(source, output) == "Answer"
+    assert body is not None
+    assert len([child for child in body.named_children if child.type == "directive"]) == 2
+    assert "doc_comment" in str(body)
+
+    research_steps = _steps(body)
+    assert [
+        _text(source, step.child_by_field_name("keyword")).strip()
+        for step in research_steps
+    ] == ["do", "unfold", "keep", "drop", "rank", "each", "fold", "repeat"]
+    do_head = research_steps[0].child_by_field_name("targets")
+    assert [
+        _text(source, target)
+        for target in _field_descendants(do_head, "target")
+    ] == ["classify", "normalize"]
+    assert "flow_inline_output_type" in str(research_steps[1].child_by_field_name("head"))
+    assert "SearchJob" in _text(source, research_steps[1].child_by_field_name("head"))
+    assert "flow_parallelism" in str(research_steps[2].child_by_field_name("head"))
+    assert "Keep only useful" in _text(source, research_steps[2].child_by_field_name("body"))
+    assert "Drop duplicate" in _text(source, research_steps[3].child_by_field_name("body"))
+    assert "flow_rank_limit" in str(research_steps[4].child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(research_steps[5].child_by_field_name("head"))
+    assert "flow_parallelism" in str(research_steps[5].child_by_field_name("head"))
+    assert "Synthesize all notes" in _text(source, research_steps[6].child_by_field_name("body"))
+    assert _text(source, research_steps[7].child_by_field_name("condition_keyword")) == "until"
+    assert _text(source, research_steps[7].child_by_field_name("count")) == "3"
+
+    delegate_steps = _steps(flows[1].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in delegate_steps] == [
+        "ask",
+        "repeat",
+    ]
+    assert _text(source, delegate_steps[1].child_by_field_name("count")) == "3"
+
+    named_steps = _steps(flows[2].child_by_field_name("body"))
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in named_steps] == [
+        "unfold",
+        "fold",
+    ]
+    assert [
+        _text(source, step.child_by_field_name("target"))
+        for step in named_steps
+    ] == ["plan_searches", "synthesize_answer"]
+    bare_steps = _steps(flows[3].child_by_field_name("body"))
+    assert len(bare_steps) == 1
+    assert bare_steps[0].child_by_field_name("keyword") is None
+    assert "Use the current input directly." in _text(source, bare_steps[0])
+    assert "pass_statement" in str(flows[4].child_by_field_name("body"))
+
+
+def test_flow_named_reference_and_inline_thunk_forms():
+    parser = _parser()
+    source = (
+        b"flow named:\n"
+        b"  do classify, normalize, summarize\n"
+        b"\n"
+        b"flow do_inline:\n"
+        b"  do: Normalize the current value.\n"
+        b"\n"
+        b"flow do_typed:\n"
+        b"  do to Note:\n"
+        b"    Extract one note.\n"
+        b"\n"
+        b"flow unfold_inline:\n"
+        b"  unfold to SearchJob: Create search jobs.\n"
+        b"\n"
+        b"flow fold_block:\n"
+        b"  fold to Answer:\n"
+        b"    Synthesize final answer.\n"
+    )
+
+    tree = parser.parse(source)
+    flows = [_item_child(item) for item in _items(tree.root_node)]
+
+    assert tree.root_node.has_error is False
+    named_targets = _steps(flows[0].child_by_field_name("body"))[0].child_by_field_name("targets")
+    assert [
+        _text(source, target)
+        for target in _field_descendants(named_targets, "target")
+    ] == ["classify", "normalize", "summarize"]
+    do_inline_step = _steps(flows[1].child_by_field_name("body"))[0]
+    assert "flow_inline_body" in str(do_inline_step.child_by_field_name("body"))
+    assert "Normalize the current value." in _text(source, do_inline_step.child_by_field_name("body"))
+    do_typed_step = _steps(flows[2].child_by_field_name("body"))[0]
+    assert "flow_inline_output_type" in str(do_typed_step.child_by_field_name("head"))
+    assert "Extract one note." in _text(source, do_typed_step.child_by_field_name("body"))
+    inline_step = _steps(flows[3].child_by_field_name("body"))[0]
+    assert "flow_inline_body" in str(inline_step.child_by_field_name("body"))
+    assert "Create search jobs." in _text(source, inline_step.child_by_field_name("body"))
+    block_step = _steps(flows[4].child_by_field_name("body"))[0]
+    assert "block_indented_implicit" in str(block_step.child_by_field_name("body"))
+    assert "Synthesize final answer." in _text(source, block_step.child_by_field_name("body"))
+
+
+def test_flow_step_heads_are_keyword_specific():
+    parser = _parser()
+    invalid_sources = [
+        b"flow bare:\n  ask alice to Answer\n",
+        b"flow bare:\n  ask to Answer:\n    Delegate.\n",
+        b"flow bare:\n  unfold\n",
+        b"flow bare:\n  unfold plan_searches:\n    Create search jobs.\n",
+        b"flow bare:\n  keep to Note:\n    useful\n",
+        b"flow bare:\n  keep useful_filter:\n    useful\n",
+        b"flow bare:\n  drop to Note:\n    duplicate\n",
+        b"flow bare:\n  drop duplicate_filter:\n    duplicate\n",
+        b"flow bare:\n  rank to Note:\n    preferred\n",
+        b"flow bare:\n  rank par 5:\n    preferred\n",
+        b"flow bare:\n  rank ranking_rule:\n    preferred\n",
+        b"flow bare:\n  do summarize:\n    Run it.\n",
+        b"flow bare:\n  each to Note search_notes:\n    search\n",
+        b"flow bare:\n  each search_notes:\n    search\n",
+        b"flow bare:\n  fold to Answer synthesize_answer:\n    synthesize\n",
+    ]
+    valid_source = (
+        b"flow ok:\n"
+        b"  unfold plan_searches\n"
+        b"  unfold to SearchJob:\n"
+        b"    create search jobs\n"
+        b"  keep useful_filter par 4\n"
+        b"  keep par 4:\n"
+        b"    useful\n"
+        b"  drop duplicate_filter par 4\n"
+        b"  drop par 4:\n"
+        b"    duplicate\n"
+        b"  rank ranking_rule\n"
+        b"  rank 5:\n"
+        b"    preferred\n"
+        b"  each search_notes par 4\n"
+        b"  each to Note par 4:\n"
+        b"    search\n"
+        b"  fold synthesize_answer\n"
+        b"  fold to Answer:\n"
+        b"    synthesize\n"
+    )
+
+    for source in invalid_sources:
+        assert parser.parse(source).root_node.has_error is True, source
+
+    valid_tree = parser.parse(valid_source)
+    valid_steps = _steps(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))
+    assert valid_tree.root_node.has_error is False
+    assert [_text(valid_source, step.child_by_field_name("keyword")).strip() for step in valid_steps] == [
+        "unfold",
+        "unfold",
+        "keep",
+        "keep",
+        "drop",
+        "drop",
+        "rank",
+        "rank",
+        "each",
+        "each",
+        "fold",
+        "fold",
+    ]
+    assert valid_steps[0].child_by_field_name("target") is not None
+    assert "flow_inline_output_type" in str(valid_steps[1].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[2].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[3].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[4].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[5].child_by_field_name("head"))
+    assert valid_steps[6].child_by_field_name("target") is not None
+    assert "flow_rank_limit" in str(valid_steps[7].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[8].child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(valid_steps[9].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[9].child_by_field_name("head"))
+    assert valid_steps[10].child_by_field_name("target") is not None
+    assert "flow_inline_output_type" in str(valid_steps[11].child_by_field_name("head"))
+
+
+def test_flow_bare_thunk_step_splitting():
+    parser = _parser()
+    source = (
+        b"flow bare:\n"
+        b"  Rewrite the current value.\n"
+        b"\n"
+        b"  Extract one note from the current value.\n"
+        b"\n"
+        b"\n"
+        b"  This starts a second bare thunk.\n"
+        b"\n"
+        b"  ## Next step\n"
+        b"  This starts a third bare thunk.\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    steps = _steps(body)
+
+    assert tree.root_node.has_error is False
+    assert len(steps) == 3
+    assert "Rewrite the current value." in _text(source, steps[0])
+    assert "Extract one note" in _text(source, steps[0])
+    assert "This starts a second bare thunk." in _text(source, steps[1])
+    assert "This starts a third bare thunk." in _text(source, steps[2])
+    assert "doc_comment" in str(body)
+
+
+def test_flow_repeat_forms():
+    parser = _parser()
+    source = (
+        b"flow repeats:\n"
+        b"  do search\n"
+        b"  repeat 3\n"
+        b"  repeat until: enough evidence\n"
+        b"  repeat 5 until:\n"
+        b"    answer is complete\n"
+    )
+
+    tree = parser.parse(source)
+    steps = _steps(_item_child(_items(tree.root_node)[0]).child_by_field_name("body"))
+
+    assert tree.root_node.has_error is False
+    assert [_text(source, step.child_by_field_name("keyword")).strip() for step in steps] == [
+        "do",
+        "repeat",
+        "repeat",
+        "repeat",
+    ]
+    assert _text(source, steps[1].child_by_field_name("count")) == "3"
+    assert steps[2].child_by_field_name("condition_keyword") is not None
+    assert steps[2].child_by_field_name("count") is None
+    assert _text(source, steps[3].child_by_field_name("count")) == "5"
+    assert "block_indented_implicit" in str(steps[3].child_by_field_name("condition"))
+
+    block_source = (
+        b"flow counted_block:\n"
+        b"  repeat 5:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"\n"
+        b"flow until_block:\n"
+        b"  repeat:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"    until: enough evidence\n"
+        b"\n"
+        b"flow counted_until_block:\n"
+        b"  repeat 5:\n"
+        b"    do collect_evidence\n"
+        b"    do verify_sources\n"
+        b"    until:\n"
+        b"      enough evidence\n"
+    )
+
+    block_tree = parser.parse(block_source)
+    flows = [_item_child(item) for item in _items(block_tree.root_node)]
+    repeat_steps = [
+        _steps(flow.child_by_field_name("body"))[0]
+        for flow in flows
+    ]
+
+    assert block_tree.root_node.has_error is False
+    assert _text(block_source, repeat_steps[0].child_by_field_name("count")) == "5"
+    assert "flow_repeat_block_body" in str(repeat_steps[0].child_by_field_name("body"))
+    assert repeat_steps[0].child_by_field_name("body").child_by_field_name("condition") is None
+    assert repeat_steps[1].child_by_field_name("count") is None
+    assert "flow_until_clause" in str(repeat_steps[1].child_by_field_name("body"))
+    assert _text(block_source, repeat_steps[2].child_by_field_name("count")) == "5"
+    assert "block_indented_implicit" in str(
+        repeat_steps[2].child_by_field_name("body").child_by_field_name("condition")
+    )
+
+
+def test_flow_directive_nodes_only_parse_at_body_start():
+    parser = _parser()
+    source = b"flow body:\n  models = gpt-5\n  do start\n  models = gpt-5\n"
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+
+    assert tree.root_node.has_error is False
+    assert len([child for child in body.named_children if child.type == "directive"]) == 1
+    steps = _steps(body)
+    assert len(steps) == 2
+    assert "models = gpt-5" in _text(source, steps[1])
+
+
+def test_flow_pass_is_required_for_empty_body_and_must_be_last():
+    parser = _parser()
+    empty = b"flow empty:\n"
+    trailing = b"flow bad:\n  pass\n  do next\n"
+    nested_empty = b"flow bad:\n  fold to Answer:\n"
+
+    assert parser.parse(empty).root_node.has_error is True
+    assert parser.parse(trailing).root_node.has_error is True
+    assert parser.parse(nested_empty).root_node.has_error is True
 
 
 def test_kitchen_sink_thunk_signature_directives_and_blocks():

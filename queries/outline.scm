@@ -5,6 +5,10 @@
   name: (thunk_name
     (value_name) @name)) @item
 
+(flow
+  name: (flow_name
+    (value_name) @name)) @item
+
 (struct
   name: (struct_name
     (type_name) @name)) @item

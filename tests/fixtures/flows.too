@@ -1,0 +1,57 @@
+##! Flow syntax fixture.
+
+struct SearchJob:
+  query: Text
+  reason?: Text
+
+struct Note:
+  title: Text
+  summary: Text
+
+struct Answer:
+  text: Text
+
+flow research(in: Pack) -> Answer:
+  models = gpt-5
+  tools += web
+
+  ## Prepare the request.
+  do classify, normalize
+
+  unfold to SearchJob:
+    Create search jobs from the request.
+
+  keep par 8:
+    Keep only useful and non-duplicate search jobs.
+
+  drop par 8:
+    Drop duplicate or low-value jobs.
+
+  rank 5:
+    Prefer specific, diverse, reliable jobs.
+
+  each to Note par 5:
+    Search the web.
+    Read relevant sources.
+    Extract concise notes.
+
+  fold to Answer:
+    Synthesize all notes into one final response.
+
+  repeat 3 until:
+    the answer is complete and well-supported
+
+flow delegate(in: Pack) -> Pack:
+  ask alice
+  repeat 3
+
+flow named:
+  unfold plan_searches
+  fold synthesize_answer
+
+flow bare:
+  Use the current input directly.
+  Return the transformed parts.
+
+flow empty:
+  pass
