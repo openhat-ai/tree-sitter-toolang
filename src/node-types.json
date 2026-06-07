@@ -842,6 +842,51 @@
     }
   },
   {
+    "type": "flow_bare_content_line",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_bare_raw_text",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_bare_thunk_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "flow_bare_content_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "flow_body",
     "named": true,
     "fields": {
@@ -877,10 +922,6 @@
       "types": [
         {
           "type": "flow_entry",
-          "named": true
-        },
-        {
-          "type": "unroled_message",
           "named": true
         }
       ]
@@ -948,29 +989,6 @@
     }
   },
   {
-    "type": "flow_each_head",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_output_type",
-          "named": true
-        },
-        {
-          "type": "flow_parallelism",
-          "named": true
-        },
-        {
-          "type": "flow_target",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_entry",
     "named": true,
     "fields": {},
@@ -986,25 +1004,6 @@
     }
   },
   {
-    "type": "flow_fold_head",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_output_type",
-          "named": true
-        },
-        {
-          "type": "flow_target",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_inline_body",
     "named": true,
     "fields": {},
@@ -1014,6 +1013,81 @@
       "types": [
         {
           "type": "flow_inline_text",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_inline_each_head",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_inline_output_type",
+          "named": true
+        },
+        {
+          "type": "flow_parallelism",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_inline_output_type",
+    "named": true,
+    "fields": {
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_to_keyword",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "flow_inline_parallel_head",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_parallelism",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "flow_inline_rank_head",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_rank_limit",
           "named": true
         }
       ]
@@ -1065,25 +1139,6 @@
     "fields": {}
   },
   {
-    "type": "flow_item_filter_head",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_parallelism",
-          "named": true
-        },
-        {
-          "type": "flow_target",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_name",
     "named": true,
     "fields": {},
@@ -1099,29 +1154,22 @@
     }
   },
   {
-    "type": "flow_output_type",
+    "type": "flow_named_parallel_head",
     "named": true,
-    "fields": {
-      "keyword": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "flow_to_keyword",
-            "named": true
-          }
-        ]
-      },
-      "type": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "type",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_parallelism",
+          "named": true
+        },
+        {
+          "type": "flow_target",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1148,25 +1196,6 @@
           }
         ]
       }
-    }
-  },
-  {
-    "type": "flow_rank_head",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_rank_limit",
-          "named": true
-        },
-        {
-          "type": "flow_target",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -1201,25 +1230,6 @@
     }
   },
   {
-    "type": "flow_step_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_inline_step_body",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_target_list",
     "named": true,
     "fields": {
@@ -1240,25 +1250,6 @@
       "types": [
         {
           "type": "comma",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "flow_unfold_head",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_output_type",
-          "named": true
-        },
-        {
-          "type": "flow_target",
           "named": true
         }
       ]
@@ -2019,11 +2010,11 @@
         "required": false,
         "types": [
           {
-            "type": "flow_inline_step_body",
+            "type": "flow_bare_thunk_body",
             "named": true
           },
           {
-            "type": "flow_step_body",
+            "type": "flow_inline_step_body",
             "named": true
           }
         ]
@@ -2073,34 +2064,30 @@
         "required": false,
         "types": [
           {
-            "type": "flow_each_head",
+            "type": "flow_inline_each_head",
             "named": true
           },
           {
-            "type": "flow_fold_head",
+            "type": "flow_inline_output_type",
             "named": true
           },
           {
-            "type": "flow_item_filter_head",
+            "type": "flow_inline_parallel_head",
             "named": true
           },
           {
-            "type": "flow_output_type",
+            "type": "flow_inline_rank_head",
             "named": true
           },
           {
-            "type": "flow_rank_head",
-            "named": true
-          },
-          {
-            "type": "flow_unfold_head",
+            "type": "flow_named_parallel_head",
             "named": true
           }
         ]
       },
       "keyword": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "flow_ask_keyword",
@@ -2656,6 +2643,10 @@
   },
   {
     "type": "flow_ask_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_bare_raw_text",
     "named": true
   },
   {

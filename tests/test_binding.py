@@ -491,13 +491,13 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         _text(source, target)
         for target in _field_descendants(do_head, "target")
     ] == ["classify", "normalize"]
-    assert "flow_output_type" in str(research_steps[1].child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(research_steps[1].child_by_field_name("head"))
     assert "SearchJob" in _text(source, research_steps[1].child_by_field_name("head"))
     assert "flow_parallelism" in str(research_steps[2].child_by_field_name("head"))
     assert "Keep only useful" in _text(source, research_steps[2].child_by_field_name("body"))
     assert "Drop duplicate" in _text(source, research_steps[3].child_by_field_name("body"))
     assert "flow_rank_limit" in str(research_steps[4].child_by_field_name("head"))
-    assert "flow_output_type" in str(research_steps[5].child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(research_steps[5].child_by_field_name("head"))
     assert "flow_parallelism" in str(research_steps[5].child_by_field_name("head"))
     assert "Synthesize all notes" in _text(source, research_steps[6].child_by_field_name("body"))
     assert _text(source, research_steps[7].child_by_field_name("condition_keyword")) == "until"
@@ -516,13 +516,13 @@ def test_flows_fixture_covers_signatures_steps_and_doc_comments():
         "fold",
     ]
     assert [
-        _text(source, step.child_by_field_name("head"))
+        _text(source, step.child_by_field_name("target"))
         for step in named_steps
     ] == ["plan_searches", "synthesize_answer"]
-    bare_blocks = _blocks(flows[3].child_by_field_name("body"))
-    assert len(bare_blocks) == 1
-    assert bare_blocks[0].child_by_field_name("kind") is None
-    assert "Use the current input directly." in _text(source, bare_blocks[0])
+    bare_steps = _steps(flows[3].child_by_field_name("body"))
+    assert len(bare_steps) == 1
+    assert bare_steps[0].child_by_field_name("keyword") is None
+    assert "Use the current input directly." in _text(source, bare_steps[0])
     assert "pass_statement" in str(flows[4].child_by_field_name("body"))
 
 
@@ -560,7 +560,7 @@ def test_flow_named_reference_and_inline_thunk_forms():
     assert "flow_inline_body" in str(do_inline_step.child_by_field_name("body"))
     assert "Normalize the current value." in _text(source, do_inline_step.child_by_field_name("body"))
     do_typed_step = _steps(flows[2].child_by_field_name("body"))[0]
-    assert "flow_output_type" in str(do_typed_step.child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(do_typed_step.child_by_field_name("head"))
     assert "Extract one note." in _text(source, do_typed_step.child_by_field_name("body"))
     inline_step = _steps(flows[3].child_by_field_name("body"))[0]
     assert "flow_inline_body" in str(inline_step.child_by_field_name("body"))
@@ -575,21 +575,39 @@ def test_flow_step_heads_are_keyword_specific():
     invalid_sources = [
         b"flow bare:\n  ask alice to Answer\n",
         b"flow bare:\n  ask to Answer:\n    Delegate.\n",
+        b"flow bare:\n  unfold\n",
+        b"flow bare:\n  unfold plan_searches:\n    Create search jobs.\n",
         b"flow bare:\n  keep to Note:\n    useful\n",
+        b"flow bare:\n  keep useful_filter:\n    useful\n",
         b"flow bare:\n  drop to Note:\n    duplicate\n",
+        b"flow bare:\n  drop duplicate_filter:\n    duplicate\n",
         b"flow bare:\n  rank to Note:\n    preferred\n",
         b"flow bare:\n  rank par 5:\n    preferred\n",
+        b"flow bare:\n  rank ranking_rule:\n    preferred\n",
         b"flow bare:\n  do summarize:\n    Run it.\n",
+        b"flow bare:\n  each to Note search_notes:\n    search\n",
+        b"flow bare:\n  each search_notes:\n    search\n",
+        b"flow bare:\n  fold to Answer synthesize_answer:\n    synthesize\n",
     ]
     valid_source = (
         b"flow ok:\n"
-        b"  keep par 4 useful_filter:\n"
+        b"  unfold plan_searches\n"
+        b"  unfold to SearchJob:\n"
+        b"    create search jobs\n"
+        b"  keep useful_filter par 4\n"
+        b"  keep par 4:\n"
         b"    useful\n"
-        b"  drop duplicate_filter par 4:\n"
+        b"  drop duplicate_filter par 4\n"
+        b"  drop par 4:\n"
         b"    duplicate\n"
-        b"  each to Note par 4 search_notes:\n"
+        b"  rank ranking_rule\n"
+        b"  rank 5:\n"
+        b"    preferred\n"
+        b"  each search_notes par 4\n"
+        b"  each to Note par 4:\n"
         b"    search\n"
-        b"  fold to Answer synthesize_answer:\n"
+        b"  fold synthesize_answer\n"
+        b"  fold to Answer:\n"
         b"    synthesize\n"
     )
 
@@ -600,16 +618,60 @@ def test_flow_step_heads_are_keyword_specific():
     valid_steps = _steps(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))
     assert valid_tree.root_node.has_error is False
     assert [_text(valid_source, step.child_by_field_name("keyword")).strip() for step in valid_steps] == [
+        "unfold",
+        "unfold",
+        "keep",
         "keep",
         "drop",
+        "drop",
+        "rank",
+        "rank",
+        "each",
         "each",
         "fold",
+        "fold",
     ]
-    assert "flow_parallelism" in str(valid_steps[0].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_steps[1].child_by_field_name("head"))
-    assert "flow_output_type" in str(valid_steps[2].child_by_field_name("head"))
+    assert valid_steps[0].child_by_field_name("target") is not None
+    assert "flow_inline_output_type" in str(valid_steps[1].child_by_field_name("head"))
     assert "flow_parallelism" in str(valid_steps[2].child_by_field_name("head"))
-    assert "flow_output_type" in str(valid_steps[3].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[3].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[4].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[5].child_by_field_name("head"))
+    assert valid_steps[6].child_by_field_name("target") is not None
+    assert "flow_rank_limit" in str(valid_steps[7].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[8].child_by_field_name("head"))
+    assert "flow_inline_output_type" in str(valid_steps[9].child_by_field_name("head"))
+    assert "flow_parallelism" in str(valid_steps[9].child_by_field_name("head"))
+    assert valid_steps[10].child_by_field_name("target") is not None
+    assert "flow_inline_output_type" in str(valid_steps[11].child_by_field_name("head"))
+
+
+def test_flow_bare_thunk_step_splitting():
+    parser = _parser()
+    source = (
+        b"flow bare:\n"
+        b"  Rewrite the current value.\n"
+        b"\n"
+        b"  Extract one note from the current value.\n"
+        b"\n"
+        b"\n"
+        b"  This starts a second bare thunk.\n"
+        b"\n"
+        b"  ## Next step\n"
+        b"  This starts a third bare thunk.\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    steps = _steps(body)
+
+    assert tree.root_node.has_error is False
+    assert len(steps) == 3
+    assert "Rewrite the current value." in _text(source, steps[0])
+    assert "Extract one note" in _text(source, steps[0])
+    assert "This starts a second bare thunk." in _text(source, steps[1])
+    assert "This starts a third bare thunk." in _text(source, steps[2])
+    assert "doc_comment" in str(body)
 
 
 def test_flow_repeat_forms():
@@ -649,7 +711,9 @@ def test_flow_directive_nodes_only_parse_at_body_start():
 
     assert tree.root_node.has_error is False
     assert len([child for child in body.named_children if child.type == "directive"]) == 1
-    assert "models = gpt-5" in _text(source, _blocks(body)[0])
+    steps = _steps(body)
+    assert len(steps) == 2
+    assert "models = gpt-5" in _text(source, steps[1])
 
 
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():
