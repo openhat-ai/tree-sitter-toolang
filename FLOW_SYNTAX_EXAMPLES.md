@@ -154,12 +154,45 @@ Notes:
 - Any comment line between bare thunk text blocks also splits them.
 - A doc comment is not special for splitting; it is a comment line too, and may
   additionally describe the next bare thunk step for UI progress.
-- `repeat` requires at least one previous executable statement in the same
-  block when using the short forms without a nested block. A flow body cannot
-  start with a short repeat.
-- `repeat N:` and `repeat:` define an explicit nested flow block. The block body
-  is the repeat range, and a final `until:` clause may stop the loop early.
+- Short repeat forms normalize to block repeat forms before execution.
+- A short repeat captures executable statements in the same flow block after the
+  previous repeat step and before the current repeat step.
+- A short repeat requires a non-empty captured range. A flow body cannot start
+  with a short repeat.
+- `repeat N:` and `repeat:` define explicit nested flow blocks. The block body is
+  the repeat range, and a final `until:` clause may stop the loop early.
+- Runtime only needs to execute block repeat semantics after normalization.
+- Doc comments attached to captured statements move with those statements during
+  normalization. Blank lines and unattached comments do not become executable
+  repeat body entries.
 - In examples such as `keep useful_filter`, `useful_filter` is a named thunk.
   Named thunk forms do not also define an inline body after `:`.
 - `to Type` belongs to inline thunk forms. Named thunk forms already carry their
   own declared type.
+
+Normalization examples:
+
+```too
+do refine_answer
+repeat 5
+```
+
+normalizes to:
+
+```too
+repeat 5:
+  do refine_answer
+```
+
+```too
+do improve_answer
+repeat until: the answer is complete
+```
+
+normalizes to:
+
+```too
+repeat:
+  do improve_answer
+  until: the answer is complete
+```

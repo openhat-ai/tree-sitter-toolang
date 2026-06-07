@@ -408,15 +408,18 @@ Rules:
 - Colon with text is a one-line inline thunk.
 - Colon with an indented body is a multi-line inline thunk.
 - Named thunk forms do not also define inline bodies after `:`.
-- `repeat N` repeats previous statements at the same indentation level N times.
-- `repeat until:` and `repeat N until:` repeat previous statements at the same
-  indentation level until the predicate succeeds or the runtime repeat limit is
-  reached.
-- `repeat N:` and `repeat:` introduce an explicit nested flow block. The block
-  body is the repeat range. A final `until:` clause may stop the loop early.
-- Short repeat forms have no nested body; block repeat forms do.
-- Short repeat forms require at least one previous executable statement in the
-  same block; this is a semantic validation rule.
+- `repeat N`, `repeat until:`, and `repeat N until:` are short forms. Before
+  execution, they normalize to block repeat forms by capturing executable
+  statements in the same flow block after the previous repeat step and before
+  the current repeat step.
+- `repeat N:` and `repeat:` are block repeat forms. The nested flow block is the
+  repeat range. A final `until:` clause may stop the loop early.
+- Runtime only needs to execute block repeat semantics after normalization.
+- Short repeat forms require a non-empty captured range; otherwise validation
+  fails. A flow body cannot start with a short repeat.
+- Doc comments attached to captured statements move with those statements during
+  normalization. Blank lines and unattached comments do not become executable
+  repeat body entries.
 - `pass` is an explicit empty statement. It can only appear as the final body
   entry. If a flow body has no other entries, it must use `pass`.
 - Inline text bodies, indented bodies, and repeat conditions lower to anonymous
