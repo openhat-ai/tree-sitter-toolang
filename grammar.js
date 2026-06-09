@@ -14,6 +14,8 @@ module.exports = grammar({
         $.skill,
         $.service,
         $.prompt,
+        $.task,
+        $.chore,
         $.context,
         $.instruct,
         $.thunk,
@@ -75,7 +77,7 @@ module.exports = grammar({
         field("kind", $.psyche_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        field("body", $.definition_body),
       ),
 
     skill: ($) =>
@@ -83,7 +85,7 @@ module.exports = grammar({
         field("kind", $.skill_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        field("body", $.definition_body),
       ),
 
     service: ($) =>
@@ -91,7 +93,7 @@ module.exports = grammar({
         field("kind", $.service_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        field("body", $.definition_body),
       ),
 
     prompt: ($) =>
@@ -99,30 +101,48 @@ module.exports = grammar({
         field("kind", $.prompt_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        field("body", $.definition_body),
+      ),
+
+    task: ($) =>
+      seq(
+        field("kind", $.task_keyword),
+        field("name", $.job_name),
+        field("colon", $.colon),
+        field("body", $.job_body),
+      ),
+
+    chore: ($) =>
+      seq(
+        field("kind", $.chore_keyword),
+        field("name", $.job_name),
+        field("colon", $.colon),
+        field("body", $.job_body),
       ),
 
     cap_name: ($) => $.value_name,
     cap_ref: ($) => choice($.cap_uri, $.cap_shorthand),
+    job_name: ($) => $.value_name,
+    job_body: ($) => $.definition_body,
 
-    cap_body: ($) => choice($.cap_indented, $.cap_markdown),
-    cap_indented: ($) =>
+    definition_body: ($) => choice($.definition_indented, $.definition_markdown),
+    definition_indented: ($) =>
       prec.right(seq(
         $.line_end,
-        repeat(choice($.property_eq, $.cap_indented_content_line, $.blank_line)),
+        repeat(choice($.property_eq, $.definition_indented_content_line, $.blank_line)),
       )),
-    cap_markdown: ($) =>
+    definition_markdown: ($) =>
       seq(
         $.fence_open,
         optional(field("language", $.block_language)),
         $.line_end,
         optional(field("frontmatter", $.frontmatter)),
-        repeat($.cap_fenced_content_line),
+        repeat($.definition_fenced_content_line),
         field("close", $.fence_close),
       ),
-    cap_content: ($) => $.raw_text,
-    cap_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
-    cap_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
+    definition_content: ($) => $.raw_text,
+    definition_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
+    definition_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
 
     frontmatter: ($) =>
       seq(
@@ -553,6 +573,8 @@ module.exports = grammar({
     context_keyword: () => "context",
     instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
+    task_keyword: () => "task",
+    chore_keyword: () => "chore",
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
     flow_do_keyword: () => "do",
@@ -579,7 +601,7 @@ module.exports = grammar({
     fence_close: () => seq("```", /\r?\n/),
     frontmatter_delimiter: () => "---",
 
-    cap_kind: () => choice("psyche", "skill", "service", "prompt"),
+    cap_kind: () => token(choice("psyche", "skill", "service", "prompt")),
     cap_uri: () => token(/[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s#]+/),
     cap_shorthand: () => token(/[A-Za-z0-9_@-][A-Za-z0-9_./:@-]*/),
     bare_value: () => token(/[A-Za-z0-9_./:@-]+/),

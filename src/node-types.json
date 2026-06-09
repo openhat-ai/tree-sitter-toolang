@@ -319,163 +319,6 @@
     "fields": {}
   },
   {
-    "type": "cap_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "cap_indented",
-          "named": true
-        },
-        {
-          "type": "cap_markdown",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_fenced_content_line",
-    "named": true,
-    "fields": {
-      "content": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "fenced_raw_text",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_indented",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "cap_indented_content_line",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "property_eq",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_indented_content_line",
-    "named": true,
-    "fields": {
-      "content": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "indented_raw_text",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_kind",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "cap_markdown",
-    "named": true,
-    "fields": {
-      "close": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "fence_close",
-            "named": true
-          }
-        ]
-      },
-      "frontmatter": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "frontmatter",
-            "named": true
-          }
-        ]
-      },
-      "language": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "block_language",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "cap_fenced_content_line",
-          "named": true
-        },
-        {
-          "type": "fence_open",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "cap_name",
     "named": true,
     "fields": {},
@@ -507,6 +350,52 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "chore",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "chore_keyword",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_name",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -594,6 +483,158 @@
       "types": [
         {
           "type": "value_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "definition_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "definition_indented",
+          "named": true
+        },
+        {
+          "type": "definition_markdown",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "definition_fenced_content_line",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "fenced_raw_text",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "definition_indented",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "definition_indented_content_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "property_eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "definition_indented_content_line",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "indented_raw_text",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "definition_markdown",
+    "named": true,
+    "fields": {
+      "close": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "fence_close",
+            "named": true
+          }
+        ]
+      },
+      "frontmatter": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "frontmatter",
+            "named": true
+          }
+        ]
+      },
+      "language": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "block_language",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "definition_fenced_content_line",
+          "named": true
+        },
+        {
+          "type": "fence_open",
+          "named": true
+        },
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -1493,6 +1534,10 @@
       "required": true,
       "types": [
         {
+          "type": "chore",
+          "named": true
+        },
+        {
           "type": "context",
           "named": true
         },
@@ -1525,11 +1570,45 @@
           "named": true
         },
         {
+          "type": "task",
+          "named": true
+        },
+        {
           "type": "thunk",
           "named": true
         },
         {
           "type": "use",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "job_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "definition_body",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "job_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "value_name",
           "named": true
         }
       ]
@@ -1716,7 +1795,7 @@
         "required": true,
         "types": [
           {
-            "type": "cap_body",
+            "type": "definition_body",
             "named": true
           }
         ]
@@ -1752,11 +1831,6 @@
         ]
       }
     }
-  },
-  {
-    "type": "prompt_keyword",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "property_colon",
@@ -1889,7 +1963,7 @@
         "required": true,
         "types": [
           {
-            "type": "cap_body",
+            "type": "definition_body",
             "named": true
           }
         ]
@@ -1927,11 +2001,6 @@
     }
   },
   {
-    "type": "psyche_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "roled_message",
     "named": true,
     "fields": {},
@@ -1960,7 +2029,7 @@
         "required": true,
         "types": [
           {
-            "type": "cap_body",
+            "type": "definition_body",
             "named": true
           }
         ]
@@ -1998,11 +2067,6 @@
     }
   },
   {
-    "type": "service_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "skill",
     "named": true,
     "fields": {
@@ -2011,7 +2075,7 @@
         "required": true,
         "types": [
           {
-            "type": "cap_body",
+            "type": "definition_body",
             "named": true
           }
         ]
@@ -2047,11 +2111,6 @@
         ]
       }
     }
-  },
-  {
-    "type": "skill_keyword",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "source_file",
@@ -2343,6 +2402,52 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "task",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "task_keyword",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_name",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2694,11 +2799,19 @@
     "named": true
   },
   {
+    "type": "cap_kind",
+    "named": true
+  },
+  {
     "type": "cap_shorthand",
     "named": true
   },
   {
     "type": "cap_uri",
+    "named": true
+  },
+  {
+    "type": "chore_keyword",
     "named": true
   },
   {
@@ -2846,12 +2959,12 @@
     "named": true
   },
   {
-    "type": "prompt",
-    "named": false
+    "type": "prompt_keyword",
+    "named": true
   },
   {
-    "type": "psyche",
-    "named": false
+    "type": "psyche_keyword",
+    "named": true
   },
   {
     "type": "psyches",
@@ -2866,16 +2979,16 @@
     "named": true
   },
   {
-    "type": "service",
-    "named": false
+    "type": "service_keyword",
+    "named": true
   },
   {
     "type": "services",
     "named": false
   },
   {
-    "type": "skill",
-    "named": false
+    "type": "skill_keyword",
+    "named": true
   },
   {
     "type": "skills",
@@ -2883,6 +2996,10 @@
   },
   {
     "type": "struct_keyword",
+    "named": true
+  },
+  {
+    "type": "task_keyword",
     "named": true
   },
   {

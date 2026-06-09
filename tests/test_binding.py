@@ -165,9 +165,19 @@ def test_uses_fixture_contains_only_use_items():
     source = (FIXTURES_DIR / "uses.too").read_bytes()
 
     tree = parser.parse(source)
-    item_types = [_item_child(item).type for item in _items(tree.root_node)]
+    uses = [_item_child(item) for item in _items(tree.root_node)]
+    item_types = [item.type for item in uses]
+    kinds = [_text(source, item.child_by_field_name("kind")) for item in uses]
+    references = [_text(source, item.child_by_field_name("reference")) for item in uses]
 
     assert item_types == ["use", "use", "use", "use"]
+    assert kinds == ["psyche", "skill", "service", "prompt"]
+    assert references == [
+        "toolang.ai/reviewer",
+        "briceyan/pdf-processing",
+        "github://briceyan/caps/services/github@main",
+        "https://toolang.ai/review",
+    ]
 
 
 def test_caps_fenced_fixture_covers_prompt_markdown_forms():
@@ -207,7 +217,7 @@ def test_caps_fenced_fixture_covers_supported_kinds_and_frontmatter():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.named_children[0].type == "cap_markdown" for body in bodies)
+    assert all(body.named_children[0].type == "definition_markdown" for body in bodies)
     assert bodies[0].named_children[0].child_by_field_name("frontmatter") is not None
     assert bodies[2].named_children[0].child_by_field_name("frontmatter") is not None
     assert bodies[3].named_children[0].child_by_field_name("frontmatter") is None
@@ -235,7 +245,7 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.named_children[0].type == "cap_indented" for body in bodies)
+    assert all(body.named_children[0].type == "definition_indented" for body in bodies)
     assert "target = http://localhost:3000/mcp" in _text(source, bodies[0])
     assert "source = by3gus/rewrite" in _text(source, bodies[1])
     assert "Prefer concrete findings." in _text(source, bodies[2])
@@ -272,7 +282,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
     for cap in items[:4]:
         body = cap.child_by_field_name("body")
         assert body is not None
-        assert body.named_children[0].type == "cap_indented"
+        assert body.named_children[0].type == "definition_indented"
 
     struct = items[4]
     fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
@@ -404,6 +414,39 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
     ]
     assert len(chat_unroled_messages) == 1
     assert "{{_}}" in _text(source, chat_unroled_messages[0])
+
+
+def test_jobs_fixture_covers_inline_task_and_chore_declarations():
+    parser = _parser()
+    source = (FIXTURES_DIR / "jobs.too").read_bytes()
+
+    tree = parser.parse(source)
+    items = [_item_child(item) for item in _items(tree.root_node)]
+    bodies = [item.child_by_field_name("body") for item in items]
+
+    assert tree.root_node.has_error is False
+    assert [item.type for item in items] == ["task", "chore"]
+    assert [_text(source, item.child_by_field_name("kind")) for item in items] == [
+        "task",
+        "chore",
+    ]
+    assert [_text(source, item.child_by_field_name("name")) for item in items] == [
+        "review_api",
+        "stale_prs",
+    ]
+    assert all(body is not None for body in bodies)
+    assert "definition_indented" in str(bodies[0])
+    assert "title = Review API changes" in _text(source, bodies[0])
+    assert "definition_markdown" in str(bodies[1])
+    assert "frontmatter" in str(bodies[1])
+    assert "schedule: \"FREQ=HOURLY;INTERVAL=6\"" in _text(source, bodies[1])
+
+
+def test_inline_task_and_chore_declarations_require_names():
+    parser = _parser()
+
+    assert parser.parse(b"task:\n  Review API changes.\n").root_node.has_error is True
+    assert parser.parse(b"chore:\n  Check stale PRs.\n").root_node.has_error is True
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():

@@ -59,6 +59,14 @@
         },
         {
           "type": "SYMBOL",
+          "name": "task"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "chore"
+        },
+        {
+          "type": "SYMBOL",
           "name": "context"
         },
         {
@@ -461,7 +469,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_body"
+            "name": "definition_body"
           }
         }
       ]
@@ -498,7 +506,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_body"
+            "name": "definition_body"
           }
         }
       ]
@@ -535,7 +543,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_body"
+            "name": "definition_body"
           }
         }
       ]
@@ -572,7 +580,81 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_body"
+            "name": "definition_body"
+          }
+        }
+      ]
+    },
+    "task": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "kind",
+          "content": {
+            "type": "SYMBOL",
+            "name": "task_keyword"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "job_name"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "job_body"
+          }
+        }
+      ]
+    },
+    "chore": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "kind",
+          "content": {
+            "type": "SYMBOL",
+            "name": "chore_keyword"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "job_name"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "SYMBOL",
+            "name": "colon"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "job_body"
           }
         }
       ]
@@ -594,20 +676,28 @@
         }
       ]
     },
-    "cap_body": {
+    "job_name": {
+      "type": "SYMBOL",
+      "name": "value_name"
+    },
+    "job_body": {
+      "type": "SYMBOL",
+      "name": "definition_body"
+    },
+    "definition_body": {
       "type": "CHOICE",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "cap_indented"
+          "name": "definition_indented"
         },
         {
           "type": "SYMBOL",
-          "name": "cap_markdown"
+          "name": "definition_markdown"
         }
       ]
     },
-    "cap_indented": {
+    "definition_indented": {
       "type": "PREC_RIGHT",
       "value": 0,
       "content": {
@@ -628,7 +718,7 @@
                 },
                 {
                   "type": "SYMBOL",
-                  "name": "cap_indented_content_line"
+                  "name": "definition_indented_content_line"
                 },
                 {
                   "type": "SYMBOL",
@@ -640,7 +730,7 @@
         ]
       }
     },
-    "cap_markdown": {
+    "definition_markdown": {
       "type": "SEQ",
       "members": [
         {
@@ -687,7 +777,7 @@
           "type": "REPEAT",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_fenced_content_line"
+            "name": "definition_fenced_content_line"
           }
         },
         {
@@ -700,11 +790,11 @@
         }
       ]
     },
-    "cap_content": {
+    "definition_content": {
       "type": "SYMBOL",
       "name": "raw_text"
     },
-    "cap_indented_content_line": {
+    "definition_indented_content_line": {
       "type": "SEQ",
       "members": [
         {
@@ -721,7 +811,7 @@
         }
       ]
     },
-    "cap_fenced_content_line": {
+    "definition_fenced_content_line": {
       "type": "SEQ",
       "members": [
         {
@@ -3531,6 +3621,14 @@
       "type": "STRING",
       "value": "thunk"
     },
+    "task_keyword": {
+      "type": "STRING",
+      "value": "task"
+    },
+    "chore_keyword": {
+      "type": "STRING",
+      "value": "chore"
+    },
     "flow_keyword": {
       "type": "STRING",
       "value": "flow"
@@ -3637,25 +3735,28 @@
       "value": "---"
     },
     "cap_kind": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "psyche"
-        },
-        {
-          "type": "STRING",
-          "value": "skill"
-        },
-        {
-          "type": "STRING",
-          "value": "service"
-        },
-        {
-          "type": "STRING",
-          "value": "prompt"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "psyche"
+          },
+          {
+            "type": "STRING",
+            "value": "skill"
+          },
+          {
+            "type": "STRING",
+            "value": "service"
+          },
+          {
+            "type": "STRING",
+            "value": "prompt"
+          }
+        ]
+      }
     },
     "cap_uri": {
       "type": "TOKEN",

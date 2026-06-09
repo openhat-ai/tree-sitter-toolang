@@ -96,7 +96,7 @@ Rules:
 
 ```ebnf
 program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
+item ::= use | struct | psyche | skill | service | prompt | task | chore | context | instruct | thunk | flow
 ```
 
 ## Use
@@ -124,20 +124,20 @@ field_name ::= value_name
 ## Caps
 
 ```ebnf
-psyche ::= "psyche" cap_name ":" cap_body
-skill ::= "skill" cap_name ":" cap_body
-service ::= "service" cap_name ":" cap_body
-prompt ::= "prompt" cap_name ":" cap_body
+psyche ::= "psyche" cap_name ":" definition_body
+skill ::= "skill" cap_name ":" definition_body
+service ::= "service" cap_name ":" definition_body
+prompt ::= "prompt" cap_name ":" definition_body
 cap_name ::= value_name
 
 cap_uri ::= /[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s#]+/
 cap_shorthand ::= /[A-Za-z0-9_@-][A-Za-z0-9_./:@-]*/
 bare_value ::= /[A-Za-z0-9_./:@-]+/
 
-cap_body ::= cap_indented | cap_markdown
-cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
-cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
-cap_content ::= raw_text
+definition_body ::= definition_indented | definition_markdown
+definition_indented ::= line_end INDENT property_eq* definition_content? DEDENT
+definition_markdown ::= "```md" line_end frontmatter? definition_content? "```" newline
+definition_content ::= raw_text
 
 frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
 
@@ -157,11 +157,29 @@ Rules:
 - Frontmatter may include `#` comment lines; they are preserved as frontmatter
   content.
 - Indented bodies store properties using `key = value` lines.
-- Runtime validates property keys and cap-specific property constraints.
-- Indented cap properties use only `=`; `+=` and `-=` are thunk directive
+- Runtime validates property keys and definition-specific property constraints.
+- Indented definition properties use only `=`; `+=` and `-=` are thunk directive
   operators, not property operators.
 - The AST should expose `psyche`, `skill`, `service`, and `prompt` directly.
 - Do not wrap these declarations in an abstract `cap` node.
+
+## Jobs
+
+```ebnf
+task ::= "task" job_name ":" job_body
+chore ::= "chore" job_name ":" job_body
+job_name ::= value_name
+job_body ::= definition_body
+```
+
+Rules:
+
+- `task` and `chore` declarations mirror cap declaration shape: keyword, name,
+  colon, and an indented or fenced markdown body.
+- The body is an authored agent job document, not a thunk body.
+- Runtime parses task bodies with the task document schema and chore bodies with
+  the chore document schema.
+- Task and chore declarations do not contain thunk directives or message blocks.
 
 ## Instruct
 
@@ -489,7 +507,7 @@ Doc comments:
 
 ```ebnf
 program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
+item ::= use | struct | psyche | skill | service | prompt | task | chore | context | instruct | thunk | flow
 
 use ::= "use" cap_kind cap_ref line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
@@ -501,21 +519,26 @@ struct_body ::= (field | doc_comment | comment_line | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= value_name
 
-psyche ::= "psyche" cap_name ":" cap_body
-skill ::= "skill" cap_name ":" cap_body
-service ::= "service" cap_name ":" cap_body
-prompt ::= "prompt" cap_name ":" cap_body
+psyche ::= "psyche" cap_name ":" definition_body
+skill ::= "skill" cap_name ":" definition_body
+service ::= "service" cap_name ":" definition_body
+prompt ::= "prompt" cap_name ":" definition_body
 cap_name ::= value_name
-cap_body ::= cap_indented | cap_markdown
-cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
-cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
-cap_content ::= raw_text
+definition_body ::= definition_indented | definition_markdown
+definition_indented ::= line_end INDENT property_eq* definition_content? DEDENT
+definition_markdown ::= "```md" line_end frontmatter? definition_content? "```" newline
+definition_content ::= raw_text
 frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
 property_eq ::= property_key "=" property_value line_end
 property_colon ::= property_key ":" property_value line_end
 frontmatter_comment ::= "#" line_text newline
 property_key ::= value_name
 property_value ::= inline_text
+
+task ::= "task" job_name ":" job_body
+chore ::= "chore" job_name ":" job_body
+job_name ::= value_name
+job_body ::= definition_body
 
 instruct ::= "instruct" instruct_name? ":" instruct_body
 instruct_name ::= value_name

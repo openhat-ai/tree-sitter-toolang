@@ -1,0 +1,13 @@
+task review_api:
+  title = Review API changes
+
+  Review the API changes and summarize risks.
+
+chore stale_prs: ```md
+---
+title: Check stale PRs
+schedule: "FREQ=HOURLY;INTERVAL=6"
+---
+
+Check stale PRs and report actionable items.
+```

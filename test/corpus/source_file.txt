@@ -72,8 +72,8 @@ prompt review:
       (cap_name
         (value_name))
       (colon)
-      (cap_body
-        (cap_markdown
+      (definition_body
+        (definition_markdown
           (fence_open)
           (block_language)
           (line_end
@@ -97,9 +97,9 @@ prompt review:
               (newline))
             (frontmatter_delimiter)
             (newline))
-          (cap_fenced_content_line
+          (definition_fenced_content_line
             (newline))
-          (cap_fenced_content_line
+          (definition_fenced_content_line
             (fenced_raw_text)
             (newline))
           (fence_close)))))
@@ -111,13 +111,13 @@ prompt review:
       (cap_name
         (value_name))
       (colon)
-      (cap_body
-        (cap_markdown
+      (definition_body
+        (definition_markdown
           (fence_open)
           (block_language)
           (line_end
             (newline))
-          (cap_fenced_content_line
+          (definition_fenced_content_line
             (fenced_raw_text)
             (newline))
           (fence_close)))))
@@ -129,8 +129,8 @@ prompt review:
       (cap_name
         (value_name))
       (colon)
-      (cap_body
-        (cap_indented
+      (definition_body
+        (definition_indented
           (line_end
             (newline))
           (property_eq
@@ -143,7 +143,7 @@ prompt review:
               (newline)))
           (blank_line
             (newline))
-          (cap_indented_content_line
+          (definition_indented_content_line
             (indented_raw_text)
             (newline)))))))
 
@@ -357,6 +357,91 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
                     (block_indented_content_line
                       (indented_raw_text)
                       (newline))))))))))))
+
+==================
+Inline Task And Chore
+==================
+task review_api:
+  title = Review API changes
+
+  Review the API changes and summarize risks.
+
+chore stale_prs: ```md
+---
+title: Check stale PRs
+schedule: "FREQ=HOURLY;INTERVAL=6"
+---
+
+Check stale PRs and report actionable items.
+```
+
+---
+
+(source_file
+  (item
+    (task
+      (task_keyword)
+      (job_name
+        (value_name))
+      (colon)
+      (job_body
+        (definition_body
+          (definition_indented
+            (line_end
+              (newline))
+            (property_eq
+              (property_key
+                (value_name))
+              (assign_operator)
+              (property_value
+                (inline_text))
+              (line_end
+                (newline)))
+            (blank_line
+              (newline))
+            (definition_indented_content_line
+              (indented_raw_text)
+              (newline))
+            (blank_line
+              (newline)))))))
+  (item
+    (chore
+      (chore_keyword)
+      (job_name
+        (value_name))
+      (colon)
+      (job_body
+        (definition_body
+          (definition_markdown
+            (fence_open)
+            (block_language)
+            (line_end
+              (newline))
+            (frontmatter
+              (frontmatter_delimiter)
+              (newline)
+              (property_colon
+                (property_key
+                  (value_name))
+                (colon)
+                (property_value
+                  (inline_text))
+                (newline))
+              (property_colon
+                (property_key
+                  (value_name))
+                (colon)
+                (property_value
+                  (inline_text))
+                (newline))
+              (frontmatter_delimiter)
+              (newline))
+            (definition_fenced_content_line
+              (newline))
+            (definition_fenced_content_line
+              (fenced_raw_text)
+              (newline))
+            (fence_close)))))))
 
 ==================
 Comments
