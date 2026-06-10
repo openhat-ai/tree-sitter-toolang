@@ -228,19 +228,17 @@ flow_body ::= trivia*
               trivia*
 
 statements ::= flow_statement+
-flow_statement ::= explicit_flow_statement
+flow_statement ::= do_statement
+                 | ask_statement
+                 | unfold_statement
+                 | keep_statement
+                 | drop_statement
+                 | rank_statement
+                 | each_statement
+                 | fold_statement
+                 | repeat_above_statement
+                 | repeat_block_statement
                  | implicit_do_statement
-
-explicit_flow_statement ::= do_statement
-                          | ask_statement
-                          | unfold_statement
-                          | keep_statement
-                          | drop_statement
-                          | rank_statement
-                          | each_statement
-                          | fold_statement
-                          | repeat_above_statement
-                          | repeat_block_statement
 
 do_statement ::= "do" callees line_end
                | "do" to_clause? ":" text_inline

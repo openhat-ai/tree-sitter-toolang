@@ -1625,19 +1625,6 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "explicit_flow_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "implicit_do_statement"
-        }
-      ]
-    },
-    "explicit_flow_statement": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
           "name": "do_statement"
         },
         {
@@ -1675,6 +1662,10 @@
         {
           "type": "SYMBOL",
           "name": "repeat_block_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "implicit_do_statement"
         }
       ]
     },

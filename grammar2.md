@@ -99,19 +99,17 @@ flow_body ::= _trivia*
 
 statements ::= (_flow_statement _trivia*)+
 
-_flow_statement ::= explicit_flow_statement
+_flow_statement ::= do_statement
+                  | ask_statement
+                  | unfold_statement
+                  | keep_statement
+                  | drop_statement
+                  | rank_statement
+                  | each_statement
+                  | fold_statement
+                  | repeat_above_statement
+                  | repeat_block_statement
                   | implicit_do_statement
-
-explicit_flow_statement ::= do_statement
-                          | ask_statement
-                          | unfold_statement
-                          | keep_statement
-                          | drop_statement
-                          | rank_statement
-                          | each_statement
-                          | fold_statement
-                          | repeat_above_statement
-                          | repeat_block_statement
 
 
 # Flow statements
@@ -277,7 +275,7 @@ Hidden grammar rules begin with `_`.
 
 `message ::= text_inline` becomes a message with omitted role, which means implicit user message.
 
-Flow parsing tries `explicit_flow_statement` before `implicit_do_statement`.
+Flow parsing tries explicit flow statements before `implicit_do_statement`.
 If a flow body entry is not an explicit statement, it is parsed as `implicit_do_statement`.
 
 `implicit_do_statement` is shorthand for `do:` with an anonymous inline thunk.

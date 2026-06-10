@@ -265,11 +265,6 @@ module.exports = grammar({
       prec.right(seq($._flow_statement, repeat(choice($._flow_statement, $._trivia)))),
     _flow_statement: ($) =>
       choice(
-        $.explicit_flow_statement,
-        $.implicit_do_statement,
-      ),
-    explicit_flow_statement: ($) =>
-      choice(
         $.do_statement,
         $.ask_statement,
         $.unfold_statement,
@@ -280,6 +275,7 @@ module.exports = grammar({
         $.fold_statement,
         $.repeat_above_statement,
         $.repeat_block_statement,
+        $.implicit_do_statement,
       ),
     do_statement: ($) =>
       choice(
