@@ -278,6 +278,8 @@ If a flow body entry is not an explicit statement, it is parsed as `implicit_do_
 Adjacent implicit-do text lines are merged into one statement. One blank line
 between implicit-do text lines is preserved inside the same statement. Two or
 more blank lines, or any comment/doc-comment line, split implicit-do statements.
+An implicit-do line must not start with `until:`; `until_clause` is only valid as
+the terminator of a repeat body.
 
 `repeat_block_statement` contains an anonymous inline flow and maps to `RepeatBlock.body: Flow`.
 The optional `until_clause` is a repeat-block terminator, not a normal flow statement.

@@ -708,6 +708,17 @@ def test_flow_statement_heads_are_keyword_specific():
     assert "to_clause" in str(valid_statements[12])
 
 
+def test_flow_itemwise_named_statements_require_callee_or_parallelism():
+    parser = _parser()
+
+    for source in (
+        b"flow bad:\n  keep\n",
+        b"flow bad:\n  drop\n",
+        b"flow bad:\n  each\n",
+    ):
+        assert parser.parse(source).root_node.has_error is True, source
+
+
 def test_implicit_thunk_statement_splitting():
     parser = _parser()
     source = (
@@ -734,6 +745,28 @@ def test_implicit_thunk_statement_splitting():
     assert "This starts a second bare thunk." in _text(source, statements[1])
     assert "This starts a third bare thunk." in _text(source, statements[2])
     assert "doc_line" in str(body)
+
+
+def test_until_clause_is_only_valid_as_repeat_terminator():
+    parser = _parser()
+    invalid = b"flow bad:\n  until: enough evidence\n"
+    valid = (
+        b"flow ok:\n"
+        b"  repeat:\n"
+        b"    do collect_evidence\n"
+        b"    until: enough evidence\n"
+    )
+
+    invalid_tree = parser.parse(invalid)
+    valid_tree = parser.parse(valid)
+    repeat_statement = _statements(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))[0]
+    repeat_body = _nodes(repeat_statement, "repeat_body")[0]
+    nested_flow_body = _nodes(repeat_body, "flow_body")[0]
+
+    assert invalid_tree.root_node.has_error is True
+    assert valid_tree.root_node.has_error is False
+    assert _nodes(repeat_body, "until_clause")
+    assert _nodes(nested_flow_body, "until_clause") == []
 
 
 def test_flow_repeat_forms():
@@ -792,12 +825,34 @@ def test_flow_repeat_forms():
 
     assert block_tree.root_node.has_error is False
     assert _text(block_source, _nodes(repeat_statements[0], "times_clause")[0]) == "5"
-    assert "flow_body" in str(repeat_statements[0])
+    assert "repeat_body" in str(repeat_statements[0])
+    assert "flow_body" in str(_nodes(repeat_statements[0], "repeat_body")[0])
     assert _nodes(repeat_statements[0], "condition") == []
     assert _nodes(repeat_statements[1], "times_clause") == []
     assert "until_clause" in str(repeat_statements[1])
     assert _text(block_source, _nodes(repeat_statements[2], "times_clause")[0]) == "5"
     assert "text_block" in str(_nodes(repeat_statements[2], "condition")[0])
+
+
+def test_flow_statements_support_inline_comments():
+    parser = _parser()
+    source = (
+        b"flow comments:\n"
+        b"  do search # named call\n"
+        b"  keep par 4: useful # predicate\n"
+        b"  repeat 2 # count\n"
+    )
+
+    tree = parser.parse(source)
+    statements = _statements(_item_child(_items(tree.root_node)[0]).child_by_field_name("body"))
+
+    assert tree.root_node.has_error is False
+    assert [_statement_keyword(source, statement) for statement in statements] == [
+        "do",
+        "keep",
+        "repeat",
+    ]
+    assert len(_nodes(_item_child(_items(tree.root_node)[0]), "inline_comment")) == 3
 
 
 def test_flow_directive_nodes_only_parse_at_body_start():
@@ -823,6 +878,18 @@ def test_flow_pass_is_required_for_empty_body_and_must_be_last():
     assert parser.parse(empty).root_node.has_error is True
     assert parser.parse(trailing).root_node.has_error is True
     assert parser.parse(nested_empty).root_node.has_error is True
+
+
+def test_empty_text_blocks_are_rejected():
+    parser = _parser()
+
+    for source in (
+        b"context empty:\n",
+        b"instruct empty:\n",
+        b"thunk bad:\n  user:\n",
+        b"flow bad:\n  do:\n",
+    ):
+        assert parser.parse(source).root_node.has_error is True, source
 
 
 def test_kitchen_sink_thunk_signature_directives_and_blocks():

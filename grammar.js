@@ -293,13 +293,15 @@ module.exports = grammar({
       ),
     implicit_do_statement: ($) =>
       prec.dynamic(-1, prec.right(seq(
-        $.text_body_line,
+        alias($._implicit_do_text_body_line, $.text_body_line),
         repeat(choice(
-          $.text_body_line,
-          seq($.blank_line, $.text_body_line),
+          alias($._implicit_do_text_body_line, $.text_body_line),
+          seq($.blank_line, alias($._implicit_do_text_body_line, $.text_body_line)),
         )),
         optional($.blank_line),
       ))),
+    _implicit_do_text_body_line: ($) =>
+      seq(field("content", alias($._implicit_do_raw_text, $.indented_raw_text)), $.newline),
     ask_statement: ($) =>
       seq(
         $.flow_ask_keyword,
@@ -535,6 +537,7 @@ module.exports = grammar({
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
+    _implicit_do_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^:\r\n][^\r\n]*)?)/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });

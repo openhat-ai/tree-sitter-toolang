@@ -297,6 +297,8 @@ Rules:
 - Adjacent implicit-do text lines are merged into one statement. One blank line
   between implicit-do lines is preserved in the same statement; two or more
   blank lines, or a comment/doc-comment line, split implicit-do statements.
+- An implicit-do line cannot start with `until:`. `until:` is only valid as the
+  terminator of a repeat body.
 - `do callees` runs named thunks or flows on the current value.
 - `do: ...` and `do to Type: ...` define inline thunk-like statements.
 - `ask agent` delegates the current value to an agent and replaces it with the
