@@ -758,11 +758,15 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
-          "type": "text_inline",
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "text_body_line",
           "named": true
         }
       ]
@@ -1947,19 +1951,11 @@
       "required": true,
       "types": [
         {
-          "type": "blank_line",
-          "named": true
-        },
-        {
           "type": "line_end",
           "named": true
         },
         {
           "type": "text_block",
-          "named": true
-        },
-        {
-          "type": "text_body_line",
           "named": true
         },
         {

@@ -292,16 +292,14 @@ module.exports = grammar({
         )),
       ),
     implicit_do_statement: ($) =>
-      prec.dynamic(-1, alias($._implicit_do_body, $.text_inline)),
-    _implicit_do_body: ($) =>
-      prec.right(seq(
+      prec.dynamic(-1, prec.right(seq(
         $.text_body_line,
         repeat(choice(
           $.text_body_line,
           seq($.blank_line, $.text_body_line),
         )),
         optional($.blank_line),
-      )),
+      ))),
     ask_statement: ($) =>
       seq(
         $.flow_ask_keyword,

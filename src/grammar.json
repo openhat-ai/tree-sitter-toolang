@@ -1728,63 +1728,54 @@
       "type": "PREC_DYNAMIC",
       "value": -1,
       "content": {
-        "type": "ALIAS",
+        "type": "PREC_RIGHT",
+        "value": 0,
         "content": {
-          "type": "SYMBOL",
-          "name": "_implicit_do_body"
-        },
-        "named": true,
-        "value": "text_inline"
-      }
-    },
-    "_implicit_do_body": {
-      "type": "PREC_RIGHT",
-      "value": 0,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "text_body_line"
-          },
-          {
-            "type": "REPEAT",
-            "content": {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "text_body_line"
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "text_body_line"
+                  },
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "blank_line"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "text_body_line"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
               "type": "CHOICE",
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "text_body_line"
+                  "name": "blank_line"
                 },
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "blank_line"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "text_body_line"
-                    }
-                  ]
+                  "type": "BLANK"
                 }
               ]
             }
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "blank_line"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          }
-        ]
+          ]
+        }
       }
     },
     "ask_statement": {

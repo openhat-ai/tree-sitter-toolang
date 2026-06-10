@@ -243,12 +243,10 @@ flow_statement ::= do_statement
 do_statement ::= "do" callees line_end
                | "do" to_clause? ":" text_inline
 
-implicit_do_statement ::= implicit_do_body
-implicit_do_body ::= implicit_do_line
-                     (implicit_do_line
-                     | blank_line implicit_do_line)*
-                     blank_line?
-implicit_do_line ::= indented_raw_text newline
+implicit_do_statement ::= text_body_line
+                          (text_body_line
+                          | blank_line text_body_line)*
+                          blank_line?
 
 ask_statement ::= "ask" agent line_end
 
