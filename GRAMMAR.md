@@ -182,12 +182,11 @@ thunk_body ::= trivia*
                trivia*
 
 directives ::= directive+
-directive ::= directive_key directive_op directive_csv line_end
+directive ::= directive_key directive_op directive_value line_end
 directive_key ::= "models" | "tools" | "skills" | "services" | "psyches"
                 | "hands" | "handoffs" | "recall"
 directive_op ::= "=" | "+=" | "-="
-directive_csv ::= directive_value ("," directive_value)*
-directive_value ::= /[A-Za-z_@][A-Za-z0-9_./@:-]*/
+directive_value ::= /[^#\r\n]+/
 
 settings ::= context_setting instruct_setting?
            | instruct_setting context_setting?
@@ -273,16 +272,16 @@ ask_statement ::= "ask" agent line_end
 unfold_statement ::= "unfold" callee line_end
                    | "unfold" to_clause? ":" text_inline
 
-keep_statement ::= "keep" (callee par_clause? | par_clause) line_end
+keep_statement ::= "keep" itemwise_named_head line_end
                  | "keep" par_clause? ":" text_inline
 
-drop_statement ::= "drop" (callee par_clause? | par_clause) line_end
+drop_statement ::= "drop" itemwise_named_head line_end
                  | "drop" par_clause? ":" text_inline
 
-rank_statement ::= "rank" callee limit_clause? par_clause? line_end
+rank_statement ::= "rank" rank_named_head line_end
                  | "rank" limit_clause? par_clause? ":" text_inline
 
-each_statement ::= "each" (callee par_clause? | par_clause) line_end
+each_statement ::= "each" itemwise_named_head line_end
                  | "each" to_clause? par_clause? ":" text_inline
 
 fold_statement ::= "fold" callee line_end
@@ -304,6 +303,9 @@ times_clause ::= integer_literal "times"?
 callees ::= callee ("," callee)*
 callee ::= snake_name
 agent ::= snake_name
+itemwise_named_head ::= callee par_clause? | par_clause callee?
+rank_named_head ::= callee limit_clause? par_clause?
+                  | limit_clause? par_clause? callee
 ```
 
 Rules:
@@ -337,6 +339,8 @@ Rules:
 - `to Type` is only supported by inline `do`, `unfold`, `each`, and `fold`.
 - `par N` is only meaningful for item-wise statements.
 - Named forms do not also define inline bodies after `:`.
+- Named item-wise forms support the callee either before modifiers or after all
+  modifiers, but not interleaved between modifiers.
 - `repeat N`, `repeat until:`, and `repeat N until:` repeat the previous
   executable statements in the current flow block. Semantic validation rejects a
   short repeat with an empty captured range.

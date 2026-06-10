@@ -144,16 +144,16 @@ ask_statement ::= "ask" agent line_end
 unfold_statement ::= "unfold" callee line_end
                    | "unfold" to_clause? ":" text_inline
 
-keep_statement ::= "keep" (callee par_clause? | par_clause) line_end
+keep_statement ::= "keep" itemwise_named_head line_end
                  | "keep" par_clause? ":" text_inline
 
-drop_statement ::= "drop" (callee par_clause? | par_clause) line_end
+drop_statement ::= "drop" itemwise_named_head line_end
                  | "drop" par_clause? ":" text_inline
 
-rank_statement ::= "rank" callee limit_clause? par_clause? line_end
+rank_statement ::= "rank" rank_named_head line_end
                  | "rank" limit_clause? par_clause? ":" text_inline
 
-each_statement ::= "each" (callee par_clause? | par_clause) line_end
+each_statement ::= "each" itemwise_named_head line_end
                  | "each" to_clause? par_clause? ":" text_inline
 
 fold_statement ::= "fold" callee line_end
@@ -186,9 +186,9 @@ text_body_line ::= indented_raw_text newline
 
 # Directives
 
-directive ::= directive_name ("=" | "+=" | "-=") directive_value ("," directive_value)* line_end
+directive ::= directive_name ("=" | "+=" | "-=") directive_value line_end
 directive_name ::= "models" | "tools" | "skills" | "services" | "psyches" | "hands" | "handoffs" | "recall"
-directive_value ::= /[A-Za-z_@][A-Za-z0-9_./@:-]*/
+directive_value ::= /[^#\r\n]+/
 
 
 # Signatures
@@ -211,6 +211,9 @@ times_clause ::= integer "times"?
 callees ::= callee ("," callee)*
 callee ::= snake_name
 agent ::= agent_name
+itemwise_named_head ::= callee par_clause? | par_clause callee?
+rank_named_head ::= callee limit_clause? par_clause?
+                  | limit_clause? par_clause? callee
 
 
 # Types
@@ -286,6 +289,9 @@ Hidden grammar rules begin with `_`.
 `callee` is parsed as a local snake_case name. The resolver decides whether it points to a thunk or a flow.
 
 `agent` is a local agent name.
+
+Named item-wise forms support the callee either before modifiers or after all
+modifiers, but not interleaved between modifiers.
 
 `message ::= unroled_message` becomes a message with omitted role, which means implicit user message.
 

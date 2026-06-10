@@ -643,6 +643,7 @@ def test_flow_statement_heads_are_keyword_specific():
         b"flow bare:\n  drop duplicate_filter:\n    duplicate\n",
         b"flow bare:\n  rank to Note:\n    preferred\n",
         b"flow bare:\n  rank ranking_rule:\n    preferred\n",
+        b"flow bare:\n  rank 5 ranking_rule par 4\n",
         b"flow bare:\n  do summarize:\n    Run it.\n",
         b"flow bare:\n  each to Note search_notes:\n    search\n",
         b"flow bare:\n  each search_notes:\n    search\n",
@@ -654,17 +655,21 @@ def test_flow_statement_heads_are_keyword_specific():
         b"  unfold to SearchJob:\n"
         b"    create search jobs\n"
         b"  keep useful_filter par 4\n"
+        b"  keep par 4 useful_filter\n"
         b"  keep par 4:\n"
         b"    useful\n"
         b"  drop duplicate_filter par 4\n"
+        b"  drop par 4 duplicate_filter\n"
         b"  drop par 4:\n"
         b"    duplicate\n"
             b"  rank ranking_rule\n"
+            b"  rank 5 par 4 ranking_rule\n"
             b"  rank par 5:\n"
             b"    preferred\n"
             b"  rank 5:\n"
         b"    preferred\n"
         b"  each search_notes par 4\n"
+        b"  each par 4 search_notes\n"
         b"  each to Note par 4:\n"
         b"    search\n"
         b"  fold synthesize_answer\n"
@@ -684,11 +689,15 @@ def test_flow_statement_heads_are_keyword_specific():
         "unfold",
         "keep",
         "keep",
+        "keep",
         "drop",
         "drop",
+        "drop",
         "rank",
         "rank",
         "rank",
+        "rank",
+        "each",
         "each",
         "each",
         "fold",
@@ -700,14 +709,19 @@ def test_flow_statement_heads_are_keyword_specific():
     assert "par_clause" in str(valid_statements[3])
     assert "par_clause" in str(valid_statements[4])
     assert "par_clause" in str(valid_statements[5])
-    assert _nodes(valid_statements[6], "callee")
+    assert "par_clause" in str(valid_statements[6])
     assert "par_clause" in str(valid_statements[7])
-    assert "limit_clause" in str(valid_statements[8])
+    assert _nodes(valid_statements[8], "callee")
+    assert "limit_clause" in str(valid_statements[9])
     assert "par_clause" in str(valid_statements[9])
-    assert "to_clause" in str(valid_statements[10])
     assert "par_clause" in str(valid_statements[10])
-    assert _nodes(valid_statements[11], "callee")
-    assert "to_clause" in str(valid_statements[12])
+    assert "limit_clause" in str(valid_statements[11])
+    assert "par_clause" in str(valid_statements[12])
+    assert "par_clause" in str(valid_statements[13])
+    assert "to_clause" in str(valid_statements[14])
+    assert "par_clause" in str(valid_statements[14])
+    assert _nodes(valid_statements[15], "callee")
+    assert "to_clause" in str(valid_statements[16])
 
 
 def test_flow_itemwise_named_statements_require_callee_or_parallelism():
@@ -875,6 +889,23 @@ def test_flow_directive_nodes_only_parse_at_body_start():
     statements = _statements(body)
     assert len(statements) == 2
     assert "models = gpt-5" in _text(source, statements[1])
+
+
+def test_directive_value_is_trimmed_line_payload():
+    parser = _parser()
+    source = (
+        b"thunk search:\n"
+        b"  tools = web_search/*, shell # selected tools\n"
+        b"  user: Search.\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    directive = next(child for child in body.named_children if child.type == "directive")
+
+    assert tree.root_node.has_error is False
+    assert directive.child_by_field_name("values") is None
+    assert _text(source, directive.child_by_field_name("value")).strip() == "web_search/*, shell"
 
 
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():

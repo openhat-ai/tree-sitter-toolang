@@ -333,7 +333,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_keep_keyword,
-          choice(seq($.callee, optional($.par_clause)), $.par_clause),
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
@@ -347,7 +347,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_drop_keyword,
-          choice(seq($.callee, optional($.par_clause)), $.par_clause),
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
@@ -361,9 +361,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_rank_keyword,
-          $.callee,
-          optional($.limit_clause),
-          optional($.par_clause),
+          $._rank_named_head,
           $.line_end,
         ),
         prec.right(seq(
@@ -378,7 +376,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_each_keyword,
-          choice(seq($.callee, optional($.par_clause)), $.par_clause),
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
@@ -449,21 +447,29 @@ module.exports = grammar({
     callees: ($) => seq($.callee, repeat(seq($.comma, $.callee))),
     callee: ($) => $.snake_name,
     agent: ($) => $.snake_name,
+    _itemwise_named_head: ($) =>
+      choice(
+        seq($.callee, optional($.par_clause)),
+        seq($.par_clause, optional($.callee)),
+      ),
+    _rank_named_head: ($) =>
+      choice(
+        seq($.callee, optional($.limit_clause), optional($.par_clause)),
+        seq(optional($.limit_clause), optional($.par_clause), $.callee),
+      ),
     integer_literal: () => token(/\d+/),
 
     directive: ($) =>
       seq(
         field("key", $.directive_key),
         field("operator", $.directive_op),
-        field("values", $.directive_csv),
+        field("value", $.directive_value),
         $.line_end,
       ),
     directive_key: () =>
       choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs", "recall"),
     directive_op: () => choice("=", "+=", "-="),
-    directive_csv: ($) =>
-      seq($.directive_value, repeat(seq($.comma, $.directive_value))),
-    directive_value: () => token(/[A-Za-z_@][A-Za-z0-9_./@:-]*/),
+    directive_value: () => token(prec(-1, /[^#\r\n]+/)),
     _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
 
     settings: ($) =>

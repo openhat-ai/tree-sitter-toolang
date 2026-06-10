@@ -343,12 +343,12 @@
           }
         ]
       },
-      "values": {
+      "value": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "directive_csv",
+            "type": "directive_value",
             "named": true
           }
         ]
@@ -366,31 +366,17 @@
     }
   },
   {
-    "type": "directive_csv",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "comma",
-          "named": true
-        },
-        {
-          "type": "directive_value",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "directive_key",
     "named": true,
     "fields": {}
   },
   {
     "type": "directive_op",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "directive_value",
     "named": true,
     "fields": {}
   },
@@ -2072,6 +2058,11 @@
     }
   },
   {
+    "type": "text_line",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "text_ref",
     "named": true,
     "fields": {},
@@ -2570,10 +2561,6 @@
     "named": false
   },
   {
-    "type": "directive_value",
-    "named": true
-  },
-  {
     "type": "doc_line",
     "named": true
   },
@@ -2739,10 +2726,6 @@
   },
   {
     "type": "task_keyword",
-    "named": true
-  },
-  {
-    "type": "text_line",
     "named": true
   },
   {
