@@ -588,7 +588,7 @@ flow research(in: Pack) -> Answer:
                         (snake_name)))
                     (line_end
                       (newline)))))
-              (until_clause
+              (until_statement
                 (flow_until_keyword)
                 (colon)
                 (condition

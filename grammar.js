@@ -275,6 +275,7 @@ module.exports = grammar({
         $.fold_statement,
         $.repeat_above_statement,
         $.repeat_block_statement,
+        $.invalid_flow_reserved_statement,
         $.implicit_do_statement,
       ),
     do_statement: ($) =>
@@ -295,13 +296,19 @@ module.exports = grammar({
       prec.dynamic(-1, prec.right(seq(
         alias($._implicit_do_text_body_line, $.text_body_line),
         repeat(choice(
-          alias($._implicit_do_text_body_line, $.text_body_line),
-          seq($.blank_line, alias($._implicit_do_text_body_line, $.text_body_line)),
+          $.text_body_line,
+          seq($.blank_line, $.text_body_line),
         )),
         optional($.blank_line),
       ))),
     _implicit_do_text_body_line: ($) =>
       seq(field("content", alias($._implicit_do_raw_text, $.indented_raw_text)), $.newline),
+    invalid_flow_reserved_statement: ($) =>
+      prec.dynamic(-2, seq(
+        $._flow_reserved_word,
+        optional($.text_line),
+        $.line_end,
+      )),
     ask_statement: ($) =>
       seq(
         $.flow_ask_keyword,
@@ -420,14 +427,20 @@ module.exports = grammar({
     repeat_body: ($) =>
       prec.right(seq(
         $.flow_body,
-        optional($.until_clause),
+        optional($.until_statement),
       )),
     until_clause: ($) =>
-      seq(
+      prec.dynamic(2, seq(
         $.flow_until_keyword,
         $.colon,
         $.condition,
-      ),
+      )),
+    until_statement: ($) =>
+      prec.dynamic(2, seq(
+        $.flow_until_keyword,
+        $.colon,
+        $.condition,
+      )),
     condition: ($) => $._nested_text_inline_alias,
     to_clause: ($) => seq($.flow_to_keyword, $.type),
     par_clause: ($) => seq($.flow_par_keyword, $.integer_literal),
@@ -487,11 +500,31 @@ module.exports = grammar({
     message: ($) =>
       choice(
         seq($.role, $.colon, $._nested_text_inline_alias),
-        $.text_inline,
+        $.invalid_thunk_reserved_message,
+        $.unroled_message,
       ),
+    unroled_message: ($) =>
+      prec.dynamic(-1, prec.right(seq(
+        alias($._unroled_message_initial_line, $.text_body_line),
+        repeat(choice(
+          alias($._unroled_message_continuation_line, $.text_body_line),
+          seq($.blank_line, alias($._unroled_message_continuation_line, $.text_body_line)),
+        )),
+        optional($.blank_line),
+      ))),
+    _unroled_message_initial_line: ($) =>
+      seq(field("content", $.indented_raw_text), $.newline),
+    _unroled_message_continuation_line: ($) =>
+      seq(field("content", alias($._unroled_message_continuation_text, $.indented_raw_text)), $.newline),
+    invalid_thunk_reserved_message: ($) =>
+      prec.dynamic(-2, seq(
+        $._thunk_reserved_word,
+        optional($.text_line),
+        $.line_end,
+      )),
     role: () => choice("user", "assistant", "tool"),
     _pass_statement: ($) =>
-      seq($.pass_keyword, $.line_end),
+      prec(1, seq($.pass_keyword, $.line_end)),
     use_keyword: () => "use",
     struct_keyword: () => "struct",
     psyche_keyword: () => "psyche",
@@ -519,6 +552,26 @@ module.exports = grammar({
     flow_par_keyword: () => "par",
     flow_limit_keyword: () => "limit",
     flow_times_keyword: () => "times",
+    _flow_reserved_word: ($) =>
+      choice(
+        $.flow_ask_keyword,
+        $.flow_do_keyword,
+        $.flow_drop_keyword,
+        $.flow_each_keyword,
+        $.flow_fold_keyword,
+        $.flow_keep_keyword,
+        $.flow_rank_keyword,
+        $.flow_repeat_keyword,
+        $.flow_unfold_keyword,
+      ),
+    _thunk_reserved_word: ($) =>
+      choice(
+        $.context_keyword,
+        $.instruct_keyword,
+        $.role,
+        $.pass_keyword,
+        $.directive_key,
+      ),
 
     optional_marker: () => "?",
     assign_operator: () => "=",
@@ -537,7 +590,8 @@ module.exports = grammar({
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
-    _implicit_do_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^:\r\n][^\r\n]*)?)/)),
+    _implicit_do_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
+    _unroled_message_continuation_text: () => token(prec(2, /[ \t][^\r\n]*/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });

@@ -81,9 +81,21 @@ text_ref ::= "default" | "none" | prompt_name
 
 messages ::= (message _trivia*)+
 message ::= role ":" text_inline
-          | text_inline
+          | invalid_thunk_reserved_message
+          | unroled_message
+
+unroled_message ::= unroled_message_line
+                    (text_body_line
+                    | blank_line text_body_line)*
+                    blank_line?
+
+unroled_message_line ::= text_body_line
 
 role ::= "user" | "assistant" | "tool"
+
+thunk_reserved_word ::= "context" | "instruct" | "user" | "assistant" | "tool"
+                      | "pass" | directive_name
+invalid_thunk_reserved_message ::= thunk_reserved_word text_line? line_end
 
 
 # Flows
@@ -109,6 +121,7 @@ _flow_statement ::= do_statement
                   | fold_statement
                   | repeat_above_statement
                   | repeat_block_statement
+                  | invalid_flow_reserved_statement
                   | implicit_do_statement
 
 
@@ -121,6 +134,10 @@ implicit_do_statement ::= text_body_line
                           (text_body_line
                           | blank_line text_body_line)*
                           blank_line?
+
+invalid_flow_reserved_statement ::= flow_reserved_word text_line? line_end
+flow_reserved_word ::= "do" | "ask" | "unfold" | "keep" | "drop"
+                     | "rank" | "each" | "fold" | "repeat"
 
 ask_statement ::= "ask" agent line_end
 
@@ -150,9 +167,10 @@ repeat_above_statement ::= "repeat" times_clause line_end
 
 repeat_block_statement ::= "repeat" times_clause? ":" line_end INDENT repeat_body DEDENT
 
-repeat_body ::= flow_body until_clause?
+repeat_body ::= flow_body until_statement?
 
 until_clause ::= "until" ":" condition
+until_statement ::= "until" ":" condition
 condition ::= text_line line_end | text_block
 
 
@@ -269,7 +287,13 @@ Hidden grammar rules begin with `_`.
 
 `agent` is a local agent name.
 
-`message ::= text_inline` becomes a message with omitted role, which means implicit user message.
+`message ::= unroled_message` becomes a message with omitted role, which means implicit user message.
+
+In thunk bodies, `unroled_message` is a fallback message. A line starting with
+`thunk_reserved_word` parses as `invalid_thunk_reserved_message` unless it
+matches an explicit thunk body form. After fallback has started, subsequent text
+lines are message content. Use an explicit role when message content itself
+starts with a reserved word.
 
 Flow parsing tries explicit flow statements before `implicit_do_statement`.
 If a flow body entry is not an explicit statement, it is parsed as `implicit_do_statement`.
@@ -278,11 +302,13 @@ If a flow body entry is not an explicit statement, it is parsed as `implicit_do_
 Adjacent implicit-do text lines are merged into one statement. One blank line
 between implicit-do text lines is preserved inside the same statement. Two or
 more blank lines, or any comment/doc-comment line, split implicit-do statements.
-An implicit-do line must not start with `until:`; `until_clause` is only valid as
-the terminator of a repeat body.
+A flow body line starting with a reserved flow word parses as
+`invalid_flow_reserved_statement` unless it matches an explicit flow statement.
+`until_statement` is only valid in repeat statements and never parses as an
+implicit `do` statement.
 
 `repeat_block_statement` contains an anonymous inline flow and maps to `RepeatBlock.body: Flow`.
-The optional `until_clause` is a repeat-block terminator, not a normal flow statement.
+The optional `until_statement` is a repeat-block terminator, not a normal flow statement.
 
 Short repeat forms such as `repeat 3` and `repeat until: done` capture previous
 executable statements in the same flow block. Semantic validation rejects a short

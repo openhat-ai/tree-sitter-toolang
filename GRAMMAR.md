@@ -196,8 +196,18 @@ instruct_setting ::= "instruct" text_ref line_end
 text_ref ::= "default" | "none" | snake_name
 
 messages ::= message+
-message ::= role ":" text_inline | text_inline
+message ::= role ":" text_inline
+          | invalid_thunk_reserved_message
+          | unroled_message
+unroled_message ::= unroled_message_line
+                    (text_body_line
+                    | blank_line text_body_line)*
+                    blank_line?
+unroled_message_line ::= text_body_line
 role ::= "user" | "assistant" | "tool"
+thunk_reserved_word ::= "context" | "instruct" | "user" | "assistant" | "tool"
+                      | "pass" | directive_key
+invalid_thunk_reserved_message ::= thunk_reserved_word text_line? line_end
 pass_statement ::= "pass" line_end
 ```
 
@@ -212,6 +222,11 @@ Rules:
   for inline bodies and messages.
 - Bare text in a thunk body is an unroled message. Runtime treats it as a user
   message.
+- Unroled messages are fallback messages. A line starting with a thunk reserved
+  word parses as `invalid_thunk_reserved_message` unless it matches an explicit
+  thunk body form. After fallback has started, subsequent text lines are message
+  content. Use an explicit role when message content itself starts with a
+  reserved word.
 - `pass` declares an empty body and cannot be followed by other body entries.
 - Runtime validates referenced names and directive semantics.
 
@@ -238,6 +253,7 @@ flow_statement ::= do_statement
                  | fold_statement
                  | repeat_above_statement
                  | repeat_block_statement
+                 | invalid_flow_reserved_statement
                  | implicit_do_statement
 
 do_statement ::= "do" callees line_end
@@ -247,6 +263,10 @@ implicit_do_statement ::= text_body_line
                           (text_body_line
                           | blank_line text_body_line)*
                           blank_line?
+
+invalid_flow_reserved_statement ::= flow_reserved_word text_line? line_end
+flow_reserved_word ::= "do" | "ask" | "unfold" | "keep" | "drop"
+                     | "rank" | "each" | "fold" | "repeat"
 
 ask_statement ::= "ask" agent line_end
 
@@ -272,8 +292,9 @@ repeat_above_statement ::= "repeat" times_clause line_end
                          | "repeat" times_clause? until_clause
 
 repeat_block_statement ::= "repeat" times_clause? ":" line_end repeat_body
-repeat_body ::= flow_body until_clause?
+repeat_body ::= flow_body until_statement?
 until_clause ::= "until" ":" condition
+until_statement ::= "until" ":" condition
 condition ::= text_inline
 
 to_clause ::= "to" type
@@ -293,12 +314,15 @@ Rules:
 - Flow directives reuse thunk directive syntax and must appear before
   statements.
 - Flow parsing tries explicit statements first. If a flow body entry is not an
-  explicit statement, it is parsed as an implicit `do` statement.
+  explicit statement or invalid reserved-word statement, it is parsed as an
+  implicit `do` statement.
 - Adjacent implicit-do text lines are merged into one statement. One blank line
   between implicit-do lines is preserved in the same statement; two or more
   blank lines, or a comment/doc-comment line, split implicit-do statements.
-- An implicit-do line cannot start with `until:`. `until:` is only valid as the
-  terminator of a repeat body.
+- A flow body line starting with a reserved flow word parses as
+  `invalid_flow_reserved_statement` unless it matches an explicit flow
+  statement. `until:` is only valid in repeat statements and never parses as an
+  implicit `do` statement.
 - `do callees` runs named thunks or flows on the current value.
 - `do: ...` and `do to Type: ...` define inline thunk-like statements.
 - `ask agent` delegates the current value to an agent and replaces it with the

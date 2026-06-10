@@ -143,9 +143,10 @@ def test_script_thunks_fixture_covers_signature_variations():
     echo_body = thunks[1].child_by_field_name("body")
     assert echo_body is not None
     echo_messages = _messages(echo_body)
-    assert len(echo_messages) == 2
-    assert "role" not in str(echo_messages[0])
+    assert len(echo_messages) == 1
+    assert not _nodes(echo_messages[0], "role")
     assert "Echo the current input:" in _text(source, echo_messages[0])
+    assert "{{_}}" in _text(source, echo_messages[0])
 
 
 def test_syntax_variants_fixture_parses_empty_params():
@@ -546,7 +547,7 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
         "repeat",
     ]
     assert [
-        _text(source, callee)
+        _text(source, callee).strip()
         for callee in _nodes(research_statements[0], "callee")
     ] == ["classify", "normalize"]
     assert "to_clause" in str(research_statements[1])
@@ -559,14 +560,14 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
     assert "par_clause" in str(research_statements[5])
     assert "Synthesize all notes" in _text(source, research_statements[6])
     assert "until_clause" in str(research_statements[7])
-    assert _text(source, _nodes(research_statements[7], "times_clause")[0]) == "3"
+    assert _text(source, _nodes(research_statements[7], "times_clause")[0]).strip() == "3"
 
     delegate_statements = _statements(flows[1].child_by_field_name("body"))
     assert [_statement_keyword(source, statement) for statement in delegate_statements] == [
         "ask",
         "repeat",
     ]
-    assert _text(source, _nodes(delegate_statements[1], "times_clause")[0]) == "3"
+    assert _text(source, _nodes(delegate_statements[1], "times_clause")[0]).strip() == "3"
 
     named_statements = _statements(flows[2].child_by_field_name("body"))
     assert [_statement_keyword(source, statement) for statement in named_statements] == [
@@ -574,7 +575,7 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
         "fold",
     ]
     assert [
-        _text(source, _nodes(statement, "callee")[0])
+        _text(source, _nodes(statement, "callee")[0]).strip()
         for statement in named_statements
     ] == ["plan_searches", "synthesize_answer"]
     bare_statements = _statements(flows[3].child_by_field_name("body"))
@@ -612,7 +613,7 @@ def test_flow_named_reference_and_inline_thunk_forms():
     assert tree.root_node.has_error is False
     named_targets = _nodes(_statements(flows[0].child_by_field_name("body"))[0], "callees")[0]
     assert [
-        _text(source, target)
+        _text(source, target).strip()
         for target in _nodes(named_targets, "callee")
     ] == ["classify", "normalize", "summarize"]
     do_inline_statement = _statements(flows[1].child_by_field_name("body"))[0]
@@ -672,7 +673,8 @@ def test_flow_statement_heads_are_keyword_specific():
     )
 
     for source in invalid_sources:
-        assert parser.parse(source).root_node.has_error is True, source
+        tree = parser.parse(source)
+        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_flow_reserved_statement"), source
 
     valid_tree = parser.parse(valid_source)
     valid_statements = _statements(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))
@@ -716,7 +718,8 @@ def test_flow_itemwise_named_statements_require_callee_or_parallelism():
         b"flow bad:\n  drop\n",
         b"flow bad:\n  each\n",
     ):
-        assert parser.parse(source).root_node.has_error is True, source
+        tree = parser.parse(source)
+        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_flow_reserved_statement"), source
 
 
 def test_implicit_thunk_statement_splitting():
@@ -752,7 +755,7 @@ def test_implicit_thunk_statement_splitting():
     assert "comment_line" in str(body)
 
 
-def test_until_clause_is_only_valid_as_repeat_terminator():
+def test_until_statement_is_only_valid_in_repeat_syntax():
     parser = _parser()
     invalid = b"flow bad:\n  until: enough evidence\n"
     valid = (
@@ -770,8 +773,8 @@ def test_until_clause_is_only_valid_as_repeat_terminator():
 
     assert invalid_tree.root_node.has_error is True
     assert valid_tree.root_node.has_error is False
-    assert _nodes(repeat_body, "until_clause")
-    assert _nodes(nested_flow_body, "until_clause") == []
+    assert _nodes(repeat_body, "until_statement")
+    assert _nodes(nested_flow_body, "until_statement") == []
 
 
 def test_flow_repeat_forms():
@@ -795,10 +798,10 @@ def test_flow_repeat_forms():
         "repeat",
         "repeat",
     ]
-    assert _text(source, _nodes(statements[1], "times_clause")[0]) == "3"
+    assert _text(source, _nodes(statements[1], "times_clause")[0]).strip() == "3"
     assert "until_clause" in str(statements[2])
     assert _nodes(statements[2], "times_clause") == []
-    assert _text(source, _nodes(statements[3], "times_clause")[0]) == "5"
+    assert _text(source, _nodes(statements[3], "times_clause")[0]).strip() == "5"
     assert "text_block" in str(_nodes(statements[3], "condition")[0])
 
     block_source = (
@@ -829,13 +832,13 @@ def test_flow_repeat_forms():
     ]
 
     assert block_tree.root_node.has_error is False
-    assert _text(block_source, _nodes(repeat_statements[0], "times_clause")[0]) == "5"
+    assert _text(block_source, _nodes(repeat_statements[0], "times_clause")[0]).strip() == "5"
     assert "repeat_body" in str(repeat_statements[0])
     assert "flow_body" in str(_nodes(repeat_statements[0], "repeat_body")[0])
     assert _nodes(repeat_statements[0], "condition") == []
     assert _nodes(repeat_statements[1], "times_clause") == []
-    assert "until_clause" in str(repeat_statements[1])
-    assert _text(block_source, _nodes(repeat_statements[2], "times_clause")[0]) == "5"
+    assert "until_statement" in str(repeat_statements[1])
+    assert _text(block_source, _nodes(repeat_statements[2], "times_clause")[0]).strip() == "5"
     assert "text_block" in str(_nodes(repeat_statements[2], "condition")[0])
 
 
@@ -973,16 +976,36 @@ def test_thunk_instruction_blocks_must_precede_messages():
 
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error is True
-
-
-def test_directive_like_bare_text_after_instruction_block_is_allowed():
-    parser = _parser()
-    source = b"thunk bad:\n  instruct default\n  recall = none\n"
-
-    tree = parser.parse(source)
-
     assert tree.root_node.has_error is False
+    assert _nodes(tree.root_node, "invalid_thunk_reserved_message")
+
+
+def test_unroled_messages_do_not_fallback_from_reserved_words():
+    parser = _parser()
+    invalid_sources = [
+        b"thunk bad:\n  instruct default\n  recall = none\n",
+        b"thunk bad:\n  user content\n",
+        b"thunk bad:\n  assistant content\n",
+        b"thunk bad:\n  tool content\n",
+        b"thunk bad:\n  pass content\n",
+        b"thunk bad:\n  models are mentioned as text\n",
+        b"thunk bad:\n  context project extra\n",
+    ]
+    valid_setting = b"thunk ok:\n  context project\n"
+    explicit_message = (
+        b"thunk ok:\n"
+        b"  user:\n"
+        b"    context project is just text\n"
+        b"    user: this is also text\n"
+        b"    models are also text\n"
+    )
+
+    for source in invalid_sources:
+        tree = parser.parse(source)
+        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_thunk_reserved_message"), source
+
+    assert parser.parse(valid_setting).root_node.has_error is False
+    assert parser.parse(explicit_message).root_node.has_error is False
 
 
 def test_thunk_context_and_instruct_are_each_allowed_once():
@@ -991,7 +1014,8 @@ def test_thunk_context_and_instruct_are_each_allowed_once():
 
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error is True
+    assert tree.root_node.has_error is False
+    assert _nodes(tree.root_node, "invalid_thunk_reserved_message")
 
 
 def test_thunk_roled_messages_support_user_assistant_and_tool():
@@ -1035,7 +1059,11 @@ def test_none_is_parsed_as_user_type_not_builtin_type():
 
 def test_bare_text_is_parsed_as_unroled_message():
     parser = _parser()
-    source = b"thunk reply(in: Text) -> Text:\n  Return directly.\n"
+    source = (
+        b"thunk reply(in: Text) -> Text:\n"
+        b"  Return directly.\n"
+        b"  context can appear after fallback starts.\n"
+    )
 
     tree = parser.parse(source)
     body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
@@ -1045,6 +1073,7 @@ def test_bare_text_is_parsed_as_unroled_message():
     assert len(messages) == 1
     assert not _nodes(messages[0], "role")
     assert "Return directly." in _text(source, messages[0])
+    assert "context can appear after fallback starts." in _text(source, messages[0])
 
 
 def test_indented_cap_body_parses_with_crlf_line_endings():
