@@ -4,27 +4,20 @@ use skill briceyan/pdf-processing # inline use comment
 use service github://briceyan/caps/services/github@main
 use prompt https://toolang.ai/review
 
-psyche reviewer: ```md
-Prefer concrete findings and direct language.
-```
+psyche reviewer:
+  Prefer concrete findings and direct language.
 
-service github: ```md # inline cap header comment
----
-protocol: http
-target: https://mcp.github.com/mcp
----
+service github: # inline cap header comment
+  protocol = http
+  target = https://mcp.github.com/mcp
 
-Use this service when the agent needs GitHub access.
-```
+  Use this service when the agent needs GitHub access.
 
-prompt review: ```md # inline prompt header comment
----
-params: path, focus
----
+prompt review: # inline prompt header comment
+  params = path, focus
 
-Review {{path}} carefully.
-{{focus}}
-```
+  Review {{path}} carefully.
+  {{focus}}
 
 struct ReviewFinding:
   path: Text
@@ -41,8 +34,7 @@ context:
   Use the current run context when preparing the final user message.
 
 thunk respond:
-  instruct:
-    Respond directly.
+  instruct default
 
 thunk summarize:
   user:
@@ -60,16 +52,14 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   tools = shell, filesystem
   recall = history, memory
 
-  instruct:
-    Review correctness issues only.
+  instruct default
 
-  context: default
-
+  context default
   user:
     Review {{path}} carefully.
     {{focus}}
 
 thunk raw:
-  instruct: none
-  context: none
+  instruct none
+  context none
   user: none

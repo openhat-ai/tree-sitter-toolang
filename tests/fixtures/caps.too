@@ -1,0 +1,29 @@
+service github:
+  protocol = http
+  target = https://mcp.github.com/mcp
+
+  Use this service when the agent needs GitHub access.
+
+service linear:
+  protocol = stdio
+  target = npx -y mcp-remote https://mcp.linear.app/sse
+
+  Use this service when the agent needs Linear access.
+
+skill review:
+  source = by3gus/review
+  description = Review support
+
+  Use this skill for review workflows.
+
+psyche reviewer:
+  Prefer concrete findings and direct language.
+
+prompt direct:
+  Review the current request directly.
+
+prompt review:
+  params = path, focus
+
+  Review {{path}} carefully.
+  {{focus}}

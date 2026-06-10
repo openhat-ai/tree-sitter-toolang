@@ -33,9 +33,8 @@ struct ReviewResult:
   messages: Part[]
   findings: Finding[]
 
-instruct strict-json: ```md
-Return only JSON.
-```
+instruct strict_json:
+  Return only JSON.
 
 context report:
   Include relevant report context before the user request.
@@ -45,8 +44,7 @@ thunk report() -> Text:
   hands += summarize
   recall = memory
 
-  instruct: strict-json
-  context: report
-  user: ```md
-Generate a concise report.
-```
+  instruct strict_json
+  context report
+  user:
+    Generate a concise report.

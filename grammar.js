@@ -2,9 +2,12 @@ module.exports = grammar({
   name: "toolang",
 
   extras: () => [/[ \t\f]/],
+  conflicts: ($) => [
+    [$._trivia, $.text_body],
+  ],
   rules: {
     source_file: ($) =>
-      repeat(choice($.program_doc_comment, $.doc_comment, $.comment_line, $.blank_line, $.item)),
+      repeat(choice($._trivia, $.item)),
 
     item: ($) =>
       choice(
@@ -14,19 +17,22 @@ module.exports = grammar({
         $.skill,
         $.service,
         $.prompt,
+        $.task,
+        $.chore,
         $.context,
         $.instruct,
         $.thunk,
         $.flow,
       ),
 
-    newline: () => /\r?\n/,
-    blank_line: ($) => $.newline,
-    program_doc_comment: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
-    doc_comment: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
+    newline: () => token(/\r?\n/),
+    blank_line: () => token(prec(1, /\r?\n/)),
+    parent_doc_line: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
+    doc_line: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
     comment_line: () => token(prec(0, seq("#", /[^\r\n]*/, /\r?\n/))),
     inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional($.inline_comment), $.newline),
+    _trivia: ($) => choice($.parent_doc_line, $.doc_line, $.comment_line, $.blank_line),
 
     use: ($) =>
       seq(
@@ -59,7 +65,7 @@ module.exports = grammar({
 
     struct_name: ($) => $.type_name,
     struct_body: ($) =>
-      prec.right(repeat1(choice($.field, $.doc_comment, $.comment_line, $.blank_line))),
+      prec.right(repeat1(choice($.field, $.doc_line, $.comment_line, $.blank_line))),
     field: ($) =>
       seq(
         field("name", $.field_name),
@@ -68,7 +74,7 @@ module.exports = grammar({
         field("type", $.type),
         $.line_end,
       ),
-    field_name: ($) => $.value_name,
+    field_name: ($) => $.snake_name,
 
     psyche: ($) =>
       seq(
@@ -102,54 +108,48 @@ module.exports = grammar({
         field("body", $.cap_body),
       ),
 
-    cap_name: ($) => $.value_name,
-    cap_ref: ($) => choice($.cap_uri, $.cap_shorthand),
+    task: ($) =>
+      seq(
+        field("kind", $.task_keyword),
+        field("name", $.job_name),
+        field("colon", $.colon),
+        field("body", $.job_body),
+      ),
 
-    cap_body: ($) => choice($.cap_indented, $.cap_markdown),
-    cap_indented: ($) =>
+    chore: ($) =>
+      seq(
+        field("kind", $.chore_keyword),
+        field("name", $.job_name),
+        field("colon", $.colon),
+        field("body", $.job_body),
+      ),
+
+    cap_name: ($) => $._snake_kebab_name,
+    cap_ref: ($) => $.text_line,
+    job_name: ($) => $._snake_kebab_name,
+
+    cap_body: ($) =>
       prec.right(seq(
         $.line_end,
-        repeat(choice($.property_eq, $.cap_indented_content_line, $.blank_line)),
+        repeat(choice($.property, $._trivia)),
+        optional(seq($.text_body, repeat($._trivia))),
       )),
-    cap_markdown: ($) =>
-      seq(
-        $.fence_open,
-        optional(field("language", $.block_language)),
+    job_body: ($) =>
+      prec.right(seq(
         $.line_end,
-        optional(field("frontmatter", $.frontmatter)),
-        repeat($.cap_fenced_content_line),
-        field("close", $.fence_close),
-      ),
-    cap_content: ($) => $.raw_text,
-    cap_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
-    cap_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
+        repeat(choice($.property, $._trivia)),
+        optional(seq($.text_body, repeat($._trivia))),
+      )),
 
-    frontmatter: ($) =>
-      seq(
-        $.frontmatter_delimiter,
-        $.newline,
-        repeat(choice($.property_colon, $.frontmatter_comment)),
-        $.frontmatter_delimiter,
-        $.newline,
-      ),
-
-    property_eq: ($) =>
+    property: ($) =>
       seq(
         field("key", $.property_key),
         field("operator", $.assign_operator),
         field("value", $.property_value),
         $.line_end,
       ),
-    property_colon: ($) =>
-      seq(
-        field("key", $.property_key),
-        field("colon", $.colon),
-        field("value", $.property_value),
-        $.newline,
-      ),
-    frontmatter_comment: () => token(seq("#", /[^\r\n]*/, /\r?\n/)),
-    property_key: ($) => $.value_name,
-    property_value: ($) => $.inline_text,
+    property_key: ($) => $.snake_name,
+    property_value: ($) => $.text_line,
 
     instruct: ($) =>
       seq(
@@ -158,8 +158,8 @@ module.exports = grammar({
         field("colon", $.colon),
         field("body", $.instruct_body),
       ),
-    instruct_name: ($) => $.value_name,
-    instruct_body: ($) => choice($.block_indented, $.block_fenced),
+    instruct_name: ($) => $.snake_name,
+    instruct_body: ($) => $.text_inline,
 
     context: ($) =>
       seq(
@@ -168,58 +168,62 @@ module.exports = grammar({
         field("colon", $.colon),
         field("body", $.context_body),
       ),
-    context_name: ($) => $.value_name,
-    context_body: ($) => choice($.block_indented, $.block_fenced),
+    context_name: ($) => $.snake_name,
+    context_body: ($) => $.text_inline,
 
-    block_indented: ($) =>
+    text_inline: ($) =>
+      choice(
+        seq($.text_line, $.line_end),
+        $.text_block,
+      ),
+    text_block: ($) =>
       prec.right(seq(
         $.line_end,
-        repeat(choice($.block_indented_content_line, $.blank_line)),
+        $.text_body,
       )),
-    block_fenced: ($) =>
-      seq(
-        $.fence_open,
-        optional(field("language", $.block_language)),
-        $.line_end,
-        repeat($.block_fenced_content_line),
-        field("close", $.fence_close),
+    text_body: ($) =>
+      prec.dynamic(1, prec.right(repeat1(choice($.text_body_line, $.blank_line)))),
+    text_body_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
+    _nested_text_inline_alias: ($) => alias($._nested_text_inline, $.text_inline),
+    _nested_text_inline: ($) =>
+      choice(
+        seq($.text_line, $.line_end),
+        alias($._nested_text_block, $.text_block),
       ),
-    block_content: ($) => $.raw_text,
-    block_indented_content_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
-    block_fenced_content_line: ($) => seq(optional(field("content", $.fenced_raw_text)), $.newline),
-    block_language: () => "md",
+    _nested_text_block: ($) =>
+      prec.right(seq(
+        $.line_end,
+        alias($._nested_text_body, $.text_body),
+      )),
+    _nested_text_body: ($) =>
+      prec.dynamic(1, prec.right(repeat1(choice(
+        alias($._nested_text_body_line, $.text_body_line),
+        $.blank_line,
+      )))),
+    _nested_text_body_line: ($) =>
+      seq(field("content", alias($._nested_indented_raw_text, $.indented_raw_text)), $.newline),
 
     thunk: ($) =>
       prec.right(seq(
         field("keyword", $.thunk_keyword),
         optional(field("name", $.thunk_name)),
         optional(field("params", $.params)),
-        optional(seq(field("arrow", $.arrow), field("output", $.type))),
+        optional(seq(field("arrow", $.arrow), field("return", $.type))),
         field("colon", $.colon),
         $.line_end,
-        optional(field("body", $.thunk_body)),
+        field("body", $.thunk_body),
       )),
-    thunk_name: ($) => $.value_name,
+    thunk_name: ($) => $.snake_name,
     thunk_body: ($) =>
-      prec.right(choice(
-        seq(
-          $.directive,
-          repeat(choice($.directive, $.comment_line, $.blank_line)),
-          field("instruction", $.instruction_section),
-          repeat(choice($.comment_line, $.blank_line)),
-          optional(field("tail", $.thunk_tail)),
+      prec.right(seq(
+        repeat($._trivia),
+        choice(
+          seq($._directives, optional($.settings), optional($.messages)),
+          seq($.settings, optional($.messages)),
+          $.messages,
+          $._pass_statement,
         ),
-        seq(
-          $.directive,
-          repeat(choice($.directive, $.comment_line, $.blank_line)),
-          optional(field("tail", $.thunk_tail)),
-        ),
-        seq(
-          field("instruction", $.instruction_section),
-          repeat(choice($.comment_line, $.blank_line)),
-          optional(field("tail", $.thunk_tail)),
-        ),
-        field("tail", $.thunk_tail),
+        repeat($._trivia),
       )),
 
     params: ($) =>
@@ -232,318 +236,315 @@ module.exports = grammar({
       seq(
         field("name", $.param_name),
         optional(field("optional", $.optional_marker)),
-        field("colon", $.colon),
-        field("type", $.type),
+        optional(seq(field("colon", $.colon), field("type", $.type))),
       ),
-    param_name: ($) => $.value_name,
+    param_name: ($) => $.snake_name,
 
     flow: ($) =>
       prec.right(seq(
         field("keyword", $.flow_keyword),
         optional(field("name", $.flow_name)),
         optional(field("params", $.params)),
-        optional(seq(field("arrow", $.arrow), field("output", $.type))),
+        optional(seq(field("arrow", $.arrow), field("return", $.type))),
         field("colon", $.colon),
         $.line_end,
         field("body", $.flow_body),
       )),
-    flow_name: ($) => $.value_name,
+    flow_name: ($) => $.snake_name,
     flow_body: ($) =>
       prec.right(seq(
-        repeat($.directive),
-        field("tail", $.flow_body_tail),
-      )),
-    flow_body_tail: ($) =>
-      prec.right(choice(
-        seq(
-          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
-          $.pass_statement,
+        repeat($._trivia),
+        choice(
+          seq($._directives, $.statements),
+          $.statements,
+          $._pass_statement,
         ),
-        seq(
-          repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
-          $.flow_body_statement,
-          repeat(choice($.flow_body_statement, $.doc_comment, $.comment_line, $.blank_line)),
-          optional($.pass_statement),
-        ),
+        repeat($._trivia),
       )),
-    flow_body_statement: ($) => $.flow_entry,
-    flow_entry: ($) =>
+    statements: ($) =>
+      prec.right(seq($._flow_statement, repeat(choice($._flow_statement, $._trivia)))),
+    _flow_statement: ($) =>
       choice(
-        alias($.flow_bare_thunk_step, $.step),
-        alias($.flow_do_step, $.step),
-        alias($.flow_ask_step, $.step),
-        alias($.flow_unfold_step, $.step),
-        alias($.flow_keep_step, $.step),
-        alias($.flow_drop_step, $.step),
-        alias($.flow_rank_step, $.step),
-        alias($.flow_each_step, $.step),
-        alias($.flow_fold_step, $.step),
-        alias($.flow_repeat_step, $.step),
+        $.do_statement,
+        $.ask_statement,
+        $.unfold_statement,
+        $.keep_statement,
+        $.drop_statement,
+        $.rank_statement,
+        $.each_statement,
+        $.fold_statement,
+        $.repeat_above_statement,
+        $.repeat_block_statement,
+        $.invalid_flow_reserved_statement,
+        $.implicit_do_statement,
       ),
-    flow_bare_thunk_step: ($) =>
-      field("body", $.flow_bare_thunk_body),
-    flow_bare_thunk_body: ($) =>
-      prec.right(seq(
-        $.flow_bare_content_line,
+    do_statement: ($) =>
+      choice(
+        seq(
+          $.flow_do_keyword,
+          $.callees,
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.flow_do_keyword,
+          optional($.to_clause),
+          $.colon,
+          $._nested_text_inline_alias,
+        )),
+      ),
+    implicit_do_statement: ($) =>
+      prec.dynamic(-1, prec.right(seq(
+        alias($._implicit_do_text_body_line, $.text_body_line),
         repeat(choice(
-          $.flow_bare_content_line,
-          seq($.blank_line, $.flow_bare_content_line),
+          $.text_body_line,
+          seq($.blank_line, $.text_body_line),
         )),
         optional($.blank_line),
+      ))),
+    _implicit_do_text_body_line: ($) =>
+      seq(field("content", alias($._implicit_do_raw_text, $.indented_raw_text)), $.newline),
+    invalid_flow_reserved_statement: ($) =>
+      prec.dynamic(-2, seq(
+        $._flow_reserved_word,
+        optional($.text_line),
+        $.line_end,
       )),
-    flow_bare_content_line: ($) =>
-      seq(field("content", $.flow_bare_raw_text), $.newline),
-    flow_do_step: ($) =>
-      choice(
-        seq(
-          field("keyword", $.flow_do_keyword),
-          field("targets", $.flow_target_list),
-          $.line_end,
-        ),
-        prec.right(seq(
-          field("keyword", $.flow_do_keyword),
-          optional(field("head", $.flow_inline_output_type)),
-          field("body", $.flow_inline_step_body),
-        )),
-      ),
-    flow_ask_step: ($) =>
+    ask_statement: ($) =>
       seq(
-        field("keyword", $.flow_ask_keyword),
-        field("target", $.flow_target),
+        $.flow_ask_keyword,
+        $.agent,
         $.line_end,
       ),
-    flow_unfold_step: ($) =>
+    unfold_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_unfold_keyword),
-          field("target", $.flow_target),
+          $.flow_unfold_keyword,
+          $.callee,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_unfold_keyword),
-          optional(field("head", $.flow_inline_output_type)),
-          field("body", $.flow_inline_step_body),
+          $.flow_unfold_keyword,
+          optional($.to_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_keep_step: ($) =>
+    keep_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_keep_keyword),
-          field("head", $.flow_named_parallel_head),
+          $.flow_keep_keyword,
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_keep_keyword),
-          optional(field("head", $.flow_inline_parallel_head)),
-          field("body", $.flow_inline_step_body),
+          $.flow_keep_keyword,
+          optional($.par_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_drop_step: ($) =>
+    drop_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_drop_keyword),
-          field("head", $.flow_named_parallel_head),
+          $.flow_drop_keyword,
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_drop_keyword),
-          optional(field("head", $.flow_inline_parallel_head)),
-          field("body", $.flow_inline_step_body),
+          $.flow_drop_keyword,
+          optional($.par_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_rank_step: ($) =>
+    rank_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_rank_keyword),
-          field("target", $.flow_target),
+          $.flow_rank_keyword,
+          $._rank_named_head,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_rank_keyword),
-          optional(field("head", $.flow_inline_rank_head)),
-          field("body", $.flow_inline_step_body),
+          $.flow_rank_keyword,
+          optional($.limit_clause),
+          optional($.par_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_each_step: ($) =>
+    each_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_each_keyword),
-          field("head", $.flow_named_parallel_head),
+          $.flow_each_keyword,
+          $._itemwise_named_head,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_each_keyword),
-          optional(field("head", $.flow_inline_each_head)),
-          field("body", $.flow_inline_step_body),
+          $.flow_each_keyword,
+          optional($.to_clause),
+          optional($.par_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_fold_step: ($) =>
+    fold_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_fold_keyword),
-          field("target", $.flow_target),
+          $.flow_fold_keyword,
+          $.callee,
           $.line_end,
         ),
         prec.right(seq(
-          field("keyword", $.flow_fold_keyword),
-          optional(field("head", $.flow_inline_output_type)),
-          field("body", $.flow_inline_step_body),
+          $.flow_fold_keyword,
+          optional($.to_clause),
+          $.colon,
+          $._nested_text_inline_alias,
         )),
       ),
-    flow_repeat_step: ($) =>
+    repeat_above_statement: ($) =>
       choice(
         seq(
-          field("keyword", $.flow_repeat_keyword),
-          field("count", $.flow_repeat_count),
+          $.flow_repeat_keyword,
+          $.times_clause,
           $.line_end,
         ),
         seq(
-          field("keyword", $.flow_repeat_keyword),
-          optional(field("count", $.flow_repeat_count)),
-          field("condition_keyword", $.flow_until_keyword),
-          field("colon", $.colon),
-          field("condition", $.flow_condition_body),
+          $.flow_repeat_keyword,
+          optional($.times_clause),
+          $.until_clause,
         ),
-        prec.right(seq(
-          field("keyword", $.flow_repeat_keyword),
-          optional(field("count", $.flow_repeat_count)),
-          field("colon", $.colon),
-          $.line_end,
-          field("body", $.flow_repeat_block_body),
-        )),
       ),
-    flow_repeat_block_body: ($) =>
+    repeat_block_statement: ($) =>
       prec.right(seq(
-        repeat(choice($.doc_comment, $.comment_line, $.blank_line)),
-        field("entry", $.flow_body_statement),
-        repeat(choice($.flow_body_statement, $.doc_comment, $.comment_line, $.blank_line)),
-        optional(field("condition", $.flow_until_clause)),
+        $.flow_repeat_keyword,
+        optional($.times_clause),
+        $.colon,
+        $.line_end,
+        $.repeat_body,
       )),
-    flow_until_clause: ($) =>
-      seq(
-        field("keyword", $.flow_until_keyword),
-        field("colon", $.colon),
-        field("condition", $.flow_condition_body),
-      ),
-    flow_condition_body: ($) =>
+    repeat_body: ($) =>
+      prec.right(seq(
+        $.flow_body,
+        optional($.until_statement),
+      )),
+    until_clause: ($) =>
+      prec.dynamic(2, seq(
+        $.flow_until_keyword,
+        $.colon,
+        $.condition,
+      )),
+    until_statement: ($) =>
+      prec.dynamic(2, seq(
+        $.flow_until_keyword,
+        $.colon,
+        $.condition,
+      )),
+    condition: ($) => $._nested_text_inline_alias,
+    to_clause: ($) => seq($.flow_to_keyword, $.type),
+    par_clause: ($) => seq($.flow_par_keyword, $.integer_literal),
+    limit_clause: ($) => seq(optional($.flow_limit_keyword), $.integer_literal),
+    times_clause: ($) => seq($.integer_literal, optional($.flow_times_keyword)),
+    callees: ($) => seq($.callee, repeat(seq($.comma, $.callee))),
+    callee: ($) => $.snake_name,
+    agent: ($) => $.snake_name,
+    _itemwise_named_head: ($) =>
       choice(
-        seq(field("text", $.flow_inline_text), $.line_end),
-        seq($.line_end, field("text", $.block_indented_implicit)),
+        seq($.callee, optional($.par_clause)),
+        seq($.par_clause, optional($.callee)),
       ),
-    flow_inline_step_body: ($) =>
-      seq(
-        field("colon", $.colon),
-        choice(
-          seq(field("value", $.flow_inline_body), $.line_end),
-          seq($.line_end, field("value", $.block_indented_implicit)),
-        ),
-      ),
-    flow_inline_output_type: ($) =>
-      seq(field("keyword", $.flow_to_keyword), field("type", $.type)),
-    flow_inline_parallel_head: ($) =>
-      $.flow_parallelism,
-    flow_inline_rank_head: ($) =>
-      $.flow_rank_limit,
-    flow_inline_each_head: ($) =>
+    _rank_named_head: ($) =>
       choice(
-        $.flow_inline_output_type,
-        $.flow_parallelism,
-        seq($.flow_inline_output_type, $.flow_parallelism),
+        seq($.callee, optional($.limit_clause), optional($.par_clause)),
+        seq(optional($.limit_clause), optional($.par_clause), $.callee),
       ),
-    flow_named_parallel_head: ($) =>
-      choice(
-        $.flow_target,
-        seq($.flow_target, $.flow_parallelism),
-        seq($.flow_parallelism, $.flow_target),
-      ),
-    flow_parallelism: ($) =>
-      seq(field("keyword", $.flow_par_keyword), field("count", $.integer_literal)),
-    flow_rank_limit: ($) =>
-      field("count", $.integer_literal),
-    flow_target_list: ($) =>
-      seq(field("target", $.flow_target), repeat(seq($.comma, field("target", $.flow_target)))),
-    flow_inline_body: ($) =>
-      $.flow_inline_text,
-    flow_target: () => token(/[A-Za-z_@][A-Za-z0-9_./@-]*/),
-    flow_repeat_count: ($) => $.integer_literal,
     integer_literal: () => token(/\d+/),
-    flow_inline_text: () => token(prec(-1, /[^#\r\n]+/)),
 
     directive: ($) =>
       seq(
         field("key", $.directive_key),
         field("operator", $.directive_op),
-        field("values", $.directive_csv),
+        field("value", $.directive_value),
         $.line_end,
       ),
     directive_key: () =>
       choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs", "recall"),
     directive_op: () => choice("=", "+=", "-="),
-    directive_csv: ($) =>
-      seq($.bare_value, repeat(seq($.comma, $.bare_value))),
+    directive_value: () => token(prec(-1, /[^#\r\n]+/)),
+    _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
 
-    instruction_section: ($) =>
+    settings: ($) =>
       prec.right(choice(
         seq(
-          alias($.context_block, $.block),
-          repeat(choice($.comment_line, $.blank_line)),
-          optional(alias($.instruct_block, $.block)),
+          $.context_setting,
+          repeat($._trivia),
+          $.instruct_setting,
+          repeat($._trivia),
         ),
         seq(
-          alias($.instruct_block, $.block),
-          repeat(choice($.comment_line, $.blank_line)),
-          optional(alias($.context_block, $.block)),
+          $.instruct_setting,
+          repeat($._trivia),
+          $.context_setting,
+          repeat($._trivia),
         ),
+        seq($.context_setting, repeat($._trivia)),
+        seq($.instruct_setting, repeat($._trivia)),
       )),
-    message_section: ($) =>
-      prec.right(seq(
-        choice($.roled_message, $.unroled_message),
-        repeat(choice($.roled_message, $.unroled_message, $.comment_line, $.blank_line)),
-      )),
-    thunk_tail: ($) =>
-      prec.right(choice(
-        field("messages", $.message_section),
-        $.pass_statement,
-      )),
-    roled_message: ($) => alias($.roled_message_block, $.block),
-    unroled_message: ($) => alias($.unroled_message_block, $.block),
-    unroled_message_block: ($) =>
-      seq(field("value", $.block_indented_implicit)),
-    block_indented_implicit: ($) =>
-      prec.right(seq(
-        $.block_indented_content_line,
-        repeat(choice($.block_indented_content_line, $.blank_line)),
-      )),
-
-    context_block: ($) =>
-      seq(
-        field("kind", $.context_block_kind),
-        field("colon", $.colon),
-        field("value", $.block_value),
+    context_setting: ($) =>
+      choice(
+        seq(
+          $.context_keyword,
+          $.text_ref,
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.context_keyword,
+          $.colon,
+          $._nested_text_inline_alias,
+        )),
       ),
-    instruct_block: ($) =>
-      seq(
-        field("kind", $.instruct_block_kind),
-        field("colon", $.colon),
-        field("value", $.block_value),
+    instruct_setting: ($) =>
+      choice(
+        seq(
+          $.instruct_keyword,
+          $.text_ref,
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.instruct_keyword,
+          $.colon,
+          $._nested_text_inline_alias,
+        )),
       ),
-    roled_message_block: ($) =>
-      seq(
-        field("kind", $.roled_message_kind),
-        field("colon", $.colon),
-        field("value", $.block_value),
+    text_ref: ($) => choice("default", "none", $.snake_name),
+    messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),
+    message: ($) =>
+      choice(
+        seq($.role, $.colon, $._nested_text_inline_alias),
+        $.invalid_thunk_reserved_message,
+        $.unroled_message,
       ),
-    pass_statement: ($) =>
-      seq(field("keyword", $.pass_keyword), $.line_end),
-    context_block_kind: () => "context",
-    instruct_block_kind: () => "instruct",
-    roled_message_kind: () => choice("user", "assistant", "tool"),
-    block_value: ($) => choice($.block_inline, $.block_indented, $.block_fenced),
-    block_inline: ($) =>
-      seq(choice(field("name", $.block_name), field("content", $.block_content_inline)), $.line_end),
-    block_name: ($) => choice("default", "none", $.value_name),
-    block_content_inline: ($) => $.inline_text,
-
+    unroled_message: ($) =>
+      prec.dynamic(-1, prec.right(seq(
+        alias($._unroled_message_initial_line, $.text_body_line),
+        repeat(choice(
+          alias($._unroled_message_continuation_line, $.text_body_line),
+          seq($.blank_line, alias($._unroled_message_continuation_line, $.text_body_line)),
+        )),
+        optional($.blank_line),
+      ))),
+    _unroled_message_initial_line: ($) =>
+      seq(field("content", $.indented_raw_text), $.newline),
+    _unroled_message_continuation_line: ($) =>
+      seq(field("content", alias($._unroled_message_continuation_text, $.indented_raw_text)), $.newline),
+    invalid_thunk_reserved_message: ($) =>
+      prec.dynamic(-2, seq(
+        $._thunk_reserved_word,
+        optional($.text_line),
+        $.line_end,
+      )),
+    role: () => choice("user", "assistant", "tool"),
+    _pass_statement: ($) =>
+      prec(1, seq($.pass_keyword, $.line_end)),
     use_keyword: () => "use",
     struct_keyword: () => "struct",
     psyche_keyword: () => "psyche",
@@ -553,6 +554,8 @@ module.exports = grammar({
     context_keyword: () => "context",
     instruct_keyword: () => "instruct",
     thunk_keyword: () => "thunk",
+    task_keyword: () => "task",
+    chore_keyword: () => "chore",
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
     flow_do_keyword: () => "do",
@@ -567,6 +570,28 @@ module.exports = grammar({
     flow_until_keyword: () => "until",
     flow_to_keyword: () => "to",
     flow_par_keyword: () => "par",
+    flow_limit_keyword: () => "limit",
+    flow_times_keyword: () => "times",
+    _flow_reserved_word: ($) =>
+      choice(
+        $.flow_ask_keyword,
+        $.flow_do_keyword,
+        $.flow_drop_keyword,
+        $.flow_each_keyword,
+        $.flow_fold_keyword,
+        $.flow_keep_keyword,
+        $.flow_rank_keyword,
+        $.flow_repeat_keyword,
+        $.flow_unfold_keyword,
+      ),
+    _thunk_reserved_word: ($) =>
+      choice(
+        $.context_keyword,
+        $.instruct_keyword,
+        $.role,
+        $.pass_keyword,
+        $.directive_key,
+      ),
 
     optional_marker: () => "?",
     assign_operator: () => "=",
@@ -575,21 +600,18 @@ module.exports = grammar({
     lparen: () => "(",
     rparen: () => ")",
     comma: () => ",",
-    fence_open: () => "```",
-    fence_close: () => seq("```", /\r?\n/),
-    frontmatter_delimiter: () => "---",
 
-    cap_kind: () => choice("psyche", "skill", "service", "prompt"),
-    cap_uri: () => token(/[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s#]+/),
-    cap_shorthand: () => token(/[A-Za-z0-9_@-][A-Za-z0-9_./:@-]*/),
-    bare_value: () => token(/[A-Za-z0-9_./:@-]+/),
+    cap_kind: () => token(choice("psyche", "skill", "service", "prompt")),
 
-    type_name: () => token(/[A-Z][A-Za-z0-9]*/),
-    value_name: () => token(/[a-z][a-z0-9_-]*/),
-    inline_text: () => token(prec(-1, /[^#\r\n]+/)),
-    raw_text: () => token(prec(-1, /[^\r\n]*/)),
+    type_name: ($) => $.pascal_name,
+    pascal_name: () => token(/[A-Z][A-Za-z0-9]*/),
+    snake_name: () => token(/[a-z][a-z0-9_]*(_[a-z0-9]+)*/),
+    kebab_name: () => token(/[a-z][a-z0-9]*(-[a-z0-9]+)*/),
+    _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
+    text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
-    flow_bare_raw_text: () => token(prec(-1, /[ \t]+[^#\s][^\r\n]*/)),
-    fenced_raw_text: () => token(prec(-1, /[^`\r\n][^\r\n]*/)),
+    _implicit_do_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
+    _unroled_message_continuation_text: () => token(prec(2, /[ \t][^\r\n]*/)),
+    _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });

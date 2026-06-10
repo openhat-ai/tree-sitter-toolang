@@ -14,7 +14,7 @@ use prompt https://toolang.ai/review
       (use_keyword)
       (cap_kind)
       (cap_ref
-        (cap_shorthand))
+        (text_line))
       (line_end
         (newline))))
   (item
@@ -22,7 +22,7 @@ use prompt https://toolang.ai/review
       (use_keyword)
       (cap_kind)
       (cap_ref
-        (cap_shorthand))
+        (text_line))
       (line_end
         (newline))))
   (item
@@ -30,7 +30,7 @@ use prompt https://toolang.ai/review
       (use_keyword)
       (cap_kind)
       (cap_ref
-        (cap_uri))
+        (text_line))
       (line_end
         (newline))))
   (item
@@ -38,30 +38,37 @@ use prompt https://toolang.ai/review
       (use_keyword)
       (cap_kind)
       (cap_ref
-        (cap_uri))
+        (text_line))
       (line_end
         (newline)))))
 
 ==================
-Cap Items
+Cap And Job Items
 ==================
-service github: ```md
----
-protocol: http
-target: https://mcp.github.com/mcp
----
+service github:
+  protocol = http
+  target = https://mcp.github.com/mcp
 
-Use this service when the agent needs GitHub access.
-```
+  Use this service when the agent needs GitHub access.
 
-psyche reviewer: ```md
-Prefer concrete findings and direct language.
-```
+psyche reviewer:
+  Prefer concrete findings and direct language.
 
 prompt review:
   params = path, focus
 
   Review {{path}} carefully.
+
+task review_api:
+  title = Review API changes
+
+  Review the API changes and summarize risks.
+
+chore stale-prs:
+  title = Check stale PRs
+  schedule = FREQ=HOURLY;INTERVAL=6
+
+  Check stale PRs and report actionable items.
 
 ---
 
@@ -69,81 +76,117 @@ prompt review:
   (item
     (service
       (service_keyword)
-      (cap_name
-        (value_name))
+      (cap_name)
       (colon)
       (cap_body
-        (cap_markdown
-          (fence_open)
-          (block_language)
+        (line_end
+          (newline))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
           (line_end
+            (newline)))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
+          (line_end
+            (newline)))
+        (text_body
+          (blank_line)
+          (text_body_line
+            (indented_raw_text)
             (newline))
-          (frontmatter
-            (frontmatter_delimiter)
-            (newline)
-            (property_colon
-              (property_key
-                (value_name))
-              (colon)
-              (property_value
-                (inline_text))
-              (newline))
-            (property_colon
-              (property_key
-                (value_name))
-              (colon)
-              (property_value
-                (inline_text))
-              (newline))
-            (frontmatter_delimiter)
-            (newline))
-          (cap_fenced_content_line
-            (newline))
-          (cap_fenced_content_line
-            (fenced_raw_text)
-            (newline))
-          (fence_close)))))
-  (blank_line
-    (newline))
+          (blank_line)))))
   (item
     (psyche
       (psyche_keyword)
-      (cap_name
-        (value_name))
+      (cap_name)
       (colon)
       (cap_body
-        (cap_markdown
-          (fence_open)
-          (block_language)
-          (line_end
+        (line_end
+          (newline))
+        (text_body
+          (text_body_line
+            (indented_raw_text)
             (newline))
-          (cap_fenced_content_line
-            (fenced_raw_text)
-            (newline))
-          (fence_close)))))
-  (blank_line
-    (newline))
+          (blank_line)))))
   (item
     (prompt
       (prompt_keyword)
-      (cap_name
-        (value_name))
+      (cap_name)
       (colon)
       (cap_body
-        (cap_indented
+        (line_end
+          (newline))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
           (line_end
+            (newline)))
+        (text_body
+          (blank_line)
+          (text_body_line
+            (indented_raw_text)
             (newline))
-          (property_eq
-            (property_key
-              (value_name))
-            (assign_operator)
-            (property_value
-              (inline_text))
-            (line_end
-              (newline)))
-          (blank_line
+          (blank_line)))))
+  (item
+    (task
+      (task_keyword)
+      (job_name)
+      (colon)
+      (job_body
+        (line_end
+          (newline))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
+          (line_end
+            (newline)))
+        (text_body
+          (blank_line)
+          (text_body_line
+            (indented_raw_text)
             (newline))
-          (cap_indented_content_line
+          (blank_line)))))
+  (item
+    (chore
+      (chore_keyword)
+      (job_name)
+      (colon)
+      (job_body
+        (line_end
+          (newline))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
+          (line_end
+            (newline)))
+        (property
+          (property_key
+            (snake_name))
+          (assign_operator)
+          (property_value
+            (text_line))
+          (line_end
+            (newline)))
+        (text_body
+          (blank_line)
+          (text_body_line
             (indented_raw_text)
             (newline)))))))
 
@@ -167,14 +210,15 @@ context:
     (struct
       (struct_keyword)
       (struct_name
-        (type_name))
+        (type_name
+          (pascal_name)))
       (colon)
       (line_end
         (newline))
       (struct_body
         (field
           (field_name
-            (value_name))
+            (snake_name))
           (colon)
           (type
             (base_type
@@ -183,42 +227,45 @@ context:
             (newline)))
         (field
           (field_name
-            (value_name))
+            (snake_name))
           (colon)
           (type
             (base_type
               (user_type
-                (type_name)))
+                (type_name
+                  (pascal_name))))
             (type_suffix
               (array_suffix)))
           (line_end
             (newline)))
-        (blank_line
-          (newline)))))
+        (blank_line))))
   (item
     (instruct
       (instruct_keyword)
       (colon)
       (instruct_body
-        (block_indented
-          (line_end
-            (newline))
-          (block_indented_content_line
-            (indented_raw_text)
-            (newline))
-          (blank_line
-            (newline))))))
+        (text_inline
+          (text_block
+            (line_end
+              (newline))
+            (text_body
+              (text_body_line
+                (indented_raw_text)
+                (newline))
+              (blank_line)))))))
   (item
     (context
       (context_keyword)
       (colon)
       (context_body
-        (block_indented
-          (line_end
-            (newline))
-          (block_indented_content_line
-            (indented_raw_text)
-            (newline)))))))
+        (text_inline
+          (text_block
+            (line_end
+              (newline))
+            (text_body
+              (text_body_line
+                (indented_raw_text)
+                (newline)))))))))
 
 ==================
 Thunk With Directives And Blocks
@@ -229,10 +276,8 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   hands += summarize
   recall = history, memory
 
-  instruct:
-    Review correctness issues only.
-
-  context: default
+  instruct default
+  context default
 
   user:
     Review {{path}} carefully.
@@ -245,12 +290,12 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
     (thunk
       (thunk_keyword)
       (thunk_name
-        (value_name))
+        (snake_name))
       (params
         (lparen)
         (param
           (param_name
-            (value_name))
+            (snake_name))
           (colon)
           (type
             (base_type
@@ -260,7 +305,7 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
         (comma)
         (param
           (param_name
-            (value_name))
+            (snake_name))
           (colon)
           (type
             (base_type
@@ -268,7 +313,7 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
         (comma)
         (param
           (param_name
-            (value_name))
+            (snake_name))
           (optional_marker)
           (colon)
           (type
@@ -279,7 +324,8 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
       (type
         (base_type
           (user_type
-            (type_name))))
+            (type_name
+              (pascal_name)))))
       (colon)
       (line_end
         (newline))
@@ -287,76 +333,264 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
         (directive
           (directive_key)
           (directive_op)
-          (directive_csv
-            (bare_value))
+          (directive_value)
           (line_end
             (newline)))
         (directive
           (directive_key)
           (directive_op)
-          (directive_csv
-            (bare_value)
-            (comma)
-            (bare_value))
+          (directive_value)
           (line_end
             (newline)))
         (directive
           (directive_key)
           (directive_op)
-          (directive_csv
-            (bare_value))
+          (directive_value)
           (line_end
             (newline)))
         (directive
           (directive_key)
           (directive_op)
-          (directive_csv
-            (bare_value)
-            (comma)
-            (bare_value))
+          (directive_value)
           (line_end
             (newline)))
-        (blank_line
-          (newline))
-        (instruction_section
-          (block
-            (instruct_block_kind)
+        (blank_line)
+        (settings
+          (instruct_setting
+            (instruct_keyword)
+            (text_ref)
+            (line_end
+              (newline)))
+          (context_setting
+            (context_keyword)
+            (text_ref)
+            (line_end
+              (newline)))
+          (blank_line))
+        (messages
+          (message
+            (role)
             (colon)
-            (block_value
-              (block_indented
+            (text_inline
+              (text_block
                 (line_end
                   (newline))
-                (block_indented_content_line
-                  (indented_raw_text)
-                  (newline))
-                (blank_line
-                  (newline)))))
-          (block
-            (context_block_kind)
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline)))))))))))
+
+==================
+Flow Statements
+==================
+flow research(in: Pack) -> Answer:
+  models = gpt-5
+
+  ## Prepare the request.
+  do classify, normalize
+  ask alice
+  unfold to SearchJob:
+    Create search jobs from the request.
+  keep par 8:
+    Keep useful jobs.
+  rank 5:
+    Prefer reliable jobs.
+  each to Note par 5:
+    Search and extract notes.
+  fold to Answer:
+    Synthesize notes.
+  repeat 3 until:
+    the answer is complete
+  repeat 5:
+    do collect_evidence
+    until:
+      enough evidence
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name
+            (snake_name))
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
+        (rparen))
+      (arrow)
+      (type
+        (base_type
+          (user_type
+            (type_name
+              (pascal_name)))))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (blank_line)
+        (doc_line)
+        (statements
+          (do_statement
+            (flow_do_keyword)
+            (callees
+              (callee
+                (snake_name))
+              (comma)
+              (callee
+                (snake_name)))
+            (line_end
+              (newline)))
+          (ask_statement
+            (flow_ask_keyword)
+            (agent
+              (snake_name))
+            (line_end
+              (newline)))
+          (unfold_statement
+            (flow_unfold_keyword)
+            (to_clause
+              (flow_to_keyword)
+              (type
+                (base_type
+                  (user_type
+                    (type_name
+                      (pascal_name))))))
             (colon)
-            (block_value
-              (block_inline
-                (block_name)
+            (text_inline
+              (text_block
                 (line_end
-                  (newline))))))
-        (blank_line
-          (newline))
-        (thunk_tail
-          (message_section
-            (roled_message
-              (block
-                (roled_message_kind)
-                (colon)
-                (block_value
-                  (block_indented
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (keep_statement
+            (flow_keep_keyword)
+            (par_clause
+              (flow_par_keyword)
+              (integer_literal))
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (rank_statement
+            (flow_rank_keyword)
+            (limit_clause
+              (integer_literal))
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (each_statement
+            (flow_each_keyword)
+            (to_clause
+              (flow_to_keyword)
+              (type
+                (base_type
+                  (user_type
+                    (type_name
+                      (pascal_name))))))
+            (par_clause
+              (flow_par_keyword)
+              (integer_literal))
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (fold_statement
+            (flow_fold_keyword)
+            (to_clause
+              (flow_to_keyword)
+              (type
+                (base_type
+                  (user_type
+                    (type_name
+                      (pascal_name))))))
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (repeat_above_statement
+            (flow_repeat_keyword)
+            (times_clause
+              (integer_literal))
+            (until_clause
+              (flow_until_keyword)
+              (colon)
+              (condition
+                (text_inline
+                  (text_block
                     (line_end
                       (newline))
-                    (block_indented_content_line
-                      (indented_raw_text)
-                      (newline))
-                    (block_indented_content_line
-                      (indented_raw_text)
-                      (newline))))))))))))
+                    (text_body
+                      (text_body_line
+                        (indented_raw_text)
+                        (newline))))))))
+          (repeat_block_statement
+            (flow_repeat_keyword)
+            (times_clause
+              (integer_literal))
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (flow_body
+                (statements
+                  (do_statement
+                    (flow_do_keyword)
+                    (callees
+                      (callee
+                        (snake_name)))
+                    (line_end
+                      (newline)))))
+              (until_statement
+                (flow_until_keyword)
+                (colon)
+                (condition
+                  (text_inline
+                    (text_block
+                      (line_end
+                        (newline))
+                      (text_body
+                        (text_body_line
+                          (indented_raw_text)
+                          (newline))))))))))))))
 
 ==================
 Comments
@@ -365,8 +599,8 @@ Comments
 use skill briceyan/pdf-processing # inline comment
 
 thunk raw:
-  instruct: none
-  context: none
+  instruct none
+  context none
   user: none
 
 ---
@@ -378,49 +612,39 @@ thunk raw:
       (use_keyword)
       (cap_kind)
       (cap_ref
-        (cap_shorthand))
+        (text_line))
       (line_end
         (inline_comment)
         (newline))))
-  (blank_line
-    (newline))
+  (blank_line)
   (item
     (thunk
       (thunk_keyword)
       (thunk_name
-        (value_name))
+        (snake_name))
       (colon)
       (line_end
         (newline))
       (thunk_body
-        (instruction_section
-          (block
-            (instruct_block_kind)
+        (settings
+          (instruct_setting
+            (instruct_keyword)
+            (text_ref)
+            (line_end
+              (newline)))
+          (context_setting
+            (context_keyword)
+            (text_ref)
+            (line_end
+              (newline))))
+        (messages
+          (message
+            (role)
             (colon)
-            (block_value
-              (block_inline
-                (block_name)
-                (line_end
-                  (newline)))))
-          (block
-            (context_block_kind)
-            (colon)
-            (block_value
-              (block_inline
-                (block_name)
-                (line_end
-                  (newline))))))
-        (thunk_tail
-          (message_section
-            (roled_message
-              (block
-                (roled_message_kind)
-                (colon)
-                (block_value
-                  (block_inline
-                    (block_name)
-                    (line_end
-                      (newline))))))))))))
+            (text_inline
+              (text_line)
+              (line_end
+                (newline)))))))))
 
 ==================
 Recall Directive
@@ -435,7 +659,7 @@ thunk recall:
     (thunk
       (thunk_keyword)
       (thunk_name
-        (value_name))
+        (snake_name))
       (colon)
       (line_end
         (newline))
@@ -443,9 +667,6 @@ thunk recall:
         (directive
           (directive_key)
           (directive_op)
-          (directive_csv
-            (bare_value)
-            (comma)
-            (bare_value))
+          (directive_value)
           (line_end
             (newline)))))))
