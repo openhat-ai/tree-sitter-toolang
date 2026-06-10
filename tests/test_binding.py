@@ -732,6 +732,9 @@ def test_implicit_thunk_statement_splitting():
         b"\n"
         b"  ## Next statement\n"
         b"  This starts a third bare thunk.\n"
+        b"\n"
+        b"  # Plain comment also splits.\n"
+        b"  This starts a fourth bare thunk.\n"
     )
 
     tree = parser.parse(source)
@@ -739,12 +742,14 @@ def test_implicit_thunk_statement_splitting():
     statements = _statements(body)
 
     assert tree.root_node.has_error is False
-    assert len(statements) == 3
+    assert len(statements) == 4
     assert "Rewrite the current value." in _text(source, statements[0])
     assert "Extract one note" in _text(source, statements[0])
     assert "This starts a second bare thunk." in _text(source, statements[1])
     assert "This starts a third bare thunk." in _text(source, statements[2])
+    assert "This starts a fourth bare thunk." in _text(source, statements[3])
     assert "doc_line" in str(body)
+    assert "comment_line" in str(body)
 
 
 def test_until_clause_is_only_valid_as_repeat_terminator():
