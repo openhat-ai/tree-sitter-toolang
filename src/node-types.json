@@ -113,11 +113,11 @@
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "comment_line",
           "named": true
         },
         {
-          "type": "line_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -125,7 +125,7 @@
           "named": true
         },
         {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         },
         {
@@ -673,15 +673,15 @@
           "named": true
         },
         {
+          "type": "comment_line",
+          "named": true
+        },
+        {
           "type": "directive",
           "named": true
         },
         {
-          "type": "doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -689,7 +689,7 @@
           "named": true
         },
         {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         },
         {
@@ -943,11 +943,11 @@
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "comment_line",
           "named": true
         },
         {
-          "type": "line_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -955,7 +955,7 @@
           "named": true
         },
         {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         },
         {
@@ -1083,11 +1083,11 @@
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "comment_line",
           "named": true
         },
         {
-          "type": "line_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -1095,7 +1095,7 @@
           "named": true
         },
         {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         }
       ]
@@ -1563,11 +1563,15 @@
           "named": true
         },
         {
+          "type": "comment_line",
+          "named": true
+        },
+        {
           "type": "context_setting",
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -1575,11 +1579,7 @@
           "named": true
         },
         {
-          "type": "line_comment",
-          "named": true
-        },
-        {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         }
       ]
@@ -1645,7 +1645,11 @@
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
           "named": true
         },
         {
@@ -1653,11 +1657,7 @@
           "named": true
         },
         {
-          "type": "line_comment",
-          "named": true
-        },
-        {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         }
       ]
@@ -1680,11 +1680,15 @@
           "named": true
         },
         {
+          "type": "comment_line",
+          "named": true
+        },
+        {
           "type": "do_statement",
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -1708,11 +1712,7 @@
           "named": true
         },
         {
-          "type": "line_comment",
-          "named": true
-        },
-        {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         },
         {
@@ -1803,15 +1803,15 @@
           "named": true
         },
         {
-          "type": "doc_comment",
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
           "named": true
         },
         {
           "type": "field",
-          "named": true
-        },
-        {
-          "type": "line_comment",
           "named": true
         }
       ]
@@ -2079,15 +2079,15 @@
           "named": true
         },
         {
+          "type": "comment_line",
+          "named": true
+        },
+        {
           "type": "directive",
           "named": true
         },
         {
-          "type": "doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_comment",
+          "type": "doc_line",
           "named": true
         },
         {
@@ -2099,7 +2099,7 @@
           "named": true
         },
         {
-          "type": "parent_doc_comment",
+          "type": "parent_doc_line",
           "named": true
         },
         {
@@ -2410,6 +2410,10 @@
     "named": true
   },
   {
+    "type": "comment_line",
+    "named": true
+  },
+  {
     "type": "context_keyword",
     "named": true
   },
@@ -2422,7 +2426,7 @@
     "named": true
   },
   {
-    "type": "doc_comment",
+    "type": "doc_line",
     "named": true
   },
   {
@@ -2510,10 +2514,6 @@
     "named": true
   },
   {
-    "type": "line_comment",
-    "named": true
-  },
-  {
     "type": "lparen",
     "named": true
   },
@@ -2534,7 +2534,7 @@
     "named": true
   },
   {
-    "type": "parent_doc_comment",
+    "type": "parent_doc_line",
     "named": true
   },
   {

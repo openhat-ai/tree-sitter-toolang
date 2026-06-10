@@ -284,11 +284,11 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
 
     assert root.has_error is False
     assert [child.type for child in root.named_children[:5]] == [
-        "line_comment",
+        "comment_line",
         "blank_line",
-        "parent_doc_comment",
+        "parent_doc_line",
         "blank_line",
-        "doc_comment",
+        "doc_line",
     ]
     assert [item.type for item in items] == [
         "skill",
@@ -374,7 +374,7 @@ def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
     assert all(body is not None for body in bodies)
     assert "# body hash line is literal block content" in _text(source, bodies[0])
     assert "# prompt body hash line" in _text(source, bodies[1])
-    assert "line_comment" in str(bodies[0])
+    assert "comment_line" in str(bodies[0])
 
 
 def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
@@ -468,7 +468,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
     child_types = [child.type for child in root.named_children]
     item_types = [_item_child(item).type for item in _items(root)]
 
-    assert child_types[0] == "line_comment"
+    assert child_types[0] == "comment_line"
     assert item_types == [
         "use",
         "use",
@@ -499,7 +499,7 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
     flows = [item for item in items if item.type == "flow"]
 
     assert root.has_error is False
-    assert root.named_children[0].type == "parent_doc_comment"
+    assert root.named_children[0].type == "parent_doc_line"
     assert [item.type for item in items] == [
         "struct",
         "struct",
@@ -532,7 +532,7 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
     assert _text(source, output) == "Answer"
     assert body is not None
     assert len([child for child in body.named_children if child.type == "directive"]) == 2
-    assert "doc_comment" in str(body)
+    assert "doc_line" in str(body)
 
     research_statements = _statements(body)
     assert [_statement_keyword(source, statement) for statement in research_statements] == [
@@ -733,7 +733,7 @@ def test_implicit_thunk_statement_splitting():
     assert "Extract one note" in _text(source, statements[0])
     assert "This starts a second bare thunk." in _text(source, statements[1])
     assert "This starts a third bare thunk." in _text(source, statements[2])
-    assert "doc_comment" in str(body)
+    assert "doc_line" in str(body)
 
 
 def test_flow_repeat_forms():

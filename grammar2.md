@@ -4,7 +4,7 @@
 program ::= (_trivia | _item)*
 
 _item ::= use | struct | psyche | skill | service | prompt | task | chore | context | instruct | thunk | flow
-_trivia ::= parent_doc_comment | doc_comment | line_comment | blank_line
+_trivia ::= parent_doc_line | doc_line | comment_line | blank_line
 
 
 # Imports
@@ -208,9 +208,9 @@ _pass_statement ::= "pass" line_end
 
 # Lexical
 
-parent_doc_comment ::= "##!" text_line? newline
-doc_comment ::= "##" text_line? newline
-line_comment ::= "#" text_line? newline
+parent_doc_line ::= "##!" text_line? newline
+doc_line ::= "##" text_line? newline
+comment_line ::= "#" text_line? newline
 blank_line ::= /[ \t]*\r?\n/
 newline ::= /\r?\n/
 inline_comment ::= "#" text_line?

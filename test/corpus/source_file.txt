@@ -453,7 +453,7 @@ flow research(in: Pack) -> Answer:
           (line_end
             (newline)))
         (blank_line)
-        (doc_comment)
+        (doc_line)
         (statements
           (do_statement
             (flow_do_keyword)
@@ -615,7 +615,7 @@ thunk raw:
 ---
 
 (source_file
-  (line_comment)
+  (comment_line)
   (item
     (use
       (use_keyword)

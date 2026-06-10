@@ -23,11 +23,11 @@ newline ::= "\n" | "\r\n"
 blank_line ::= newline
 line_end ::= inline_comment? newline
 
-parent_doc_comment ::= "##!" /[^\r\n]*/ newline
-doc_comment ::= "##" /[^\r\n]*/ newline
-line_comment ::= "#" /[^\r\n]*/ newline
+parent_doc_line ::= "##!" /[^\r\n]*/ newline
+doc_line ::= "##" /[^\r\n]*/ newline
+comment_line ::= "#" /[^\r\n]*/ newline
 inline_comment ::= "#" /[^\r\n]*/
-trivia ::= parent_doc_comment | doc_comment | line_comment | blank_line
+trivia ::= parent_doc_line | doc_line | comment_line | blank_line
 
 pascal_name ::= /[A-Z][A-Za-z0-9]*/
 snake_name ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
@@ -90,7 +90,7 @@ cap_ref ::= text_line
 ```ebnf
 struct ::= "struct" struct_name ":" line_end struct_body
 struct_name ::= type_name
-struct_body ::= (field | doc_comment | line_comment | blank_line)+
+struct_body ::= (field | doc_line | comment_line | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= snake_name
 optional_marker ::= "?"

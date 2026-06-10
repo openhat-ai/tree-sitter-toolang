@@ -27,12 +27,12 @@ module.exports = grammar({
 
     newline: () => token(/\r?\n/),
     blank_line: () => token(prec(1, /\r?\n/)),
-    parent_doc_comment: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
-    doc_comment: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
-    line_comment: () => token(prec(0, seq("#", /[^\r\n]*/, /\r?\n/))),
+    parent_doc_line: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
+    doc_line: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
+    comment_line: () => token(prec(0, seq("#", /[^\r\n]*/, /\r?\n/))),
     inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional($.inline_comment), $.newline),
-    _trivia: ($) => choice($.parent_doc_comment, $.doc_comment, $.line_comment, $.blank_line),
+    _trivia: ($) => choice($.parent_doc_line, $.doc_line, $.comment_line, $.blank_line),
 
     use: ($) =>
       seq(
@@ -65,7 +65,7 @@ module.exports = grammar({
 
     struct_name: ($) => $.type_name,
     struct_body: ($) =>
-      prec.right(repeat1(choice($.field, $.doc_comment, $.line_comment, $.blank_line))),
+      prec.right(repeat1(choice($.field, $.doc_line, $.comment_line, $.blank_line))),
     field: ($) =>
       seq(
         field("name", $.field_name),

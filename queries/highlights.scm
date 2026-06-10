@@ -1,9 +1,9 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
 ; Maintain this file in this repository and consume it from tooling.
 
-(line_comment) @comment
-(parent_doc_comment) @comment.documentation
-(doc_comment) @comment.documentation
+(comment_line) @comment
+(parent_doc_line) @comment.documentation
+(doc_line) @comment.documentation
 (inline_comment) @comment
 
 (use_keyword) @keyword

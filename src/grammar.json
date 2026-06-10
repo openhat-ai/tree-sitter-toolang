@@ -89,7 +89,7 @@
         }
       }
     },
-    "parent_doc_comment": {
+    "parent_doc_line": {
       "type": "TOKEN",
       "content": {
         "type": "PREC",
@@ -113,7 +113,7 @@
         }
       }
     },
-    "doc_comment": {
+    "doc_line": {
       "type": "TOKEN",
       "content": {
         "type": "PREC",
@@ -137,7 +137,7 @@
         }
       }
     },
-    "line_comment": {
+    "comment_line": {
       "type": "TOKEN",
       "content": {
         "type": "PREC",
@@ -203,15 +203,15 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "parent_doc_comment"
+          "name": "parent_doc_line"
         },
         {
           "type": "SYMBOL",
-          "name": "doc_comment"
+          "name": "doc_line"
         },
         {
           "type": "SYMBOL",
-          "name": "line_comment"
+          "name": "comment_line"
         },
         {
           "type": "SYMBOL",
@@ -389,11 +389,11 @@
             },
             {
               "type": "SYMBOL",
-              "name": "doc_comment"
+              "name": "doc_line"
             },
             {
               "type": "SYMBOL",
-              "name": "line_comment"
+              "name": "comment_line"
             },
             {
               "type": "SYMBOL",
