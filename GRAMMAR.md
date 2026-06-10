@@ -191,7 +191,9 @@ directive_value ::= /[^#\r\n]+/
 settings ::= context_setting instruct_setting?
            | instruct_setting context_setting?
 context_setting ::= "context" text_ref line_end
+                  | "context" ":" text_inline
 instruct_setting ::= "instruct" text_ref line_end
+                   | "instruct" ":" text_inline
 text_ref ::= "default" | "none" | snake_name
 
 messages ::= message+
@@ -217,8 +219,8 @@ Rules:
 - A thunk without `in` does not accept invocation input.
 - `_` is available in thunk templates as an alias for `in`.
 - Directives must appear before settings and messages.
-- `context` and `instruct` settings do not use `:`. Colon syntax is reserved
-  for inline bodies and messages.
+- `context ref` and `instruct ref` select named/default/none settings.
+  `context:` and `instruct:` provide inline setting bodies.
 - Bare text in a thunk body is an unroled message. Runtime treats it as a user
   message.
 - Unroled messages are fallback messages. A line starting with a thunk reserved

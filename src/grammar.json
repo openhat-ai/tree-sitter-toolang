@@ -2813,36 +2813,88 @@
       }
     },
     "context_setting": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "context_keyword"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "context_keyword"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "text_ref"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
         },
         {
-          "type": "SYMBOL",
-          "name": "text_ref"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "line_end"
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "context_keyword"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "colon"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_nested_text_inline_alias"
+              }
+            ]
+          }
         }
       ]
     },
     "instruct_setting": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "instruct_keyword"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "instruct_keyword"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "text_ref"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
         },
         {
-          "type": "SYMBOL",
-          "name": "text_ref"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "line_end"
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "instruct_keyword"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "colon"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_nested_text_inline_alias"
+              }
+            ]
+          }
         }
       ]
     },

@@ -490,16 +490,30 @@ module.exports = grammar({
         seq($.instruct_setting, repeat($._trivia)),
       )),
     context_setting: ($) =>
-      seq(
-        $.context_keyword,
-        $.text_ref,
-        $.line_end,
+      choice(
+        seq(
+          $.context_keyword,
+          $.text_ref,
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.context_keyword,
+          $.colon,
+          $._nested_text_inline_alias,
+        )),
       ),
     instruct_setting: ($) =>
-      seq(
-        $.instruct_keyword,
-        $.text_ref,
-        $.line_end,
+      choice(
+        seq(
+          $.instruct_keyword,
+          $.text_ref,
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.instruct_keyword,
+          $.colon,
+          $._nested_text_inline_alias,
+        )),
       ),
     text_ref: ($) => choice("default", "none", $.snake_name),
     messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),

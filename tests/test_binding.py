@@ -1001,6 +1001,32 @@ def test_thunk_name_can_be_omitted():
     assert thunk.child_by_field_name("name") is None
 
 
+def test_thunk_settings_support_inline_bodies():
+    parser = _parser()
+    source = (
+        b"thunk search:\n"
+        b"  context abc\n"
+        b"  instruct:\n"
+        b"      hello world\n"
+        b"\n"
+        b"  Query:\n"
+        b"  {{_}}\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    settings = _nodes(body, "settings")[0]
+    messages = _messages(body)
+
+    assert tree.root_node.has_error is False
+    assert _nodes(settings, "context_setting")
+    instruct_setting = _nodes(settings, "instruct_setting")[0]
+    assert "text_block" in str(instruct_setting)
+    assert "hello world" in _text(source, instruct_setting)
+    assert len(messages) == 1
+    assert "Query:" in _text(source, messages[0])
+
+
 def test_thunk_instruction_blocks_must_precede_messages():
     parser = _parser()
     source = b"thunk bad:\n  user: hello\n  instruct default\n"

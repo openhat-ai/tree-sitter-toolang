@@ -305,11 +305,19 @@
       "required": true,
       "types": [
         {
+          "type": "colon",
+          "named": true
+        },
+        {
           "type": "context_keyword",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "text_inline",
           "named": true
         },
         {
@@ -843,11 +851,19 @@
       "required": true,
       "types": [
         {
+          "type": "colon",
+          "named": true
+        },
+        {
           "type": "instruct_keyword",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "text_inline",
           "named": true
         },
         {

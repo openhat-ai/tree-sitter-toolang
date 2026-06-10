@@ -74,8 +74,10 @@ _settings ::= context_setting _trivia* instruct_setting _trivia*
             | instruct_setting _trivia*
 
 context_setting ::= "context" text_ref line_end
+                  | "context" ":" text_inline
 
 instruct_setting ::= "instruct" text_ref line_end
+                   | "instruct" ":" text_inline
 
 text_ref ::= "default" | "none" | prompt_name
 
