@@ -299,9 +299,12 @@ modifiers, but not interleaved between modifiers.
 
 In thunk bodies, `unroled_message` is a fallback message. A line starting with
 `thunk_reserved_word` parses as `invalid_thunk_reserved_message` unless it
-matches an explicit thunk body form. After fallback has started, subsequent text
-lines are message content. Use an explicit role when message content itself
-starts with a reserved word.
+matches an explicit thunk body form. Explicit thunk body forms are tried before
+fallback, including after an unroled message has started. Adjacent unroled
+message text lines are merged into one message. One blank line between unroled
+message text lines is preserved inside the same message. Two or more blank
+lines, or any comment/doc-comment line, split unroled messages. Use an explicit
+role when message content itself starts with a reserved word.
 
 Flow parsing tries explicit flow statements before `implicit_do_statement`.
 If a flow body entry is not an explicit statement, it is parsed as `implicit_do_statement`.

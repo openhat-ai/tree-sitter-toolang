@@ -535,7 +535,7 @@ module.exports = grammar({
     _unroled_message_initial_line: ($) =>
       seq(field("content", $.indented_raw_text), $.newline),
     _unroled_message_continuation_line: ($) =>
-      seq(field("content", alias($._unroled_message_continuation_text, $.indented_raw_text)), $.newline),
+      seq(field("content", $.indented_raw_text), $.newline),
     invalid_thunk_reserved_message: ($) =>
       prec.dynamic(-2, seq(
         $._thunk_reserved_word,
@@ -611,7 +611,6 @@ module.exports = grammar({
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
     _implicit_do_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
-    _unroled_message_continuation_text: () => token(prec(2, /[ \t][^\r\n]*/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });
