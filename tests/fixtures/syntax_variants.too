@@ -45,8 +45,8 @@ thunk report() -> Text:
   hands += summarize
   recall = memory
 
-  instruct: strict-json
-  context: report
+  instruct strict-json
+  context report
   user: ```md
 Generate a concise report.
 ```

@@ -43,25 +43,32 @@ use prompt https://toolang.ai/review
         (newline)))))
 
 ==================
-Cap Items
+Cap And Job Items
 ==================
-service github: ```md
----
-protocol: http
-target: https://mcp.github.com/mcp
----
+service github:
+  protocol = http
+  target = https://mcp.github.com/mcp
 
-Use this service when the agent needs GitHub access.
-```
+  Use this service when the agent needs GitHub access.
 
-psyche reviewer: ```md
-Prefer concrete findings and direct language.
-```
+psyche reviewer:
+  Prefer concrete findings and direct language.
 
 prompt review:
   params = path, focus
 
   Review {{path}} carefully.
+
+task review_api:
+  title = Review API changes
+
+  Review the API changes and summarize risks.
+
+chore stale-prs:
+  title = Check stale PRs
+  schedule = FREQ=HOURLY;INTERVAL=6
+
+  Check stale PRs and report actionable items.
 
 ---
 
@@ -73,38 +80,31 @@ prompt review:
         (value_name))
       (colon)
       (cap_body
-        (cap_markdown
-          (fence_open)
-          (block_language)
+        (line_end
+          (newline))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
           (line_end
-            (newline))
-          (frontmatter
-            (frontmatter_delimiter)
-            (newline)
-            (property_colon
-              (property_key
-                (value_name))
-              (colon)
-              (property_value
-                (inline_text))
-              (newline))
-            (property_colon
-              (property_key
-                (value_name))
-              (colon)
-              (property_value
-                (inline_text))
-              (newline))
-            (frontmatter_delimiter)
-            (newline))
-          (cap_fenced_content_line
-            (newline))
-          (cap_fenced_content_line
-            (fenced_raw_text)
-            (newline))
-          (fence_close)))))
-  (blank_line
-    (newline))
+            (newline)))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
+          (line_end
+            (newline)))
+        (blank_line
+          (newline))
+        (cap_indented_content_line
+          (indented_raw_text)
+          (newline))
+        (blank_line
+          (newline)))))
   (item
     (psyche
       (psyche_keyword)
@@ -112,17 +112,13 @@ prompt review:
         (value_name))
       (colon)
       (cap_body
-        (cap_markdown
-          (fence_open)
-          (block_language)
-          (line_end
-            (newline))
-          (cap_fenced_content_line
-            (fenced_raw_text)
-            (newline))
-          (fence_close)))))
-  (blank_line
-    (newline))
+        (line_end
+          (newline))
+        (cap_indented_content_line
+          (indented_raw_text)
+          (newline))
+        (blank_line
+          (newline)))))
   (item
     (prompt
       (prompt_keyword)
@@ -130,22 +126,77 @@ prompt review:
         (value_name))
       (colon)
       (cap_body
-        (cap_indented
+        (line_end
+          (newline))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
           (line_end
-            (newline))
-          (property_eq
-            (property_key
-              (value_name))
-            (assign_operator)
-            (property_value
-              (inline_text))
-            (line_end
-              (newline)))
-          (blank_line
-            (newline))
-          (cap_indented_content_line
-            (indented_raw_text)
-            (newline)))))))
+            (newline)))
+        (blank_line
+          (newline))
+        (cap_indented_content_line
+          (indented_raw_text)
+          (newline))
+        (blank_line
+          (newline)))))
+  (item
+    (task
+      (task_keyword)
+      (job_name
+        (value_name))
+      (colon)
+      (job_body
+        (line_end
+          (newline))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
+          (line_end
+            (newline)))
+        (blank_line
+          (newline))
+        (job_indented_content_line
+          (indented_raw_text)
+          (newline))
+        (blank_line
+          (newline)))))
+  (item
+    (chore
+      (chore_keyword)
+      (job_name
+        (value_name))
+      (colon)
+      (job_body
+        (line_end
+          (newline))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
+          (line_end
+            (newline)))
+        (property_eq
+          (property_key
+            (value_name))
+          (assign_operator)
+          (property_value
+            (inline_text))
+          (line_end
+            (newline)))
+        (blank_line
+          (newline))
+        (job_indented_content_line
+          (indented_raw_text)
+          (newline))))))
 
 ==================
 Struct, Instruct, And Context
@@ -229,10 +280,8 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   hands += summarize
   recall = history, memory
 
-  instruct:
-    Review correctness issues only.
-
-  context: default
+  instruct default
+  context default
 
   user:
     Review {{path}} carefully.
@@ -321,24 +370,14 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
         (instruction_section
           (block
             (instruct_block_kind)
-            (colon)
-            (block_value
-              (block_indented
-                (line_end
-                  (newline))
-                (block_indented_content_line
-                  (indented_raw_text)
-                  (newline))
-                (blank_line
-                  (newline)))))
+            (block_name)
+            (line_end
+              (newline)))
           (block
             (context_block_kind)
-            (colon)
-            (block_value
-              (block_inline
-                (block_name)
-                (line_end
-                  (newline))))))
+            (block_name)
+            (line_end
+              (newline))))
         (blank_line
           (newline))
         (thunk_tail
@@ -359,20 +398,234 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
                       (newline))))))))))))
 
 ==================
+Flow Statements
+==================
+flow research(in: Pack) -> Answer:
+  models = gpt-5
+
+  ## Prepare the request.
+  do classify, normalize
+  ask alice
+  unfold to SearchJob:
+    Create search jobs from the request.
+  keep par 8:
+    Keep useful jobs.
+  rank 5:
+    Prefer reliable jobs.
+  each to Note par 5:
+    Search and extract notes.
+  fold to Answer:
+    Synthesize notes.
+  repeat 3 until:
+    the answer is complete
+  repeat 5:
+    do collect_evidence
+    until:
+      enough evidence
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (value_name))
+      (params
+        (lparen)
+        (param
+          (param_name
+            (value_name))
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
+        (rparen))
+      (arrow)
+      (type
+        (base_type
+          (user_type
+            (type_name))))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_csv
+            (bare_value))
+          (line_end
+            (newline)))
+        (flow_body_tail
+          (blank_line
+            (newline))
+          (doc_comment)
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_do_keyword)
+                (call_ref_list
+                  (call_ref)
+                  (comma)
+                  (call_ref))
+                (line_end
+                  (newline)))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_ask_keyword)
+                (call_ref)
+                (line_end
+                  (newline)))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_unfold_keyword)
+                (flow_inline_output_type
+                  (flow_to_keyword)
+                  (type
+                    (base_type
+                      (user_type
+                        (type_name)))))
+                (flow_inline_statement_body
+                  (colon)
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_keep_keyword)
+                (flow_inline_parallel_head
+                  (flow_parallelism
+                    (flow_par_keyword)
+                    (integer_literal)))
+                (flow_inline_statement_body
+                  (colon)
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_rank_keyword)
+                (flow_inline_rank_head
+                  (flow_rank_limit
+                    (integer_literal)))
+                (flow_inline_statement_body
+                  (colon)
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_each_keyword)
+                (flow_inline_each_head
+                  (flow_inline_output_type
+                    (flow_to_keyword)
+                    (type
+                      (base_type
+                        (user_type
+                          (type_name)))))
+                  (flow_parallelism
+                    (flow_par_keyword)
+                    (integer_literal)))
+                (flow_inline_statement_body
+                  (colon)
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_fold_keyword)
+                (flow_inline_output_type
+                  (flow_to_keyword)
+                  (type
+                    (base_type
+                      (user_type
+                        (type_name)))))
+                (flow_inline_statement_body
+                  (colon)
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_repeat_keyword)
+                (flow_repeat_count
+                  (integer_literal))
+                (flow_until_keyword)
+                (colon)
+                (flow_condition_body
+                  (line_end
+                    (newline))
+                  (block_indented_implicit
+                    (block_indented_content_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (flow_statement
+            (flow_statement_entry
+              (statement
+                (flow_repeat_keyword)
+                (flow_repeat_count
+                  (integer_literal))
+                (colon)
+                (line_end
+                  (newline))
+                (repeat_block_body
+                  (flow_statement
+                    (flow_statement_entry
+                      (statement
+                        (flow_do_keyword)
+                        (call_ref_list
+                          (call_ref))
+                        (line_end
+                          (newline)))))
+                  (until_clause
+                    (flow_until_keyword)
+                    (colon)
+                    (flow_condition_body
+                      (line_end
+                        (newline))
+                      (block_indented_implicit
+                        (block_indented_content_line
+                          (indented_raw_text)
+                          (newline))))))))))))))
+
+==================
 Comments
 ==================
 # top-level comment
 use skill briceyan/pdf-processing # inline comment
 
 thunk raw:
-  instruct: none
-  context: none
+  instruct none
+  context none
   user: none
 
 ---
 
 (source_file
-  (comment_line)
+  (line_comment)
   (item
     (use
       (use_keyword)
@@ -396,20 +649,14 @@ thunk raw:
         (instruction_section
           (block
             (instruct_block_kind)
-            (colon)
-            (block_value
-              (block_inline
-                (block_name)
-                (line_end
-                  (newline)))))
+            (block_name)
+            (line_end
+              (newline)))
           (block
             (context_block_kind)
-            (colon)
-            (block_value
-              (block_inline
-                (block_name)
-                (line_end
-                  (newline))))))
+            (block_name)
+            (line_end
+              (newline))))
         (thunk_tail
           (message_section
             (roled_message

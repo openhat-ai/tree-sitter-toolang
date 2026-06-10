@@ -1,33 +1,24 @@
 # top-level file comment
 use skill briceyan/pdf-processing # inline use comment
 
-service github: ```md # inline cap header comment
----
-# frontmatter hash line is literal metadata text
-protocol: http
-target: https://mcp.github.com/mcp
----
+service github: # inline cap header comment
+  protocol = http
+  target = https://mcp.github.com/mcp
 
-# body hash line is literal block text
-Use this service when the agent needs GitHub access.
-```
+  # body hash line is literal block content
+  Use this service when the agent needs GitHub access.
 
 struct ReviewResult:
   summary: Text # inline struct field comment
 
-prompt review: ```md # inline prompt header comment
----
-# prompt frontmatter hash line
-params: path, focus
----
+prompt review: # inline prompt header comment
+  params = path, focus
 
-# prompt body hash line
-Review {{path}} carefully.
-{{focus}}
-```
+  # prompt body hash line
+  Review {{path}} carefully.
+  {{focus}}
 
 thunk review(in: Part[], focus?: Text) -> ReviewResult: # inline thunk header comment
   models = gpt-5 # inline directive comment
 
-  instruct:
-    Review the target carefully. # literal block content
+  instruct default

@@ -26,6 +26,12 @@
   (prompt
     name: (cap_name
       (value_name) @name))
+  (task
+    name: (job_name
+      (value_name) @name))
+  (chore
+    name: (job_name
+      (value_name) @name))
   (context
     name: (context_name
       (value_name) @name))

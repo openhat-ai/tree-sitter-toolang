@@ -26,7 +26,7 @@ thunk score(in: Part[], rubric?: Json) -> Number:
     Score {{_}} using {{rubric}}.
 
 thunk render(template: Text, data: Json, notes?: Part[]) -> Part[]:
-  instruct: default
+  instruct default
   user: ```md
 Render {{template}} with {{data}}.
 {{notes}}

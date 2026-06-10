@@ -26,8 +26,8 @@ line_text ::= /[^\r\n]*/
 inline_text ::= /[^#\r\n]+/
 raw_text ::= /raw block or fence content/
 
-comment_line ::= "#" line_text newline
-program_doc_comment ::= "##!" line_text newline
+line_comment ::= "#" line_text newline
+parent_doc_comment ::= "##!" line_text newline
 doc_comment ::= "##" line_text newline
 inline_comment ::= "#" line_text
 line_end ::= inline_comment? newline
@@ -36,6 +36,7 @@ optional_marker ::= "?"
 
 type_name ::= /[A-Z][A-Za-z0-9]*/
 value_name ::= /[a-z][a-z0-9_-]*/
+snake_kebab_name ::= value_name
 ```
 
 Rules:
@@ -58,11 +59,11 @@ Comments:
 - A comment starts with `#` and extends to the end of the line.
 - Comments are ignored unless they appear inside block content, where they are
   literal text.
-- A comment that starts at the beginning of a line is a `comment_line`.
+- A comment that starts at the beginning of a line is a `line_comment`.
 - A comment that starts after another token on the same line is an
   `inline_comment`.
 - Grammar lines use `line_end` when they may carry an inline comment.
-- `comment_line` and `blank_line` may appear between logical lines unless a
+- `line_comment` and `blank_line` may appear between logical lines unless a
   production explicitly forbids them.
 
 ## Types
@@ -84,7 +85,7 @@ Rules:
   `kind` names such as `text`, `json`, `image`, `audio`, `video`, `file`,
   `tool_call`, and `tool_result`.
 - `Pack` is a builtin Record equivalent to `{ parts: Part[] }`.
-- `Pack` is one whole value, not an array. Item-wise flow steps such as `keep`,
+- `Pack` is one whole value, not an array. Item-wise flow statements such as `keep`,
   `drop`, `rank`, `each`, and `fold` operate on expanded items, so a flow must
   `unfold` a `Pack` before processing its contained parts item-wise.
 - A `struct` declaration defines a user-defined Record type. `Record` is a
@@ -95,8 +96,8 @@ Rules:
 ## Program
 
 ```ebnf
-program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
+program ::= (item | parent_doc_comment | doc_comment | line_comment | blank_line)*
+item ::= use | struct | psyche | skill | service | prompt | task | chore | context | instruct | thunk | flow
 ```
 
 ## Use
@@ -116,7 +117,7 @@ Rules:
 ```ebnf
 struct ::= "struct" struct_name ":" line_end INDENT struct_body DEDENT
 struct_name ::= type_name
-struct_body ::= (field | doc_comment | comment_line | blank_line)+
+struct_body ::= (field | doc_comment | line_comment | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= value_name
 ```
@@ -128,22 +129,16 @@ psyche ::= "psyche" cap_name ":" cap_body
 skill ::= "skill" cap_name ":" cap_body
 service ::= "service" cap_name ":" cap_body
 prompt ::= "prompt" cap_name ":" cap_body
-cap_name ::= value_name
+cap_name ::= snake_kebab_name
 
 cap_uri ::= /[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s#]+/
 cap_shorthand ::= /[A-Za-z0-9_@-][A-Za-z0-9_./:@-]*/
 bare_value ::= /[A-Za-z0-9_./:@-]+/
 
-cap_body ::= cap_indented | cap_markdown
-cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
-cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
-cap_content ::= raw_text
-
-frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
+cap_body ::= line_end (property_eq | cap_indented_content_line | parent_doc_comment | doc_comment | line_comment | blank_line)*
+cap_indented_content_line ::= indented_raw_text newline
 
 property_eq ::= property_key "=" property_value line_end
-property_colon ::= property_key ":" property_value line_end
-frontmatter_comment ::= "#" line_text newline
 property_key ::= value_name
 property_value ::= inline_text
 ```
@@ -151,17 +146,29 @@ property_value ::= inline_text
 Rules:
 
 - `cap_shorthand` must not start with `.` or `/`.
-- Both body forms may contain zero or more properties before body text.
-- Markdown fenced bodies store properties in frontmatter using `key: value`
-  lines.
-- Frontmatter may include `#` comment lines; they are preserved as frontmatter
-  content.
-- Indented bodies store properties using `key = value` lines.
+- Bodies may contain zero or more `key = value` properties and indented
+  content lines.
 - Runtime validates property keys and cap-specific property constraints.
-- Indented cap properties use only `=`; `+=` and `-=` are thunk directive
-  operators, not property operators.
+- Cap properties use only `=`; `+=` and `-=` are thunk directive operators,
+  not property operators.
 - The AST should expose `psyche`, `skill`, `service`, and `prompt` directly.
 - Do not wrap these declarations in an abstract `cap` node.
+
+## Jobs
+
+```ebnf
+task ::= "task" job_name ":" job_body
+chore ::= "chore" job_name ":" job_body
+job_name ::= snake_kebab_name
+
+job_body ::= line_end (property_eq | job_indented_content_line | parent_doc_comment | doc_comment | line_comment | blank_line)*
+job_indented_content_line ::= indented_raw_text newline
+```
+
+Rules:
+
+- `task` and `chore` use the same indented property/content shape as caps.
+- The AST should expose `task` and `chore` directly.
 
 ## Instruct
 
@@ -215,7 +222,7 @@ thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_bod
 thunk_name ::= value_name
 thunk_body ::= directive* instruction_section? (message_section | pass_statement)?
 params ::= "(" (param ("," param)*)? ")"
-param ::= param_name optional_marker? ":" type
+param ::= param_name optional_marker? (":" type)?
 param_name ::= value_name
 output_type ::= "->" type
 pass_statement ::= "pass" line_end
@@ -226,8 +233,8 @@ directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 
 instruction_section ::= context_block instruct_block? | instruct_block context_block?
-context_block ::= "context" ":" block_value
-instruct_block ::= "instruct" ":" block_value
+context_block ::= "context" block_name line_end
+instruct_block ::= "instruct" block_name line_end
 message_section ::= (roled_message | unroled_message)+
 roled_message ::= roled_message_kind ":" block_value
 roled_message_kind ::= "user" | "assistant" | "tool"
@@ -251,7 +258,8 @@ Defaults:
 
 Rules:
 
-- Parameters require explicit types.
+- Parameter types are optional in the grammar. Runtime validation may require
+  explicit types in contexts where inference is unavailable.
 - `in` is reserved as the primary invocation input parameter.
 - If `in` appears, it must be first.
 - A thunk without `in` does not accept invocation input and cannot be used as a
@@ -269,7 +277,7 @@ Rules:
 - Explicit message blocks and an implicit `user` message block should not be
   mixed in the same thunk.
 - Thunk-local blocks cannot have custom names.
-- If an inline block value matches `block_name`, parse it as a
+- If an inline message block value matches `block_name`, parse it as a
   name-like value.
 - Otherwise, parse it as literal inline text.
 - Inline values trim surrounding whitespace.
@@ -283,9 +291,9 @@ Rules:
 - Bare indented text is an unroled message. Runtime treats unroled messages as
   `user` messages.
 - A thunk body may contain `pass` to explicitly do nothing.
-- Thunk-local `context` and `instruct` values may be `none`, `default`, a named
-  top-level template reference, inline text, an indented block, or a fenced
-  block.
+- Thunk-local `context` and `instruct` values may be `none`, `default`, or a
+  named top-level template reference. They do not use `:`; colon forms are
+  reserved for inline body/message syntax.
 - Runtime decides defaults for omitted `context`, `instruct`, and messages.
 - Runtime decides the semantics of `default` and `none`.
 
@@ -295,45 +303,45 @@ Rules:
 flow ::= "flow" flow_name? params? output_type? ":" line_end flow_body
 flow_name ::= value_name
 flow_body ::= directive* flow_body_tail
-flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
-                 | (doc_comment | comment_line | blank_line)* flow_body_statement
-                   (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_body_statement ::= flow_entry
+flow_body_tail ::= (doc_comment | line_comment | blank_line)* pass_statement
+                 | (doc_comment | line_comment | blank_line)* flow_statement
+                   (flow_statement | doc_comment | line_comment | blank_line)* pass_statement?
+flow_statement ::= flow_statement_entry
 
-flow_entry ::= flow_bare_thunk_step
-             | flow_do_step
-             | flow_ask_step
-             | flow_unfold_step
-             | flow_keep_step
-             | flow_drop_step
-             | flow_rank_step
-             | flow_each_step
-             | flow_fold_step
-             | flow_repeat_step
+flow_statement_entry ::= implicit_thunk_statement
+             | do_statement
+             | ask_statement
+             | unfold_statement
+             | keep_statement
+             | drop_statement
+             | rank_statement
+             | each_statement
+             | fold_statement
+             | repeat_statement
 
-flow_bare_thunk_step ::= flow_bare_thunk_body
-flow_bare_thunk_body ::= flow_bare_content_line
+implicit_thunk_statement ::= implicit_thunk_body
+implicit_thunk_body ::= flow_bare_content_line
                          (flow_bare_content_line
                          | blank_line flow_bare_content_line)*
                          blank_line?
 flow_bare_content_line ::= /[ \t]+[^#\s][^\r\n]*/ newline
-flow_do_step ::= "do" flow_target_list line_end
-               | "do" flow_inline_output_type? flow_inline_step_body
-flow_ask_step ::= "ask" flow_target line_end
-flow_unfold_step ::= "unfold" flow_target line_end
-                   | "unfold" flow_inline_output_type? flow_inline_step_body
-flow_keep_step ::= "keep" flow_named_parallel_head line_end
-                 | "keep" flow_inline_parallel_head? flow_inline_step_body
-flow_drop_step ::= "drop" flow_named_parallel_head line_end
-                 | "drop" flow_inline_parallel_head? flow_inline_step_body
-flow_rank_step ::= "rank" flow_target line_end
-                 | "rank" flow_inline_rank_head? flow_inline_step_body
-flow_each_step ::= "each" flow_named_parallel_head line_end
-                 | "each" flow_inline_each_head? flow_inline_step_body
-flow_fold_step ::= "fold" flow_target line_end
-                 | "fold" flow_inline_output_type? flow_inline_step_body
+do_statement ::= "do" call_ref_list line_end
+               | "do" flow_inline_output_type? flow_inline_statement_body
+ask_statement ::= "ask" call_ref line_end
+unfold_statement ::= "unfold" call_ref line_end
+                   | "unfold" flow_inline_output_type? flow_inline_statement_body
+keep_statement ::= "keep" flow_named_parallel_head line_end
+                 | "keep" flow_inline_parallel_head? flow_inline_statement_body
+drop_statement ::= "drop" flow_named_parallel_head line_end
+                 | "drop" flow_inline_parallel_head? flow_inline_statement_body
+rank_statement ::= "rank" call_ref line_end
+                 | "rank" flow_inline_rank_head? flow_inline_statement_body
+each_statement ::= "each" flow_named_parallel_head line_end
+                 | "each" flow_inline_each_head? flow_inline_statement_body
+fold_statement ::= "fold" call_ref line_end
+                 | "fold" flow_inline_output_type? flow_inline_statement_body
 
-flow_inline_step_body ::= ":" flow_inline_body line_end
+flow_inline_statement_body ::= ":" flow_inline_body line_end
                         | ":" line_end block_indented_implicit
 flow_inline_output_type ::= "to" type
 flow_inline_parallel_head ::= flow_parallelism
@@ -341,23 +349,23 @@ flow_inline_rank_head ::= flow_rank_limit
 flow_inline_each_head ::= flow_inline_output_type
                         | flow_parallelism
                         | flow_inline_output_type flow_parallelism
-flow_named_parallel_head ::= flow_target
-                           | flow_target flow_parallelism
-                           | flow_parallelism flow_target
+flow_named_parallel_head ::= call_ref
+                           | call_ref flow_parallelism
+                           | flow_parallelism call_ref
 flow_parallelism ::= "par" integer_literal
 flow_rank_limit ::= integer_literal
-flow_target_list ::= flow_target ("," flow_target)*
-flow_target ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
+call_ref_list ::= call_ref ("," call_ref)*
+call_ref ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
 integer_literal ::= /\d+/
 
-flow_repeat_step ::= "repeat" flow_repeat_count line_end
+repeat_statement ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
-                   | "repeat" flow_repeat_count? ":" line_end flow_repeat_block_body
-flow_repeat_block_body ::= (doc_comment | comment_line | blank_line)*
-                           flow_body_statement
-                           (flow_body_statement | doc_comment | comment_line | blank_line)*
-                           flow_until_clause?
-flow_until_clause ::= "until" ":" flow_condition_body
+                   | "repeat" flow_repeat_count? ":" line_end repeat_block_body
+repeat_block_body ::= (doc_comment | line_comment | blank_line)*
+                           flow_statement
+                           (flow_statement | doc_comment | line_comment | blank_line)*
+                           until_clause?
+until_clause ::= "until" ":" flow_condition_body
 flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit
@@ -373,25 +381,25 @@ Defaults:
 
 Rules:
 
-- A `flow` describes a workflow as an ordered tree of executable steps.
-- The runtime's primary flow execution unit is a step.
+- A `flow` describes a workflow as an ordered tree of executable statements.
+- The runtime's primary flow execution unit is a statement.
 - `flow` signatures reuse thunk parameter and output type syntax.
-- Parameters require explicit types.
+- Parameter types follow thunk signature syntax.
 - `in` is reserved as the primary invocation input parameter. If `in` appears,
   it must be first.
 - Flow directives reuse thunk directive syntax and must appear before any
   non-directive body entry.
-- Bare indented text in a flow body defines an inline thunk-like step. One blank
-  line keeps adjacent bare text in the same step; two or more blank lines, or a
-  comment line, split bare thunk steps. Doc comments are not a special splitting
-  mechanism; they are comments too, and they may additionally describe the next
-  step for UI progress.
+- Bare indented text in a flow body defines an implicit thunk statement. One
+  blank line keeps adjacent bare text in the same statement; two or more blank
+  lines, or a comment line, split implicit thunk statements. Doc comments are
+  comments too, and they may additionally describe the next statement for UI
+  progress.
 - `do targets` runs named thunks or flows on the current value.
-- `do: ...` and `do to Type: ...` define an inline thunk-like step. The optional
-  `to Type` annotates the inline step output type.
+- `do: ...` and `do to Type: ...` define an inline thunk-like statement. The
+  optional `to Type` annotates the inline statement output type.
 - `ask` delegates the current value to an agent.
 - `unfold target` runs a named thunk that expands one value into an array of
-  values. `unfold:` and `unfold to Type:` define an inline unfold step. Bare
+  values. `unfold:` and `unfold to Type:` define an inline unfold statement. Bare
   `unfold` is not supported.
 - `keep` keeps matching items. It does not support `to Type`.
 - `drop` drops matching items. It does not support `to Type`.
@@ -399,19 +407,19 @@ Rules:
   support `to Type`.
 - `each` processes every item and collects results.
 - `fold` combines an array of values into one value.
-- `to Type` specifies an inline step output type and is only supported by inline
+- `to Type` specifies an inline statement output type and is only supported by inline
   `do`, `unfold`, `each`, and `fold` forms.
 - `par N` limits concurrent workers and is only supported by item-wise array
-  steps: `keep`, `drop`, and `each`.
-- No colon means the step body is a named reference, for example
+  statements: `keep`, `drop`, and `each`.
+- No colon means the statement body is a named reference, for example
   `do summarize` or `fold synthesize_answer`.
 - Colon with text is a one-line inline thunk.
 - Colon with an indented body is a multi-line inline thunk.
 - Named thunk forms do not also define inline bodies after `:`.
 - `repeat N`, `repeat until:`, and `repeat N until:` are short forms. Before
   execution, they normalize to block repeat forms by capturing executable
-  statements in the same flow block after the previous repeat step and before
-  the current repeat step.
+  statements in the same flow block after the previous repeat statement and
+  before the current repeat statement.
 - `repeat N:` and `repeat:` are block repeat forms. The nested flow block is the
   repeat range. A final `until:` clause may stop the loop early.
 - Runtime only needs to execute block repeat semantics after normalization.
@@ -434,14 +442,13 @@ types; they are records with a role and `Part[]`.
 - `tools` is derived from available tool declarations and thunk capability
   directives.
 - `instructions` is generated from the selected `instruct` template. The
-  selection can be `default`, a named top-level `instruct`, `none`, or
-  thunk-local inline/block text. Template rendering receives the run context.
+  selection can be `default`, a named top-level `instruct`, or `none`.
+  Template rendering receives the run context.
 - Runtime messages start with retrieved history according to `recall`, then
   append thunk-local `user`, `assistant`, and `tool` blocks.
 - The final user message is formed by prepending a rendered context prompt to
   the invocation input referenced by the user block. The context prompt is
-  generated from `default`, a named
-  top-level `context`, `none`, or thunk-local inline/block text. Template
+  generated from `default`, a named top-level `context`, or `none`. Template
   rendering receives the run context.
 - Only values referenced by message blocks are sent to the model call. Referenced
   values are promoted to parts according to their type: `Text` to a text part,
@@ -463,7 +470,7 @@ the exceptions.
 Shebang comments:
 
 - A first-line comment beginning with `#!` is a shebang comment.
-- Elsewhere, `#!` is a normal `comment_line`.
+- Elsewhere, `#!` is a normal `line_comment`.
 - A shebang supports scripting use. When a file is executed directly, for
   example `./script.too`, the operating system uses the shebang to locate the
   Toolang interpreter. When the file is run as `toolang script.too`, the
@@ -483,13 +490,13 @@ Doc comments:
   normal comment lines.
 - A blank line breaks doc attachment.
 - An empty doc comment line creates a paragraph break.
-- Non-doc `comment_line` does not attach.
+- Non-doc `line_comment` does not attach.
 
 ## Grammar Summary
 
 ```ebnf
-program ::= (item | program_doc_comment | doc_comment | comment_line | blank_line)*
-item ::= use | struct | psyche | skill | service | prompt | context | instruct | thunk | flow
+program ::= (item | parent_doc_comment | doc_comment | line_comment | blank_line)*
+item ::= use | struct | psyche | skill | service | prompt | task | chore | context | instruct | thunk | flow
 
 use ::= "use" cap_kind cap_ref line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
@@ -497,7 +504,7 @@ cap_ref ::= cap_uri | cap_shorthand
 
 struct ::= "struct" struct_name ":" line_end INDENT struct_body DEDENT
 struct_name ::= type_name
-struct_body ::= (field | doc_comment | comment_line | blank_line)+
+struct_body ::= (field | doc_comment | line_comment | blank_line)+
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= value_name
 
@@ -505,15 +512,17 @@ psyche ::= "psyche" cap_name ":" cap_body
 skill ::= "skill" cap_name ":" cap_body
 service ::= "service" cap_name ":" cap_body
 prompt ::= "prompt" cap_name ":" cap_body
-cap_name ::= value_name
-cap_body ::= cap_indented | cap_markdown
-cap_indented ::= line_end INDENT property_eq* cap_content? DEDENT
-cap_markdown ::= "```md" line_end frontmatter? cap_content? "```" newline
-cap_content ::= raw_text
-frontmatter ::= "---" newline (property_colon | frontmatter_comment)* "---" newline
+cap_name ::= snake_kebab_name
+cap_body ::= line_end (property_eq | cap_indented_content_line | parent_doc_comment | doc_comment | line_comment | blank_line)*
+cap_indented_content_line ::= indented_raw_text newline
+
+task ::= "task" job_name ":" job_body
+chore ::= "chore" job_name ":" job_body
+job_name ::= snake_kebab_name
+job_body ::= line_end (property_eq | job_indented_content_line | parent_doc_comment | doc_comment | line_comment | blank_line)*
+job_indented_content_line ::= indented_raw_text newline
+
 property_eq ::= property_key "=" property_value line_end
-property_colon ::= property_key ":" property_value line_end
-frontmatter_comment ::= "#" line_text newline
 property_key ::= value_name
 property_value ::= inline_text
 
@@ -533,7 +542,7 @@ thunk ::= "thunk" thunk_name? params? output_type? ":" line_end INDENT thunk_bod
 thunk_name ::= value_name
 thunk_body ::= directive* instruction_section? (message_section | pass_statement)?
 params ::= "(" (param ("," param)*)? ")"
-param ::= param_name optional_marker? ":" type
+param ::= param_name optional_marker? (":" type)?
 param_name ::= value_name
 output_type ::= "->" type
 pass_statement ::= "pass" line_end
@@ -542,8 +551,8 @@ directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "hand
 directive_op ::= "=" | "+=" | "-="
 directive_csv ::= bare_value ("," bare_value)*
 instruction_section ::= context_block instruct_block? | instruct_block context_block?
-context_block ::= "context" ":" block_value
-instruct_block ::= "instruct" ":" block_value
+context_block ::= "context" block_name line_end
+instruct_block ::= "instruct" block_name line_end
 message_section ::= (roled_message | unroled_message)+
 roled_message ::= roled_message_kind ":" block_value
 roled_message_kind ::= "user" | "assistant" | "tool"
@@ -556,42 +565,42 @@ block_content_inline ::= inline_text
 flow ::= "flow" flow_name? params? output_type? ":" line_end flow_body
 flow_name ::= value_name
 flow_body ::= directive* flow_body_tail
-flow_body_tail ::= (doc_comment | comment_line | blank_line)* pass_statement
-                 | (doc_comment | comment_line | blank_line)* flow_body_statement
-                   (flow_body_statement | doc_comment | comment_line | blank_line)* pass_statement?
-flow_body_statement ::= flow_entry
-flow_entry ::= flow_bare_thunk_step
-             | flow_do_step
-             | flow_ask_step
-             | flow_unfold_step
-             | flow_keep_step
-             | flow_drop_step
-             | flow_rank_step
-             | flow_each_step
-             | flow_fold_step
-             | flow_repeat_step
-flow_bare_thunk_step ::= flow_bare_thunk_body
-flow_bare_thunk_body ::= flow_bare_content_line
+flow_body_tail ::= (doc_comment | line_comment | blank_line)* pass_statement
+                 | (doc_comment | line_comment | blank_line)* flow_statement
+                   (flow_statement | doc_comment | line_comment | blank_line)* pass_statement?
+flow_statement ::= flow_statement_entry
+flow_statement_entry ::= implicit_thunk_statement
+             | do_statement
+             | ask_statement
+             | unfold_statement
+             | keep_statement
+             | drop_statement
+             | rank_statement
+             | each_statement
+             | fold_statement
+             | repeat_statement
+implicit_thunk_statement ::= implicit_thunk_body
+implicit_thunk_body ::= flow_bare_content_line
                          (flow_bare_content_line
                          | blank_line flow_bare_content_line)*
                          blank_line?
 flow_bare_content_line ::= /[ \t]+[^#\s][^\r\n]*/ newline
-flow_do_step ::= "do" flow_target_list line_end
-               | "do" flow_inline_output_type? flow_inline_step_body
-flow_ask_step ::= "ask" flow_target line_end
-flow_unfold_step ::= "unfold" flow_target line_end
-                   | "unfold" flow_inline_output_type? flow_inline_step_body
-flow_keep_step ::= "keep" flow_named_parallel_head line_end
-                 | "keep" flow_inline_parallel_head? flow_inline_step_body
-flow_drop_step ::= "drop" flow_named_parallel_head line_end
-                 | "drop" flow_inline_parallel_head? flow_inline_step_body
-flow_rank_step ::= "rank" flow_target line_end
-                 | "rank" flow_inline_rank_head? flow_inline_step_body
-flow_each_step ::= "each" flow_named_parallel_head line_end
-                 | "each" flow_inline_each_head? flow_inline_step_body
-flow_fold_step ::= "fold" flow_target line_end
-                 | "fold" flow_inline_output_type? flow_inline_step_body
-flow_inline_step_body ::= ":" flow_inline_body line_end
+do_statement ::= "do" call_ref_list line_end
+               | "do" flow_inline_output_type? flow_inline_statement_body
+ask_statement ::= "ask" call_ref line_end
+unfold_statement ::= "unfold" call_ref line_end
+                   | "unfold" flow_inline_output_type? flow_inline_statement_body
+keep_statement ::= "keep" flow_named_parallel_head line_end
+                 | "keep" flow_inline_parallel_head? flow_inline_statement_body
+drop_statement ::= "drop" flow_named_parallel_head line_end
+                 | "drop" flow_inline_parallel_head? flow_inline_statement_body
+rank_statement ::= "rank" call_ref line_end
+                 | "rank" flow_inline_rank_head? flow_inline_statement_body
+each_statement ::= "each" flow_named_parallel_head line_end
+                 | "each" flow_inline_each_head? flow_inline_statement_body
+fold_statement ::= "fold" call_ref line_end
+                 | "fold" flow_inline_output_type? flow_inline_statement_body
+flow_inline_statement_body ::= ":" flow_inline_body line_end
                         | ":" line_end block_indented_implicit
 flow_inline_output_type ::= "to" type
 flow_inline_parallel_head ::= flow_parallelism
@@ -599,22 +608,22 @@ flow_inline_rank_head ::= flow_rank_limit
 flow_inline_each_head ::= flow_inline_output_type
                         | flow_parallelism
                         | flow_inline_output_type flow_parallelism
-flow_named_parallel_head ::= flow_target
-                           | flow_target flow_parallelism
-                           | flow_parallelism flow_target
+flow_named_parallel_head ::= call_ref
+                           | call_ref flow_parallelism
+                           | flow_parallelism call_ref
 flow_parallelism ::= "par" integer_literal
 flow_rank_limit ::= integer_literal
-flow_target_list ::= flow_target ("," flow_target)*
-flow_target ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
+call_ref_list ::= call_ref ("," call_ref)*
+call_ref ::= /[A-Za-z_@][A-Za-z0-9_./@-]*/
 integer_literal ::= /\d+/
-flow_repeat_step ::= "repeat" flow_repeat_count line_end
+repeat_statement ::= "repeat" flow_repeat_count line_end
                    | "repeat" flow_repeat_count? "until" ":" flow_condition_body
-                   | "repeat" flow_repeat_count? ":" line_end flow_repeat_block_body
-flow_repeat_block_body ::= (doc_comment | comment_line | blank_line)*
-                           flow_body_statement
-                           (flow_body_statement | doc_comment | comment_line | blank_line)*
-                           flow_until_clause?
-flow_until_clause ::= "until" ":" flow_condition_body
+                   | "repeat" flow_repeat_count? ":" line_end repeat_block_body
+repeat_block_body ::= (doc_comment | line_comment | blank_line)*
+                           flow_statement
+                           (flow_statement | doc_comment | line_comment | blank_line)*
+                           until_clause?
+until_clause ::= "until" ":" flow_condition_body
 flow_repeat_count ::= integer_literal
 flow_condition_body ::= flow_inline_text line_end
                       | line_end block_indented_implicit

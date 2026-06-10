@@ -3,7 +3,7 @@ thunk chat(in: Part[]) -> Part[]:
   tools += shell
   hands += summarize
 
-  instruct: Keep the conversation grounded and ask clarifying questions when needed.
+  instruct default
 
   {{_}}
 
@@ -15,8 +15,7 @@ thunk task(in: Part[]) -> Part[]:
   hands += plan, execute
   handoffs = support
 
-  instruct:
-    Complete the requested task and return structured progress.
+  instruct default
 
   user:
     {{_}}
@@ -26,7 +25,6 @@ thunk chore:
   tools += shell
   handoffs = support, billing
 
-  instruct: default
-
+  instruct default
   user:
     Run the scheduled maintenance chore and report the result.

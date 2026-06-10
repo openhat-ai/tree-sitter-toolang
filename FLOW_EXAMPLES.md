@@ -14,7 +14,7 @@ flow examples(in: Pack) -> Answer:
   This starts a separate bare thunk because it is separated by two blank lines.
 
   # Any comment line also starts a separate bare thunk.
-  ## A doc comment can additionally describe the next step in UI progress.
+  ## A doc comment can additionally describe the next statement in UI progress.
   Normalize the current value.
 
   ## do: named calls.
@@ -150,13 +150,13 @@ flow examples(in: Pack) -> Answer:
 Notes:
 
 - One blank line inside a bare thunk body keeps the text in the same bare thunk.
-- Two or more blank lines split bare thunk bodies into separate bare thunk steps.
+- Two or more blank lines split bare thunk bodies into separate bare thunk statements.
 - Any comment line between bare thunk text blocks also splits them.
 - A doc comment is not special for splitting; it is a comment line too, and may
-  additionally describe the next bare thunk step for UI progress.
+  additionally describe the next bare thunk statement for UI progress.
 - Short repeat forms normalize to block repeat forms before execution.
 - A short repeat captures executable statements in the same flow block after the
-  previous repeat step and before the current repeat step.
+  previous repeat statement and before the current repeat statement.
 - A short repeat requires a non-empty captured range. A flow body cannot start
   with a short repeat.
 - `repeat N:` and `repeat:` define explicit nested flow blocks. The block body is

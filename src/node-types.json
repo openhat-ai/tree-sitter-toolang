@@ -79,11 +79,25 @@
             "named": true
           },
           {
+            "type": "block_name",
+            "named": true
+          },
+          {
             "type": "block_value",
             "named": true
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -319,52 +333,33 @@
     "fields": {}
   },
   {
-    "type": "cap_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "cap_indented",
-          "named": true
-        },
-        {
-          "type": "cap_markdown",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_fenced_content_line",
+    "type": "call_ref_list",
     "named": true,
     "fields": {
-      "content": {
-        "multiple": false,
-        "required": false,
+      "target": {
+        "multiple": true,
+        "required": true,
         "types": [
           {
-            "type": "fenced_raw_text",
+            "type": "call_ref",
             "named": true
           }
         ]
       }
     },
     "children": {
-      "multiple": false,
-      "required": true,
+      "multiple": true,
+      "required": false,
       "types": [
         {
-          "type": "newline",
+          "type": "comma",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "cap_indented",
+    "type": "cap_body",
     "named": true,
     "fields": {},
     "children": {
@@ -380,7 +375,19 @@
           "named": true
         },
         {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "line_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_comment",
           "named": true
         },
         {
@@ -411,65 +418,6 @@
       "types": [
         {
           "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "cap_kind",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "cap_markdown",
-    "named": true,
-    "fields": {
-      "close": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "fence_close",
-            "named": true
-          }
-        ]
-      },
-      "frontmatter": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "frontmatter",
-            "named": true
-          }
-        ]
-      },
-      "language": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "block_language",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "cap_fenced_content_line",
-          "named": true
-        },
-        {
-          "type": "fence_open",
-          "named": true
-        },
-        {
-          "type": "line_end",
           "named": true
         }
       ]
@@ -507,6 +455,52 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "chore",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "chore_keyword",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_name",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -868,25 +862,6 @@
     }
   },
   {
-    "type": "flow_bare_thunk_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "flow_bare_content_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_body",
     "named": true,
     "fields": {
@@ -913,21 +888,6 @@
     }
   },
   {
-    "type": "flow_body_statement",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_entry",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_body_tail",
     "named": true,
     "fields": {},
@@ -940,15 +900,15 @@
           "named": true
         },
         {
-          "type": "comment_line",
-          "named": true
-        },
-        {
           "type": "doc_comment",
           "named": true
         },
         {
-          "type": "flow_body_statement",
+          "type": "flow_statement",
+          "named": true
+        },
+        {
+          "type": "line_comment",
           "named": true
         },
         {
@@ -983,21 +943,6 @@
       "types": [
         {
           "type": "line_end",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "flow_entry",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "step",
           "named": true
         }
       ]
@@ -1094,7 +1039,7 @@
     }
   },
   {
-    "type": "flow_inline_step_body",
+    "type": "flow_inline_statement_body",
     "named": true,
     "fields": {
       "colon": {
@@ -1162,11 +1107,11 @@
       "required": true,
       "types": [
         {
-          "type": "flow_parallelism",
+          "type": "call_ref",
           "named": true
         },
         {
-          "type": "flow_target",
+          "type": "flow_parallelism",
           "named": true
         }
       ]
@@ -1215,54 +1160,6 @@
     }
   },
   {
-    "type": "flow_repeat_block_body",
-    "named": true,
-    "fields": {
-      "condition": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "flow_until_clause",
-            "named": true
-          }
-        ]
-      },
-      "entry": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "flow_body_statement",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "comment_line",
-          "named": true
-        },
-        {
-          "type": "doc_comment",
-          "named": true
-        },
-        {
-          "type": "flow_body_statement",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "flow_repeat_count",
     "named": true,
     "fields": {},
@@ -1278,69 +1175,37 @@
     }
   },
   {
-    "type": "flow_target_list",
+    "type": "flow_statement",
     "named": true,
-    "fields": {
-      "target": {
-        "multiple": true,
-        "required": true,
-        "types": [
-          {
-            "type": "flow_target",
-            "named": true
-          }
-        ]
-      }
-    },
+    "fields": {},
     "children": {
-      "multiple": true,
-      "required": false,
+      "multiple": false,
+      "required": true,
       "types": [
         {
-          "type": "comma",
+          "type": "flow_statement_entry",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "flow_until_clause",
+    "type": "flow_statement_entry",
     "named": true,
-    "fields": {
-      "colon": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "condition": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "flow_condition_body",
-            "named": true
-          }
-        ]
-      },
-      "keyword": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "flow_until_keyword",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "statement",
+          "named": true
+        }
+      ]
     }
   },
   {
-    "type": "frontmatter",
+    "type": "implicit_thunk_body",
     "named": true,
     "fields": {},
     "children": {
@@ -1348,19 +1213,11 @@
       "required": true,
       "types": [
         {
-          "type": "frontmatter_comment",
+          "type": "blank_line",
           "named": true
         },
         {
-          "type": "frontmatter_delimiter",
-          "named": true
-        },
-        {
-          "type": "newline",
-          "named": true
-        },
-        {
-          "type": "property_colon",
+          "type": "flow_bare_content_line",
           "named": true
         }
       ]
@@ -1478,7 +1335,7 @@
           "named": true
         },
         {
-          "type": "comment_line",
+          "type": "line_comment",
           "named": true
         }
       ]
@@ -1492,6 +1349,10 @@
       "multiple": false,
       "required": true,
       "types": [
+        {
+          "type": "chore",
+          "named": true
+        },
         {
           "type": "context",
           "named": true
@@ -1525,11 +1386,95 @@
           "named": true
         },
         {
+          "type": "task",
+          "named": true
+        },
+        {
           "type": "thunk",
           "named": true
         },
         {
           "type": "use",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "job_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "job_indented_content_line",
+          "named": true
+        },
+        {
+          "type": "line_comment",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_comment",
+          "named": true
+        },
+        {
+          "type": "property_eq",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "job_indented_content_line",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "indented_raw_text",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "job_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "value_name",
           "named": true
         }
       ]
@@ -1567,7 +1512,7 @@
           "named": true
         },
         {
-          "type": "comment_line",
+          "type": "line_comment",
           "named": true
         },
         {
@@ -1592,7 +1537,7 @@
     "fields": {
       "colon": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "colon",
@@ -1622,7 +1567,7 @@
       },
       "type": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "type",
@@ -1754,57 +1699,6 @@
     }
   },
   {
-    "type": "prompt_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "property_colon",
-    "named": true,
-    "fields": {
-      "colon": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "key": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "property_key",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "property_value",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "property_eq",
     "named": true,
     "fields": {
@@ -1927,9 +1821,52 @@
     }
   },
   {
-    "type": "psyche_keyword",
+    "type": "repeat_block_body",
     "named": true,
-    "fields": {}
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "until_clause",
+            "named": true
+          }
+        ]
+      },
+      "entry": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_statement",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "doc_comment",
+          "named": true
+        },
+        {
+          "type": "flow_statement",
+          "named": true
+        },
+        {
+          "type": "line_comment",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "roled_message",
@@ -1998,11 +1935,6 @@
     }
   },
   {
-    "type": "service_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "skill",
     "named": true,
     "fields": {
@@ -2049,11 +1981,6 @@
     }
   },
   {
-    "type": "skill_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "source_file",
     "named": true,
     "root": true,
@@ -2067,10 +1994,6 @@
           "named": true
         },
         {
-          "type": "comment_line",
-          "named": true
-        },
-        {
           "type": "doc_comment",
           "named": true
         },
@@ -2079,14 +2002,18 @@
           "named": true
         },
         {
-          "type": "program_doc_comment",
+          "type": "line_comment",
+          "named": true
+        },
+        {
+          "type": "parent_doc_comment",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "step",
+    "type": "statement",
     "named": true,
     "fields": {
       "body": {
@@ -2094,15 +2021,15 @@
         "required": false,
         "types": [
           {
-            "type": "flow_bare_thunk_body",
+            "type": "flow_inline_statement_body",
             "named": true
           },
           {
-            "type": "flow_inline_step_body",
+            "type": "implicit_thunk_body",
             "named": true
           },
           {
-            "type": "flow_repeat_block_body",
+            "type": "repeat_block_body",
             "named": true
           }
         ]
@@ -2220,7 +2147,7 @@
         "required": false,
         "types": [
           {
-            "type": "flow_target",
+            "type": "call_ref",
             "named": true
           }
         ]
@@ -2230,7 +2157,7 @@
         "required": false,
         "types": [
           {
-            "type": "flow_target_list",
+            "type": "call_ref_list",
             "named": true
           }
         ]
@@ -2316,15 +2243,15 @@
           "named": true
         },
         {
-          "type": "comment_line",
-          "named": true
-        },
-        {
           "type": "doc_comment",
           "named": true
         },
         {
           "type": "field",
+          "named": true
+        },
+        {
+          "type": "line_comment",
           "named": true
         }
       ]
@@ -2343,6 +2270,52 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "task",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_body",
+            "named": true
+          }
+        ]
+      },
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "task_keyword",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "job_name",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2465,11 +2438,11 @@
           "named": true
         },
         {
-          "type": "comment_line",
+          "type": "directive",
           "named": true
         },
         {
-          "type": "directive",
+          "type": "line_comment",
           "named": true
         }
       ]
@@ -2570,6 +2543,42 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "until_clause",
+    "named": true,
+    "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_condition_body",
+            "named": true
+          }
+        ]
+      },
+      "keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flow_until_keyword",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -2694,6 +2703,14 @@
     "named": true
   },
   {
+    "type": "call_ref",
+    "named": true
+  },
+  {
+    "type": "cap_kind",
+    "named": true
+  },
+  {
     "type": "cap_shorthand",
     "named": true
   },
@@ -2702,15 +2719,15 @@
     "named": true
   },
   {
+    "type": "chore_keyword",
+    "named": true
+  },
+  {
     "type": "colon",
     "named": true
   },
   {
     "type": "comma",
-    "named": true
-  },
-  {
-    "type": "comment_line",
     "named": true
   },
   {
@@ -2774,10 +2791,6 @@
     "named": true
   },
   {
-    "type": "flow_target",
-    "named": true
-  },
-  {
     "type": "flow_to_keyword",
     "named": true
   },
@@ -2787,14 +2800,6 @@
   },
   {
     "type": "flow_until_keyword",
-    "named": true
-  },
-  {
-    "type": "frontmatter_comment",
-    "named": true
-  },
-  {
-    "type": "frontmatter_delimiter",
     "named": true
   },
   {
@@ -2822,6 +2827,10 @@
     "named": true
   },
   {
+    "type": "line_comment",
+    "named": true
+  },
+  {
     "type": "lparen",
     "named": true
   },
@@ -2838,20 +2847,20 @@
     "named": true
   },
   {
+    "type": "parent_doc_comment",
+    "named": true
+  },
+  {
     "type": "pass_keyword",
     "named": true
   },
   {
-    "type": "program_doc_comment",
+    "type": "prompt_keyword",
     "named": true
   },
   {
-    "type": "prompt",
-    "named": false
-  },
-  {
-    "type": "psyche",
-    "named": false
+    "type": "psyche_keyword",
+    "named": true
   },
   {
     "type": "psyches",
@@ -2866,16 +2875,16 @@
     "named": true
   },
   {
-    "type": "service",
-    "named": false
+    "type": "service_keyword",
+    "named": true
   },
   {
     "type": "services",
     "named": false
   },
   {
-    "type": "skill",
-    "named": false
+    "type": "skill_keyword",
+    "named": true
   },
   {
     "type": "skills",
@@ -2883,6 +2892,10 @@
   },
   {
     "type": "struct_keyword",
+    "named": true
+  },
+  {
+    "type": "task_keyword",
     "named": true
   },
   {

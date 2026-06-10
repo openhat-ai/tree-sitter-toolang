@@ -1,11 +1,10 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
 ; Maintain this file in this repository and consume it from tooling.
 
-(comment_line) @comment
-(program_doc_comment) @comment.documentation
+(line_comment) @comment
+(parent_doc_comment) @comment.documentation
 (doc_comment) @comment.documentation
 (inline_comment) @comment
-(frontmatter_comment) @comment
 
 (use_keyword) @keyword
 (struct_keyword) @keyword
@@ -13,6 +12,8 @@
 (skill_keyword) @keyword
 (service_keyword) @keyword
 (prompt_keyword) @keyword
+(task_keyword) @keyword
+(chore_keyword) @keyword
 (context_keyword) @keyword
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
@@ -49,7 +50,6 @@
 (array_suffix) @punctuation.special
 (fence_open) @punctuation.special
 (fence_close) @punctuation.special
-(frontmatter_delimiter) @punctuation.special
 
 (cap_uri) @constant
 (cap_shorthand) @constant
@@ -76,6 +76,14 @@
   name: (cap_name
     (value_name) @function))
 
+(task
+  name: (job_name
+    (value_name) @function))
+
+(chore
+  name: (job_name
+    (value_name) @function))
+
 (context
   name: (context_name
     (value_name) @function))
@@ -88,6 +96,8 @@
   (psyche)
   (skill)
   (service)
+  (task)
+  (chore)
 ] @type
 
 (param
