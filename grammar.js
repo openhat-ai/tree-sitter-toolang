@@ -265,6 +265,11 @@ module.exports = grammar({
       prec.right(seq($._flow_statement, repeat(choice($._flow_statement, $._trivia)))),
     _flow_statement: ($) =>
       choice(
+        $.explicit_flow_statement,
+        $.implicit_do_statement,
+      ),
+    explicit_flow_statement: ($) =>
+      choice(
         $.do_statement,
         $.ask_statement,
         $.unfold_statement,
@@ -289,7 +294,6 @@ module.exports = grammar({
           $.colon,
           $._nested_text_inline_alias,
         )),
-        $.implicit_do_statement,
       ),
     implicit_do_statement: ($) =>
       prec.dynamic(-1, alias($._implicit_do_body, $.text_inline)),
@@ -326,7 +330,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_keep_keyword,
-          optional(choice(seq($.callee, optional($.par_clause)), $.par_clause)),
+          choice(seq($.callee, optional($.par_clause)), $.par_clause),
           $.line_end,
         ),
         prec.right(seq(
@@ -340,7 +344,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_drop_keyword,
-          optional(choice(seq($.callee, optional($.par_clause)), $.par_clause)),
+          choice(seq($.callee, optional($.par_clause)), $.par_clause),
           $.line_end,
         ),
         prec.right(seq(
@@ -371,7 +375,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_each_keyword,
-          optional(choice(seq($.callee, optional($.par_clause)), $.par_clause)),
+          choice(seq($.callee, optional($.par_clause)), $.par_clause),
           $.line_end,
         ),
         prec.right(seq(
@@ -415,6 +419,10 @@ module.exports = grammar({
         optional($.times_clause),
         $.colon,
         $.line_end,
+        $.repeat_body,
+      )),
+    repeat_body: ($) =>
+      prec.right(seq(
         $.flow_body,
         optional($.until_clause),
       )),

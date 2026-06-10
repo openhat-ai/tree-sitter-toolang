@@ -45,6 +45,7 @@ FLOW_STATEMENT_TYPES = {
     "fold_statement",
     "repeat_above_statement",
     "repeat_block_statement",
+    "implicit_do_statement",
 }
 
 

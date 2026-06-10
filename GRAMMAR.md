@@ -228,37 +228,45 @@ flow_body ::= trivia*
               trivia*
 
 statements ::= flow_statement+
-flow_statement ::= do_statement
-                 | ask_statement
-                 | unfold_statement
-                 | keep_statement
-                 | drop_statement
-                 | rank_statement
-                 | each_statement
-                 | fold_statement
-                 | repeat_above_statement
-                 | repeat_block_statement
+flow_statement ::= explicit_flow_statement
+                 | implicit_do_statement
+
+explicit_flow_statement ::= do_statement
+                          | ask_statement
+                          | unfold_statement
+                          | keep_statement
+                          | drop_statement
+                          | rank_statement
+                          | each_statement
+                          | fold_statement
+                          | repeat_above_statement
+                          | repeat_block_statement
 
 do_statement ::= "do" callees line_end
                | "do" to_clause? ":" text_inline
-               | implicit_do_statement
-implicit_do_statement ::= text_inline
+
+implicit_do_statement ::= implicit_do_body
+implicit_do_body ::= implicit_do_line
+                     (implicit_do_line
+                     | blank_line implicit_do_line)*
+                     blank_line?
+implicit_do_line ::= indented_raw_text newline
 
 ask_statement ::= "ask" agent line_end
 
 unfold_statement ::= "unfold" callee line_end
                    | "unfold" to_clause? ":" text_inline
 
-keep_statement ::= "keep" (callee par_clause? | par_clause)? line_end
+keep_statement ::= "keep" (callee par_clause? | par_clause) line_end
                  | "keep" par_clause? ":" text_inline
 
-drop_statement ::= "drop" (callee par_clause? | par_clause)? line_end
+drop_statement ::= "drop" (callee par_clause? | par_clause) line_end
                  | "drop" par_clause? ":" text_inline
 
 rank_statement ::= "rank" callee limit_clause? par_clause? line_end
                  | "rank" limit_clause? par_clause? ":" text_inline
 
-each_statement ::= "each" (callee par_clause? | par_clause)? line_end
+each_statement ::= "each" (callee par_clause? | par_clause) line_end
                  | "each" to_clause? par_clause? ":" text_inline
 
 fold_statement ::= "fold" callee line_end
@@ -267,7 +275,8 @@ fold_statement ::= "fold" callee line_end
 repeat_above_statement ::= "repeat" times_clause line_end
                          | "repeat" times_clause? until_clause
 
-repeat_block_statement ::= "repeat" times_clause? ":" line_end flow_body until_clause?
+repeat_block_statement ::= "repeat" times_clause? ":" line_end repeat_body
+repeat_body ::= flow_body until_clause?
 until_clause ::= "until" ":" condition
 condition ::= text_inline
 
@@ -287,7 +296,11 @@ Rules:
 - Flow signatures reuse thunk parameter and return type syntax.
 - Flow directives reuse thunk directive syntax and must appear before
   statements.
-- Bare text in a flow body defines an implicit `do` statement.
+- Flow parsing tries explicit statements first. If a flow body entry is not an
+  explicit statement, it is parsed as an implicit `do` statement.
+- Adjacent implicit-do text lines are merged into one statement. One blank line
+  between implicit-do lines is preserved in the same statement; two or more
+  blank lines, or a comment/doc-comment line, split implicit-do statements.
 - `do callees` runs named thunks or flows on the current value.
 - `do: ...` and `do to Type: ...` define inline thunk-like statements.
 - `ask agent` delegates the current value to an agent and replaces it with the
@@ -306,7 +319,8 @@ Rules:
   executable statements in the current flow block. Semantic validation rejects a
   short repeat with an empty captured range.
 - `repeat N:` and `repeat:` define explicit nested flow blocks. A final
-  `until:` clause may stop the loop early.
+  `until:` clause may stop the loop early. The `until:` clause is the repeat
+  block terminator, not a normal flow statement.
 - Runtime may normalize short repeat forms to repeat block statements before
   execution.
 

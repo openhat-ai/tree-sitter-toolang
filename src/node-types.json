@@ -415,10 +415,6 @@
           "named": true
         },
         {
-          "type": "implicit_do_statement",
-          "named": true
-        },
-        {
           "type": "line_end",
           "named": true
         },
@@ -502,6 +498,57 @@
         },
         {
           "type": "to_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "explicit_flow_statement",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "ask_statement",
+          "named": true
+        },
+        {
+          "type": "do_statement",
+          "named": true
+        },
+        {
+          "type": "drop_statement",
+          "named": true
+        },
+        {
+          "type": "each_statement",
+          "named": true
+        },
+        {
+          "type": "fold_statement",
+          "named": true
+        },
+        {
+          "type": "keep_statement",
+          "named": true
+        },
+        {
+          "type": "rank_statement",
+          "named": true
+        },
+        {
+          "type": "repeat_above_statement",
+          "named": true
+        },
+        {
+          "type": "repeat_block_statement",
+          "named": true
+        },
+        {
+          "type": "unfold_statement",
           "named": true
         }
       ]
@@ -1462,10 +1509,6 @@
           "named": true
         },
         {
-          "type": "flow_body",
-          "named": true
-        },
-        {
           "type": "flow_repeat_keyword",
           "named": true
         },
@@ -1474,7 +1517,26 @@
           "named": true
         },
         {
+          "type": "repeat_body",
+          "named": true
+        },
+        {
           "type": "times_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "repeat_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_body",
           "named": true
         },
         {
@@ -1657,15 +1719,7 @@
       "required": true,
       "types": [
         {
-          "type": "ask_statement",
-          "named": true
-        },
-        {
           "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "do_statement",
           "named": true
         },
         {
@@ -1673,19 +1727,11 @@
           "named": true
         },
         {
-          "type": "drop_statement",
+          "type": "explicit_flow_statement",
           "named": true
         },
         {
-          "type": "each_statement",
-          "named": true
-        },
-        {
-          "type": "fold_statement",
-          "named": true
-        },
-        {
-          "type": "keep_statement",
+          "type": "implicit_do_statement",
           "named": true
         },
         {
@@ -1694,22 +1740,6 @@
         },
         {
           "type": "parent_doc_comment",
-          "named": true
-        },
-        {
-          "type": "rank_statement",
-          "named": true
-        },
-        {
-          "type": "repeat_above_statement",
-          "named": true
-        },
-        {
-          "type": "repeat_block_statement",
-          "named": true
-        },
-        {
-          "type": "unfold_statement",
           "named": true
         }
       ]
