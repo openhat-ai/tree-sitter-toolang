@@ -3067,13 +3067,8 @@
           "type": "FIELD",
           "name": "content",
           "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_unroled_message_continuation_text"
-            },
-            "named": true,
-            "value": "indented_raw_text"
+            "type": "SYMBOL",
+            "name": "indented_raw_text"
           }
         },
         {
@@ -3433,17 +3428,6 @@
         "content": {
           "type": "PATTERN",
           "value": "[ \\t]+([^u \\t\\r\\n][^\\r\\n]*|u([^n\\r\\n][^\\r\\n]*)?|un([^t\\r\\n][^\\r\\n]*)?|unt([^i\\r\\n][^\\r\\n]*)?|unti([^l\\r\\n][^\\r\\n]*)?|until([^ \\t:=+\\-\\r\\n][^\\r\\n]*)?)"
-        }
-      }
-    },
-    "_unroled_message_continuation_text": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PREC",
-        "value": 2,
-        "content": {
-          "type": "PATTERN",
-          "value": "[ \\t][^\\r\\n]*"
         }
       }
     },

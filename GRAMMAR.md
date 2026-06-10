@@ -225,9 +225,12 @@ Rules:
   message.
 - Unroled messages are fallback messages. A line starting with a thunk reserved
   word parses as `invalid_thunk_reserved_message` unless it matches an explicit
-  thunk body form. After fallback has started, subsequent text lines are message
-  content. Use an explicit role when message content itself starts with a
-  reserved word.
+  thunk body form. Explicit thunk body forms are tried before fallback, including
+  after an unroled message has started.
+- Adjacent unroled message text lines are merged into one message. One blank
+  line between unroled text lines is preserved inside the same message. Two or
+  more blank lines, or any comment/doc-comment line, split unroled messages.
+- Use an explicit role when message content itself starts with a reserved word.
 - `pass` declares an empty body and cannot be followed by other body entries.
 - Runtime validates referenced names and directive semantics.
 

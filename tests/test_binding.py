@@ -1119,7 +1119,7 @@ def test_bare_text_is_parsed_as_unroled_message():
     source = (
         b"thunk reply(in: Text) -> Text:\n"
         b"  Return directly.\n"
-        b"  context can appear after fallback starts.\n"
+        b"  Include the current context in the reply.\n"
     )
 
     tree = parser.parse(source)
@@ -1130,7 +1130,58 @@ def test_bare_text_is_parsed_as_unroled_message():
     assert len(messages) == 1
     assert not _nodes(messages[0], "role")
     assert "Return directly." in _text(source, messages[0])
-    assert "context can appear after fallback starts." in _text(source, messages[0])
+    assert "Include the current context in the reply." in _text(source, messages[0])
+
+
+def test_unroled_message_stops_before_explicit_roles():
+    parser = _parser()
+    source = (
+        b"thunk classify:\n"
+        b"  Evidence bundle:\n"
+        b"  {{ _ }}\n"
+        b"\n"
+        b"  Decide whether to keep it.\n"
+        b"\n"
+        b"  user:\n"
+        b"    abc\n"
+        b"\n"
+        b"  assistant:\n"
+        b"    def\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    messages = _messages(body)
+
+    assert tree.root_node.has_error is False
+    assert len(messages) == 3
+    assert not _nodes(messages[0], "role")
+    assert "Evidence bundle:" in _text(source, messages[0])
+    assert [_text(source, _nodes(message, "role")[0]).strip() for message in messages[1:]] == [
+        "user",
+        "assistant",
+    ]
+
+
+def test_comments_split_unroled_messages():
+    parser = _parser()
+    source = (
+        b"thunk split:\n"
+        b"  first message\n"
+        b"  # Plain comment splits messages.\n"
+        b"  second message\n"
+    )
+
+    tree = parser.parse(source)
+    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    messages = _messages(body)
+
+    assert tree.root_node.has_error is False
+    assert len(messages) == 2
+    assert "first message" in _text(source, messages[0])
+    assert "second message" in _text(source, messages[1])
+    assert "Plain comment" not in _text(source, messages[0])
+    assert "Plain comment" not in _text(source, messages[1])
 
 
 def test_indented_cap_body_parses_with_crlf_line_endings():
