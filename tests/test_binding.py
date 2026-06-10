@@ -34,29 +34,37 @@ def _item_child(item):
     return item.named_children[0]
 
 
-def _blocks(node):
-    blocks = []
+FLOW_STATEMENT_TYPES = {
+    "do_statement",
+    "ask_statement",
+    "unfold_statement",
+    "keep_statement",
+    "drop_statement",
+    "rank_statement",
+    "each_statement",
+    "fold_statement",
+    "repeat_above_statement",
+    "repeat_block_statement",
+}
+
+
+def _nodes(node, *types):
+    matches = []
     for child in node.named_children:
-        if child.type == "block":
-            blocks.append(child)
-        elif child.type in {
-            "flow_body",
-            "flow_body_tail",
-            "flow_statement",
-            "instruction_section",
-            "message_section",
-            "roled_message",
-            "thunk_tail",
-            "unroled_message",
-        }:
-            blocks.extend(_blocks(child))
-    return blocks
+        if child.type in types:
+            matches.append(child)
+        matches.extend(_nodes(child, *types))
+    return matches
+
+
+def _messages(node):
+    return _nodes(node, "message")
 
 
 def _statements(node):
     statements = []
     for child in node.named_children:
-        if child.type == "statement":
+        if child.type in FLOW_STATEMENT_TYPES:
             statements.append(child)
         statements.extend(_statements(child))
     return statements
@@ -67,6 +75,13 @@ def _field_descendants(node, field_name):
     for child in node.named_children:
         matches.extend(_field_descendants(child, field_name))
     return matches
+
+
+def _statement_keyword(source: bytes, statement) -> str | None:
+    for child in statement.named_children:
+        if child.type.startswith("flow_") and child.type.endswith("_keyword"):
+            return _text(source, child).strip()
+    return None
 
 
 def test_language_capsule_builds_language():
@@ -101,7 +116,7 @@ def test_script_thunks_fixture_covers_signature_variations():
         else None
         for thunk in thunks
     ]
-    outputs = [thunk.child_by_field_name("output") for thunk in thunks]
+    outputs = [thunk.child_by_field_name("return") for thunk in thunks]
     param_counts = [
         len(params.children_by_field_name("param"))
         if (params := thunk.child_by_field_name("params")) is not None
@@ -121,15 +136,15 @@ def test_script_thunks_fixture_covers_signature_variations():
         "Part[]",
     ]
     assert param_counts == [None, 1, 1, 2, 1, 2, 3]
-    assert "pass_statement" in str(thunks[0].child_by_field_name("body"))
+    assert "pass_keyword" in str(thunks[0].child_by_field_name("body"))
     assert "type_suffix" in str(thunks[3].child_by_field_name("params"))
-    assert "block_fenced" in str(thunks[-1].child_by_field_name("body"))
+    assert "text_block" in str(thunks[-1].child_by_field_name("body"))
     echo_body = thunks[1].child_by_field_name("body")
     assert echo_body is not None
-    echo_blocks = _blocks(echo_body)
-    assert len(echo_blocks) == 1
-    assert echo_blocks[0].child_by_field_name("kind") is None
-    assert "Echo the current input:" in _text(source, echo_blocks[0])
+    echo_messages = _messages(echo_body)
+    assert len(echo_messages) == 2
+    assert "role" not in str(echo_messages[0])
+    assert "Echo the current input:" in _text(source, echo_messages[0])
 
 
 def test_syntax_variants_fixture_parses_empty_params():
@@ -258,7 +273,7 @@ def test_jobs_fixture_covers_task_and_chore_items():
     assert "report actionable items" in _text(source, bodies[1])
 
 
-def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
+def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     parser = _parser()
     source = (FIXTURES_DIR / "syntax_variants.too").read_bytes()
 
@@ -306,23 +321,40 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_fenced_blocks():
 
     instruct = items[5]
     assert instruct.child_by_field_name("name") is not None
-    assert "block_fenced" in str(instruct.child_by_field_name("body"))
+    assert "text_block" in str(instruct.child_by_field_name("body"))
 
     context = items[6]
     assert context.child_by_field_name("name") is not None
-    assert "block_indented" in str(context.child_by_field_name("body"))
+    assert "text_block" in str(context.child_by_field_name("body"))
 
     thunk = items[7]
     body = thunk.child_by_field_name("body")
     assert body is not None
-    blocks = _blocks(body)
-    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
-        "instruct",
-        "context",
+    messages = _messages(body)
+    assert [
+        _text(source, _nodes(message, "role")[0]).strip()
+        for message in messages
+        if _nodes(message, "role")
+    ] == [
         "user",
     ]
-    assert "block_fenced" in str(blocks[2].child_by_field_name("value"))
-    assert "block_name" in str(blocks[1].child_by_field_name("value"))
+    assert [
+        child.type
+        for child in body.named_children
+        if child.type in {"settings", "messages"}
+    ] == [
+        "settings",
+        "messages",
+    ]
+    assert [
+        child.type
+        for child in _nodes(body, "settings")[0].named_children
+        if child.type.endswith("_setting")
+    ] == [
+        "instruct_setting",
+        "context_setting",
+    ]
+    assert "text_block" in str(messages[0])
 
 
 def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
@@ -352,7 +384,7 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
     thunks = [_item_child(item) for item in _items(tree.root_node)]
     names = [_text(source, thunk.child_by_field_name("name")) for thunk in thunks]
     params = [thunk.child_by_field_name("params") for thunk in thunks]
-    outputs = [thunk.child_by_field_name("output") for thunk in thunks]
+    outputs = [thunk.child_by_field_name("return") for thunk in thunks]
 
     assert tree.root_node.has_error is False
     assert names == ["chat", "task", "chore"]
@@ -388,15 +420,15 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
         for directive in task_body.named_children
         if directive.type == "directive"
     ]
-    chore_block_kinds = [
-        _text(source, block.child_by_field_name("kind")).strip()
-        for block in _blocks(chore_body)
-        if block.child_by_field_name("kind") is not None
+    chore_message_roles = [
+        _text(source, _nodes(message, "role")[0]).strip()
+        for message in _messages(chore_body)
+        if _nodes(message, "role")
     ]
     chat_unroled_messages = [
-        block
-        for block in _blocks(chat_body)
-        if block.child_by_field_name("kind") is None
+        message
+        for message in _messages(chat_body)
+        if not _nodes(message, "role")
     ]
 
     assert chat_directive_keys == [
@@ -412,8 +444,14 @@ def test_agent_thunks_fixture_covers_chat_task_and_chore_shapes():
         "hands",
         "handoffs",
     ]
-    assert chore_block_kinds == [
-        "instruct",
+    assert [
+        child.type
+        for child in _nodes(chore_body, "settings")[0].named_children
+        if child.type.endswith("_setting")
+    ] == [
+        "instruct_setting",
+    ]
+    assert chore_message_roles == [
         "user",
     ]
     assert len(chat_unroled_messages) == 1
@@ -481,7 +519,7 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
 
     research = flows[0]
     params = research.child_by_field_name("params")
-    output = research.child_by_field_name("output")
+    output = research.child_by_field_name("return")
     body = research.child_by_field_name("body")
 
     assert params is not None
@@ -496,48 +534,54 @@ def test_flows_fixture_covers_signatures_statements_and_doc_comments():
     assert "doc_comment" in str(body)
 
     research_statements = _statements(body)
+    assert [_statement_keyword(source, statement) for statement in research_statements] == [
+        "do",
+        "unfold",
+        "keep",
+        "drop",
+        "rank",
+        "each",
+        "fold",
+        "repeat",
+    ]
     assert [
-        _text(source, statement.child_by_field_name("keyword")).strip()
-        for statement in research_statements
-    ] == ["do", "unfold", "keep", "drop", "rank", "each", "fold", "repeat"]
-    do_head = research_statements[0].child_by_field_name("targets")
-    assert [
-        _text(source, target)
-        for target in _field_descendants(do_head, "target")
+        _text(source, callee)
+        for callee in _nodes(research_statements[0], "callee")
     ] == ["classify", "normalize"]
-    assert "flow_inline_output_type" in str(research_statements[1].child_by_field_name("head"))
-    assert "SearchJob" in _text(source, research_statements[1].child_by_field_name("head"))
-    assert "flow_parallelism" in str(research_statements[2].child_by_field_name("head"))
-    assert "Keep only useful" in _text(source, research_statements[2].child_by_field_name("body"))
-    assert "Drop duplicate" in _text(source, research_statements[3].child_by_field_name("body"))
-    assert "flow_rank_limit" in str(research_statements[4].child_by_field_name("head"))
-    assert "flow_inline_output_type" in str(research_statements[5].child_by_field_name("head"))
-    assert "flow_parallelism" in str(research_statements[5].child_by_field_name("head"))
-    assert "Synthesize all notes" in _text(source, research_statements[6].child_by_field_name("body"))
-    assert _text(source, research_statements[7].child_by_field_name("condition_keyword")) == "until"
-    assert _text(source, research_statements[7].child_by_field_name("count")) == "3"
+    assert "to_clause" in str(research_statements[1])
+    assert "SearchJob" in _text(source, _nodes(research_statements[1], "to_clause")[0])
+    assert "par_clause" in str(research_statements[2])
+    assert "Keep only useful" in _text(source, research_statements[2])
+    assert "Drop duplicate" in _text(source, research_statements[3])
+    assert "limit_clause" in str(research_statements[4])
+    assert "to_clause" in str(research_statements[5])
+    assert "par_clause" in str(research_statements[5])
+    assert "Synthesize all notes" in _text(source, research_statements[6])
+    assert "until_clause" in str(research_statements[7])
+    assert _text(source, _nodes(research_statements[7], "times_clause")[0]) == "3"
 
     delegate_statements = _statements(flows[1].child_by_field_name("body"))
-    assert [_text(source, statement.child_by_field_name("keyword")).strip() for statement in delegate_statements] == [
+    assert [_statement_keyword(source, statement) for statement in delegate_statements] == [
         "ask",
         "repeat",
     ]
-    assert _text(source, delegate_statements[1].child_by_field_name("count")) == "3"
+    assert _text(source, _nodes(delegate_statements[1], "times_clause")[0]) == "3"
 
     named_statements = _statements(flows[2].child_by_field_name("body"))
-    assert [_text(source, statement.child_by_field_name("keyword")).strip() for statement in named_statements] == [
+    assert [_statement_keyword(source, statement) for statement in named_statements] == [
         "unfold",
         "fold",
     ]
     assert [
-        _text(source, statement.child_by_field_name("target"))
+        _text(source, _nodes(statement, "callee")[0])
         for statement in named_statements
     ] == ["plan_searches", "synthesize_answer"]
     bare_statements = _statements(flows[3].child_by_field_name("body"))
     assert len(bare_statements) == 1
-    assert bare_statements[0].child_by_field_name("keyword") is None
+    assert _statement_keyword(source, bare_statements[0]) is None
     assert "Use the current input directly." in _text(source, bare_statements[0])
-    assert "pass_statement" in str(flows[4].child_by_field_name("body"))
+    assert "Return the transformed parts." in _text(source, bare_statements[0])
+    assert "pass_keyword" in str(flows[4].child_by_field_name("body"))
 
 
 def test_flow_named_reference_and_inline_thunk_forms():
@@ -565,23 +609,23 @@ def test_flow_named_reference_and_inline_thunk_forms():
     flows = [_item_child(item) for item in _items(tree.root_node)]
 
     assert tree.root_node.has_error is False
-    named_targets = _statements(flows[0].child_by_field_name("body"))[0].child_by_field_name("targets")
+    named_targets = _nodes(_statements(flows[0].child_by_field_name("body"))[0], "callees")[0]
     assert [
         _text(source, target)
-        for target in _field_descendants(named_targets, "target")
+        for target in _nodes(named_targets, "callee")
     ] == ["classify", "normalize", "summarize"]
     do_inline_statement = _statements(flows[1].child_by_field_name("body"))[0]
-    assert "flow_inline_body" in str(do_inline_statement.child_by_field_name("body"))
-    assert "Normalize the current value." in _text(source, do_inline_statement.child_by_field_name("body"))
+    assert "text_inline" in str(do_inline_statement)
+    assert "Normalize the current value." in _text(source, do_inline_statement)
     do_typed_statement = _statements(flows[2].child_by_field_name("body"))[0]
-    assert "flow_inline_output_type" in str(do_typed_statement.child_by_field_name("head"))
-    assert "Extract one note." in _text(source, do_typed_statement.child_by_field_name("body"))
+    assert "to_clause" in str(do_typed_statement)
+    assert "Extract one note." in _text(source, do_typed_statement)
     inline_statement = _statements(flows[3].child_by_field_name("body"))[0]
-    assert "flow_inline_body" in str(inline_statement.child_by_field_name("body"))
-    assert "Create search jobs." in _text(source, inline_statement.child_by_field_name("body"))
+    assert "text_inline" in str(inline_statement)
+    assert "Create search jobs." in _text(source, inline_statement)
     block_statement = _statements(flows[4].child_by_field_name("body"))[0]
-    assert "block_indented_implicit" in str(block_statement.child_by_field_name("body"))
-    assert "Synthesize final answer." in _text(source, block_statement.child_by_field_name("body"))
+    assert "text_block" in str(block_statement)
+    assert "Synthesize final answer." in _text(source, block_statement)
 
 
 def test_flow_statement_heads_are_keyword_specific():
@@ -596,7 +640,6 @@ def test_flow_statement_heads_are_keyword_specific():
         b"flow bare:\n  drop to Note:\n    duplicate\n",
         b"flow bare:\n  drop duplicate_filter:\n    duplicate\n",
         b"flow bare:\n  rank to Note:\n    preferred\n",
-        b"flow bare:\n  rank par 5:\n    preferred\n",
         b"flow bare:\n  rank ranking_rule:\n    preferred\n",
         b"flow bare:\n  do summarize:\n    Run it.\n",
         b"flow bare:\n  each to Note search_notes:\n    search\n",
@@ -614,8 +657,10 @@ def test_flow_statement_heads_are_keyword_specific():
         b"  drop duplicate_filter par 4\n"
         b"  drop par 4:\n"
         b"    duplicate\n"
-        b"  rank ranking_rule\n"
-        b"  rank 5:\n"
+            b"  rank ranking_rule\n"
+            b"  rank par 5:\n"
+            b"    preferred\n"
+            b"  rank 5:\n"
         b"    preferred\n"
         b"  each search_notes par 4\n"
         b"  each to Note par 4:\n"
@@ -631,13 +676,14 @@ def test_flow_statement_heads_are_keyword_specific():
     valid_tree = parser.parse(valid_source)
     valid_statements = _statements(_item_child(_items(valid_tree.root_node)[0]).child_by_field_name("body"))
     assert valid_tree.root_node.has_error is False
-    assert [_text(valid_source, statement.child_by_field_name("keyword")).strip() for statement in valid_statements] == [
+    assert [_statement_keyword(valid_source, statement) for statement in valid_statements] == [
         "unfold",
         "unfold",
         "keep",
         "keep",
         "drop",
         "drop",
+        "rank",
         "rank",
         "rank",
         "each",
@@ -645,19 +691,20 @@ def test_flow_statement_heads_are_keyword_specific():
         "fold",
         "fold",
     ]
-    assert valid_statements[0].child_by_field_name("target") is not None
-    assert "flow_inline_output_type" in str(valid_statements[1].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[2].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[3].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[4].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[5].child_by_field_name("head"))
-    assert valid_statements[6].child_by_field_name("target") is not None
-    assert "flow_rank_limit" in str(valid_statements[7].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[8].child_by_field_name("head"))
-    assert "flow_inline_output_type" in str(valid_statements[9].child_by_field_name("head"))
-    assert "flow_parallelism" in str(valid_statements[9].child_by_field_name("head"))
-    assert valid_statements[10].child_by_field_name("target") is not None
-    assert "flow_inline_output_type" in str(valid_statements[11].child_by_field_name("head"))
+    assert _nodes(valid_statements[0], "callee")
+    assert "to_clause" in str(valid_statements[1])
+    assert "par_clause" in str(valid_statements[2])
+    assert "par_clause" in str(valid_statements[3])
+    assert "par_clause" in str(valid_statements[4])
+    assert "par_clause" in str(valid_statements[5])
+    assert _nodes(valid_statements[6], "callee")
+    assert "par_clause" in str(valid_statements[7])
+    assert "limit_clause" in str(valid_statements[8])
+    assert "par_clause" in str(valid_statements[9])
+    assert "to_clause" in str(valid_statements[10])
+    assert "par_clause" in str(valid_statements[10])
+    assert _nodes(valid_statements[11], "callee")
+    assert "to_clause" in str(valid_statements[12])
 
 
 def test_implicit_thunk_statement_splitting():
@@ -703,17 +750,17 @@ def test_flow_repeat_forms():
     statements = _statements(_item_child(_items(tree.root_node)[0]).child_by_field_name("body"))
 
     assert tree.root_node.has_error is False
-    assert [_text(source, statement.child_by_field_name("keyword")).strip() for statement in statements] == [
+    assert [_statement_keyword(source, statement) for statement in statements] == [
         "do",
         "repeat",
         "repeat",
         "repeat",
     ]
-    assert _text(source, statements[1].child_by_field_name("count")) == "3"
-    assert statements[2].child_by_field_name("condition_keyword") is not None
-    assert statements[2].child_by_field_name("count") is None
-    assert _text(source, statements[3].child_by_field_name("count")) == "5"
-    assert "block_indented_implicit" in str(statements[3].child_by_field_name("condition"))
+    assert _text(source, _nodes(statements[1], "times_clause")[0]) == "3"
+    assert "until_clause" in str(statements[2])
+    assert _nodes(statements[2], "times_clause") == []
+    assert _text(source, _nodes(statements[3], "times_clause")[0]) == "5"
+    assert "text_block" in str(_nodes(statements[3], "condition")[0])
 
     block_source = (
         b"flow counted_block:\n"
@@ -743,15 +790,13 @@ def test_flow_repeat_forms():
     ]
 
     assert block_tree.root_node.has_error is False
-    assert _text(block_source, repeat_statements[0].child_by_field_name("count")) == "5"
-    assert "repeat_block_body" in str(repeat_statements[0].child_by_field_name("body"))
-    assert repeat_statements[0].child_by_field_name("body").child_by_field_name("condition") is None
-    assert repeat_statements[1].child_by_field_name("count") is None
-    assert "until_clause" in str(repeat_statements[1].child_by_field_name("body"))
-    assert _text(block_source, repeat_statements[2].child_by_field_name("count")) == "5"
-    assert "block_indented_implicit" in str(
-        repeat_statements[2].child_by_field_name("body").child_by_field_name("condition")
-    )
+    assert _text(block_source, _nodes(repeat_statements[0], "times_clause")[0]) == "5"
+    assert "flow_body" in str(repeat_statements[0])
+    assert _nodes(repeat_statements[0], "condition") == []
+    assert _nodes(repeat_statements[1], "times_clause") == []
+    assert "until_clause" in str(repeat_statements[1])
+    assert _text(block_source, _nodes(repeat_statements[2], "times_clause")[0]) == "5"
+    assert "text_block" in str(_nodes(repeat_statements[2], "condition")[0])
 
 
 def test_flow_directive_nodes_only_parse_at_body_start():
@@ -806,10 +851,22 @@ def test_kitchen_sink_thunk_signature_directives_and_blocks():
     ]
     assert body is not None
     assert len([child for child in body.named_children if child.type == "directive"]) == 6
-    blocks = _blocks(body)
-    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
-        "instruct",
-        "context",
+    settings = _nodes(body, "settings")[0] if _nodes(body, "settings") else None
+    messages = _messages(body)
+    assert settings is not None
+    assert [
+        child.type
+        for child in settings.named_children
+        if child.type.endswith("_setting")
+    ] == [
+        "instruct_setting",
+        "context_setting",
+    ]
+    assert [
+        _text(source, _nodes(message, "role")[0]).strip()
+        for message in messages
+        if _nodes(message, "role")
+    ] == [
         "user",
     ]
 
@@ -870,10 +927,10 @@ def test_thunk_roled_messages_support_user_assistant_and_tool():
 
     tree = parser.parse(source)
     body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
-    blocks = _blocks(body)
+    messages = _messages(body)
 
     assert tree.root_node.has_error is False
-    assert [_text(source, block.child_by_field_name("kind")).strip() for block in blocks] == [
+    assert [_text(source, _nodes(message, "role")[0]).strip() for message in messages] == [
         "user",
         "assistant",
         "tool",
@@ -909,12 +966,12 @@ def test_bare_text_is_parsed_as_unroled_message():
 
     tree = parser.parse(source)
     body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
-    blocks = _blocks(body)
+    messages = _messages(body)
 
     assert tree.root_node.has_error is False
-    assert len(blocks) == 1
-    assert blocks[0].child_by_field_name("kind") is None
-    assert "Return directly." in _text(source, blocks[0])
+    assert len(messages) == 1
+    assert not _nodes(messages[0], "role")
+    assert "Return directly." in _text(source, messages[0])
 
 
 def test_indented_cap_body_parses_with_crlf_line_endings():

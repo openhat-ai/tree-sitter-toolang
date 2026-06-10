@@ -6,4 +6,4 @@
 (instruct) @indent
 (thunk) @indent
 (flow) @indent
-(block) @indent
+(text_block) @indent

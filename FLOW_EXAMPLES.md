@@ -1,7 +1,6 @@
 # Flow Syntax Examples
 
-This file lists the intended flow syntax forms for review. It is a design
-example, not yet a complete grammar contract.
+This file lists the supported flow syntax forms.
 
 ```too
 flow examples(in: Pack) -> Answer:
@@ -47,7 +46,6 @@ flow examples(in: Pack) -> Answer:
   ## keep: named predicate, or inline predicate. `par` is allowed.
   keep useful_filter
   keep useful_filter par 8
-  keep par 8 useful_filter
 
   keep: useful items
   keep:
@@ -60,7 +58,6 @@ flow examples(in: Pack) -> Answer:
   ## drop: named predicate, or inline predicate. `par` is allowed.
   drop duplicate_filter
   drop duplicate_filter par 8
-  drop par 8 duplicate_filter
 
   drop: duplicate items
   drop:
@@ -84,7 +81,6 @@ flow examples(in: Pack) -> Answer:
   ## each: named mapper, or inline mapper with optional output type and `par`.
   each search_notes
   each search_notes par 5
-  each par 5 search_notes
 
   each: Process each item.
   each:

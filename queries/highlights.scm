@@ -30,13 +30,12 @@
 (flow_until_keyword) @keyword
 (flow_to_keyword) @keyword
 (flow_par_keyword) @keyword
+(flow_limit_keyword) @keyword
+(flow_times_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
-(context_block_kind) @keyword
-(instruct_block_kind) @keyword
-(roled_message_kind) @keyword
-(block_language) @property
+(role) @keyword
 
 (assign_operator) @operator
 (directive_op) @operator
@@ -48,16 +47,13 @@
 (rparen) @punctuation.delimiter
 (optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
-(fence_open) @punctuation.special
-(fence_close) @punctuation.special
 
-(cap_uri) @constant
-(cap_shorthand) @constant
-(bare_value) @constant
+(cap_ref
+  (text_line) @constant)
+(directive_value) @constant
 
 (property_value) @string
-(block_content_inline) @string
-(fenced_raw_text) @string
+(text_line) @string
 (indented_raw_text) @string
 
 (struct
@@ -66,31 +62,28 @@
 
 (thunk
   name: (thunk_name
-    (value_name) @function))
+    (snake_name) @function))
 
 (flow
   name: (flow_name
-    (value_name) @function))
+    (snake_name) @function))
 
 (prompt
-  name: (cap_name
-    (value_name) @function))
+  name: (cap_name) @function)
 
 (task
-  name: (job_name
-    (value_name) @function))
+  name: (job_name) @function)
 
 (chore
-  name: (job_name
-    (value_name) @function))
+  name: (job_name) @function)
 
 (context
   name: (context_name
-    (value_name) @function))
+    (snake_name) @function))
 
 (instruct
   name: (instruct_name
-    (value_name) @function))
+    (snake_name) @function))
 
 [
   (psyche)
@@ -102,11 +95,11 @@
 
 (param
   name: (param_name
-    (value_name) @property))
+    (snake_name) @property))
 
 (field
   name: (field_name
-    (value_name) @property))
+    (snake_name) @property))
 
 (type
   (base_type

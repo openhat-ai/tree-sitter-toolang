@@ -2,11 +2,11 @@
 
 (thunk
   name: (thunk_name
-    (value_name) @name)) @definition.function
+    (snake_name) @name)) @definition.function
 
 (flow
   name: (flow_name
-    (value_name) @name)) @definition.function
+    (snake_name) @name)) @definition.function
 
 (struct
   name: (struct_name
@@ -14,27 +14,21 @@
 
 [
   (psyche
-    name: (cap_name
-      (value_name) @name))
+    name: (cap_name) @name)
   (skill
-    name: (cap_name
-      (value_name) @name))
+    name: (cap_name) @name)
   (service
-    name: (cap_name
-      (value_name) @name))
+    name: (cap_name) @name)
   (prompt
-    name: (cap_name
-      (value_name) @name))
+    name: (cap_name) @name)
   (task
-    name: (job_name
-      (value_name) @name))
+    name: (job_name) @name)
   (chore
-    name: (job_name
-      (value_name) @name))
+    name: (job_name) @name)
   (context
     name: (context_name
-      (value_name) @name))
+      (snake_name) @name))
   (instruct
     name: (instruct_name
-      (value_name) @name))
+      (snake_name) @name))
 ] @definition.class
