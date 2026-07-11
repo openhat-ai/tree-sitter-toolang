@@ -1,8 +1,8 @@
 # top-level file comment
-use psyche toolang.ai/reviewer
-use skill briceyan/pdf-processing # inline use comment
-use service github://briceyan/caps/services/github@main
-use prompt https://toolang.ai/review
+with psyche toolang.ai/reviewer
+with skill briceyan/pdf-processing # inline with comment
+with service github://briceyan/caps/services/github@main
+with prompt https://toolang.ai/review
 
 psyche reviewer:
   Prefer concrete findings and direct language.
@@ -28,23 +28,23 @@ struct ReviewResult:
   findings: ReviewFinding[]
 
 instruct:
-  You are running {{thunk.name}}.
+  You are running {{agic.name}}.
 
 context:
   Use the current run context when preparing the final user message.
 
-thunk respond:
+agic respond:
   instruct default
 
-thunk summarize:
+agic summarize:
   user:
     Summarize the current workspace in a concise style.
 
-thunk inspect() -> ReviewResult:
+agic inspect() -> ReviewResult:
   user:
     Return a precise result.
 
-thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
+agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5 # inline directive comment
   psyches += reviewer
   skills += review, patch
@@ -59,7 +59,7 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
     Review {{path}} carefully.
     {{focus}}
 
-thunk raw:
+agic raw:
   instruct none
   context none
   user: none

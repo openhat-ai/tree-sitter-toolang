@@ -1,7 +1,7 @@
 ; Source of truth for Toolang Tree-sitter tags queries.
 
-(thunk
-  name: (thunk_name
+(agic
+  name: (agic_name
     (snake_name) @name)) @definition.function
 
 (flow

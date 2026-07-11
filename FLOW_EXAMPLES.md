@@ -1,194 +1,111 @@
 # Flow Syntax Examples
 
-This file lists the supported flow syntax forms.
+This file shows every supported flow statement shape.
 
 ```too
-flow examples(in: Pack) -> Answer:
-  ## Bare thunk: inline thunk body without a keyword.
+flow examples(input: Pack) -> Answer:
+  ## Bare text is shorthand for an inline run.
   Rewrite the current value.
 
-  Extract one note from the current value.
+  A single blank line remains inside the same inline run.
 
 
-  This starts a separate bare thunk because it is separated by two blank lines.
+  Two blank lines start another inline run.
 
-  # Any comment line also starts a separate bare thunk.
-  ## A doc comment can additionally describe the next statement in UI progress.
-  Normalize the current value.
+  ## Run a named agic or flow.
+  run normalize
 
-  ## do: named calls.
-  do normalize
-  do classify, normalize, summarize
-
-  ## do: inline thunk, with optional output type.
-  do: Rewrite the current value.
-  do:
-    Rewrite the current value.
-
-  do to Note: Rewrite the current value.
-  do to Note:
+  ## Define an inline agic, optionally with a return type.
+  run: Rewrite the current value.
+  run -> Note:
     Extract one note from the current value.
 
-  ## ask: delegate to an agent.
-  ask alice
+  ## Seek another agent with a named runnable or inline agic.
+  seek reviewer review
+  seek reviewer -> Review:
+    Review the current value.
 
-  ## unfold: named thunk, or inline thunk with optional output type.
-  unfold plan_searches
+  ## Ask the human owner.
+  ask: Approve this result?
+  ask:
+    Choose the preferred result and explain why.
 
-  unfold: Split into items.
-  unfold:
-    Split the request into independent jobs.
+  ## Expand one item into a list with one run.
+  scatter 5 plan_searches
+  scatter 5 -> SearchJob:
+    Generate five distinct search jobs.
 
-  unfold to SearchJob: Create search jobs from the request.
-  unfold to SearchJob:
-    Create search jobs from the request.
+  ## Expand one item into a list with independent runs.
+  storm 5 sample_direction
+  storm 5 sample_direction par 3
+  storm 5 par 3 -> Direction:
+    Generate one independent research direction.
 
-  ## keep: named predicate, or inline predicate. `par` is allowed.
-  keep useful_filter
-  keep useful_filter par 8
+  ## Reduce a list into one item with one run.
+  gather synthesize
+  gather -> Report:
+    Synthesize every current item into one report.
 
-  keep: useful items
-  keep:
-    useful items
+  ## Reduce a list into one item through sequential runs.
+  settle merge_next
+  settle -> Report:
+    Merge this item into the accumulated report.
 
-  keep par 8: useful items
-  keep par 8:
-    useful items
+  ## Transform every list item.
+  map extract_note
+  map extract_note par 5
+  map par 5 -> Note:
+    Extract one concise note from this item.
 
-  ## drop: named predicate, or inline predicate. `par` is allowed.
-  drop duplicate_filter
-  drop duplicate_filter par 8
+  ## Select by position or predicate.
+  keep first 5
+  keep last 5
+  keep useful
+  keep useful par 5
+  keep par 5:
+    Return true when this item is useful.
 
-  drop: duplicate items
-  drop:
-    duplicate items
+  drop first 2
+  drop last 2
+  drop duplicate
+  drop duplicate par 5
+  drop par 5:
+    Return true when this item is a duplicate.
 
-  drop par 8: duplicate items
-  drop par 8:
-    duplicate items
+  ## Rank by descending numeric score.
+  rank relevance
+  rank relevance top 5
+  rank relevance bottom 5 par 3
+  rank top 5 par 3:
+    Score this item by relevance.
 
-  ## rank: named ranker, inline ranker, or inline ranker with top N.
-  rank ranking_rule
+  ## Bind, discard, or directly assign results.
+  let jobs = scatter 5 plan_searches
+  let run publish
+  let guidance:
+    Prefer primary sources and concrete evidence.
 
-  rank: best items first
-  rank:
-    best items first
-
-  rank 5: best five items
-  rank 5:
-    best five items
-
-  ## each: named mapper, or inline mapper with optional output type and `par`.
-  each search_notes
-  each search_notes par 5
-
-  each: Process each item.
-  each:
-    Process each item.
-
-  each par 5: Process items in parallel.
-  each par 5:
-    Process items in parallel.
-
-  each to Note: Extract a note.
-  each to Note:
-    Extract a note.
-
-  each to Note par 5: Search and extract notes.
-  each to Note par 5:
-    Search and extract notes.
-
-  ## fold: named reducer, or inline reducer with optional output type.
-  fold synthesize_answer
-
-  fold: Combine all items.
-  fold:
-    Combine all items.
-
-  fold to Answer: Synthesize the final answer.
-  fold to Answer:
-    Synthesize the final answer.
-
-  ## repeat: repeat previous executable statements in the same block.
-  do search
-  repeat 3
-
-  do improve_answer
-  repeat until: the answer is complete
-
-  do collect_evidence
-  repeat until:
-    the answer is complete and well-supported
-
-  do refine_answer
-  repeat 5 until: the answer is complete
-
-  do verify_answer
-  repeat 5 until:
-    the answer is complete and well-supported
-
-  repeat 5:
-    do collect_evidence
-    do verify_sources
+  ## Repeat by count, condition, or both.
+  repeat 3:
+    run improve
 
   repeat:
-    do collect_evidence
-    do verify_sources
-    until: enough evidence
+    run improve
+    until: Return true when no material improvement remains.
 
-  repeat 5:
-    do collect_evidence
-    do verify_sources
+  repeat 3:
+    run improve
     until:
-      enough evidence
+      Return true when no material improvement remains.
 ```
 
 Notes:
 
-- One blank line inside a bare thunk body keeps the text in the same bare thunk.
-- Two or more blank lines split bare thunk bodies into separate bare thunk statements.
-- Any comment line between bare thunk text blocks also splits them.
-- A doc comment is not special for splitting; it is a comment line too, and may
-  additionally describe the next bare thunk statement for UI progress.
-- Short repeat forms normalize to block repeat forms before execution.
-- A short repeat captures executable statements in the same flow block after the
-  previous repeat statement and before the current repeat statement.
-- A short repeat requires a non-empty captured range. A flow body cannot start
-  with a short repeat.
-- `repeat N:` and `repeat:` define explicit nested flow blocks. The block body is
-  the repeat range, and a final `until:` clause may stop the loop early.
-- Runtime only needs to execute block repeat semantics after normalization.
-- Doc comments attached to captured statements move with those statements during
-  normalization. Blank lines and unattached comments do not become executable
-  repeat body entries.
-- In examples such as `keep useful_filter`, `useful_filter` is a named thunk.
-  Named thunk forms do not also define an inline body after `:`.
-- `to Type` belongs to inline thunk forms. Named thunk forms already carry their
-  own declared type.
-
-Normalization examples:
-
-```too
-do refine_answer
-repeat 5
-```
-
-normalizes to:
-
-```too
-repeat 5:
-  do refine_answer
-```
-
-```too
-do improve_answer
-repeat until: the answer is complete
-```
-
-normalizes to:
-
-```too
-repeat:
-  do improve_answer
-  until: the answer is complete
-```
+- Named runnable forms use the return contract declared by the referenced agic
+  or flow.
+- `-> T` and the following body form one inline agic definition.
+- `par P` limits concurrency without changing result order.
+- Bare text uses the same inline-run semantics as `run:`.
+- One blank line remains inside a bare text body. Two blank lines or any comment
+  line split adjacent bare text into separate statements.
+- `repeat` always has a count, a final `until` condition, or both.

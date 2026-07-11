@@ -1,5 +1,5 @@
 # top-level file comment
-use skill briceyan/pdf-processing # inline use comment
+with skill briceyan/pdf-processing # inline with comment
 
 service github: # inline cap header comment
   protocol = http
@@ -18,7 +18,7 @@ prompt review: # inline prompt header comment
   Review {{path}} carefully.
   {{focus}}
 
-thunk review(in: Part[], focus?: Text) -> ReviewResult: # inline thunk header comment
+agic review(in: Part[], focus?: Text) -> ReviewResult: # inline agic header comment
   models = gpt-5 # inline directive comment
 
   instruct default
