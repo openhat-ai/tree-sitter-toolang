@@ -11,43 +11,61 @@ struct Note:
 struct Answer:
   text: Text
 
-flow research(in: Pack) -> Answer:
+flow research(input: Pack) -> Answer:
   models = gpt-5
   tools += web
 
-  ## Prepare the request.
-  do classify, normalize
+  ## Produce one item.
+  run normalize
+  run -> Note: Extract one note.
 
-  unfold to SearchJob:
-    Create search jobs from the request.
+  ## Expand one item into a list.
+  scatter 5 plan_searches
+  scatter 5 -> SearchJob:
+    Create five search jobs.
+  storm 3 sample_direction par 2
+  storm 3 par 2 -> SearchJob:
+    Create one independent search job.
 
-  keep par 8:
-    Keep only useful and non-duplicate search jobs.
+  ## Reduce a list into one item.
+  gather synthesize
+  gather -> Answer: Synthesize one answer.
+  settle merge_next
+  settle -> Answer:
+    Merge this item into the accumulated answer.
 
-  drop par 8:
-    Drop duplicate or low-value jobs.
+  ## Transform and select list items.
+  map extract_note par 5
+  map par 5 -> Note: Extract one note.
+  keep first 5
+  keep useful par 5
+  keep par 5: Return true for useful items.
+  drop last 2
+  drop duplicate par 5
+  drop par 5: Return true for duplicate items.
+  rank relevance top 5 par 5
+  rank bottom 2 par 5: Score this item.
 
-  rank 5:
-    Prefer specific, diverse, reliable jobs.
+  ## Repeat with a count and optional condition.
+  repeat 3:
+    run improve
+    until: Return true when complete.
 
-  each to Note par 5:
-    Search the web.
-    Read relevant sources.
-    Extract concise notes.
+flow delegate:
+  seek reviewer review
+  seek reviewer -> Answer:
+    Review the current value.
+  ask: Approve this result?
 
-  fold to Answer:
-    Synthesize all notes into one final response.
-
-  repeat 3 until:
-    the answer is complete and well-supported
-
-flow delegate(in: Pack) -> Pack:
-  ask alice
-  repeat 3
-
-flow named:
-  unfold plan_searches
-  fold synthesize_answer
+flow bindings:
+  let jobs = scatter 5 plan_searches
+  let run publish
+  let guidance:
+    Prefer primary sources.
+  repeat:
+    run improve
+    until:
+      Return true when complete.
 
 flow bare:
   Use the current input directly.

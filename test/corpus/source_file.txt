@@ -1,41 +1,41 @@
 ==================
-Use Items
+With Items
 ==================
-use psyche toolang.ai/reviewer
-use skill briceyan/pdf-processing
-use service github://briceyan/caps/services/github@main
-use prompt https://toolang.ai/review
+with psyche toolang.ai/reviewer
+with skill briceyan/pdf-processing
+with service github://briceyan/caps/services/github@main
+with prompt https://toolang.ai/review
 
 ---
 
 (source_file
   (item
-    (use
-      (use_keyword)
+    (with
+      (with_keyword)
       (cap_kind)
       (cap_ref
         (text_line))
       (line_end
         (newline))))
   (item
-    (use
-      (use_keyword)
+    (with
+      (with_keyword)
       (cap_kind)
       (cap_ref
         (text_line))
       (line_end
         (newline))))
   (item
-    (use
-      (use_keyword)
+    (with
+      (with_keyword)
       (cap_kind)
       (cap_ref
         (text_line))
       (line_end
         (newline))))
   (item
-    (use
-      (use_keyword)
+    (with
+      (with_keyword)
       (cap_kind)
       (cap_ref
         (text_line))
@@ -198,7 +198,7 @@ struct ReviewResult:
   findings: Finding[]
 
 instruct:
-  You are running {{thunk.name}}.
+  You are running {{agic.name}}.
 
 context:
   Add current workspace context to the final user message.
@@ -268,9 +268,9 @@ context:
                 (newline)))))))))
 
 ==================
-Thunk With Directives And Blocks
+Agic With Directives And Blocks
 ==================
-thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
+agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
   hands += summarize
@@ -287,9 +287,9 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
 
 (source_file
   (item
-    (thunk
-      (thunk_keyword)
-      (thunk_name
+    (agic
+      (agic_keyword)
+      (agic_name
         (snake_name))
       (params
         (lparen)
@@ -329,7 +329,7 @@ thunk review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
       (colon)
       (line_end
         (newline))
-      (thunk_body
+      (agic_body
         (directive
           (directive_key)
           (directive_op)
@@ -390,24 +390,24 @@ flow research(in: Pack) -> Answer:
   models = gpt-5
 
   ## Prepare the request.
-  do classify, normalize
-  ask alice
-  unfold to SearchJob:
-    Create search jobs from the request.
+  run normalize
+  seek alice review
+  ask: Approve the plan?
+  scatter 5 -> SearchJob:
+    Create five search jobs.
+  storm 3 sample par 2
   keep par 8:
-    Keep useful jobs.
-  rank 5:
-    Prefer reliable jobs.
-  each to Note par 5:
-    Search and extract notes.
-  fold to Answer:
+    Return true for useful jobs.
+  drop last 1
+  rank relevance top 5 par 3
+  map par 5 -> Note:
+    Extract one note.
+  gather -> Answer:
     Synthesize notes.
-  repeat 3 until:
-    the answer is complete
+  let draft = run summarize
   repeat 5:
-    do collect_evidence
-    until:
-      enough evidence
+    run collect_evidence
+    until: Return true when enough evidence exists.
 
 ---
 
@@ -446,159 +446,170 @@ flow research(in: Pack) -> Answer:
         (blank_line)
         (doc_line)
         (statements
-          (do_statement
-            (flow_do_keyword)
-            (callees
-              (callee
-                (snake_name))
-              (comma)
-              (callee
-                (snake_name)))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (seek_statement
+            (flow_seek_keyword)
+            (agent
+              (snake_name))
+            (runnable
+              (snake_name))
             (line_end
               (newline)))
           (ask_statement
             (flow_ask_keyword)
-            (agent
-              (snake_name))
-            (line_end
-              (newline)))
-          (unfold_statement
-            (flow_unfold_keyword)
-            (to_clause
-              (flow_to_keyword)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline))))
+          (scatter_statement
+            (flow_scatter_keyword)
+            (integer_literal)
+            (inline_agic
+              (arrow)
               (type
                 (base_type
                   (user_type
                     (type_name
-                      (pascal_name))))))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))))
+                      (pascal_name)))))
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (storm_statement
+            (flow_storm_keyword)
+            (integer_literal)
+            (runnable
+              (snake_name))
+            (par_clause
+              (flow_par_keyword)
+              (integer_literal))
+            (line_end
+              (newline)))
           (keep_statement
             (flow_keep_keyword)
             (par_clause
               (flow_par_keyword)
               (integer_literal))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))))
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (drop_statement
+            (flow_drop_keyword)
+            (position_clause
+              (flow_last_keyword)
+              (integer_literal))
+            (line_end
+              (newline)))
           (rank_statement
             (flow_rank_keyword)
-            (limit_clause
+            (runnable
+              (snake_name))
+            (rank_selection_clause
+              (flow_top_keyword)
               (integer_literal))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))))
-          (each_statement
-            (flow_each_keyword)
-            (to_clause
-              (flow_to_keyword)
-              (type
-                (base_type
-                  (user_type
-                    (type_name
-                      (pascal_name))))))
             (par_clause
               (flow_par_keyword)
               (integer_literal))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))))
-          (fold_statement
-            (flow_fold_keyword)
-            (to_clause
-              (flow_to_keyword)
+            (line_end
+              (newline)))
+          (map_statement
+            (flow_map_keyword)
+            (par_clause
+              (flow_par_keyword)
+              (integer_literal))
+            (inline_agic
+              (arrow)
               (type
                 (base_type
                   (user_type
                     (type_name
-                      (pascal_name))))))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))))
-          (repeat_above_statement
-            (flow_repeat_keyword)
-            (times_clause
-              (integer_literal))
-            (until_clause
-              (flow_until_keyword)
+                      (pascal_name)))))
               (colon)
-              (condition
-                (text_inline
-                  (text_block
-                    (line_end
-                      (newline))
-                    (text_body
-                      (text_body_line
-                        (indented_raw_text)
-                        (newline))))))))
-          (repeat_block_statement
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (gather_statement
+            (flow_gather_keyword)
+            (inline_agic
+              (arrow)
+              (type
+                (base_type
+                  (user_type
+                    (type_name
+                      (pascal_name)))))
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (run_statement
+              (flow_run_keyword)
+              (runnable
+                (snake_name))
+              (line_end
+                (newline))))
+          (repeat_statement
             (flow_repeat_keyword)
-            (times_clause
-              (integer_literal))
+            (integer_literal)
             (colon)
             (line_end
               (newline))
             (repeat_body
-              (flow_body
-                (statements
-                  (do_statement
-                    (flow_do_keyword)
-                    (callees
-                      (callee
-                        (snake_name)))
-                    (line_end
-                      (newline)))))
+              (statements
+                (run_statement
+                  (flow_run_keyword)
+                  (runnable
+                    (snake_name))
+                  (line_end
+                    (newline))))
               (until_statement
                 (flow_until_keyword)
-                (colon)
-                (condition
+                (inline_agic_body
+                  (colon)
                   (text_inline
-                    (text_block
-                      (line_end
-                        (newline))
-                      (text_body
-                        (text_body_line
-                          (indented_raw_text)
-                          (newline))))))))))))))
+                    (text_line)
+                    (line_end
+                      (newline))))))))))))
 
 ==================
 Comments
 ==================
 # top-level comment
-use skill briceyan/pdf-processing # inline comment
+with skill briceyan/pdf-processing # inline comment
 
-thunk raw:
+agic raw:
   instruct none
   context none
   user: none
@@ -608,8 +619,8 @@ thunk raw:
 (source_file
   (comment_line)
   (item
-    (use
-      (use_keyword)
+    (with
+      (with_keyword)
       (cap_kind)
       (cap_ref
         (text_line))
@@ -618,14 +629,14 @@ thunk raw:
         (newline))))
   (blank_line)
   (item
-    (thunk
-      (thunk_keyword)
-      (thunk_name
+    (agic
+      (agic_keyword)
+      (agic_name
         (snake_name))
       (colon)
       (line_end
         (newline))
-      (thunk_body
+      (agic_body
         (settings
           (instruct_setting
             (instruct_keyword)
@@ -649,21 +660,21 @@ thunk raw:
 ==================
 Recall Directive
 ==================
-thunk recall:
+agic recall:
   recall = history, memory
 
 ---
 
 (source_file
   (item
-    (thunk
-      (thunk_keyword)
-      (thunk_name
+    (agic
+      (agic_keyword)
+      (agic_name
         (snake_name))
       (colon)
       (line_end
         (newline))
-      (thunk_body
+      (agic_body
         (directive
           (directive_key)
           (directive_op)

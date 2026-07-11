@@ -4,6 +4,6 @@
 (struct) @indent
 (context) @indent
 (instruct) @indent
-(thunk) @indent
+(agic) @indent
 (flow) @indent
 (text_block) @indent

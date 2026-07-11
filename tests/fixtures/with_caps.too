@@ -1,0 +1,4 @@
+with psyche toolang.ai/reviewer
+with skill briceyan/pdf-processing
+with service github://briceyan/caps/services/github@main
+with prompt https://toolang.ai/review

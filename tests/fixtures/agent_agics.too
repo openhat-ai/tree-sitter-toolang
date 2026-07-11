@@ -1,4 +1,4 @@
-thunk chat(in: Part[]) -> Part[]:
+agic chat(in: Part[]) -> Part[]:
   models = gpt-5
   tools += shell
   hands += summarize
@@ -7,7 +7,7 @@ thunk chat(in: Part[]) -> Part[]:
 
   {{_}}
 
-thunk task(in: Part[]) -> Part[]:
+agic task(in: Part[]) -> Part[]:
   models = gpt-5
   tools += shell, filesystem
   skills += review
@@ -20,7 +20,7 @@ thunk task(in: Part[]) -> Part[]:
   user:
     {{_}}
 
-thunk chore:
+agic chore:
   models = gpt-5
   tools += shell
   handoffs = support, billing

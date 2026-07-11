@@ -39,7 +39,7 @@ instruct strict_json:
 context report:
   Include relevant report context before the user request.
 
-thunk report() -> Text:
+agic report() -> Text:
   handoffs = support, billing
   hands += summarize
   recall = memory

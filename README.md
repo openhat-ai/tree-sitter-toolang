@@ -22,7 +22,7 @@ from tree_sitter import Language, Parser
 
 language = Language(tree_sitter_toolang.language())
 parser = Parser(language)
-tree = parser.parse(b"use skill a/b\n")
+tree = parser.parse(b"with skill a/b\n")
 ```
 
 The Python package also exposes packaged query strings:

@@ -6,7 +6,7 @@
 (doc_line) @comment.documentation
 (inline_comment) @comment
 
-(use_keyword) @keyword
+(with_keyword) @keyword
 (struct_keyword) @keyword
 (psyche_keyword) @keyword
 (skill_keyword) @keyword
@@ -16,22 +16,30 @@
 (chore_keyword) @keyword
 (context_keyword) @keyword
 (instruct_keyword) @keyword
-(thunk_keyword) @keyword
+(agic_keyword) @keyword
 (flow_keyword) @keyword
-(flow_do_keyword) @keyword
+(flow_run_keyword) @keyword
+(flow_let_keyword) @keyword
+(flow_seek_keyword) @keyword
 (flow_ask_keyword) @keyword
-(flow_unfold_keyword) @keyword
+(flow_scatter_keyword) @keyword
+(flow_storm_keyword) @keyword
+(flow_gather_keyword) @keyword
+(flow_settle_keyword) @keyword
+(flow_map_keyword) @keyword
 (flow_keep_keyword) @keyword
 (flow_drop_keyword) @keyword
 (flow_rank_keyword) @keyword
-(flow_each_keyword) @keyword
-(flow_fold_keyword) @keyword
 (flow_repeat_keyword) @keyword
 (flow_until_keyword) @keyword
-(flow_to_keyword) @keyword
 (flow_par_keyword) @keyword
-(flow_limit_keyword) @keyword
-(flow_times_keyword) @keyword
+(flow_first_keyword) @keyword
+(flow_last_keyword) @keyword
+(flow_top_keyword) @keyword
+(flow_bottom_keyword) @keyword
+(flow_think_keyword) @keyword
+(flow_use_keyword) @keyword
+(thunk_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
@@ -60,8 +68,8 @@
   name: (struct_name
     (type_name) @type))
 
-(thunk
-  name: (thunk_name
+(agic
+  name: (agic_name
     (snake_name) @function))
 
 (flow

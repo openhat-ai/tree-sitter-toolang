@@ -1,31 +1,31 @@
 #!/usr/bin/env toolang
 
-thunk respond:
+agic respond:
   pass
 
-thunk echo(in: Text) -> Text:
+agic echo(in: Text) -> Text:
   Echo the current input:
   {{_}}
 
-thunk summarize(in: Part[]) -> Text:
+agic summarize(in: Part[]) -> Text:
   user:
     Summarize {{_}}.
 
-thunk classify(in: Part[], labels: Text[]) -> Json:
+agic classify(in: Part[], labels: Text[]) -> Json:
   models = gpt-5
 
   user:
     Classify {{_}} into {{labels}}.
 
-thunk decide(strict?: Boolean) -> Boolean:
+agic decide(strict?: Boolean) -> Boolean:
   user:
     Decide whether the request should proceed.
 
-thunk score(in: Part[], rubric?: Json) -> Number:
+agic score(in: Part[], rubric?: Json) -> Number:
   user:
     Score {{_}} using {{rubric}}.
 
-thunk render(template: Text, data: Json, notes?: Part[]) -> Part[]:
+agic render(template: Text, data: Json, notes?: Part[]) -> Part[]:
   instruct default
   user:
     Render {{template}} with {{data}}.

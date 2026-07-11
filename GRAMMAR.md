@@ -43,7 +43,7 @@ Comments:
 - `##` documents the next item or statement.
 - `##!` documents the parent. At the top level, it documents the program.
 - Normal comments and blank lines are trivia. They can separate statements and
-  implicit thunk bodies.
+  implicit agic bodies.
 - Inline comments are allowed where a rule uses `line_end`.
 
 ## Types
@@ -67,20 +67,20 @@ Rules:
 - A `struct` declaration defines a user Record type. `Record` is a semantic
   category, not a builtin type name.
 - Runtime `Message` values are Records, but Toolang source does not use
-  `Message` as a normal thunk or flow type.
+  `Message` as a normal agic or flow type.
 
 ## Program
 
 ```ebnf
 program ::= (item | trivia)*
-item ::= use | struct | psyche | skill | service | prompt | task | chore
-       | context | instruct | thunk | flow
+item ::= with | struct | psyche | skill | service | prompt | task | chore
+       | context | instruct | agic | flow
 ```
 
-## Use
+## With
 
 ```ebnf
-use ::= "use" cap_kind cap_ref line_end
+with ::= "with" cap_kind cap_ref line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
 cap_ref ::= text_line
 ```
@@ -142,7 +142,7 @@ text_body_line ::= indented_raw_text newline
 
 Rules:
 
-- `context`, `instruct`, thunk messages, flow inline bodies, and flow conditions
+- `context`, `instruct`, agic messages, flow inline bodies, and flow conditions
   all use `text_inline`.
 - This grammar no longer supports Markdown fenced bodies for caps, context,
   instruct, or messages.
@@ -163,18 +163,18 @@ Defaults:
 
 - An omitted name defaults semantically to `default`.
 
-## Thunk
+## Agic
 
 ```ebnf
-thunk ::= "thunk" thunk_name? params? return_type? ":" line_end thunk_body
-thunk_name ::= snake_name
+agic ::= "agic" agic_name? params? return_type? ":" line_end agic_body
+agic_name ::= snake_name
 return_type ::= "->" type
 
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? (":" type)?
 param_name ::= snake_name
 
-thunk_body ::= trivia*
+agic_body ::= trivia*
                (directives settings? messages?
                | settings messages?
                | messages
@@ -198,7 +198,7 @@ text_ref ::= "default" | "none" | snake_name
 
 messages ::= message+
 message ::= role ":" text_inline
-          | invalid_thunk_reserved_message
+          | invalid_agic_reserved_message
           | unroled_message
 unroled_message ::= unroled_message_line
                     (text_body_line
@@ -206,9 +206,9 @@ unroled_message ::= unroled_message_line
                     blank_line?
 unroled_message_line ::= text_body_line
 role ::= "user" | "assistant" | "tool"
-thunk_reserved_word ::= "context" | "instruct" | "user" | "assistant" | "tool"
+agic_reserved_word ::= "context" | "instruct" | "user" | "assistant" | "tool"
                       | "pass" | directive_key
-invalid_thunk_reserved_message ::= thunk_reserved_word text_line? line_end
+invalid_agic_reserved_message ::= agic_reserved_word text_line? line_end
 pass_statement ::= "pass" line_end
 ```
 
@@ -216,16 +216,16 @@ Rules:
 
 - `in` is reserved as the primary invocation input parameter. If present, it
   must be first.
-- A thunk without `in` does not accept invocation input.
-- `_` is available in thunk templates as an alias for `in`.
+- An agic without `in` does not accept invocation input.
+- `_` is available in agic templates as an alias for `in`.
 - Directives must appear before settings and messages.
 - `context ref` and `instruct ref` select named/default/none settings.
   `context:` and `instruct:` provide inline setting bodies.
-- Bare text in a thunk body is an unroled message. Runtime treats it as a user
+- Bare text in an agic body is an unroled message. Runtime treats it as a user
   message.
-- Unroled messages are fallback messages. A line starting with a thunk reserved
-  word parses as `invalid_thunk_reserved_message` unless it matches an explicit
-  thunk body form. Explicit thunk body forms are tried before fallback, including
+- Unroled messages are fallback messages. A line starting with an agic reserved
+  word parses as `invalid_agic_reserved_message` unless it matches an explicit
+  agic body form. Explicit agic body forms are tried before fallback, including
   after an unroled message has started.
 - Adjacent unroled message text lines are merged into one message. One blank
   line between unroled text lines is preserved inside the same message. Two or
@@ -247,117 +247,117 @@ flow_body ::= trivia*
               trivia*
 
 statements ::= flow_statement+
-flow_statement ::= do_statement
+flow_statement ::= let_statement
+                 | flow_operation
+                 | invalid_flow_reserved_statement
+                 | implicit_run_statement
+
+flow_operation ::= run_statement
+                 | seek_statement
                  | ask_statement
-                 | unfold_statement
+                 | scatter_statement
+                 | storm_statement
+                 | gather_statement
+                 | settle_statement
+                 | map_statement
                  | keep_statement
                  | drop_statement
                  | rank_statement
-                 | each_statement
-                 | fold_statement
-                 | repeat_above_statement
-                 | repeat_block_statement
-                 | invalid_flow_reserved_statement
-                 | implicit_do_statement
+                 | repeat_statement
 
-do_statement ::= "do" callees line_end
-               | "do" to_clause? ":" text_inline
+let_statement ::= "let" local_name "=" flow_operation
+                | "let" flow_operation
+                | "let" local_name ":" text_inline
+local_name ::= snake_name
 
-implicit_do_statement ::= text_body_line
-                          (text_body_line
-                          | blank_line text_body_line)*
-                          blank_line?
+run_statement ::= "run" runnable line_end
+                | "run" inline_agic
+
+implicit_run_statement ::= text_body_line
+                           (text_body_line
+                           | blank_line text_body_line)*
+                           blank_line?
+
+seek_statement ::= "seek" agent runnable line_end
+                 | "seek" agent inline_agic
+
+ask_statement ::= "ask" ":" text_inline
+
+scatter_statement ::= "scatter" integer_literal runnable line_end
+                    | "scatter" integer_literal inline_agic
+
+storm_statement ::= "storm" integer_literal runnable par_clause? line_end
+                  | "storm" integer_literal par_clause? inline_agic
+
+gather_statement ::= "gather" runnable line_end
+                   | "gather" inline_agic
+
+settle_statement ::= "settle" runnable line_end
+                   | "settle" inline_agic
+
+map_statement ::= "map" runnable par_clause? line_end
+                | "map" par_clause? inline_agic
+
+keep_statement ::= "keep" position_clause line_end
+                 | "keep" runnable par_clause? line_end
+                 | "keep" par_clause? inline_agic_body
+
+drop_statement ::= "drop" position_clause line_end
+                 | "drop" runnable par_clause? line_end
+                 | "drop" par_clause? inline_agic_body
+
+rank_statement ::= "rank" runnable rank_selection_clause? par_clause? line_end
+                 | "rank" rank_selection_clause? par_clause? inline_agic_body
+
+repeat_statement ::= "repeat" integer_literal ":" line_end repeat_body
+                   | "repeat" ":" line_end repeat_until_body
+repeat_body ::= statements until_statement?
+repeat_until_body ::= statements until_statement
+until_statement ::= "until" inline_agic_body
+
+inline_agic ::= return_type? ":" text_inline
+inline_agic_body ::= ":" text_inline
+
+par_clause ::= "par" integer_literal
+position_clause ::= ("first" | "last") integer_literal
+rank_selection_clause ::= ("top" | "bottom") integer_literal
+
+runnable ::= snake_name
+agent ::= snake_name
 
 invalid_flow_reserved_statement ::= flow_reserved_word text_line? line_end
-flow_reserved_word ::= "do" | "ask" | "unfold" | "keep" | "drop"
-                     | "rank" | "each" | "fold" | "repeat"
-
-ask_statement ::= "ask" agent line_end
-
-unfold_statement ::= "unfold" callee line_end
-                   | "unfold" to_clause? ":" text_inline
-
-keep_statement ::= "keep" itemwise_named_head line_end
-                 | "keep" par_clause? ":" text_inline
-
-drop_statement ::= "drop" itemwise_named_head line_end
-                 | "drop" par_clause? ":" text_inline
-
-rank_statement ::= "rank" rank_named_head line_end
-                 | "rank" limit_clause? par_clause? ":" text_inline
-
-each_statement ::= "each" itemwise_named_head line_end
-                 | "each" to_clause? par_clause? ":" text_inline
-
-fold_statement ::= "fold" callee line_end
-                 | "fold" to_clause? ":" text_inline
-
-repeat_above_statement ::= "repeat" times_clause line_end
-                         | "repeat" times_clause? until_clause
-
-repeat_block_statement ::= "repeat" times_clause? ":" line_end repeat_body
-repeat_body ::= flow_body until_statement?
-until_clause ::= "until" ":" condition
-until_statement ::= "until" ":" condition
-condition ::= text_inline
-
-to_clause ::= "to" type
-par_clause ::= "par" integer_literal
-limit_clause ::= "limit"? integer_literal
-times_clause ::= integer_literal "times"?
-callees ::= callee ("," callee)*
-callee ::= snake_name
-agent ::= snake_name
-itemwise_named_head ::= callee par_clause? | par_clause callee?
-rank_named_head ::= callee limit_clause? par_clause?
-                  | limit_clause? par_clause? callee
+flow_reserved_word ::= "let" | "run" | "seek" | "ask" | "scatter" | "storm"
+                     | "gather" | "settle" | "map" | "keep" | "drop" | "rank"
+                     | "repeat" | "until" | "think" | "use" | "thunk"
 ```
 
 Rules:
 
 - A `flow` describes a workflow as an ordered tree of executable statements.
-- The runtime's primary flow execution unit is a statement.
-- Flow signatures reuse thunk parameter and return type syntax.
-- Flow directives reuse thunk directive syntax and must appear before
+- Flow signatures reuse agic parameter and return type syntax.
+- Flow directives reuse agic directive syntax and must appear before
   statements.
-- Flow parsing tries explicit statements first. If a flow body entry is not an
-  explicit statement or invalid reserved-word statement, it is parsed as an
-  implicit `do` statement.
-- Adjacent implicit-do text lines are merged into one statement. One blank line
-  between implicit-do lines is preserved in the same statement; two or more
-  blank lines, or a comment/doc-comment line, split implicit-do statements.
-- A flow body line starting with a reserved flow word parses as
-  `invalid_flow_reserved_statement` unless it matches an explicit flow
-  statement. `until:` is only valid in repeat statements and never parses as an
-  implicit `do` statement.
-- `do callees` runs named thunks or flows on the current value.
-- `do: ...` and `do to Type: ...` define inline thunk-like statements.
-- `ask agent` delegates the current value to an agent and replaces it with the
-  result.
-- `unfold` expands one value into multiple items. Bare `unfold` without a named
-  callee or inline body is invalid.
-- `keep` keeps matching items.
-- `drop` drops matching items.
-- `rank` ranks items and can keep the top N when `limit_clause` is provided.
-- `each` processes every item and collects results.
-- `fold` combines multiple items into one value.
-- `to Type` is only supported by inline `do`, `unfold`, `each`, and `fold`.
-- `par N` is only meaningful for item-wise statements.
-- Named forms do not also define inline bodies after `:`.
-- Named item-wise forms support the callee either before modifiers or after all
-  modifiers, but not interleaved between modifiers.
-- `repeat N`, `repeat until:`, and `repeat N until:` repeat the previous
-  executable statements in the current flow block. Semantic validation rejects a
-  short repeat with an empty captured range.
-- `repeat N:` and `repeat:` define explicit nested flow blocks. A final
-  `until:` clause may stop the loop early. The `until:` clause is the repeat
-  block terminator, not a normal flow statement.
-- Runtime may normalize short repeat forms to repeat block statements before
-  execution.
+- `let name = statement` writes the result to a named local. `let statement`
+  discards it. `let name: body` assigns authored text directly.
+- `run` resolves a named agic or flow, or defines an inline agic.
+- Bare flow text is shorthand for inline `run`. One blank line stays inside the
+  same body; two blank lines or a comment split statements.
+- `seek` targets another agent with a named runnable or inline agic. `ask`
+  requests input from the human owner.
+- `scatter` and `storm` expand one item into a list. `gather` and `settle`
+  reduce a list to one item.
+- `map` transforms every list item. `keep` and `drop` select by position or
+  Boolean filter. `rank` orders items by descending numeric score.
+- `par N` limits independent child-run concurrency without changing result
+  order.
+- `repeat` always has a count, a final `until` condition, or both.
+- `think`, `use`, and `thunk` are reserved and have no statement syntax.
+- A malformed line beginning with a reserved flow word parses as
+  `invalid_flow_reserved_statement` rather than implicit `run` text.
 
 ## Model Call Assembly
 
-The runtime assembles a thunk call into tools, instructions, and messages for
+The runtime assembles an agic call into tools, instructions, and messages for
 the model adapter. Runtime messages are not Toolang source-level types; they are
 Records with a role and `Part[]`.
 
