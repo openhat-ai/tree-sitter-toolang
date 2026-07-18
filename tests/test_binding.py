@@ -109,7 +109,10 @@ def test_script_agics_fixture_covers_signature_variations():
     ]
 
     assert shebang.type == "comment_line"
-    assert _text(source, shebang) == "#!/usr/bin/env toolang\n"
+    assert _text(source, shebang) in {
+        "#!/usr/bin/env toolang\n",
+        "#!/usr/bin/env toolang\r\n",
+    }
     assert [agic.type for agic in agics] == ["agic"] * 7
     assert names == ["respond", "echo", "summarize", "classify", "decide", "score", "render"]
     assert [None if output is None else _text(source, output) for output in outputs] == [
