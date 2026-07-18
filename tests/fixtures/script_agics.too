@@ -3,15 +3,15 @@
 agic respond:
   pass
 
-agic echo(in: Text) -> Text:
+agic echo(_: Text) -> Text:
   Echo the current input:
   {{_}}
 
-agic summarize(in: Part[]) -> Text:
+agic summarize(_: Part[]) -> Text:
   user:
     Summarize {{_}}.
 
-agic classify(in: Part[], labels: Text[]) -> Json:
+agic classify(_: Part[], labels: Text[]) -> Json:
   models = gpt-5
 
   user:
@@ -21,7 +21,7 @@ agic decide(strict?: Boolean) -> Boolean:
   user:
     Decide whether the request should proceed.
 
-agic score(in: Part[], rubric?: Json) -> Number:
+agic score(_: Part[], rubric?: Json) -> Number:
   user:
     Score {{_}} using {{rubric}}.
 

@@ -172,7 +172,7 @@ return_type ::= "->" type
 
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? (":" type)?
-param_name ::= snake_name
+param_name ::= "_" | snake_name
 
 agic_body ::= trivia*
                (directives settings? messages?
@@ -214,10 +214,10 @@ pass_statement ::= "pass" line_end
 
 Rules:
 
-- `in` is reserved as the primary invocation input parameter. If present, it
-  must be first.
-- An agic without `in` does not accept invocation input.
-- `_` is available in agic templates as an alias for `in`.
+- `_` is the primary invocation input parameter. If present, it must be first.
+- Omitting the complete parameter list implies `_ : Part[]`; writing `()`
+  declares no primary input.
+- An explicit `_` without a type also defaults to `Part[]`.
 - Directives must appear before settings and messages.
 - `context ref` and `instruct ref` select named/default/none settings.
   `context:` and `instruct:` provide inline setting bodies.

@@ -92,6 +92,7 @@ def test_script_agics_fixture_covers_signature_variations():
     source = (FIXTURES_DIR / "script_agics.too").read_bytes()
 
     tree = parser.parse(source)
+    shebang = tree.root_node.named_children[0]
     agics = [_item_child(item) for item in _items(tree.root_node)]
     names = [
         _text(source, name)
@@ -107,6 +108,8 @@ def test_script_agics_fixture_covers_signature_variations():
         for agic in agics
     ]
 
+    assert shebang.type == "comment_line"
+    assert _text(source, shebang) == "#!/usr/bin/env toolang\n"
     assert [agic.type for agic in agics] == ["agic"] * 7
     assert names == ["respond", "echo", "summarize", "classify", "decide", "score", "render"]
     assert [None if output is None else _text(source, output) for output in outputs] == [
@@ -376,13 +379,13 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
     assert [
         _text(source, param.child_by_field_name("name"))
         for param in params[0].children_by_field_name("param")
-    ] == ["in"]
+    ] == ["_"]
     assert _text(source, outputs[0]) == "Part[]"
     assert params[1] is not None
     assert [
         _text(source, param.child_by_field_name("name"))
         for param in params[1].children_by_field_name("param")
-    ] == ["in"]
+    ] == ["_"]
     assert _text(source, outputs[1]) == "Part[]"
     assert params[2] is None
     assert outputs[2] is None
@@ -534,7 +537,7 @@ def test_kitchen_sink_agic_signature_directives_and_blocks():
 
     assert params is not None
     assert [ _text(source, param.child_by_field_name("name")) for param in params.children_by_field_name("param") ] == [
-        "in",
+        "_",
         "path",
         "focus",
     ]
@@ -562,13 +565,14 @@ def test_kitchen_sink_agic_signature_directives_and_blocks():
 
 def test_parameter_types_can_be_omitted():
     parser = _parser()
-    source = b"agic ok(in: Part[], focus):\n  instruct none\n"
+    source = b"agic ok(_: Part[], focus):\n  instruct none\n"
 
     tree = parser.parse(source)
     params = _item_child(_items(tree.root_node)[0]).child_by_field_name("params")
     untyped = params.children_by_field_name("param")[1]
 
     assert tree.root_node.has_error is False
+    assert _text(source, params.children_by_field_name("param")[0].child_by_field_name("name")) == "_"
     assert untyped.child_by_field_name("type") is None
 
 
@@ -699,7 +703,7 @@ def test_none_is_parsed_as_user_type_not_builtin_type():
 def test_bare_text_is_parsed_as_unroled_message():
     parser = _parser()
     source = (
-        b"agic reply(in: Text) -> Text:\n"
+        b"agic reply(_: Text) -> Text:\n"
         b"  Return directly.\n"
         b"  Include the current context in the reply.\n"
     )
