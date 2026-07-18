@@ -238,7 +238,7 @@ module.exports = grammar({
         optional(field("optional", $.optional_marker)),
         optional(seq(field("colon", $.colon), field("type", $.type))),
       ),
-    param_name: ($) => $.snake_name,
+    param_name: ($) => choice("_", $.snake_name),
 
     flow: ($) =>
       prec.right(seq(

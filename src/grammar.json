@@ -1437,8 +1437,17 @@
       ]
     },
     "param_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "_"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "snake_name"
+        }
+      ]
     },
     "flow": {
       "type": "PREC_RIGHT",

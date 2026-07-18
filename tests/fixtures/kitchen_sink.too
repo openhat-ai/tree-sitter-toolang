@@ -44,7 +44,7 @@ agic inspect() -> ReviewResult:
   user:
     Return a precise result.
 
-agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
+agic review(_: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5 # inline directive comment
   psyches += reviewer
   skills += review, patch

@@ -6,5 +6,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+bindings/python/tree_sitter_toolang/*.so
+bindings/python/tree_sitter_toolang/*.pyd
 .pytest_cache/
 tree-sitter-toolang.wasm

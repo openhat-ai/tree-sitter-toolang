@@ -11,7 +11,7 @@ struct Note:
 struct Answer:
   text: Text
 
-flow research(input: Pack) -> Answer:
+flow research(_: Part[]) -> Answer:
   models = gpt-5
   tools += web
 

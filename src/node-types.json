@@ -1592,7 +1592,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "snake_name",
@@ -2944,6 +2944,10 @@
   },
   {
     "type": "Text",
+    "named": false
+  },
+  {
+    "type": "_",
     "named": false
   },
   {

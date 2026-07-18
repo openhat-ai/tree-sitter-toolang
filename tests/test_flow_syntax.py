@@ -267,7 +267,7 @@ def test_with_and_agic_replace_use_and_thunk():
     parser = _parser()
     valid = (
         b"with skill owner/reviewer\n"
-        b"agic review(input: Text) -> Text:\n"
+        b"agic review(_: Text) -> Text:\n"
         b"  Review {{_}}.\n"
     )
 
