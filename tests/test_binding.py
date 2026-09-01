@@ -175,7 +175,7 @@ def test_with_fixture_contains_only_with_items():
     assert item_types == ["with", "with", "with", "with"]
 
 
-def test_caps_fixture_covers_prompt_indented_forms():
+def test_caps_fixture_covers_placeholder_based_prompts():
     parser = _parser()
     source = (FIXTURES_DIR / "caps.too").read_bytes()
 
@@ -189,9 +189,25 @@ def test_caps_fixture_covers_prompt_indented_forms():
 
     assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
-    assert "Review the current request directly." in _text(source, bodies[0])
-    assert "params = path, focus" in _text(source, bodies[1])
+    assert all(body.type == "prompt_body" for body in bodies)
+    assert not any(_nodes(body, "property") for body in bodies)
+    assert "Review {{_}} directly." in _text(source, bodies[0])
     assert "Review {{path}} carefully." in _text(source, bodies[1])
+    assert "{{focus}}" in _text(source, bodies[1])
+
+
+def test_prompt_property_like_lines_remain_template_text():
+    parser = _parser()
+    source = b"prompt literal:\n  mode = exact\n  Render {{_}}.\n"
+
+    tree = parser.parse(source)
+    prompt = _item_child(_items(tree.root_node)[0])
+    body = prompt.child_by_field_name("body")
+
+    assert tree.root_node.has_error is False
+    assert body is not None and body.type == "prompt_body"
+    assert "mode = exact" in _text(source, body)
+    assert not _nodes(body, "property")
 
 
 def test_caps_fixture_covers_supported_kinds_and_metadata():
@@ -212,7 +228,14 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all("cap_body" == body.type for body in bodies)
+    assert [body.type for body in bodies] == [
+        "cap_body",
+        "cap_body",
+        "cap_body",
+        "cap_body",
+        "prompt_body",
+        "prompt_body",
+    ]
     assert "protocol = http" in _text(source, bodies[0])
     assert "target = https://mcp.github.com/mcp" in _text(source, bodies[0])
     assert "source = by3gus/review" in _text(source, bodies[2])
@@ -236,11 +259,17 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "cap_body" for body in bodies)
+    assert [body.type for body in bodies] == [
+        "cap_body",
+        "cap_body",
+        "cap_body",
+        "prompt_body",
+    ]
     assert "target = http://localhost:3000/mcp" in _text(source, bodies[0])
     assert "source = by3gus/rewrite" in _text(source, bodies[1])
     assert "Prefer concrete findings." in _text(source, bodies[2])
-    assert "params = tone" in _text(source, bodies[3])
+    assert "{{_}}" in _text(source, bodies[3])
+    assert "{{tone}}" in _text(source, bodies[3])
 
 
 def test_jobs_fixture_covers_task_and_chore_items():
@@ -293,7 +322,9 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     for cap in items[:4]:
         body = cap.child_by_field_name("body")
         assert body is not None
-        assert body.type == "cap_body"
+        assert body.type == (
+            "prompt_body" if cap.type == "prompt" else "cap_body"
+        )
 
     struct = items[4]
     fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
@@ -364,6 +395,7 @@ def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
     assert "# body hash line is literal block content" in _text(source, bodies[0])
     assert "# prompt body hash line" in _text(source, bodies[1])
     assert "comment_line" in str(bodies[0])
+    assert "indented_raw_text" in str(bodies[1])
 
 
 def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
@@ -777,8 +809,6 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
     parser = _parser()
     source = (
         b"prompt review:\r\n"
-        b"  params = path, focus\r\n"
-        b"\r\n"
         b"  Review {{path}} carefully.\r\n"
         b"  {{focus}}\r\n"
     )
@@ -790,7 +820,7 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
 
     assert root.has_error is False
     assert body is not None
-    assert "params = path, focus" in _normalize_newlines(_text(source, body))
+    assert body.type == "prompt_body"
     assert "Review {{path}} carefully." in _normalize_newlines(_text(source, body))
 
 

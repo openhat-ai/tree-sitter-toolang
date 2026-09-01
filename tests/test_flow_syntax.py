@@ -143,6 +143,55 @@ def test_flow_fixture_covers_complete_statement_set():
     assert _statements(flows[4]) == []
 
 
+def test_let_uses_equals_for_operation_results_and_text_locals():
+    parser = _parser()
+    source = (
+        b"flow bindings:\n"
+        b"  let result = run transform\n"
+        b"  let run publish\n"
+        b"  let note = Keep this text.\n"
+        b"  let detail =\n"
+        b"    Keep this block too.\n"
+    )
+    tree = parser.parse(source)
+    statements = _statements(_items(tree.root_node)[0])
+
+    assert tree.root_node.has_error is False
+    has_statement = [
+        statement.child_by_field_name("statement") is not None
+        for statement in statements
+    ]
+    has_value = [
+        statement.child_by_field_name("value") is not None
+        for statement in statements
+    ]
+
+    assert has_statement == [
+        True,
+        True,
+        False,
+        False,
+    ]
+    assert has_value == [
+        False,
+        False,
+        True,
+        True,
+    ]
+    assert (
+        _text(source, statements[0].child_by_field_name("name")).strip()
+        == "result"
+    )
+    assert statements[1].child_by_field_name("name") is None
+    assert _text(source, statements[2].child_by_field_name("name")).strip() == "note"
+    assert "Keep this block too." in _text(
+        source, statements[3].child_by_field_name("value")
+    )
+
+    legacy = parser.parse(b"flow legacy:\n  let note: Old syntax.\n")
+    assert legacy.root_node.has_error is True
+
+
 def test_flow_clause_order_and_variants_are_explicit():
     parser = _parser()
     valid = (

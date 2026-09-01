@@ -105,7 +105,23 @@ module.exports = grammar({
         field("kind", $.prompt_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        field("body", $.prompt_body),
+      ),
+
+    prompt_body: ($) =>
+      prec.right(seq(
+        $.line_end,
+        optional(alias($._prompt_text_body, $.text_body)),
+      )),
+    _prompt_text_body: ($) =>
+      prec.dynamic(2, prec.right(repeat1(choice(
+        alias($._prompt_text_body_line, $.text_body_line),
+        $.blank_line,
+      )))),
+    _prompt_text_body_line: ($) =>
+      seq(
+        field("content", alias($._prompt_indented_raw_text, $.indented_raw_text)),
+        $.newline,
       ),
 
     task: ($) =>
@@ -300,7 +316,7 @@ module.exports = grammar({
         prec.right(seq(
           $.flow_let_keyword,
           field("name", $.local_name),
-          $.colon,
+          $.assign_operator,
           field("value", $._nested_text_inline_alias),
         )),
       ),
@@ -710,6 +726,7 @@ module.exports = grammar({
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
+    _prompt_indented_raw_text: () => token(prec(3, /[ \t][^\r\n]*/)),
     _implicit_run_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },

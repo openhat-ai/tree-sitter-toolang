@@ -102,7 +102,6 @@ optional_marker ::= "?"
 psyche ::= "psyche" cap_name ":" cap_body
 skill ::= "skill" cap_name ":" cap_body
 service ::= "service" cap_name ":" cap_body
-prompt ::= "prompt" cap_name ":" cap_body
 cap_name ::= snake_kebab_name
 
 cap_body ::= line_end (property | trivia)* text_body? trivia*
@@ -113,8 +112,27 @@ property_value ::= text_line
 
 Rules:
 
-- The public CST exposes `psyche`, `skill`, `service`, and `prompt` directly.
+- The public CST exposes `psyche`, `skill`, and `service` directly.
 - Runtime validates property keys and cap-specific constraints.
+
+### Prompts
+
+```ebnf
+prompt ::= "prompt" cap_name ":" prompt_body
+prompt_body ::= line_end text_body?
+```
+
+Rules:
+
+- A prompt body is a text template, not a metadata body. Property-looking lines
+  remain template text.
+- `{{name}}` placeholders implicitly declare named inputs. `{{_}}` is the
+  primary-input placeholder. Prompt declarations have no parameter directive or
+  typed signature.
+- A prompt expands to Text before the enclosing runnable input is parsed as
+  Content. Text is its implicit return and cannot be written as a return type.
+- Placeholder extraction and substitution are language semantics; placeholders
+  remain part of raw `text_body` in the CST.
 
 ## Jobs
 
@@ -218,6 +236,8 @@ Rules:
 - Omitting the complete parameter list implies `_ : Part[]`; writing `()`
   declares no primary input.
 - An explicit `_` without a type also defaults to `Part[]`.
+- An untyped named parameter defaults to `Text`.
+- An omitted return type defaults to `Part[]`.
 - Directives must appear before settings and messages.
 - `context ref` and `instruct ref` select named/default/none settings.
   `context:` and `instruct:` provide inline setting bodies.
@@ -267,7 +287,7 @@ flow_operation ::= run_statement
 
 let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
-                | "let" local_name ":" text_inline
+                | "let" local_name "=" text_inline
 local_name ::= snake_name
 
 run_statement ::= "run" runnable line_end
@@ -334,11 +354,13 @@ flow_reserved_word ::= "let" | "run" | "seek" | "ask" | "scatter" | "storm"
 Rules:
 
 - A `flow` describes a workflow as an ordered tree of executable statements.
-- Flow signatures reuse agic parameter and return type syntax.
+- Flow signatures reuse agic parameter and return type syntax and defaults.
 - Flow directives reuse agic directive syntax and must appear before
   statements.
 - `let name = statement` writes the result to a named local. `let statement`
-  discards it. `let name: body` assigns authored text directly.
+  discards the result and does not update `_`. `let name = body` creates or
+  replaces a named local with authored Text. An explicit flow operation after
+  `=` takes precedence over the text form.
 - `run` resolves a named agic or flow, or defines an inline agic.
 - Bare flow text is shorthand for inline `run`. One blank line stays inside the
   same body; two blank lines or a comment split statements.
@@ -367,6 +389,10 @@ Records with a role and `Part[]`.
   parts.
 - Runtime part values use short `kind` names such as `text`, `json`, `image`,
   `audio`, `video`, `file`, `tool_call`, and `tool_result`.
-- `recall = none` disables history retrieval. `recall = default` delegates to
-  runtime policy. Explicit `history`, `memory`, or `history, memory` values
-  select retrieval sources.
+- `recall` is singular and agic-only. Its canonical values are `auto`, `none`,
+  `far`, `near`, and `far, near`; omission means `auto`. `line` is a reserved
+  runtime local, not a recall source.
+- `far`, `near`, and `line` are reserved read-only runtime locals. Named
+  parameters and flow bindings cannot use them.
+- `hands` authorizes runnable targets for `_too__run`; `handoffs` authorizes
+  runnable targets for `_too__execute`.

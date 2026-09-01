@@ -1364,10 +1364,6 @@
           "named": true
         },
         {
-          "type": "colon",
-          "named": true
-        },
-        {
           "type": "flow_let_keyword",
           "named": true
         }
@@ -1674,7 +1670,7 @@
         "required": true,
         "types": [
           {
-            "type": "cap_body",
+            "type": "prompt_body",
             "named": true
           }
         ]
@@ -1709,6 +1705,25 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "prompt_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "text_body",
+          "named": true
+        }
+      ]
     }
   },
   {

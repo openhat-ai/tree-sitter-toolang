@@ -20,10 +20,8 @@ psyche reviewer:
   Prefer concrete findings and direct language.
 
 prompt direct:
-  Review the current request directly.
+  Review {{_}} directly.
 
 prompt review:
-  params = path, focus
-
   Review {{path}} carefully.
   {{focus}}

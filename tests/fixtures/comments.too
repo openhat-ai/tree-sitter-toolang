@@ -12,8 +12,6 @@ struct ReviewResult:
   summary: Text # inline struct field comment
 
 prompt review: # inline prompt header comment
-  params = path, focus
-
   # prompt body hash line
   Review {{path}} carefully.
   {{focus}}

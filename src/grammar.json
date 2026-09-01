@@ -599,8 +599,89 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_body"
+            "name": "prompt_body"
           }
+        }
+      ]
+    },
+    "prompt_body": {
+      "type": "PREC_RIGHT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "line_end"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_prompt_text_body"
+                },
+                "named": true,
+                "value": "text_body"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "_prompt_text_body": {
+      "type": "PREC_DYNAMIC",
+      "value": 2,
+      "content": {
+        "type": "PREC_RIGHT",
+        "value": 0,
+        "content": {
+          "type": "REPEAT1",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_prompt_text_body_line"
+                },
+                "named": true,
+                "value": "text_body_line"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "blank_line"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "_prompt_text_body_line": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "content",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_prompt_indented_raw_text"
+            },
+            "named": true,
+            "value": "indented_raw_text"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
         }
       ]
     },
@@ -1772,7 +1853,7 @@
               },
               {
                 "type": "SYMBOL",
-                "name": "colon"
+                "name": "assign_operator"
               },
               {
                 "type": "FIELD",
@@ -3835,6 +3916,17 @@
       "content": {
         "type": "PREC",
         "value": -1,
+        "content": {
+          "type": "PATTERN",
+          "value": "[ \\t][^\\r\\n]*"
+        }
+      }
+    },
+    "_prompt_indented_raw_text": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": 3,
         "content": {
           "type": "PATTERN",
           "value": "[ \\t][^\\r\\n]*"

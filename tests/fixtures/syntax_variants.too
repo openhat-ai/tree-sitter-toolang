@@ -16,9 +16,7 @@ service github:
   Use GitHub for repository operations.
 
 prompt rewrite:
-  params = tone
-
-  Rewrite the input in the requested tone.
+  Rewrite {{_}} in the requested {{tone}} tone.
 
 psyche rigorous:
   Prefer concrete findings.
@@ -42,7 +40,7 @@ context report:
 agic report() -> Text:
   handoffs = support, billing
   hands += summarize
-  recall = memory
+  recall = near
 
   instruct strict_json
   context report

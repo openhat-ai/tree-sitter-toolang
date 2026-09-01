@@ -82,7 +82,7 @@ flow examples(input: Pack) -> Answer:
   ## Bind, discard, or directly assign results.
   let jobs = scatter 5 plan_searches
   let run publish
-  let guidance:
+  let guidance =
     Prefer primary sources and concrete evidence.
 
   ## Repeat by count, condition, or both.
