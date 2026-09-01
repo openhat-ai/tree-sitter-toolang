@@ -338,9 +338,12 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
           (line_end
             (newline)))
         (directive
-          (directive_key)
-          (directive_op)
-          (directive_value)
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_far_keyword)
+            (comma)
+            (recall_near_keyword))
           (line_end
             (newline)))
         (blank_line)
@@ -665,8 +668,11 @@ agic recall:
         (newline))
       (agic_body
         (directive
-          (directive_key)
-          (directive_op)
-          (directive_value)
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_far_keyword)
+            (comma)
+            (recall_near_keyword))
           (line_end
             (newline)))))))

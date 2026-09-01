@@ -527,6 +527,63 @@ def test_directive_value_is_trimmed_line_payload():
     assert _text(source, directive.child_by_field_name("value")).strip() == "web_search/*, shell"
 
 
+def test_recall_directive_uses_canonical_keyword_values():
+    parser = _parser()
+    source = (
+        b"agic automatic:\n  recall = auto\n"
+        b"agic disabled:\n  recall = none\n"
+        b"agic distant:\n  recall = far\n"
+        b"agic recent:\n  recall = near\n"
+        b"agic combined:\n  recall = far, near\n"
+    )
+
+    tree = parser.parse(source)
+    directives = _nodes(tree.root_node, "directive")
+    values = [directive.child_by_field_name("value") for directive in directives]
+
+    assert tree.root_node.has_error is False
+    assert all(
+        directive.child_by_field_name("key").type == "recall_keyword"
+        for directive in directives
+    )
+    assert all(
+        directive.child_by_field_name("operator").type == "assign_operator"
+        for directive in directives
+    )
+    assert [_text(source, value).strip() for value in values] == [
+        "auto",
+        "none",
+        "far",
+        "near",
+        "far, near",
+    ]
+    assert [
+        [child.type for child in value.named_children]
+        for value in values
+    ] == [
+        ["recall_auto_keyword"],
+        ["recall_none_keyword"],
+        ["recall_far_keyword"],
+        ["recall_near_keyword"],
+        ["recall_far_keyword", "comma", "recall_near_keyword"],
+    ]
+
+
+def test_recall_directive_rejects_noncanonical_forms():
+    parser = _parser()
+
+    for source in (
+        b"agic bad:\n  recall = line\n",
+        b"agic bad:\n  recall = default\n",
+        b"agic bad:\n  recall = near, far\n",
+        b"agic bad:\n  recall += far\n",
+    ):
+        tree = parser.parse(source)
+        assert tree.root_node.has_error or _nodes(
+            tree.root_node, "invalid_agic_reserved_message"
+        ), source
+
+
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():
     parser = _parser()
     empty = b"flow empty:\n"

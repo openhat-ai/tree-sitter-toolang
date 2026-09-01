@@ -199,10 +199,13 @@ agic_body ::= trivia*
 
 directives ::= directive+
 directive ::= directive_key directive_op directive_value line_end
+            | "recall" "=" recall_value line_end
 directive_key ::= "models" | "tools" | "skills" | "services" | "psyches"
-                | "hands" | "handoffs" | "recall"
+                | "hands" | "handoffs"
 directive_op ::= "=" | "+=" | "-="
 directive_value ::= /[^#\r\n]+/
+
+recall_value ::= "auto" | "none" | "far" | "near" | "far" "," "near"
 
 settings ::= context_setting instruct_setting?
            | instruct_setting context_setting?
@@ -250,7 +253,8 @@ Rules:
   more blank lines, or any comment/doc-comment line, split unroled messages.
 - Use an explicit role when message content itself starts with a reserved word.
 - `pass` declares an empty body and cannot be followed by other body entries.
-- Runtime validates referenced names and directive semantics.
+- Runtime validates referenced names and resource-directive semantics. Recall
+  operators and values are fixed by the grammar.
 
 ## Flow
 

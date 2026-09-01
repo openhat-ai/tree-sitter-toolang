@@ -420,6 +420,10 @@
           {
             "type": "directive_key",
             "named": true
+          },
+          {
+            "type": "recall_keyword",
+            "named": true
           }
         ]
       },
@@ -427,6 +431,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "assign_operator",
+            "named": true
+          },
           {
             "type": "directive_op",
             "named": true
@@ -439,6 +447,10 @@
         "types": [
           {
             "type": "directive_value",
+            "named": true
+          },
+          {
+            "type": "recall_value",
             "named": true
           }
         ]
@@ -997,6 +1009,10 @@
         },
         {
           "type": "pass_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_keyword",
           "named": true
         },
         {
@@ -1950,6 +1966,42 @@
         },
         {
           "type": "rank_selection_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "recall_none_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "recall_value",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        },
+        {
+          "type": "recall_auto_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_far_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_near_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_none_keyword",
           "named": true
         }
       ]
@@ -3295,8 +3347,20 @@
     "named": false
   },
   {
-    "type": "recall",
-    "named": false
+    "type": "recall_auto_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_far_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_near_keyword",
+    "named": true
   },
   {
     "type": "rparen",

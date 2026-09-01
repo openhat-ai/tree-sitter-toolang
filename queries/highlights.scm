@@ -43,6 +43,7 @@
 
 (cap_kind) @type
 (directive_key) @property
+(recall_keyword) @property
 (role) @keyword
 
 (assign_operator) @operator
@@ -59,6 +60,7 @@
 (cap_ref
   (text_line) @constant)
 (directive_value) @constant
+(recall_value) @constant
 
 (property_value) @string
 (text_line) @string

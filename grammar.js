@@ -537,16 +537,32 @@ module.exports = grammar({
     integer_literal: () => token(/\d+/),
 
     directive: ($) =>
-      seq(
-        field("key", $.directive_key),
-        field("operator", $.directive_op),
-        field("value", $.directive_value),
-        $.line_end,
+      choice(
+        seq(
+          field("key", $.recall_keyword),
+          field("operator", $.assign_operator),
+          field("value", $.recall_value),
+          $.line_end,
+        ),
+        seq(
+          field("key", $.directive_key),
+          field("operator", $.directive_op),
+          field("value", $.directive_value),
+          $.line_end,
+        ),
       ),
     directive_key: () =>
-      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs", "recall"),
+      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs"),
     directive_op: () => choice("=", "+=", "-="),
     directive_value: () => token(prec(-1, /[^#\r\n]+/)),
+    recall_value: ($) =>
+      choice(
+        $.recall_auto_keyword,
+        $.recall_none_keyword,
+        $.recall_far_keyword,
+        $.recall_near_keyword,
+        seq($.recall_far_keyword, $.comma, $.recall_near_keyword),
+      ),
     _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
 
     settings: ($) =>
@@ -657,6 +673,11 @@ module.exports = grammar({
     flow_think_keyword: () => "think",
     flow_use_keyword: () => "use",
     thunk_keyword: () => "thunk",
+    recall_keyword: () => "recall",
+    recall_auto_keyword: () => "auto",
+    recall_none_keyword: () => "none",
+    recall_far_keyword: () => "far",
+    recall_near_keyword: () => "near",
     _flow_reserved_word: ($) =>
       choice(
         $.flow_run_keyword,
@@ -692,6 +713,7 @@ module.exports = grammar({
         $.instruct_keyword,
         $.role,
         $.pass_keyword,
+        $.recall_keyword,
         $.directive_key,
       ),
 

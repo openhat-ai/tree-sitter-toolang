@@ -2908,35 +2908,73 @@
       }
     },
     "directive": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "FIELD",
-          "name": "key",
-          "content": {
-            "type": "SYMBOL",
-            "name": "directive_key"
-          }
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "key",
+              "content": {
+                "type": "SYMBOL",
+                "name": "recall_keyword"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "operator",
+              "content": {
+                "type": "SYMBOL",
+                "name": "assign_operator"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "recall_value"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
         },
         {
-          "type": "FIELD",
-          "name": "operator",
-          "content": {
-            "type": "SYMBOL",
-            "name": "directive_op"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "value",
-          "content": {
-            "type": "SYMBOL",
-            "name": "directive_value"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "line_end"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "key",
+              "content": {
+                "type": "SYMBOL",
+                "name": "directive_key"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "operator",
+              "content": {
+                "type": "SYMBOL",
+                "name": "directive_op"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "value",
+              "content": {
+                "type": "SYMBOL",
+                "name": "directive_value"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
         }
       ]
     },
@@ -2970,10 +3008,6 @@
         {
           "type": "STRING",
           "value": "handoffs"
-        },
-        {
-          "type": "STRING",
-          "value": "recall"
         }
       ]
     },
@@ -3004,6 +3038,44 @@
           "value": "[^#\\r\\n]+"
         }
       }
+    },
+    "recall_value": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "recall_auto_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "recall_none_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "recall_far_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "recall_near_keyword"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "recall_far_keyword"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "comma"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "recall_near_keyword"
+            }
+          ]
+        }
+      ]
     },
     "_directives": {
       "type": "PREC_RIGHT",
@@ -3597,6 +3669,26 @@
       "type": "STRING",
       "value": "thunk"
     },
+    "recall_keyword": {
+      "type": "STRING",
+      "value": "recall"
+    },
+    "recall_auto_keyword": {
+      "type": "STRING",
+      "value": "auto"
+    },
+    "recall_none_keyword": {
+      "type": "STRING",
+      "value": "none"
+    },
+    "recall_far_keyword": {
+      "type": "STRING",
+      "value": "far"
+    },
+    "recall_near_keyword": {
+      "type": "STRING",
+      "value": "near"
+    },
     "_flow_reserved_word": {
       "type": "CHOICE",
       "members": [
@@ -3724,6 +3816,10 @@
         {
           "type": "SYMBOL",
           "name": "pass_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "recall_keyword"
         },
         {
           "type": "SYMBOL",
