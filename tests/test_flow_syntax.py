@@ -143,6 +143,56 @@ def test_flow_fixture_covers_complete_statement_set():
     assert _statements(flows[4]) == []
 
 
+def test_unnamed_flow_supports_signatures():
+    parser = _parser()
+    source = (
+        b"flow:\n  pass\n"
+        b"flow() -> Text:\n  pass\n"
+        b"flow(_: Text) -> Text:\n  pass\n"
+    )
+
+    tree = parser.parse(source)
+    flows = _items(tree.root_node)
+
+    assert tree.root_node.has_error is False
+    assert [flow.type for flow in flows] == ["flow", "flow", "flow"]
+    assert all(flow.child_by_field_name("name") is None for flow in flows)
+    assert [flow.child_by_field_name("params") is not None for flow in flows] == [
+        False,
+        True,
+        True,
+    ]
+    assert [flow.child_by_field_name("return") is not None for flow in flows] == [
+        False,
+        True,
+        True,
+    ]
+
+
+def test_unnamed_agics_and_flows_can_coexist_syntactically():
+    parser = _parser()
+    source = (
+        b"agic:\n  pass\n"
+        b"flow:\n  pass\n"
+        b"agic:\n  pass\n"
+        b"flow:\n  pass\n"
+    )
+
+    tree = parser.parse(source)
+    runnables = _items(tree.root_node)
+
+    assert tree.root_node.has_error is False
+    assert [runnable.type for runnable in runnables] == [
+        "agic",
+        "flow",
+        "agic",
+        "flow",
+    ]
+    assert all(
+        runnable.child_by_field_name("name") is None for runnable in runnables
+    )
+
+
 def test_let_uses_equals_for_operation_results_and_content_locals():
     parser = _parser()
     source = (

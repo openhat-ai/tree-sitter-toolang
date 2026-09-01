@@ -356,6 +356,10 @@ flow_reserved_word ::= "let" | "run" | "seek" | "ask" | "scatter" | "storm"
 Rules:
 
 - A `flow` describes a workflow as an ordered tree of executable statements.
+- A flow name may be omitted.
+- The grammar permits multiple unnamed agics and flows in one source file.
+  Default naming and runnable-name uniqueness are semantic validation after
+  parsing.
 - Flow signatures reuse agic parameter and return type syntax and defaults.
 - Flow directives reuse agic directive syntax and must appear before
   statements.
