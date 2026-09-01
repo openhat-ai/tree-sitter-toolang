@@ -51,7 +51,7 @@ Comments:
 ```ebnf
 type ::= base_type type_suffix*
 base_type ::= builtin_type | user_type
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" | "Pack"
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
 user_type ::= type_name
 type_name ::= pascal_name
 type_suffix ::= "[]"
@@ -62,8 +62,6 @@ Rules:
 - `Text`, `Number`, and `Boolean` are scalar types.
 - `Json` is a dynamic JSON-compatible value.
 - `Part` is a model-visible content part.
-- `Pack` is a builtin Record equivalent to `{ parts: Part[] }`. It is one value,
-  not an item array.
 - A `struct` declaration defines a user Record type. `Record` is a semantic
   category, not a builtin type name.
 - Runtime `Message` values are Records, but Toolang source does not use
@@ -397,8 +395,7 @@ Records with a role and `Part[]`.
 
 - Values referenced by message bodies are promoted to parts according to their
   type: `Text` to a text part; `Number`, `Boolean`, `Json`, and user Records to
-  JSON parts; `Part` values to parts directly; and `Pack` values to contained
-  parts.
+  JSON parts; and `Part` values to parts directly.
 - Runtime part values use short `kind` names such as `text`, `json`, `image`,
   `audio`, `video`, `file`, `tool_call`, and `tool_result`.
 - `recall` is singular and agic-only. Its canonical values are `auto`, `none`,

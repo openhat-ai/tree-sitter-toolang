@@ -378,7 +378,7 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
 ==================
 Flow Statements
 ==================
-flow research(in: Pack) -> Answer:
+flow research(in: Part[]) -> Answer:
   models = gpt-5
 
   ## Prepare the request.
@@ -417,7 +417,9 @@ flow research(in: Pack) -> Answer:
           (colon)
           (type
             (base_type
-              (builtin_type))))
+              (builtin_type))
+            (type_suffix
+              (array_suffix))))
         (rparen))
       (arrow)
       (type

@@ -311,10 +311,6 @@
         {
           "type": "STRING",
           "value": "Part"
-        },
-        {
-          "type": "STRING",
-          "value": "Pack"
         }
       ]
     },

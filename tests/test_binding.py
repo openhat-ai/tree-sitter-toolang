@@ -791,6 +791,19 @@ def test_none_is_parsed_as_user_type_not_builtin_type():
     assert "builtin_type" not in str(type_node)
 
 
+def test_pack_is_parsed_as_user_type_not_builtin_type():
+    parser = _parser()
+    source = b"struct ReviewResult:\n  parts: Pack\n"
+    tree = parser.parse(source)
+
+    assert not tree.root_node.has_error
+    field = _nodes(tree.root_node, "field")[0]
+    type_node = field.child_by_field_name("type")
+    assert type_node is not None
+    assert "user_type" in str(type_node)
+    assert "builtin_type" not in str(type_node)
+
+
 def test_bare_text_is_parsed_as_unroled_message():
     parser = _parser()
     source = (

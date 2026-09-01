@@ -49,7 +49,7 @@ module.exports = grammar({
       ),
 
     base_type: ($) => choice($.builtin_type, $.user_type),
-    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Part", "Pack"),
+    builtin_type: () => choice("Text", "Number", "Boolean", "Json", "Part"),
     user_type: ($) => $.type_name,
     type_suffix: ($) => $.array_suffix,
     array_suffix: () => "[]",
