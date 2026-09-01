@@ -99,12 +99,10 @@ optional_marker ::= "?"
 ## Caps
 
 ```ebnf
-psyche ::= "psyche" cap_name ":" cap_body
-skill ::= "skill" cap_name ":" cap_body
-service ::= "service" cap_name ":" cap_body
+cap ::= cap_kind cap_name ":" line_end (property | trivia)* cap_body? trivia*
 cap_name ::= snake_kebab_name
 
-cap_body ::= line_end (property | trivia)* text_body? trivia*
+cap_body ::= text_body
 property ::= property_key "=" property_value line_end
 property_key ::= snake_name
 property_value ::= text_line
@@ -112,27 +110,27 @@ property_value ::= text_line
 
 Rules:
 
-- The public CST exposes `psyche`, `skill`, and `service` directly.
-- Runtime validates property keys and cap-specific constraints.
+- The public CST exposes `psyche`, `skill`, `service`, and `prompt` directly.
+- All four cap declarations expose the same `kind`, `name`, repeated `property`,
+  and optional `body` fields. The body is the declaration's indented text block
+  and is always exposed as `cap_body`.
+- Properties form a leading prefix before the text body. Once the text body
+  starts, later property-looking lines remain text.
+- Runtime validates property keys and cap-specific constraints after parsing.
+  A prompt permits no properties; the other cap kinds each define their own
+  property schema.
 
 ### Prompts
 
-```ebnf
-prompt ::= "prompt" cap_name ":" prompt_body
-prompt_body ::= line_end text_body?
-```
-
 Rules:
 
-- A prompt body is a text template, not a metadata body. Property-looking lines
-  remain template text.
+- A leading property-looking line is parsed as a property and rejected by
+  prompt semantic validation.
 - `{{name}}` placeholders implicitly declare named inputs. `{{_}}` is the
   primary-input placeholder. Prompt declarations have no parameter directive or
   typed signature.
-- A prompt expands to Text before the enclosing runnable input is parsed as
-  Content. Text is its implicit return and cannot be written as a return type.
 - Placeholder extraction and substitution are language semantics; placeholders
-  remain part of raw `text_body` in the CST.
+  remain part of the raw `cap_body` text in the CST.
 
 ## Jobs
 

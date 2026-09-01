@@ -189,14 +189,16 @@ def test_caps_fixture_covers_placeholder_based_prompts():
 
     assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "prompt_body" for body in bodies)
-    assert not any(_nodes(body, "property") for body in bodies)
+    assert all(body.type == "cap_body" for body in bodies)
+    assert not any(
+        prompt.children_by_field_name("property") for prompt in prompts
+    )
     assert "Review {{_}} directly." in _text(source, bodies[0])
     assert "Review {{path}} carefully." in _text(source, bodies[1])
     assert "{{focus}}" in _text(source, bodies[1])
 
 
-def test_prompt_property_like_lines_remain_template_text():
+def test_prompt_property_like_prefix_uses_common_cap_property_shape():
     parser = _parser()
     source = b"prompt literal:\n  mode = exact\n  Render {{_}}.\n"
 
@@ -205,9 +207,14 @@ def test_prompt_property_like_lines_remain_template_text():
     body = prompt.child_by_field_name("body")
 
     assert tree.root_node.has_error is False
-    assert body is not None and body.type == "prompt_body"
-    assert "mode = exact" in _text(source, body)
-    assert not _nodes(body, "property")
+    properties = prompt.children_by_field_name("property")
+
+    assert body is not None and body.type == "cap_body"
+    assert [_text(source, property_node).strip() for property_node in properties] == [
+        "mode = exact"
+    ]
+    assert "mode = exact" not in _text(source, body)
+    assert "Render {{_}}." in _text(source, body)
 
 
 def test_caps_fixture_covers_supported_kinds_and_metadata():
@@ -228,17 +235,14 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert [body.type for body in bodies] == [
-        "cap_body",
-        "cap_body",
-        "cap_body",
-        "cap_body",
-        "prompt_body",
-        "prompt_body",
-    ]
-    assert "protocol = http" in _text(source, bodies[0])
-    assert "target = https://mcp.github.com/mcp" in _text(source, bodies[0])
-    assert "source = by3gus/review" in _text(source, bodies[2])
+    assert all(body.type == "cap_body" for body in bodies)
+    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert "protocol = http" in _text(source, properties[0][0])
+    assert "target = https://mcp.github.com/mcp" in _text(
+        source, properties[0][1]
+    )
+    assert "source = by3gus/review" in _text(source, properties[2][0])
+    assert properties[3:] == [[], [], []]
     assert "Prefer concrete findings and direct language." in _text(source, bodies[3])
     assert "Review {{path}} carefully." in _text(source, bodies[5])
 
@@ -259,14 +263,13 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert [body.type for body in bodies] == [
-        "cap_body",
-        "cap_body",
-        "cap_body",
-        "prompt_body",
-    ]
-    assert "target = http://localhost:3000/mcp" in _text(source, bodies[0])
-    assert "source = by3gus/rewrite" in _text(source, bodies[1])
+    assert all(body.type == "cap_body" for body in bodies)
+    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert "target = http://localhost:3000/mcp" in _text(
+        source, properties[0][1]
+    )
+    assert "source = by3gus/rewrite" in _text(source, properties[1][0])
+    assert properties[2:] == [[], []]
     assert "Prefer concrete findings." in _text(source, bodies[2])
     assert "{{_}}" in _text(source, bodies[3])
     assert "{{tone}}" in _text(source, bodies[3])
@@ -322,9 +325,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     for cap in items[:4]:
         body = cap.child_by_field_name("body")
         assert body is not None
-        assert body.type == (
-            "prompt_body" if cap.type == "prompt" else "cap_body"
-        )
+        assert body.type == "cap_body"
 
     struct = items[4]
     fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
@@ -378,7 +379,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     assert "text_block" in str(messages[0])
 
 
-def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
+def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
     parser = _parser()
     source = (FIXTURES_DIR / "comments.too").read_bytes()
 
@@ -392,10 +393,8 @@ def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
 
     assert tree.root_node.has_error is False
     assert all(body is not None for body in bodies)
-    assert "# body hash line is literal block content" in _text(source, bodies[0])
-    assert "# prompt body hash line" in _text(source, bodies[1])
-    assert "comment_line" in str(bodies[0])
-    assert "indented_raw_text" in str(bodies[1])
+    assert all("#" not in _text(source, body) for body in bodies)
+    assert all(_nodes(cap, "comment_line") for cap in caps)
 
 
 def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
@@ -820,7 +819,7 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
 
     assert root.has_error is False
     assert body is not None
-    assert body.type == "prompt_body"
+    assert body.type == "cap_body"
     assert "Review {{path}} carefully." in _normalize_newlines(_text(source, body))
 
 

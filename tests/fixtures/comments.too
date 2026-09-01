@@ -5,14 +5,14 @@ service github: # inline cap header comment
   protocol = http
   target = https://mcp.github.com/mcp
 
-  # body hash line is literal block content
+  # service body comment
   Use this service when the agent needs GitHub access.
 
 struct ReviewResult:
   summary: Text # inline struct field comment
 
 prompt review: # inline prompt header comment
-  # prompt body hash line
+  # prompt body comment
   Review {{path}} carefully.
   {{focus}}
 

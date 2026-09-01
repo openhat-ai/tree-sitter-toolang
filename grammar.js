@@ -81,7 +81,7 @@ module.exports = grammar({
         field("kind", $.psyche_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        $._cap_definition,
       ),
 
     skill: ($) =>
@@ -89,7 +89,7 @@ module.exports = grammar({
         field("kind", $.skill_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        $._cap_definition,
       ),
 
     service: ($) =>
@@ -97,7 +97,7 @@ module.exports = grammar({
         field("kind", $.service_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.cap_body),
+        $._cap_definition,
       ),
 
     prompt: ($) =>
@@ -105,24 +105,16 @@ module.exports = grammar({
         field("kind", $.prompt_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        field("body", $.prompt_body),
+        $._cap_definition,
       ),
 
-    prompt_body: ($) =>
+    _cap_definition: ($) =>
       prec.right(seq(
         $.line_end,
-        optional(alias($._prompt_text_body, $.text_body)),
+        repeat(choice(field("property", $.property), $._trivia)),
+        optional(seq(field("body", $.cap_body), repeat($._trivia))),
       )),
-    _prompt_text_body: ($) =>
-      prec.dynamic(2, prec.right(repeat1(choice(
-        alias($._prompt_text_body_line, $.text_body_line),
-        $.blank_line,
-      )))),
-    _prompt_text_body_line: ($) =>
-      seq(
-        field("content", alias($._prompt_indented_raw_text, $.indented_raw_text)),
-        $.newline,
-      ),
+    cap_body: ($) => $.text_body,
 
     task: ($) =>
       seq(
@@ -144,12 +136,6 @@ module.exports = grammar({
     cap_ref: ($) => $.text_line,
     job_name: ($) => $._snake_kebab_name,
 
-    cap_body: ($) =>
-      prec.right(seq(
-        $.line_end,
-        repeat(choice($.property, $._trivia)),
-        optional(seq($.text_body, repeat($._trivia))),
-      )),
     job_body: ($) =>
       prec.right(seq(
         $.line_end,
@@ -726,7 +712,6 @@ module.exports = grammar({
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
-    _prompt_indented_raw_text: () => token(prec(3, /[ \t][^\r\n]*/)),
     _implicit_run_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },

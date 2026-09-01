@@ -226,33 +226,9 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "comment_line",
-          "named": true
-        },
-        {
-          "type": "doc_line",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "parent_doc_line",
-          "named": true
-        },
-        {
-          "type": "property",
-          "named": true
-        },
         {
           "type": "text_body",
           "named": true
@@ -1667,10 +1643,10 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "prompt_body",
+            "type": "cap_body",
             "named": true
           }
         ]
@@ -1704,23 +1680,40 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
-    }
-  },
-  {
-    "type": "prompt_body",
-    "named": true,
-    "fields": {},
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
           "type": "line_end",
           "named": true
         },
         {
-          "type": "text_body",
+          "type": "parent_doc_line",
           "named": true
         }
       ]
@@ -1808,7 +1801,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -1845,7 +1838,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2178,7 +2207,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -2215,7 +2244,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2299,7 +2364,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -2336,7 +2401,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {

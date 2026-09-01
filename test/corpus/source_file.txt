@@ -76,25 +76,25 @@ chore stale-prs:
       (service_keyword)
       (cap_name)
       (colon)
-      (cap_body
+      (line_end
+        (newline))
+      (property
+        (property_key
+          (snake_name))
+        (assign_operator)
+        (property_value
+          (text_line))
         (line_end
-          (newline))
-        (property
-          (property_key
-            (snake_name))
-          (assign_operator)
-          (property_value
-            (text_line))
-          (line_end
-            (newline)))
-        (property
-          (property_key
-            (snake_name))
-          (assign_operator)
-          (property_value
-            (text_line))
-          (line_end
-            (newline)))
+          (newline)))
+      (property
+        (property_key
+          (snake_name))
+        (assign_operator)
+        (property_value
+          (text_line))
+        (line_end
+          (newline)))
+      (cap_body
         (text_body
           (blank_line)
           (text_body_line
@@ -106,9 +106,9 @@ chore stale-prs:
       (psyche_keyword)
       (cap_name)
       (colon)
+      (line_end
+        (newline))
       (cap_body
-        (line_end
-          (newline))
         (text_body
           (text_body_line
             (indented_raw_text)
@@ -119,9 +119,9 @@ chore stale-prs:
       (prompt_keyword)
       (cap_name)
       (colon)
-      (prompt_body
-        (line_end
-          (newline))
+      (line_end
+        (newline))
+      (cap_body
         (text_body
           (text_body_line
             (indented_raw_text)

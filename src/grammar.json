@@ -484,12 +484,8 @@
           }
         },
         {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "cap_body"
-          }
+          "type": "SYMBOL",
+          "name": "_cap_definition"
         }
       ]
     },
@@ -521,12 +517,8 @@
           }
         },
         {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "cap_body"
-          }
+          "type": "SYMBOL",
+          "name": "_cap_definition"
         }
       ]
     },
@@ -558,12 +550,8 @@
           }
         },
         {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "cap_body"
-          }
+          "type": "SYMBOL",
+          "name": "_cap_definition"
         }
       ]
     },
@@ -595,16 +583,12 @@
           }
         },
         {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "prompt_body"
-          }
+          "type": "SYMBOL",
+          "name": "_cap_definition"
         }
       ]
     },
-    "prompt_body": {
+    "_cap_definition": {
       "type": "PREC_RIGHT",
       "value": 0,
       "content": {
@@ -615,16 +599,47 @@
             "name": "line_end"
           },
           {
+            "type": "REPEAT",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "property",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "property"
+                  }
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_trivia"
+                }
+              ]
+            }
+          },
+          {
             "type": "CHOICE",
             "members": [
               {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_prompt_text_body"
-                },
-                "named": true,
-                "value": "text_body"
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "body",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "cap_body"
+                    }
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_trivia"
+                    }
+                  }
+                ]
               },
               {
                 "type": "BLANK"
@@ -634,56 +649,9 @@
         ]
       }
     },
-    "_prompt_text_body": {
-      "type": "PREC_DYNAMIC",
-      "value": 2,
-      "content": {
-        "type": "PREC_RIGHT",
-        "value": 0,
-        "content": {
-          "type": "REPEAT1",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_prompt_text_body_line"
-                },
-                "named": true,
-                "value": "text_body_line"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "blank_line"
-              }
-            ]
-          }
-        }
-      }
-    },
-    "_prompt_text_body_line": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "content",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_prompt_indented_raw_text"
-            },
-            "named": true,
-            "value": "indented_raw_text"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
+    "cap_body": {
+      "type": "SYMBOL",
+      "name": "text_body"
     },
     "task": {
       "type": "SEQ",
@@ -770,59 +738,6 @@
     "job_name": {
       "type": "SYMBOL",
       "name": "_snake_kebab_name"
-    },
-    "cap_body": {
-      "type": "PREC_RIGHT",
-      "value": 0,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "line_end"
-          },
-          {
-            "type": "REPEAT",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "property"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_trivia"
-                }
-              ]
-            }
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "text_body"
-                  },
-                  {
-                    "type": "REPEAT",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_trivia"
-                    }
-                  }
-                ]
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          }
-        ]
-      }
     },
     "job_body": {
       "type": "PREC_RIGHT",
@@ -3916,17 +3831,6 @@
       "content": {
         "type": "PREC",
         "value": -1,
-        "content": {
-          "type": "PATTERN",
-          "value": "[ \\t][^\\r\\n]*"
-        }
-      }
-    },
-    "_prompt_indented_raw_text": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PREC",
-        "value": 3,
         "content": {
           "type": "PATTERN",
           "value": "[ \\t][^\\r\\n]*"

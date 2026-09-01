@@ -76,8 +76,17 @@
   name: (flow_name
     (snake_name) @function))
 
+(psyche
+  name: (cap_name) @type)
+
+(skill
+  name: (cap_name) @type)
+
+(service
+  name: (cap_name) @type)
+
 (prompt
-  name: (cap_name) @function)
+  name: (cap_name) @type)
 
 (task
   name: (job_name) @function)
@@ -94,9 +103,6 @@
     (snake_name) @function))
 
 [
-  (psyche)
-  (skill)
-  (service)
   (task)
   (chore)
 ] @type
