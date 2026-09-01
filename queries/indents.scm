@@ -2,6 +2,10 @@
 ; Maintain this file in this repository and consume it from tooling.
 
 (struct) @indent
+(psyche) @indent
+(skill) @indent
+(service) @indent
+(prompt) @indent
 (context) @indent
 (instruct) @indent
 (agic) @indent

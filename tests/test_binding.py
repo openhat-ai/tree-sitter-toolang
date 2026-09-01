@@ -175,7 +175,7 @@ def test_with_fixture_contains_only_with_items():
     assert item_types == ["with", "with", "with", "with"]
 
 
-def test_caps_fixture_covers_prompt_indented_forms():
+def test_caps_fixture_covers_placeholder_based_prompts():
     parser = _parser()
     source = (FIXTURES_DIR / "caps.too").read_bytes()
 
@@ -189,9 +189,32 @@ def test_caps_fixture_covers_prompt_indented_forms():
 
     assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
-    assert "Review the current request directly." in _text(source, bodies[0])
-    assert "params = path, focus" in _text(source, bodies[1])
+    assert all(body.type == "cap_body" for body in bodies)
+    assert not any(
+        prompt.children_by_field_name("property") for prompt in prompts
+    )
+    assert "Review {{_}} directly." in _text(source, bodies[0])
     assert "Review {{path}} carefully." in _text(source, bodies[1])
+    assert "{{focus}}" in _text(source, bodies[1])
+
+
+def test_prompt_property_like_prefix_uses_common_cap_property_shape():
+    parser = _parser()
+    source = b"prompt literal:\n  mode = exact\n  Render {{_}}.\n"
+
+    tree = parser.parse(source)
+    prompt = _item_child(_items(tree.root_node)[0])
+    body = prompt.child_by_field_name("body")
+
+    assert tree.root_node.has_error is False
+    properties = prompt.children_by_field_name("property")
+
+    assert body is not None and body.type == "cap_body"
+    assert [_text(source, property_node).strip() for property_node in properties] == [
+        "mode = exact"
+    ]
+    assert "mode = exact" not in _text(source, body)
+    assert "Render {{_}}." in _text(source, body)
 
 
 def test_caps_fixture_covers_supported_kinds_and_metadata():
@@ -212,10 +235,14 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all("cap_body" == body.type for body in bodies)
-    assert "protocol = http" in _text(source, bodies[0])
-    assert "target = https://mcp.github.com/mcp" in _text(source, bodies[0])
-    assert "source = by3gus/review" in _text(source, bodies[2])
+    assert all(body.type == "cap_body" for body in bodies)
+    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert "protocol = http" in _text(source, properties[0][0])
+    assert "target = https://mcp.github.com/mcp" in _text(
+        source, properties[0][1]
+    )
+    assert "source = by3gus/review" in _text(source, properties[2][0])
+    assert properties[3:] == [[], [], []]
     assert "Prefer concrete findings and direct language." in _text(source, bodies[3])
     assert "Review {{path}} carefully." in _text(source, bodies[5])
 
@@ -237,10 +264,15 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
     ]
     assert all(body is not None for body in bodies)
     assert all(body.type == "cap_body" for body in bodies)
-    assert "target = http://localhost:3000/mcp" in _text(source, bodies[0])
-    assert "source = by3gus/rewrite" in _text(source, bodies[1])
+    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert "target = http://localhost:3000/mcp" in _text(
+        source, properties[0][1]
+    )
+    assert "source = by3gus/rewrite" in _text(source, properties[1][0])
+    assert properties[2:] == [[], []]
     assert "Prefer concrete findings." in _text(source, bodies[2])
-    assert "params = tone" in _text(source, bodies[3])
+    assert "{{_}}" in _text(source, bodies[3])
+    assert "{{tone}}" in _text(source, bodies[3])
 
 
 def test_jobs_fixture_covers_task_and_chore_items():
@@ -347,7 +379,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     assert "text_block" in str(messages[0])
 
 
-def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
+def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
     parser = _parser()
     source = (FIXTURES_DIR / "comments.too").read_bytes()
 
@@ -361,9 +393,8 @@ def test_comments_fixture_preserves_hash_lines_inside_indented_cap_bodies():
 
     assert tree.root_node.has_error is False
     assert all(body is not None for body in bodies)
-    assert "# body hash line is literal block content" in _text(source, bodies[0])
-    assert "# prompt body hash line" in _text(source, bodies[1])
-    assert "comment_line" in str(bodies[0])
+    assert all("#" not in _text(source, body) for body in bodies)
+    assert all(_nodes(cap, "comment_line") for cap in caps)
 
 
 def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
@@ -494,6 +525,63 @@ def test_directive_value_is_trimmed_line_payload():
     assert tree.root_node.has_error is False
     assert directive.child_by_field_name("values") is None
     assert _text(source, directive.child_by_field_name("value")).strip() == "web_search/*, shell"
+
+
+def test_recall_directive_uses_canonical_keyword_values():
+    parser = _parser()
+    source = (
+        b"agic automatic:\n  recall = auto\n"
+        b"agic disabled:\n  recall = none\n"
+        b"agic distant:\n  recall = far\n"
+        b"agic recent:\n  recall = near\n"
+        b"agic combined:\n  recall = far, near\n"
+    )
+
+    tree = parser.parse(source)
+    directives = _nodes(tree.root_node, "directive")
+    values = [directive.child_by_field_name("value") for directive in directives]
+
+    assert tree.root_node.has_error is False
+    assert all(
+        directive.child_by_field_name("key").type == "recall_keyword"
+        for directive in directives
+    )
+    assert all(
+        directive.child_by_field_name("operator").type == "assign_operator"
+        for directive in directives
+    )
+    assert [_text(source, value).strip() for value in values] == [
+        "auto",
+        "none",
+        "far",
+        "near",
+        "far, near",
+    ]
+    assert [
+        [child.type for child in value.named_children]
+        for value in values
+    ] == [
+        ["recall_auto_keyword"],
+        ["recall_none_keyword"],
+        ["recall_far_keyword"],
+        ["recall_near_keyword"],
+        ["recall_far_keyword", "comma", "recall_near_keyword"],
+    ]
+
+
+def test_recall_directive_rejects_noncanonical_forms():
+    parser = _parser()
+
+    for source in (
+        b"agic bad:\n  recall = line\n",
+        b"agic bad:\n  recall = default\n",
+        b"agic bad:\n  recall = near, far\n",
+        b"agic bad:\n  recall += far\n",
+    ):
+        tree = parser.parse(source)
+        assert tree.root_node.has_error or _nodes(
+            tree.root_node, "invalid_agic_reserved_message"
+        ), source
 
 
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():
@@ -703,6 +791,19 @@ def test_none_is_parsed_as_user_type_not_builtin_type():
     assert "builtin_type" not in str(type_node)
 
 
+def test_pack_is_parsed_as_user_type_not_builtin_type():
+    parser = _parser()
+    source = b"struct ReviewResult:\n  parts: Pack\n"
+    tree = parser.parse(source)
+
+    assert not tree.root_node.has_error
+    field = _nodes(tree.root_node, "field")[0]
+    type_node = field.child_by_field_name("type")
+    assert type_node is not None
+    assert "user_type" in str(type_node)
+    assert "builtin_type" not in str(type_node)
+
+
 def test_bare_text_is_parsed_as_unroled_message():
     parser = _parser()
     source = (
@@ -777,8 +878,6 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
     parser = _parser()
     source = (
         b"prompt review:\r\n"
-        b"  params = path, focus\r\n"
-        b"\r\n"
         b"  Review {{path}} carefully.\r\n"
         b"  {{focus}}\r\n"
     )
@@ -790,7 +889,7 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
 
     assert root.has_error is False
     assert body is not None
-    assert "params = path, focus" in _normalize_newlines(_text(source, body))
+    assert body.type == "cap_body"
     assert "Review {{path}} carefully." in _normalize_newlines(_text(source, body))
 
 

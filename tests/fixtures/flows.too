@@ -60,7 +60,7 @@ flow delegate:
 flow bindings:
   let jobs = scatter 5 plan_searches
   let run publish
-  let guidance:
+  let guidance =
     Prefer primary sources.
   repeat:
     run improve

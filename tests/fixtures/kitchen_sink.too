@@ -14,8 +14,6 @@ service github: # inline cap header comment
   Use this service when the agent needs GitHub access.
 
 prompt review: # inline prompt header comment
-  params = path, focus
-
   Review {{path}} carefully.
   {{focus}}
 
@@ -50,7 +48,7 @@ agic review(_: Part[], path: Text, focus?: Text) -> ReviewResult:
   skills += review, patch
   services -= linear
   tools = shell, filesystem
-  recall = history, memory
+  recall = far, near
 
   instruct default
 

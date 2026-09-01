@@ -226,33 +226,9 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "comment_line",
-          "named": true
-        },
-        {
-          "type": "doc_line",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "parent_doc_line",
-          "named": true
-        },
-        {
-          "type": "property",
-          "named": true
-        },
         {
           "type": "text_body",
           "named": true
@@ -444,6 +420,10 @@
           {
             "type": "directive_key",
             "named": true
+          },
+          {
+            "type": "recall_keyword",
+            "named": true
           }
         ]
       },
@@ -451,6 +431,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "assign_operator",
+            "named": true
+          },
           {
             "type": "directive_op",
             "named": true
@@ -463,6 +447,10 @@
         "types": [
           {
             "type": "directive_value",
+            "named": true
+          },
+          {
+            "type": "recall_value",
             "named": true
           }
         ]
@@ -1024,6 +1012,10 @@
           "named": true
         },
         {
+          "type": "recall_keyword",
+          "named": true
+        },
+        {
           "type": "role",
           "named": true
         },
@@ -1364,10 +1356,6 @@
           "named": true
         },
         {
-          "type": "colon",
-          "named": true
-        },
-        {
           "type": "flow_let_keyword",
           "named": true
         }
@@ -1671,7 +1659,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -1708,7 +1696,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1793,7 +1817,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -1830,7 +1854,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1906,6 +1966,42 @@
         },
         {
           "type": "rank_selection_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "recall_none_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "recall_value",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comma",
+          "named": true
+        },
+        {
+          "type": "recall_auto_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_far_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_near_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_none_keyword",
           "named": true
         }
       ]
@@ -2163,7 +2259,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -2200,7 +2296,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2284,7 +2416,7 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "cap_body",
@@ -2321,7 +2453,43 @@
             "named": true
           }
         ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -2935,10 +3103,6 @@
     "named": false
   },
   {
-    "type": "Pack",
-    "named": false
-  },
-  {
     "type": "Part",
     "named": false
   },
@@ -3179,8 +3343,20 @@
     "named": false
   },
   {
-    "type": "recall",
-    "named": false
+    "type": "recall_auto_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_far_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_keyword",
+    "named": true
+  },
+  {
+    "type": "recall_near_keyword",
+    "named": true
   },
   {
     "type": "rparen",

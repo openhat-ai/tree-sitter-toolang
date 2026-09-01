@@ -43,6 +43,7 @@
 
 (cap_kind) @type
 (directive_key) @property
+(recall_keyword) @property
 (role) @keyword
 
 (assign_operator) @operator
@@ -59,6 +60,7 @@
 (cap_ref
   (text_line) @constant)
 (directive_value) @constant
+(recall_value) @constant
 
 (property_value) @string
 (text_line) @string
@@ -76,8 +78,17 @@
   name: (flow_name
     (snake_name) @function))
 
+(psyche
+  name: (cap_name) @type)
+
+(skill
+  name: (cap_name) @type)
+
+(service
+  name: (cap_name) @type)
+
 (prompt
-  name: (cap_name) @function)
+  name: (cap_name) @type)
 
 (task
   name: (job_name) @function)
@@ -94,9 +105,6 @@
     (snake_name) @function))
 
 [
-  (psyche)
-  (skill)
-  (service)
   (task)
   (chore)
 ] @type

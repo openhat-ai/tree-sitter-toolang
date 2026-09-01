@@ -51,7 +51,7 @@ Comments:
 ```ebnf
 type ::= base_type type_suffix*
 base_type ::= builtin_type | user_type
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" | "Pack"
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
 user_type ::= type_name
 type_name ::= pascal_name
 type_suffix ::= "[]"
@@ -62,8 +62,6 @@ Rules:
 - `Text`, `Number`, and `Boolean` are scalar types.
 - `Json` is a dynamic JSON-compatible value.
 - `Part` is a model-visible content part.
-- `Pack` is a builtin Record equivalent to `{ parts: Part[] }`. It is one value,
-  not an item array.
 - A `struct` declaration defines a user Record type. `Record` is a semantic
   category, not a builtin type name.
 - Runtime `Message` values are Records, but Toolang source does not use
@@ -99,13 +97,10 @@ optional_marker ::= "?"
 ## Caps
 
 ```ebnf
-psyche ::= "psyche" cap_name ":" cap_body
-skill ::= "skill" cap_name ":" cap_body
-service ::= "service" cap_name ":" cap_body
-prompt ::= "prompt" cap_name ":" cap_body
+cap ::= cap_kind cap_name ":" line_end (property | trivia)* cap_body? trivia*
 cap_name ::= snake_kebab_name
 
-cap_body ::= line_end (property | trivia)* text_body? trivia*
+cap_body ::= text_body
 property ::= property_key "=" property_value line_end
 property_key ::= snake_name
 property_value ::= text_line
@@ -114,7 +109,26 @@ property_value ::= text_line
 Rules:
 
 - The public CST exposes `psyche`, `skill`, `service`, and `prompt` directly.
-- Runtime validates property keys and cap-specific constraints.
+- All four cap declarations expose the same `kind`, `name`, repeated `property`,
+  and optional `body` fields. The body is the declaration's indented text block
+  and is always exposed as `cap_body`.
+- Properties form a leading prefix before the text body. Once the text body
+  starts, later property-looking lines remain text.
+- Runtime validates property keys and cap-specific constraints after parsing.
+  A prompt permits no properties; the other cap kinds each define their own
+  property schema.
+
+### Prompts
+
+Rules:
+
+- A leading property-looking line is parsed as a property and rejected by
+  prompt semantic validation.
+- `{{name}}` placeholders implicitly declare named inputs. `{{_}}` is the
+  primary-input placeholder. Prompt declarations have no parameter directive or
+  typed signature.
+- Placeholder extraction and substitution are language semantics; placeholders
+  remain part of the raw `cap_body` text in the CST.
 
 ## Jobs
 
@@ -183,10 +197,13 @@ agic_body ::= trivia*
 
 directives ::= directive+
 directive ::= directive_key directive_op directive_value line_end
+            | "recall" "=" recall_value line_end
 directive_key ::= "models" | "tools" | "skills" | "services" | "psyches"
-                | "hands" | "handoffs" | "recall"
+                | "hands" | "handoffs"
 directive_op ::= "=" | "+=" | "-="
 directive_value ::= /[^#\r\n]+/
+
+recall_value ::= "auto" | "none" | "far" | "near" | "far" "," "near"
 
 settings ::= context_setting instruct_setting?
            | instruct_setting context_setting?
@@ -218,6 +235,8 @@ Rules:
 - Omitting the complete parameter list implies `_ : Part[]`; writing `()`
   declares no primary input.
 - An explicit `_` without a type also defaults to `Part[]`.
+- An untyped named parameter defaults to `Text`.
+- An omitted return type defaults to `Part[]`.
 - Directives must appear before settings and messages.
 - `context ref` and `instruct ref` select named/default/none settings.
   `context:` and `instruct:` provide inline setting bodies.
@@ -232,7 +251,8 @@ Rules:
   more blank lines, or any comment/doc-comment line, split unroled messages.
 - Use an explicit role when message content itself starts with a reserved word.
 - `pass` declares an empty body and cannot be followed by other body entries.
-- Runtime validates referenced names and directive semantics.
+- Runtime validates referenced names and resource-directive semantics. Recall
+  operators and values are fixed by the grammar.
 
 ## Flow
 
@@ -267,7 +287,7 @@ flow_operation ::= run_statement
 
 let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
-                | "let" local_name ":" text_inline
+                | "let" local_name "=" text_inline
 local_name ::= snake_name
 
 run_statement ::= "run" runnable line_end
@@ -334,11 +354,23 @@ flow_reserved_word ::= "let" | "run" | "seek" | "ask" | "scatter" | "storm"
 Rules:
 
 - A `flow` describes a workflow as an ordered tree of executable statements.
-- Flow signatures reuse agic parameter and return type syntax.
+- A flow name may be omitted.
+- The grammar permits multiple unnamed agics and flows in one source file.
+  Default naming and runnable-name uniqueness are semantic validation after
+  parsing.
+- Flow signatures reuse agic parameter and return type syntax and defaults.
 - Flow directives reuse agic directive syntax and must appear before
   statements.
 - `let name = statement` writes the result to a named local. `let statement`
-  discards it. `let name: body` assigns authored text directly.
+  discards the result and does not update `_`. `let name = BODY` evaluates
+  authored Content and creates or replaces a `dim=0` named local whose single
+  value is `Part[]`, without starting a child run. The `Part[]` type is implicit
+  and omitted from source. Type annotations and collection bindings are outside
+  this grammar version; a future extension must preserve `let name = BODY` as
+  the compatible shorthand. A statement binding instead infers its value type
+  from the operation result. The `text_inline` CST rule permits BODY on the
+  same line or in an indented block. An explicit flow operation after `=` takes
+  precedence over the BODY form.
 - `run` resolves a named agic or flow, or defines an inline agic.
 - Bare flow text is shorthand for inline `run`. One blank line stays inside the
   same body; two blank lines or a comment split statements.
@@ -363,10 +395,13 @@ Records with a role and `Part[]`.
 
 - Values referenced by message bodies are promoted to parts according to their
   type: `Text` to a text part; `Number`, `Boolean`, `Json`, and user Records to
-  JSON parts; `Part` values to parts directly; and `Pack` values to contained
-  parts.
+  JSON parts; and `Part` values to parts directly.
 - Runtime part values use short `kind` names such as `text`, `json`, `image`,
   `audio`, `video`, `file`, `tool_call`, and `tool_result`.
-- `recall = none` disables history retrieval. `recall = default` delegates to
-  runtime policy. Explicit `history`, `memory`, or `history, memory` values
-  select retrieval sources.
+- `recall` is singular and agic-only. Its canonical values are `auto`, `none`,
+  `far`, `near`, and `far, near`; omission means `auto`. `line` is a reserved
+  runtime local, not a recall source.
+- `far`, `near`, and `line` are reserved read-only runtime locals. Named
+  parameters and flow bindings cannot use them.
+- `hands` authorizes runnable targets for `_too__run`; `handoffs` authorizes
+  runnable targets for `_too__execute`.

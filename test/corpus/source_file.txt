@@ -55,8 +55,6 @@ psyche reviewer:
   Prefer concrete findings and direct language.
 
 prompt review:
-  params = path, focus
-
   Review {{path}} carefully.
 
 task review_api:
@@ -78,25 +76,25 @@ chore stale-prs:
       (service_keyword)
       (cap_name)
       (colon)
-      (cap_body
+      (line_end
+        (newline))
+      (property
+        (property_key
+          (snake_name))
+        (assign_operator)
+        (property_value
+          (text_line))
         (line_end
-          (newline))
-        (property
-          (property_key
-            (snake_name))
-          (assign_operator)
-          (property_value
-            (text_line))
-          (line_end
-            (newline)))
-        (property
-          (property_key
-            (snake_name))
-          (assign_operator)
-          (property_value
-            (text_line))
-          (line_end
-            (newline)))
+          (newline)))
+      (property
+        (property_key
+          (snake_name))
+        (assign_operator)
+        (property_value
+          (text_line))
+        (line_end
+          (newline)))
+      (cap_body
         (text_body
           (blank_line)
           (text_body_line
@@ -108,9 +106,9 @@ chore stale-prs:
       (psyche_keyword)
       (cap_name)
       (colon)
+      (line_end
+        (newline))
       (cap_body
-        (line_end
-          (newline))
         (text_body
           (text_body_line
             (indented_raw_text)
@@ -121,19 +119,10 @@ chore stale-prs:
       (prompt_keyword)
       (cap_name)
       (colon)
+      (line_end
+        (newline))
       (cap_body
-        (line_end
-          (newline))
-        (property
-          (property_key
-            (snake_name))
-          (assign_operator)
-          (property_value
-            (text_line))
-          (line_end
-            (newline)))
         (text_body
-          (blank_line)
           (text_body_line
             (indented_raw_text)
             (newline))
@@ -274,7 +263,7 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
   hands += summarize
-  recall = history, memory
+  recall = far, near
 
   instruct default
   context default
@@ -349,9 +338,12 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
           (line_end
             (newline)))
         (directive
-          (directive_key)
-          (directive_op)
-          (directive_value)
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_far_keyword)
+            (comma)
+            (recall_near_keyword))
           (line_end
             (newline)))
         (blank_line)
@@ -386,7 +378,7 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
 ==================
 Flow Statements
 ==================
-flow research(in: Pack) -> Answer:
+flow research(in: Part[]) -> Answer:
   models = gpt-5
 
   ## Prepare the request.
@@ -425,7 +417,9 @@ flow research(in: Pack) -> Answer:
           (colon)
           (type
             (base_type
-              (builtin_type))))
+              (builtin_type))
+            (type_suffix
+              (array_suffix))))
         (rparen))
       (arrow)
       (type
@@ -661,7 +655,7 @@ agic raw:
 Recall Directive
 ==================
 agic recall:
-  recall = history, memory
+  recall = far, near
 
 ---
 
@@ -676,8 +670,11 @@ agic recall:
         (newline))
       (agic_body
         (directive
-          (directive_key)
-          (directive_op)
-          (directive_value)
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_far_keyword)
+            (comma)
+            (recall_near_keyword))
           (line_end
             (newline)))))))
