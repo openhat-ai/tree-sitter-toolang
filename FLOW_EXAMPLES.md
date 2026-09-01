@@ -79,7 +79,7 @@ flow examples(input: Pack) -> Answer:
   rank top 5 par 3:
     Score this item by relevance.
 
-  ## Bind, discard, or directly assign results.
+  ## Bind or discard operation results, or assign Content directly.
   let jobs = scatter 5 plan_searches
   let run publish
   let guidance =

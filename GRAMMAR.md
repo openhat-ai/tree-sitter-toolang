@@ -358,9 +358,14 @@ Rules:
 - Flow directives reuse agic directive syntax and must appear before
   statements.
 - `let name = statement` writes the result to a named local. `let statement`
-  discards the result and does not update `_`. `let name = body` creates or
-  replaces a named local with authored Text. An explicit flow operation after
-  `=` takes precedence over the text form.
+  discards the result and does not update `_`. `let name = BODY` evaluates
+  authored Content and creates or replaces a named local with one `Part[]`
+  value, without starting a child run. `Part[]` is the implicit local type and
+  is omitted from source; the semantic form is `let name: Part[] = BODY`. A
+  statement binding instead infers the local type from the operation result.
+  The `text_inline` CST rule permits BODY on the same line or in an indented
+  block. An explicit flow operation after `=` takes precedence over the BODY
+  form.
 - `run` resolves a named agic or flow, or defines an inline agic.
 - Bare flow text is shorthand for inline `run`. One blank line stays inside the
   same body; two blank lines or a comment split statements.

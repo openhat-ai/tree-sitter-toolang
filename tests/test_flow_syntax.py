@@ -143,7 +143,7 @@ def test_flow_fixture_covers_complete_statement_set():
     assert _statements(flows[4]) == []
 
 
-def test_let_uses_equals_for_operation_results_and_text_locals():
+def test_let_uses_equals_for_operation_results_and_content_locals():
     parser = _parser()
     source = (
         b"flow bindings:\n"
