@@ -359,13 +359,14 @@ Rules:
   statements.
 - `let name = statement` writes the result to a named local. `let statement`
   discards the result and does not update `_`. `let name = BODY` evaluates
-  authored Content and creates or replaces a named local with one `Part[]`
-  value, without starting a child run. `Part[]` is the implicit local type and
-  is omitted from source; the semantic form is `let name: Part[] = BODY`. A
-  statement binding instead infers the local type from the operation result.
-  The `text_inline` CST rule permits BODY on the same line or in an indented
-  block. An explicit flow operation after `=` takes precedence over the BODY
-  form.
+  authored Content and creates or replaces a `dim=0` named local whose single
+  value is `Part[]`, without starting a child run. The `Part[]` type is implicit
+  and omitted from source. Type annotations and collection bindings are outside
+  this grammar version; a future extension must preserve `let name = BODY` as
+  the compatible shorthand. A statement binding instead infers its value type
+  from the operation result. The `text_inline` CST rule permits BODY on the
+  same line or in an indented block. An explicit flow operation after `=` takes
+  precedence over the BODY form.
 - `run` resolves a named agic or flow, or defines an inline agic.
 - Bare flow text is shorthand for inline `run`. One blank line stays inside the
   same body; two blank lines or a comment split statements.
