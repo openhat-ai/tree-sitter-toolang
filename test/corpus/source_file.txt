@@ -385,19 +385,19 @@ flow research(in: Part[]) -> Answer:
   run normalize
   seek alice review
   ask: Approve the plan?
-  scatter 5 -> SearchJob:
+  scatter 5 using -> SearchJob:
     Create five search jobs.
-  storm 3 sample par 2
-  keep par 8:
+  storm 3 in 2 lanes using sample
+  keep in 8 lanes if:
     Return true for useful jobs.
   drop last 1
-  rank relevance top 5 par 3
-  map par 5 -> Note:
+  sort descending in 3 lanes by relevance
+  map in 5 lanes using -> Note:
     Extract one note.
-  gather -> Answer:
+  gather using -> Answer:
     Synthesize notes.
   let draft = run summarize
-  repeat 5:
+  repeat 5 times:
     run collect_evidence
     until: Return true when enough evidence exists.
 
@@ -464,6 +464,7 @@ flow research(in: Part[]) -> Answer:
           (scatter_statement
             (flow_scatter_keyword)
             (integer_literal)
+            (flow_using_keyword)
             (inline_agic
               (arrow)
               (type
@@ -483,19 +484,21 @@ flow research(in: Part[]) -> Answer:
           (storm_statement
             (flow_storm_keyword)
             (integer_literal)
+            (flow_in_keyword)
+            (integer_literal)
+            (flow_lanes_keyword)
+            (flow_using_keyword)
             (runnable
               (snake_name))
-            (par_clause
-              (flow_par_keyword)
-              (integer_literal))
             (line_end
               (newline)))
           (keep_statement
             (flow_keep_keyword)
-            (par_clause
-              (flow_par_keyword)
-              (integer_literal))
-            (inline_agic_body
+            (flow_in_keyword)
+            (integer_literal)
+            (flow_lanes_keyword)
+            (flow_if_keyword)
+            (inline_agic
               (colon)
               (text_inline
                 (text_block
@@ -507,28 +510,28 @@ flow research(in: Part[]) -> Answer:
                       (newline)))))))
           (drop_statement
             (flow_drop_keyword)
-            (position_clause
+            (position
               (flow_last_keyword)
               (integer_literal))
             (line_end
               (newline)))
-          (rank_statement
-            (flow_rank_keyword)
+          (sort_statement
+            (flow_sort_keyword)
+            (flow_descending_keyword)
+            (flow_in_keyword)
+            (integer_literal)
+            (flow_lanes_keyword)
+            (flow_by_keyword)
             (runnable
               (snake_name))
-            (rank_selection_clause
-              (flow_top_keyword)
-              (integer_literal))
-            (par_clause
-              (flow_par_keyword)
-              (integer_literal))
             (line_end
               (newline)))
           (map_statement
             (flow_map_keyword)
-            (par_clause
-              (flow_par_keyword)
-              (integer_literal))
+            (flow_in_keyword)
+            (integer_literal)
+            (flow_lanes_keyword)
+            (flow_using_keyword)
             (inline_agic
               (arrow)
               (type
@@ -547,6 +550,7 @@ flow research(in: Part[]) -> Answer:
                       (newline)))))))
           (gather_statement
             (flow_gather_keyword)
+            (flow_using_keyword)
             (inline_agic
               (arrow)
               (type
@@ -577,25 +581,24 @@ flow research(in: Part[]) -> Answer:
           (repeat_statement
             (flow_repeat_keyword)
             (integer_literal)
+            (flow_times_keyword)
             (colon)
             (line_end
               (newline))
-            (repeat_body
-              (statements
-                (run_statement
-                  (flow_run_keyword)
-                  (runnable
-                    (snake_name))
-                  (line_end
-                    (newline))))
-              (until_statement
-                (flow_until_keyword)
-                (inline_agic_body
-                  (colon)
-                  (text_inline
-                    (text_line)
-                    (line_end
-                      (newline))))))))))))
+            (statements
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline))))
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))))))))
 
 ==================
 Comments
