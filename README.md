@@ -60,25 +60,33 @@ tree-sitter-toolang = "0.3.0"
 let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 ```
 
+## Grammar
+
+[GRAMMAR.md](GRAMMAR.md) documents the public Toolang syntax and CST contract.
+`grammar.js` is the parser source of truth; generated artifacts live under
+`src/`.
+
 ## Development
 
 Edit:
 
+- `GRAMMAR.md`
 - `grammar.js`
 - `queries/*.scm`
 - `test/corpus/*.txt`
+- `tests/fixtures/*.too`
+- `tests/*.py`
 
 Regenerate and test:
 
 ```bash
-npm install
-npm run generate
-npm test
-npm run test:cli
-npm run build:wasm
+npm ci
+python -m venv .venv
+.venv/bin/python -m pip install -e '.[tests]'
+
+npm run check
+.venv/bin/python -m pytest tests
 cargo test
-python -m pip install -e .[tests]
-pytest tests
 ```
 
 ## Publishing
