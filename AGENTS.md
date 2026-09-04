@@ -83,8 +83,6 @@ applies, raise the ambiguity and ask the human before proceeding.
   acceptance criteria.
 - Title PRs in semantic `type(scope): summary` form. Select the type from the
   delivered change.
-- Use `loop:human-confirmed` as the human-approval workflow signal. Do not add
-  account-identity requirements or a separate manual-merge ownership rule.
 
 ## Grammar Updates
 
