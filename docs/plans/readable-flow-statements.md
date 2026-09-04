@@ -21,8 +21,8 @@ This plan uses the following terms throughout:
 - **complement**: one complete syntax unit after the verb;
 - **positional complement**: an unmarked complement fixed immediately after
   the verb;
-- **marked complement**: a complement introduced by `in`, `using`, `if`, or
-  `by`; and
+- **marked complement**: a complement introduced by `in`, `using`, `if`, `by`,
+  or `until`; and
 - **field**: the public CST field that exposes a complement value.
 
 ## Success Criteria
@@ -32,7 +32,8 @@ This plan uses the following terms throughout:
 - `sort ascending|descending` replaces `rank`; selection remains a separate
   `keep` or `drop` statement.
 - Counted repetition reads as `repeat N time|times:`.
-- Positional complements follow the verb; marked complements may be reordered.
+- Positional complements follow the verb; lane and named-runnable complements
+  may be reordered where the statement grammar permits them.
 - Public CST nodes remain flat: the statement type identifies the verb and
   fields expose its complements.
 - Implicit prose and explicit statements have deterministic, visually clear
@@ -45,7 +46,8 @@ This plan uses the following terms throughout:
 In scope:
 
 - surface syntax and public CST fields for `scatter`, `storm`, `gather`,
-  `settle`, `map`, `keep`, `drop`, `sort`, and counted `repeat`;
+  `settle`, `map`, `keep`, `drop`, `sort`, and counted `repeat`, plus public CST
+  fields for both repeat forms;
 - named and inline runnable complements, lane limits, ordering, positional
   selection, and singular or plural units;
 - the boundary between implicit runs and explicit flow statements; and
@@ -54,8 +56,8 @@ In scope:
 
 Out of scope:
 
-- surface syntax for `run`, `seek`, `ask`, `until`, uncounted `repeat`, `let`,
-  and other unchanged statements;
+- new surface forms for `run`, `seek`, `ask`, `until`, uncounted `repeat`,
+  `let`, and other unchanged statements;
 - top-level `value` declarations and all supported type syntax for `value` or
   `let`;
 - local, statement, or context variable interpolation;
@@ -84,150 +86,212 @@ repeat 3:
 
 The current CST exposes simple values as statement fields but wraps `par`,
 position, and rank selection in public `*_clause` nodes. Named and inline
-runnables use separate `runnable` and `agic` fields.
+runnables use separate `runnable` and `agic` fields. A repeat's final `until`
+runnable is nested inside its `body` rather than exposed by `repeat_statement`:
+
+```text
+(repeat_statement
+  count: (integer_literal)
+  body: (repeat_body
+    (statements ...)
+    (until_statement
+      agic: (inline_agic_body ...))))
+```
 
 ## Decisions
 
-### Complement order
+### Grammar notation
 
-- A positional complement has no marker and must immediately follow the verb.
-- A marked complement begins with `in`, `using`, `if`, or `by`.
-- Marked complements may appear in any valid order after positional
-  complements.
-- Each required complement appears exactly once; each optional complement
-  appears at most once.
-- The words within a complement remain adjacent and use whitespace without
-  commas.
-- A complement containing an inline agic is final because its body consumes
-  the rest of the statement.
+The EBNF below is normative for the changed surface syntax. Quoted terminals
+are exact and case-sensitive. Rules prefixed with `_` are grammar helpers and
+must not create public CST nodes. `line_end`, `runnable`, `inline_agic`,
+`inline_agic_body`, and `flow_statement` retain their existing meanings unless
+a rule below states otherwise.
 
-The canonical documentation order is verb, positional complement, lanes, then
-runnable. Other orders of marked complements remain valid for named runnables:
+```ebnf
+_one_integer_literal   ::= an integer literal whose numeric value is 1
+_other_integer_literal ::= an integer literal whose numeric value is not 1
 
-```too
-storm 8 in 4 lanes using generate
-storm 8 using generate in 4 lanes
+_lanes_complement ::= "in" _one_integer_literal "lane"
+                    | "in" _other_integer_literal "lanes"
+
+_repeat_count_complement ::= _one_integer_literal "time"
+                           | _other_integer_literal "times"
+
+position          ::= ("first" | "last") integer_literal
+_order_complement ::= "ascending" | "descending"
 ```
 
-Moving a positional complement is invalid:
+Both integer alternatives produce the public `integer_literal` node. Hidden
+lexical rules may distinguish them before aliasing them to that node. `in 0
+lanes` is grammatical; whether it is executable belongs to semantic validation.
+Non-literal counts remain outside this plan.
 
-```too
-storm in 4 lanes 8 using generate
-sort by priority_score descending
+### Runnable complements
+
+```ebnf
+_named_using_complement  ::= "using" runnable
+_inline_using_complement ::= "using" inline_agic
+_named_if_complement     ::= "if" runnable
+_inline_if_complement    ::= "if" inline_agic
+_named_by_complement     ::= "by" runnable
+_inline_by_complement    ::= "by" inline_agic
+
+_using_complements ::= _named_using_complement line_end
+                     | _lanes_complement _named_using_complement line_end
+                     | _named_using_complement _lanes_complement line_end
+                     | _inline_using_complement
+                     | _lanes_complement _inline_using_complement
+
+_if_complements ::= _named_if_complement line_end
+                  | _lanes_complement _named_if_complement line_end
+                  | _named_if_complement _lanes_complement line_end
+                  | _inline_if_complement
+                  | _lanes_complement _inline_if_complement
+
+_by_complements ::= _named_by_complement line_end
+                  | _lanes_complement _named_by_complement line_end
+                  | _named_by_complement _lanes_complement line_end
+                  | _inline_by_complement
+                  | _lanes_complement _inline_by_complement
 ```
 
-Keywords are lowercase and case-sensitive. `using` has no `with` alias, and
-statement headers do not accept trailing prose punctuation.
+These finite alternatives make each complement unique, allow the lane and
+named-runnable complements in either order, and force an inline agic to be
+final. A marker is adjacent to its runnable. No alternative admits commas,
+`with`, an expression, a field name, or an interpolated selector.
 
-### Runnable markers
+The result of `if` is `Boolean`, the result of `by` is `Number`, and the result
+of `using` is determined by its verb. Explicit matching type annotations remain
+valid. Semantic validation belongs to the consuming Toolang implementation.
+Authoring recommendations live in
+[Toolang Authoring Conventions](toolang-authoring-conventions.md).
 
-| Marker | Use | Expected result |
-| --- | --- | --- |
-| `using` | Operation-specific runnable | Determined by the verb |
-| `if` | `keep` or `drop` predicate | `Boolean` |
-| `by` | `sort` scorer | `Number` |
+### Flow statement grammar
 
-Each marker is immediately followed by a named runnable or inline agic. The
-grammar does not accept an expression, field name, or interpolated selector in
-that position.
+```ebnf
+scatter_statement ::= "scatter" integer_literal
+                      (_named_using_complement line_end
+                      | _inline_using_complement)
+
+storm_statement ::= "storm" integer_literal _using_complements
+
+gather_statement ::= "gather" (_named_using_complement line_end
+                               | _inline_using_complement)
+
+settle_statement ::= "settle" (_named_using_complement line_end
+                               | _inline_using_complement)
+
+map_statement ::= "map" _using_complements
+
+keep_statement ::= "keep" position line_end
+                 | "keep" _if_complements
+
+drop_statement ::= "drop" position line_end
+                 | "drop" _if_complements
+
+sort_statement ::= "sort" order_complement _by_complements
+
+repeat_statement ::= "repeat" _repeat_count_complement ":" line_end
+                     statements _until_complement?
+                   | "repeat" ":" line_end
+                     statements _until_complement
+
+_until_complement ::= "until" inline_agic_body
+```
+
+The grammar fixes every positional complement immediately after its verb. It
+allows marked lane and named-runnable complements to change order only through
+the finite alternatives above. The canonical authored order is verb,
+positional complement, lanes, then runnable.
+
+The two `repeat_statement` alternatives require at least one of the count or
+final `until` runnable. The body is always required. `until` keeps its existing
+surface form but becomes a direct complement of `repeat_statement` in the CST.
 
 ```too
 scatter 8 using generate_proposals
 storm 8 in 4 lanes using generate_proposal
+storm 8 using generate_proposal in 4 lanes
 gather using write_report
 settle using merge_next
 map in 4 lanes using review_plan
 keep in 4 lanes if is_actionable
 drop if is_duplicate in 4 lanes
 sort descending in 4 lanes by priority_score
+repeat 3 times:
+  run improve
+
+repeat:
+  run improve
+  until:
+    Return true when the result is ready.
 ```
 
-Inline forms use the same marker and may omit types that their context or
-Toolang defaults determine:
+The following forms do not match the grammar because they move a positional
+complement or use an unsupported marker:
 
 ```too
-map in 4 lanes using:
-  Summarize the current item.
-
-keep in 4 lanes if:
-  Return true when the current item is actionable.
-
-sort descending in 4 lanes by:
-  Score the current item by priority.
+storm in 4 lanes 8 using generate
+sort by priority_score descending
+map in 4 lanes with review_plan
 ```
 
-Explicit type annotations remain valid. Semantic validation of return types is
-owned by the consuming Toolang implementation. Authoring recommendations live
-in [Toolang Authoring Conventions](toolang-authoring-conventions.md).
-
-### Statement forms
-
-| Verb | Positional complement | Required marked complement | Optional marked complement |
-| --- | --- | --- | --- |
-| `scatter` | count | `using` | none |
-| `storm` | count | `using` | `in N lane|lanes` |
-| `gather` | none | `using` | none |
-| `settle` | none | `using` | none |
-| `map` | none | `using` | `in N lane|lanes` |
-| predicate `keep` / `drop` | none | `if` | `in N lane|lanes` |
-| positional `keep` / `drop` | `first N` or `last N` | none | none |
-| `sort` | `ascending` or `descending` | `by` | `in N lane|lanes` |
-| counted `repeat` | `N time|times` | none | none |
-
-`map` is the complete verb; `map each` is explanatory prose, not an alias.
-
-`sort` always requires an explicit order and only orders its input. Selection
-is expressed by a following statement:
+`map` is the complete verb; `map each` is not an alias. `sort` requires an
+explicit order and only orders its input. Selection composes as a following
+statement:
 
 ```too
 sort descending in 4 lanes by priority_score
 keep first 3
 ```
 
-`rank`, `par`, `top`, and `bottom` are removed from valid operation syntax.
-Relevant legacy statement starters remain reserved-invalid so old source cannot
-be reinterpreted as implicit prose at a statement boundary.
+`rank`, `par`, `top`, and `bottom` are removed from operation syntax and remain
+reserved-invalid at statement boundaries. This prevents legacy source from
+being reinterpreted as implicit prose. A named or positional statement header
+must match `line_end` immediately after its final complement, so trailing prose
+punctuation is invalid.
 
-### Singular and plural units
+### Implicit run grammar
 
-Literal `1` requires a singular unit. Every other integer literal requires a
-plural unit.
+```ebnf
+_active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
+                            | "storm" | "gather" | "settle" | "map" | "keep"
+                            | "drop" | "sort" | "repeat"
 
-| Form | Result |
-| --- | --- |
-| `in 1 lane` | valid |
-| `in 1 lanes` | invalid |
-| `in 2 lane` | invalid |
-| `in 2 lanes` | valid |
-| `repeat 1 time:` | valid |
-| `repeat 1 times:` | invalid |
-| `repeat 0 times:` | valid |
-| `repeat 5 times:` | valid |
+_reserved_statement_keyword ::= "rank" | "par" | "top" | "bottom"
+                              | "think" | "use"
 
-The public value remains an `integer_literal`. Hidden lexical rules may
-distinguish numeric one from other integers and alias both forms back to that
-node. Whether zero lanes is executable is semantic validation outside this
-grammar plan.
+_statement_boundary_keyword ::= _active_statement_keyword
+                              | _reserved_statement_keyword
 
-Future non-literal counts use the plural unit, but non-literal count syntax is
-outside this scope.
+_repeat_until_start ::= "until" ":"
 
-### Implicit run boundaries
+implicit_run_statement ::= implicit_paragraph
+                           (blank_line implicit_paragraph)*
+                           blank_line?
 
-Capitalization does not determine whether text is an implicit run. At a flow
-statement boundary, a lowercase flow statement keyword starts an explicit
-statement; malformed reserved forms are invalid instead of falling back to
-text.
+implicit_paragraph ::= implicit_initial_line implicit_continuation_line*
 
-Once an implicit run begins:
+implicit_initial_line ::= a nonblank flow text line that does not begin with
+                          _statement_boundary_keyword as a complete word and,
+                          within a repeat body, does not begin with
+                          _repeat_until_start
 
-- every adjacent nonblank text line remains part of it, even when a continuation
-  line begins with a lowercase flow verb;
-- one blank line followed by a lowercase flow verb ends the implicit run and
-  starts an explicit statement;
-- one blank line followed by other text remains inside the implicit run;
-- two consecutive blank lines end the implicit run unconditionally; and
-- a comment, the end of the flow body, or the end of the file ends it.
+implicit_continuation_line ::= any nonblank flow text line
+```
+
+Because only `implicit_initial_line` excludes statement keywords, an adjacent
+line beginning with a lowercase verb remains prose. After one blank line, the
+next line must match `implicit_initial_line` to continue the implicit run; a
+lowercase verb therefore starts an explicit statement instead. Two consecutive
+blank lines cannot match the repetition and always end the implicit run.
+
+A comment, a flow-body boundary, or end of file cannot match a nonblank flow
+text line and therefore ends the implicit run. `in`, `using`, `if`, and `by`
+are complement markers rather than statement keywords, so they may begin or
+occur within implicit prose. The word `until` may do the same unless it matches
+`_repeat_until_start` where a repeat may accept its final complement.
 
 ```too
 flow example:
@@ -237,14 +301,10 @@ flow example:
   sort descending by relevance
 ```
 
-The first `sort` line is prose because it is adjacent to the preceding text.
-The second starts `sort_statement` because a blank line precedes it.
-
-Complement markers such as `in`, `using`, `if`, and `by` are not statement
-starters and remain valid words in implicit prose.
-
-Capitalization and punctuation are not implicit-run parser requirements.
-Authoring guidance is defined in
+The first `sort` matches `implicit_continuation_line`. The second follows a
+blank line and cannot match `implicit_initial_line`, so it begins
+`sort_statement`. Capitalization and punctuation do not participate in these
+rules; their authoring guidance is defined in
 [Toolang Authoring Conventions](toolang-authoring-conventions.md).
 
 ### Public CST contract
@@ -254,7 +314,7 @@ verb, keyword children preserve source markers, and fields expose complement
 values directly. A composite complement value may still use its own value node,
 as `position` does for positional selection.
 
-| Statement | Public complement fields |
+| Statement | Public fields |
 | --- | --- |
 | `scatter_statement` | `count`, `runnable` |
 | `storm_statement` | `count`, optional `lanes`, `runnable` |
@@ -264,10 +324,12 @@ as `position` does for positional selection.
 | predicate `keep_statement` / `drop_statement` | optional `lanes`, `runnable` |
 | positional `keep_statement` / `drop_statement` | `selection` |
 | `sort_statement` | `order`, optional `lanes`, `runnable` |
-| `repeat_statement` | optional `count`, `body` |
+| `repeat_statement` | optional `count`, `body`, optional `runnable` |
 
-The `runnable` field accepts either a named `runnable` node or an `inline_agic`
-node. Remove the separate statement-level `agic` field for these forms.
+For `using`, `if`, and `by`, the `runnable` field accepts either a named
+`runnable` node or an `inline_agic` node. Remove the separate statement-level
+`agic` field for these forms. For `repeat`, the optional `runnable` field is the
+`inline_agic_body` introduced by the final `until` keyword.
 
 The `selection` field points to a `position` node that preserves `side` as
 `first` or `last` and its unsigned `count`. A semantic consumer may lower
@@ -283,8 +345,23 @@ are absent from the source.
 
 Replace `rank_statement` with `sort_statement`. Remove `par_clause`,
 `rank_selection_clause`, and `position_clause`; use the flat `lanes` field and
-the `selection: (position)` field instead. Counted `repeat` keeps its `count`
-and `body` fields and adds the matching `time` or `times` keyword child.
+the `selection: (position)` field instead.
+
+Remove `repeat_body`, `repeat_until_body`, and `until_statement` from the public
+CST. The `body` field points directly to `statements`, and the final `until`
+runnable is a sibling field on `repeat_statement`:
+
+```text
+(repeat_statement
+  count: (integer_literal)
+  body: (statements ...)
+  (flow_until_keyword)
+  runnable: (inline_agic_body ...))
+```
+
+The `count` and `runnable` fields are individually optional, but the grammar
+requires at least one. Counted `repeat` adds the matching `time` or `times`
+keyword child.
 
 Define and highlight keyword nodes for `using`, `if`, `by`, `in`, `lane`,
 `lanes`, `sort`, `ascending`, `descending`, `time`, and `times`. CST child order
@@ -292,8 +369,8 @@ preserves authored complement order.
 
 ## Implementation Touchpoints
 
-- Update authored rules, permutation helpers, unit tokens, and
-  implicit-run boundary handling in `grammar.js`.
+- Update authored rules, permutation helpers, unit tokens, repeat field
+  ownership, and implicit-run boundary handling in `grammar.js`.
 - Regenerate `src/grammar.json`, `src/node-types.json`, and `src/parser.c` with
   `npm run generate`.
 - Update `GRAMMAR.md` with the new surface, boundary rules, and CST contract.
@@ -314,8 +391,9 @@ preserves authored complement order.
 4. Require a complement containing an inline agic to be final.
 5. Accept only matching literal unit forms: `1 lane`, `N lanes`, `1 time`, and
    `N times`, where plural `N` is any integer other than one.
-6. Parse `repeat N time|times:` with stable `count` and `body` fields; preserve
-   the existing uncounted repeat form.
+6. Parse counted repeat with optional final `until` and uncounted repeat with
+   required final `until`; expose `body` directly as `statements` and `until` as
+   the statement's `runnable` field.
 7. Keep adjacent lowercase verb lines inside implicit prose, start explicit
    statements after the required blank boundary, and split implicit runs after
    two blank lines or comments.
@@ -323,7 +401,8 @@ preserves authored complement order.
    lane limits, trailing punctuation on named or positional statement headers,
    and old `par`, `rank`, `top`, or `bottom` forms at statement boundaries.
 9. Assert the flat fields in the CST table for named and inline forms, including
-   `let`-wrapped changed operations.
+   repeat without its former wrapper nodes and `let`-wrapped changed
+   operations.
 10. Confirm new keyword highlights and successful parsing of complete fixtures
     through the Python binding.
 11. Run `npm run check`, `.venv/bin/python -m pytest tests`, and `cargo test`.
