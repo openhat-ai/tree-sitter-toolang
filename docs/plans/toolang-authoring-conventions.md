@@ -5,6 +5,8 @@
 Proposed for human confirmation. These conventions apply across Toolang source
 and its consumers. They do not introduce syntax or replace parser requirements.
 Flow examples use the separately proposed readable flow statement syntax.
+Parser behavior is defined in
+[Readable Flow Statements](readable-flow-statements.md).
 
 ## Principle
 
@@ -14,11 +16,11 @@ needed by a consumer or information that the source cannot express directly.
 
 Keep comments rare, short, and close to what they describe.
 
-## Natural Language and Flow Statements
+## Natural Language
 
 Toolang deliberately keeps authored instructions close to natural language.
-Use ordinary prose for content and reserve compact command-like wording for
-explicit flow statements.
+Write prompt bodies, agic messages, implicit runs, and other authored content as
+ordinary prose.
 
 ### Implicit runs
 
@@ -26,9 +28,8 @@ Write implicit runs as natural prose:
 
 - Start English prose with normal sentence capitalization.
 - End prose with appropriate punctuation.
-- Use a blank line when switching between prose and explicit flow statements.
-- Use two consecutive blank lines when intentionally ending one implicit run
-  before starting another.
+- Use blank lines to make transitions between prose and explicit flow
+  statements visually clear.
 
 Capitalization and punctuation are authoring conventions, not requirements for
 implicit text. They must not exclude interpolation, quoted text, numbers, or
@@ -43,10 +44,6 @@ flow research:
 
   Write an answer supported by the strongest findings.
 ```
-
-Explicit statement syntax supplies the complementary visual form: flow verbs
-are lowercase, named and positional statement headers do not end in prose
-punctuation, and block headers end with a colon.
 
 ## Type Annotations
 
@@ -83,9 +80,9 @@ that the consuming syntax does not already determine. Keep `()` when a
 runnable intentionally accepts no primary input, and keep `?` when a named
 parameter is optional.
 
-The consuming flow verb determines the return type of inline runnables after
-`if` and `by`: `if` requires `Boolean`, and `by` requires `Number`. Omit those
-redundant return annotations:
+Do not repeat a return type that the consuming context already determines.
+Inline runnables after `if` and `by` are the common cases, with `Boolean` and
+`Number` results respectively:
 
 ```too
 keep if:
@@ -159,9 +156,8 @@ storm 8 in 4 lanes using investigate
 ```
 
 Avoid comments that narrate the syntax, long design notes, and frequent inline
-comments. Prefer a short standalone line when a comment is necessary. Because
-a comment splits implicit text, do not insert comments into natural-language
-content.
+comments. Prefer a short standalone line when a comment is necessary, and keep
+comments outside natural-language content.
 
 ## Review Checklist
 
