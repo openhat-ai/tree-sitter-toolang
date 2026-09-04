@@ -24,16 +24,21 @@ ordinary prose.
 
 ### Implicit runs
 
-Write implicit runs as natural prose:
+An implicit run is a flow statement written directly as prose without the
+`run` keyword. Write its prose naturally:
 
 - Start English prose with normal sentence capitalization.
 - End prose with appropriate punctuation.
 - Use blank lines to make transitions between prose and explicit flow
   statements visually clear.
+- When prose would begin with a lowercase statement-boundary keyword, capitalize
+  it or use an explicit inline `run`. Write `Until ...` or `run: Until ...`
+  instead of lowercase `until ...`.
 
-Capitalization and punctuation are authoring conventions, not requirements for
-implicit text. They must not exclude interpolation, quoted text, numbers, or
-languages without English letter case.
+These capitalization and punctuation recommendations are conventions. The
+grammar separately reserves lowercase statement-boundary keywords; other
+prose in an implicit run may still begin with interpolation, quoted text,
+numbers, or a language without English letter case.
 
 ```too
 flow research:

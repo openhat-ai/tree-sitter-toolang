@@ -284,7 +284,7 @@ module.exports = grammar({
         $.map_statement,
         $.keep_statement,
         $.drop_statement,
-        $.rank_statement,
+        $.sort_statement,
         $.repeat_statement,
       ),
     let_statement: ($) =>
@@ -322,13 +322,36 @@ module.exports = grammar({
       prec.dynamic(-1, prec.right(seq(
         alias($._implicit_run_text_body_line, $.text_body_line),
         repeat(choice(
-          $.text_body_line,
-          seq($.blank_line, $.text_body_line),
+          alias($._implicit_run_continuation_text_body_line, $.text_body_line),
+          seq(
+            $.blank_line,
+            alias($._implicit_run_text_body_line, $.text_body_line),
+          ),
         )),
         optional($.blank_line),
       ))),
     _implicit_run_text_body_line: ($) =>
-      seq(field("content", alias($._implicit_run_raw_text, $.indented_raw_text)), $.newline),
+      choice(
+        seq(
+          field(
+            "content",
+            alias($._implicit_run_keyword_prefix_raw_text, $.indented_raw_text),
+          ),
+          $.newline,
+        ),
+        seq(
+          field("content", alias($._implicit_run_raw_text, $.indented_raw_text)),
+          $.newline,
+        ),
+      ),
+    _implicit_run_continuation_text_body_line: ($) =>
+      seq(
+        field(
+          "content",
+          alias($._implicit_run_continuation_raw_text, $.indented_raw_text),
+        ),
+        $.newline,
+      ),
     seek_statement: ($) =>
       choice(
         seq(
@@ -354,153 +377,186 @@ module.exports = grammar({
         seq(
           $.flow_scatter_keyword,
           field("count", $.integer_literal),
-          field("runnable", $.runnable),
+          $._named_using_complement,
           $.line_end,
         ),
         prec.right(seq(
           $.flow_scatter_keyword,
           field("count", $.integer_literal),
-          field("agic", $.inline_agic),
+          $._inline_using_complement,
         )),
       ),
     storm_statement: ($) =>
-      choice(
-        seq(
-          $.flow_storm_keyword,
-          field("count", $.integer_literal),
-          field("runnable", $.runnable),
-          optional($.par_clause),
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_storm_keyword,
-          field("count", $.integer_literal),
-          optional($.par_clause),
-          field("agic", $.inline_agic),
-        )),
+      seq(
+        $.flow_storm_keyword,
+        field("count", $.integer_literal),
+        $._using_complements,
       ),
     gather_statement: ($) =>
       choice(
         seq(
           $.flow_gather_keyword,
-          field("runnable", $.runnable),
+          $._named_using_complement,
           $.line_end,
         ),
         prec.right(seq(
           $.flow_gather_keyword,
-          field("agic", $.inline_agic),
+          $._inline_using_complement,
         )),
       ),
     settle_statement: ($) =>
       choice(
         seq(
           $.flow_settle_keyword,
-          field("runnable", $.runnable),
+          $._named_using_complement,
           $.line_end,
         ),
         prec.right(seq(
           $.flow_settle_keyword,
-          field("agic", $.inline_agic),
+          $._inline_using_complement,
         )),
       ),
     map_statement: ($) =>
-      choice(
-        seq(
-          $.flow_map_keyword,
-          field("runnable", $.runnable),
-          optional($.par_clause),
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_map_keyword,
-          optional($.par_clause),
-          field("agic", $.inline_agic),
-        )),
+      seq(
+        $.flow_map_keyword,
+        $._using_complements,
       ),
     keep_statement: ($) =>
       choice(
         seq(
           $.flow_keep_keyword,
-          $.position_clause,
-          $.line_end,
-        ),
-        seq(
-          $.flow_keep_keyword,
-          field("runnable", $.runnable),
-          optional($.par_clause),
+          field("selection", $.position),
           $.line_end,
         ),
         prec.right(seq(
           $.flow_keep_keyword,
-          optional($.par_clause),
-          field("agic", $.inline_agic_body),
+          $._if_complements,
         )),
       ),
     drop_statement: ($) =>
       choice(
         seq(
           $.flow_drop_keyword,
-          $.position_clause,
-          $.line_end,
-        ),
-        seq(
-          $.flow_drop_keyword,
-          field("runnable", $.runnable),
-          optional($.par_clause),
+          field("selection", $.position),
           $.line_end,
         ),
         prec.right(seq(
           $.flow_drop_keyword,
-          optional($.par_clause),
-          field("agic", $.inline_agic_body),
+          $._if_complements,
         )),
       ),
-    rank_statement: ($) =>
+    sort_statement: ($) =>
+      prec.right(seq(
+        $.flow_sort_keyword,
+        $._order_complement,
+        $._by_complements,
+      )),
+    _named_using_complement: ($) =>
+      seq(
+        $.flow_using_keyword,
+        field("runnable", $.runnable),
+      ),
+    _inline_using_complement: ($) =>
+      seq(
+        $.flow_using_keyword,
+        field("runnable", $.inline_agic),
+      ),
+    _named_if_complement: ($) =>
+      seq(
+        $.flow_if_keyword,
+        field("runnable", $.runnable),
+      ),
+    _inline_if_complement: ($) =>
+      seq(
+        $.flow_if_keyword,
+        field("runnable", $.inline_agic),
+      ),
+    _named_by_complement: ($) =>
+      seq(
+        $.flow_by_keyword,
+        field("runnable", $.runnable),
+      ),
+    _inline_by_complement: ($) =>
+      seq(
+        $.flow_by_keyword,
+        field("runnable", $.inline_agic),
+      ),
+    _using_complements: ($) =>
       choice(
-        seq(
-          $.flow_rank_keyword,
-          field("runnable", $.runnable),
-          optional($.rank_selection_clause),
-          optional($.par_clause),
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_rank_keyword,
-          optional($.rank_selection_clause),
-          optional($.par_clause),
-          field("agic", $.inline_agic_body),
-        )),
+        seq($._named_using_complement, $.line_end),
+        seq($._lanes_complement, $._named_using_complement, $.line_end),
+        seq($._named_using_complement, $._lanes_complement, $.line_end),
+        $._inline_using_complement,
+        seq($._lanes_complement, $._inline_using_complement),
       ),
+    _if_complements: ($) =>
+      choice(
+        seq($._named_if_complement, $.line_end),
+        seq($._lanes_complement, $._named_if_complement, $.line_end),
+        seq($._named_if_complement, $._lanes_complement, $.line_end),
+        $._inline_if_complement,
+        seq($._lanes_complement, $._inline_if_complement),
+      ),
+    _by_complements: ($) =>
+      choice(
+        seq($._named_by_complement, $.line_end),
+        seq($._lanes_complement, $._named_by_complement, $.line_end),
+        seq($._named_by_complement, $._lanes_complement, $.line_end),
+        $._inline_by_complement,
+        seq($._lanes_complement, $._inline_by_complement),
+      ),
+    _lanes_complement: ($) =>
+      seq(
+        $.flow_in_keyword,
+        choice(
+          seq(
+            field("lanes", alias($._one_integer_literal, $.integer_literal)),
+            $.flow_lane_keyword,
+          ),
+          seq(
+            field("lanes", alias($._other_integer_literal, $.integer_literal)),
+            $.flow_lanes_keyword,
+          ),
+        ),
+      ),
+    _order_complement: ($) =>
+      field("order", choice(
+        $.flow_ascending_keyword,
+        $.flow_descending_keyword,
+      )),
     repeat_statement: ($) =>
       choice(
         prec.right(seq(
           $.flow_repeat_keyword,
-          field("count", $.integer_literal),
+          $._repeat_count_complement,
           $.colon,
           $.line_end,
-          field("body", $.repeat_body),
+          field("body", $.statements),
+          optional($._until_complement),
         )),
         prec.right(seq(
           $.flow_repeat_keyword,
           $.colon,
           $.line_end,
-          field("body", $.repeat_until_body),
+          field("body", $.statements),
+          $._until_complement,
         )),
       ),
-    repeat_body: ($) =>
-      prec.right(seq(
-        $.statements,
-        optional($.until_statement),
-      )),
-    repeat_until_body: ($) =>
-      prec.right(seq(
-        $.statements,
-        $.until_statement,
-      )),
-    until_statement: ($) =>
+    _repeat_count_complement: ($) =>
+      choice(
+        seq(
+          field("count", alias($._one_integer_literal, $.integer_literal)),
+          $.flow_time_keyword,
+        ),
+        seq(
+          field("count", alias($._other_integer_literal, $.integer_literal)),
+          $.flow_times_keyword,
+        ),
+      ),
+    _until_complement: ($) =>
       prec.dynamic(2, seq(
         $.flow_until_keyword,
-        field("agic", $.inline_agic_body),
+        field("until", $.inline_agic_body),
       )),
     invalid_flow_reserved_statement: ($) =>
       prec.dynamic(-2, seq(
@@ -519,22 +575,17 @@ module.exports = grammar({
         $.colon,
         field("body", $._nested_text_inline_alias),
       ),
-    par_clause: ($) =>
-      seq($.flow_par_keyword, field("limit", $.integer_literal)),
-    position_clause: ($) =>
+    position: ($) =>
       seq(
-        field("position", choice($.flow_first_keyword, $.flow_last_keyword)),
-        field("count", $.integer_literal),
-      ),
-    rank_selection_clause: ($) =>
-      seq(
-        field("selection", choice($.flow_top_keyword, $.flow_bottom_keyword)),
+        field("side", choice($.flow_first_keyword, $.flow_last_keyword)),
         field("count", $.integer_literal),
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
     local_name: ($) => $.snake_name,
     integer_literal: () => token(/\d+/),
+    _one_integer_literal: () => token(/0*1/),
+    _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
 
     directive: ($) =>
       choice(
@@ -662,9 +713,20 @@ module.exports = grammar({
     flow_map_keyword: () => "map",
     flow_keep_keyword: () => "keep",
     flow_drop_keyword: () => "drop",
+    flow_sort_keyword: () => "sort",
     flow_rank_keyword: () => "rank",
     flow_repeat_keyword: () => "repeat",
     flow_until_keyword: () => "until",
+    flow_using_keyword: () => "using",
+    flow_if_keyword: () => "if",
+    flow_by_keyword: () => "by",
+    flow_in_keyword: () => "in",
+    flow_lane_keyword: () => "lane",
+    flow_lanes_keyword: () => "lanes",
+    flow_ascending_keyword: () => "ascending",
+    flow_descending_keyword: () => "descending",
+    flow_time_keyword: () => "time",
+    flow_times_keyword: () => "times",
     flow_par_keyword: () => "par",
     flow_first_keyword: () => "first",
     flow_last_keyword: () => "last",
@@ -691,8 +753,10 @@ module.exports = grammar({
         $.flow_map_keyword,
         $.flow_drop_keyword,
         $.flow_keep_keyword,
+        $.flow_sort_keyword,
         $.flow_rank_keyword,
         $.flow_repeat_keyword,
+        $.flow_par_keyword,
         $.flow_top_keyword,
         $.flow_bottom_keyword,
         $.flow_think_keyword,
@@ -703,7 +767,6 @@ module.exports = grammar({
         "unfold",
         "each",
         "fold",
-        "sort",
         "head",
         "tail",
       ),
@@ -734,7 +797,9 @@ module.exports = grammar({
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
     indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
-    _implicit_run_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?|until([^ \t:=+\-\r\n][^\r\n]*)?)/)),
+    _implicit_run_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?)/)),
+    _implicit_run_keyword_prefix_raw_text: () => token(/(let|run|seek|ask|scatter|storm|gather|settle|map|keep|drop|sort|repeat|until|rank|par|top|bottom|think|use|thunk|call|do|unfold|each|fold|head|tail)[A-Za-z0-9_][^\r\n]*/),
+    _implicit_run_continuation_raw_text: () => token(prec(1, /[ \t]+[^# \t\r\n][^\r\n]*/)),
     _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });

@@ -897,3 +897,17 @@ def test_queries_are_packaged():
     assert "@" in tree_sitter_toolang.HIGHLIGHTS_QUERY
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY
     assert "@definition" in tree_sitter_toolang.TAGS_QUERY
+    for keyword in (
+        "flow_sort_keyword",
+        "flow_using_keyword",
+        "flow_if_keyword",
+        "flow_by_keyword",
+        "flow_in_keyword",
+        "flow_lane_keyword",
+        "flow_lanes_keyword",
+        "flow_ascending_keyword",
+        "flow_descending_keyword",
+        "flow_time_keyword",
+        "flow_times_keyword",
+    ):
+        assert f"({keyword}) @keyword" in tree_sitter_toolang.HIGHLIGHTS_QUERY

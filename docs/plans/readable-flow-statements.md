@@ -23,7 +23,10 @@ This plan uses the following terms throughout:
   the verb;
 - **marked complement**: a complement introduced by `in`, `using`, `if`, `by`,
   or `until`; and
-- **field**: the public CST field that exposes a complement value.
+- **field**: the public CST field that exposes a complement value;
+- **implicit run**: a flow statement authored directly as prose without the
+  `run` keyword, represented by `implicit_run_statement`; and
+- **prose**: natural-language content, not a separate statement type.
 
 ## Success Criteria
 
@@ -36,7 +39,7 @@ This plan uses the following terms throughout:
   may be reordered where the statement grammar permits them.
 - Public CST nodes remain flat: the statement type identifies the verb and
   fields expose its complements.
-- Implicit prose and explicit statements have deterministic, visually clear
+- Implicit runs and explicit statements have deterministic, visually clear
   boundaries.
 - Invalid and legacy forms do not silently fall back to implicit runs at a
   statement boundary.
@@ -248,7 +251,7 @@ keep first 3
 
 `rank`, `par`, `top`, and `bottom` are removed from operation syntax and remain
 reserved-invalid at statement boundaries. This prevents legacy source from
-being reinterpreted as implicit prose. A named or positional statement header
+being reinterpreted as an implicit run. A named or positional statement header
 must match `line_end` immediately after its final complement, so trailing prose
 punctuation is invalid.
 
@@ -259,13 +262,11 @@ _active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
                             | "storm" | "gather" | "settle" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
-_reserved_statement_keyword ::= "rank" | "par" | "top" | "bottom"
+_reserved_statement_keyword ::= "until" | "rank" | "par" | "top" | "bottom"
                               | "think" | "use"
 
 _statement_boundary_keyword ::= _active_statement_keyword
                               | _reserved_statement_keyword
-
-_repeat_until_start ::= "until" ":"
 
 implicit_run_statement ::= implicit_paragraph
                            (blank_line implicit_paragraph)*
@@ -274,9 +275,7 @@ implicit_run_statement ::= implicit_paragraph
 implicit_paragraph ::= implicit_initial_line implicit_continuation_line*
 
 implicit_initial_line ::= a nonblank flow text line that does not begin with
-                          _statement_boundary_keyword as a complete word and,
-                          within a repeat body, does not begin with
-                          _repeat_until_start
+                          _statement_boundary_keyword as a complete word
 
 implicit_continuation_line ::= any nonblank flow text line
 ```
@@ -290,8 +289,9 @@ blank lines cannot match the repetition and always end the implicit run.
 A comment, a flow-body boundary, or end of file cannot match a nonblank flow
 text line and therefore ends the implicit run. `in`, `using`, `if`, and `by`
 are complement markers rather than statement keywords, so they may begin or
-occur within implicit prose. The word `until` may do the same unless it matches
-`_repeat_until_start` where a repeat may accept its final complement.
+occur within the prose of an implicit run. `until` is reserved at a statement
+boundary: only `until:` inside a repeat is valid, while bare `until` and
+lowercase `until ...` must not form an implicit run.
 
 ```too
 flow example:
@@ -395,12 +395,13 @@ preserves authored complement order.
 6. Parse counted repeat with optional final `until` and uncounted repeat with
    required final `until`; expose `body` directly as `statements` and `until` as
    the statement's role-specific field.
-7. Keep adjacent lowercase verb lines inside implicit prose, start explicit
+7. Keep adjacent lowercase verb lines inside an implicit run, start explicit
    statements after the required blank boundary, and split implicit runs after
    two blank lines or comments.
 8. Reject missing runnable complements, commas, split complements, unsupported
    lane limits, trailing punctuation on named or positional statement headers,
-   and old `par`, `rank`, `top`, or `bottom` forms at statement boundaries.
+   `until` or lowercase `until ...` prose, and old `par`, `rank`, `top`, or
+   `bottom` forms at statement boundaries.
 9. Assert the flat fields in the CST table for named and inline forms, including
    repeat without its former wrapper nodes and `let`-wrapped changed
    operations.
@@ -412,8 +413,9 @@ preserves authored complement order.
 
 - Order-independent marked complements require explicit finite alternatives to
   reject duplicates without adding ambiguous repetitions.
-- Inline agics and implicit prose both consume remaining text; final-position
-  and blank-boundary rules must be covered directly in corpus trees.
+- Inline agics and the prose of an implicit run both consume remaining text;
+  final-position and blank-boundary rules must be covered directly in corpus
+  trees.
 - Strict literal unit agreement needs hidden tokens without changing the public
   `integer_literal` node.
 - Removed syntax could fall through to implicit runs unless statement-boundary

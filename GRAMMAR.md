@@ -282,7 +282,7 @@ flow_operation ::= run_statement
                  | map_statement
                  | keep_statement
                  | drop_statement
-                 | rank_statement
+                 | sort_statement
                  | repeat_statement
 
 let_statement ::= "let" local_name "=" flow_operation
@@ -293,74 +293,110 @@ local_name ::= snake_name
 run_statement ::= "run" runnable line_end
                 | "run" inline_agic
 
-implicit_run_statement ::= text_body_line
-                           (text_body_line
-                           | blank_line text_body_line)*
-                           blank_line?
-
 seek_statement ::= "seek" agent runnable line_end
                  | "seek" agent inline_agic
 
 ask_statement ::= "ask" ":" text_inline
 
-scatter_statement ::= "scatter" integer_literal runnable line_end
-                    | "scatter" integer_literal inline_agic
+_one_integer_literal   ::= an integer literal whose numeric value is 1
+_other_integer_literal ::= an integer literal whose numeric value is not 1
 
-storm_statement ::= "storm" integer_literal runnable par_clause? line_end
-                  | "storm" integer_literal par_clause? inline_agic
+_lanes_complement ::= "in" _one_integer_literal "lane"
+                    | "in" _other_integer_literal "lanes"
 
-gather_statement ::= "gather" runnable line_end
-                   | "gather" inline_agic
+_repeat_count_complement ::= _one_integer_literal "time"
+                           | _other_integer_literal "times"
 
-settle_statement ::= "settle" runnable line_end
-                   | "settle" inline_agic
+_named_using_complement  ::= "using" runnable
+_inline_using_complement ::= "using" inline_agic
+_named_if_complement     ::= "if" runnable
+_inline_if_complement    ::= "if" inline_agic
+_named_by_complement     ::= "by" runnable
+_inline_by_complement    ::= "by" inline_agic
 
-map_statement ::= "map" runnable par_clause? line_end
-                | "map" par_clause? inline_agic
+_using_complements ::= _named_using_complement line_end
+                     | _lanes_complement _named_using_complement line_end
+                     | _named_using_complement _lanes_complement line_end
+                     | _inline_using_complement
+                     | _lanes_complement _inline_using_complement
 
-keep_statement ::= "keep" position_clause line_end
-                 | "keep" runnable par_clause? line_end
-                 | "keep" par_clause? inline_agic_body
+_if_complements ::= _named_if_complement line_end
+                  | _lanes_complement _named_if_complement line_end
+                  | _named_if_complement _lanes_complement line_end
+                  | _inline_if_complement
+                  | _lanes_complement _inline_if_complement
 
-drop_statement ::= "drop" position_clause line_end
-                 | "drop" runnable par_clause? line_end
-                 | "drop" par_clause? inline_agic_body
+_by_complements ::= _named_by_complement line_end
+                  | _lanes_complement _named_by_complement line_end
+                  | _named_by_complement _lanes_complement line_end
+                  | _inline_by_complement
+                  | _lanes_complement _inline_by_complement
 
-rank_statement ::= "rank" runnable rank_selection_clause? par_clause? line_end
-                 | "rank" rank_selection_clause? par_clause? inline_agic_body
+scatter_statement ::= "scatter" integer_literal
+                      (_named_using_complement line_end
+                      | _inline_using_complement)
 
-repeat_statement ::= "repeat" integer_literal ":" line_end repeat_body
-                   | "repeat" ":" line_end repeat_until_body
-repeat_body ::= statements until_statement?
-repeat_until_body ::= statements until_statement
-until_statement ::= "until" inline_agic_body
+storm_statement ::= "storm" integer_literal _using_complements
+
+gather_statement ::= "gather"
+                     (_named_using_complement line_end
+                     | _inline_using_complement)
+
+settle_statement ::= "settle"
+                     (_named_using_complement line_end
+                     | _inline_using_complement)
+
+map_statement ::= "map" _using_complements
+
+position ::= ("first" | "last") integer_literal
+keep_statement ::= "keep" position line_end
+                 | "keep" _if_complements
+drop_statement ::= "drop" position line_end
+                 | "drop" _if_complements
+
+sort_statement ::= "sort" ("ascending" | "descending") _by_complements
+
+repeat_statement ::= "repeat" _repeat_count_complement ":" line_end
+                     statements _until_complement?
+                   | "repeat" ":" line_end
+                     statements _until_complement
+_until_complement ::= "until" inline_agic_body
 
 inline_agic ::= return_type? ":" text_inline
 inline_agic_body ::= ":" text_inline
 
-par_clause ::= "par" integer_literal
-position_clause ::= ("first" | "last") integer_literal
-rank_selection_clause ::= ("top" | "bottom") integer_literal
-
 runnable ::= snake_name
 agent ::= snake_name
 
-invalid_flow_reserved_statement ::= flow_reserved_word text_line? line_end
-flow_reserved_word ::= "let" | "run" | "seek" | "ask" | "scatter" | "storm"
-                     | "gather" | "settle" | "map" | "keep" | "drop" | "rank"
-                     | "repeat" | "until" | "think" | "use" | "thunk"
+_active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
+                            | "storm" | "gather" | "settle" | "map" | "keep"
+                            | "drop" | "sort" | "repeat"
+
+_reserved_statement_keyword ::= "until" | "rank" | "par" | "top" | "bottom"
+                              | "think" | "use" | "thunk" | "call" | "do"
+                              | "unfold" | "each" | "fold" | "head" | "tail"
+
+implicit_run_statement ::= _implicit_initial_line
+                           (_implicit_continuation_line
+                           | blank_line _implicit_initial_line)*
+                           blank_line?
+_implicit_initial_line ::= a nonblank flow text line that does not begin with
+                           an active or reserved statement keyword
+_implicit_continuation_line ::= any nonblank, non-comment flow text line
+
+invalid_flow_reserved_statement ::= (_active_statement_keyword
+                                   | _reserved_statement_keyword)
+                                   text_line? line_end
 ```
 
 Rules:
 
 - A `flow` describes a workflow as an ordered tree of executable statements.
-- A flow name may be omitted.
-- The grammar permits multiple unnamed agics and flows in one source file.
-  Default naming and runnable-name uniqueness are semantic validation after
-  parsing.
+- A flow name may be omitted. The grammar permits multiple unnamed agics and
+  flows in one source file. Default naming and runnable-name uniqueness are
+  semantic validation after parsing.
 - Flow signatures reuse agic parameter and return type syntax and defaults.
-- Flow directives reuse agic directive syntax and must appear before
-  statements.
+  Flow directives reuse agic directive syntax and must appear before statements.
 - `let name = statement` writes the result to a named local. `let statement`
   discards the result and does not update `_`. `let name = BODY` evaluates
   authored Content and creates or replaces a `dim=0` named local whose single
@@ -371,21 +407,41 @@ Rules:
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
   precedence over the BODY form.
-- `run` resolves a named agic or flow, or defines an inline agic.
-- Bare flow text is shorthand for inline `run`. One blank line stays inside the
-  same body; two blank lines or a comment split statements.
-- `seek` targets another agent with a named runnable or inline agic. `ask`
-  requests input from the human owner.
+- `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
+  another agent with a named runnable or inline agic. `ask` requests input from
+  the human owner.
+- `using`, `if`, and `by` must be followed immediately by a named or inline
+  runnable. `if` selects with a Boolean result, while `by` sorts with a Number
+  result; result validation is semantic.
 - `scatter` and `storm` expand one item into a list. `gather` and `settle`
-  reduce a list to one item.
-- `map` transforms every list item. `keep` and `drop` select by position or
-  Boolean filter. `rank` orders items by descending numeric score.
-- `par N` limits independent child-run concurrency without changing result
-  order.
-- `repeat` always has a count, a final `until` condition, or both.
-- `think`, `use`, and `thunk` are reserved and have no statement syntax.
-- A malformed line beginning with a reserved flow word parses as
-  `invalid_flow_reserved_statement` rather than implicit `run` text.
+  reduce a list to one item. `map` transforms every list item. `keep` and `drop`
+  select by `first N`, `last N`, or a Boolean runnable. `sort` orders items by
+  an explicit ascending or descending numeric score.
+- `in N lane|lanes` limits independent child-run concurrency without changing
+  result order. Literal `1`, including a leading-zero spelling, requires
+  `lane`; every other integer requires `lanes`. The same agreement applies to
+  `repeat N time|times:`.
+- A positional count, selection, or order immediately follows its verb. Lane
+  and named-runnable complements may exchange order. An inline runnable is
+  final. Commas and `with` are not complement syntax.
+- `repeat` always has a count, a final `until` condition, or both. Its `body`
+  field points directly to `statements`; its optional `until` field points to
+  `inline_agic_body`.
+- Bare flow text is shorthand for inline `run`. An adjacent nonblank line stays
+  in the same implicit run even when it begins with a flow verb. After one blank
+  line, ordinary text continues the implicit run while a lowercase boundary
+  keyword starts an explicit or reserved statement. Two blank lines, a comment,
+  the end of the flow body, or end of file ends the implicit run.
+- `until` is a reserved boundary keyword. Only `until:` in a repeat is valid;
+  bare `until` and lowercase `until ...` do not form an implicit run at a
+  statement boundary.
+- Explicit statement keywords are lowercase and case-sensitive. Named and
+  positional statement headers end at `line_end` and do not accept trailing
+  prose punctuation.
+- `rank`, `par`, `top`, and `bottom` are reserved legacy words. `think`, `use`,
+  and `thunk` remain reserved without statement syntax. A malformed line that
+  begins with an active or reserved flow word parses as
+  `invalid_flow_reserved_statement` instead of implicit `run` text.
 
 ## Model Call Assembly
 

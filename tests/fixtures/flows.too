@@ -20,34 +20,34 @@ flow research(_: Part[]) -> Answer:
   run -> Note: Extract one note.
 
   ## Expand one item into a list.
-  scatter 5 plan_searches
-  scatter 5 -> SearchJob:
+  scatter 5 using plan_searches
+  scatter 5 using -> SearchJob:
     Create five search jobs.
-  storm 3 sample_direction par 2
-  storm 3 par 2 -> SearchJob:
+  storm 3 using sample_direction in 2 lanes
+  storm 3 in 2 lanes using -> SearchJob:
     Create one independent search job.
 
   ## Reduce a list into one item.
-  gather synthesize
-  gather -> Answer: Synthesize one answer.
-  settle merge_next
-  settle -> Answer:
+  gather using synthesize
+  gather using -> Answer: Synthesize one answer.
+  settle using merge_next
+  settle using -> Answer:
     Merge this item into the accumulated answer.
 
   ## Transform and select list items.
-  map extract_note par 5
-  map par 5 -> Note: Extract one note.
+  map using extract_note in 5 lanes
+  map in 5 lanes using -> Note: Extract one note.
   keep first 5
-  keep useful par 5
-  keep par 5: Return true for useful items.
+  keep if useful in 5 lanes
+  keep in 5 lanes if: Return true for useful items.
   drop last 2
-  drop duplicate par 5
-  drop par 5: Return true for duplicate items.
-  rank relevance top 5 par 5
-  rank bottom 2 par 5: Score this item.
+  drop in 5 lanes if duplicate
+  drop in 5 lanes if: Return true for duplicate items.
+  sort descending by relevance in 5 lanes
+  sort ascending in 5 lanes by: Score this item.
 
   ## Repeat with a count and optional condition.
-  repeat 3:
+  repeat 3 times:
     run improve
     until: Return true when complete.
 
@@ -58,7 +58,7 @@ flow delegate:
   ask: Approve this result?
 
 flow bindings:
-  let jobs = scatter 5 plan_searches
+  let jobs = scatter 5 using plan_searches
   let run publish
   let guidance =
     Prefer primary sources.
