@@ -205,8 +205,8 @@ allows marked lane and named-runnable complements to change order only through
 the finite alternatives above. The canonical authored order is verb,
 positional complement, lanes, then runnable.
 
-The two `repeat_statement` alternatives require at least one of the count or
-final `until` runnable. The body is always required. `until` keeps its existing
+The two `repeat_statement` alternatives require at least one of the `count` or
+`until` complements. The body is always required. `until` keeps its existing
 surface form but becomes a direct complement of `repeat_statement` in the CST.
 
 ```too
@@ -324,12 +324,13 @@ as `position` does for positional selection.
 | predicate `keep_statement` / `drop_statement` | optional `lanes`, `runnable` |
 | positional `keep_statement` / `drop_statement` | `selection` |
 | `sort_statement` | `order`, optional `lanes`, `runnable` |
-| `repeat_statement` | optional `count`, `body`, optional `runnable` |
+| `repeat_statement` | optional `count`, `body`, optional `until` |
 
 For `using`, `if`, and `by`, the `runnable` field accepts either a named
 `runnable` node or an `inline_agic` node. Remove the separate statement-level
-`agic` field for these forms. For `repeat`, the optional `runnable` field is the
-`inline_agic_body` introduced by the final `until` keyword.
+`agic` field for these forms. For `repeat`, the optional `until` field is the
+`inline_agic_body` introduced by the final `until` keyword. Its role-specific
+name makes the termination condition explicit to CST consumers.
 
 The `selection` field points to a `position` node that preserves `side` as
 `first` or `last` and its unsigned `count`. A semantic consumer may lower
@@ -349,17 +350,17 @@ the `selection: (position)` field instead.
 
 Remove `repeat_body`, `repeat_until_body`, and `until_statement` from the public
 CST. The `body` field points directly to `statements`, and the final `until`
-runnable is a sibling field on `repeat_statement`:
+condition is a sibling field on `repeat_statement`:
 
 ```text
 (repeat_statement
   count: (integer_literal)
   body: (statements ...)
   (flow_until_keyword)
-  runnable: (inline_agic_body ...))
+  until: (inline_agic_body ...))
 ```
 
-The `count` and `runnable` fields are individually optional, but the grammar
+The `count` and `until` fields are individually optional, but the grammar
 requires at least one. Counted `repeat` adds the matching `time` or `times`
 keyword child.
 
@@ -393,7 +394,7 @@ preserves authored complement order.
    `N times`, where plural `N` is any integer other than one.
 6. Parse counted repeat with optional final `until` and uncounted repeat with
    required final `until`; expose `body` directly as `statements` and `until` as
-   the statement's `runnable` field.
+   the statement's role-specific field.
 7. Keep adjacent lowercase verb lines inside implicit prose, start explicit
    statements after the required blank boundary, and split implicit runs after
    two blank lines or comments.
