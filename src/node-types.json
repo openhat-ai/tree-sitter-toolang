@@ -1055,6 +1055,26 @@
       "required": true,
       "types": [
         {
+          "type": "agic_keyword",
+          "named": true
+        },
+        {
+          "type": "chore_keyword",
+          "named": true
+        },
+        {
+          "type": "context_keyword",
+          "named": true
+        },
+        {
+          "type": "directive_key",
+          "named": true
+        },
+        {
+          "type": "flow_ascending_keyword",
+          "named": true
+        },
+        {
           "type": "flow_ask_keyword",
           "named": true
         },
@@ -1063,7 +1083,19 @@
           "named": true
         },
         {
+          "type": "flow_by_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_descending_keyword",
+          "named": true
+        },
+        {
           "type": "flow_drop_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_first_keyword",
           "named": true
         },
         {
@@ -1071,7 +1103,31 @@
           "named": true
         },
         {
+          "type": "flow_if_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_in_keyword",
+          "named": true
+        },
+        {
           "type": "flow_keep_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_lane_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_lanes_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_last_keyword",
           "named": true
         },
         {
@@ -1123,7 +1179,19 @@
           "named": true
         },
         {
+          "type": "flow_time_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_times_keyword",
+          "named": true
+        },
+        {
           "type": "flow_top_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_until_keyword",
           "named": true
         },
         {
@@ -1131,7 +1199,51 @@
           "named": true
         },
         {
+          "type": "flow_using_keyword",
+          "named": true
+        },
+        {
+          "type": "instruct_keyword",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "pass_keyword",
+          "named": true
+        },
+        {
+          "type": "prompt_keyword",
+          "named": true
+        },
+        {
+          "type": "psyche_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_keyword",
+          "named": true
+        },
+        {
+          "type": "role",
+          "named": true
+        },
+        {
+          "type": "service_keyword",
+          "named": true
+        },
+        {
+          "type": "skill_keyword",
+          "named": true
+        },
+        {
+          "type": "struct_keyword",
+          "named": true
+        },
+        {
+          "type": "task_keyword",
           "named": true
         },
         {
@@ -1140,6 +1252,10 @@
         },
         {
           "type": "thunk_keyword",
+          "named": true
+        },
+        {
+          "type": "with_keyword",
           "named": true
         }
       ]
@@ -2009,7 +2125,19 @@
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "colon",
+          "named": true
+        },
+        {
+          "type": "comment_line",
+          "named": true
+        },
+        {
+          "type": "doc_line",
           "named": true
         },
         {
@@ -2030,6 +2158,10 @@
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
           "named": true
         }
       ]
@@ -2771,6 +2903,10 @@
         },
         {
           "type": "field",
+          "named": true
+        },
+        {
+          "type": "parent_doc_line",
           "named": true
         }
       ]

@@ -1,0 +1,11 @@
+flow research:
+  repeat 2 times:
+    ## Gather fresh evidence for each review.
+    run search
+    ## Refine the evidence before the next search.
+    repeat:
+      # Keep revisions within the provider quota.
+      ## Address the strongest remaining objection.
+      run revise
+      until: Stop refining.
+    until: Stop researching.

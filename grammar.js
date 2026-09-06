@@ -1,16 +1,20 @@
 module.exports = grammar({
   name: "toolang",
 
-  extras: () => [/[ \t\f]/],
-  conflicts: ($) => [
-    [$._trivia, $.text_body],
+  extras: () => [/[ \t]/],
+  externals: ($) => [
+    $.newline, $.blank_line,
+    $._comment_start, $.parent_doc_line, $.doc_line, $.comment_line,
+    $._indent, $._dedent, $._line_start, $._directive_start, $._setting_start,
+    $._until_start, $._text_indent, $._cap_text_start,
+    $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
   ],
   rules: {
     source_file: ($) =>
       repeat(choice($._trivia, $.item)),
 
     item: ($) =>
-      choice(
+      seq($._line_start, choice(
         $.with,
         $.struct,
         $.psyche,
@@ -23,16 +27,14 @@ module.exports = grammar({
         $.instruct,
         $.agic,
         $.flow,
-      ),
+      )),
 
-    newline: () => token(/\r?\n/),
-    blank_line: () => token(prec(1, /\r?\n/)),
-    parent_doc_line: () => token(prec(2, seq("##!", /[^\r\n]*/, /\r?\n/))),
-    doc_line: () => token(prec(1, seq("##", /[^\r\n]*/, /\r?\n/))),
-    comment_line: () => token(prec(0, seq("#", /[^\r\n]*/, /\r?\n/))),
     inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional($.inline_comment), $.newline),
-    _trivia: ($) => choice($.parent_doc_line, $.doc_line, $.comment_line, $.blank_line),
+    _trivia: ($) => choice(
+      seq($._comment_start, choice($.parent_doc_line, $.doc_line, $.comment_line)),
+      $.blank_line,
+    ),
 
     with: ($) =>
       seq(
@@ -65,9 +67,10 @@ module.exports = grammar({
 
     struct_name: ($) => $.type_name,
     struct_body: ($) =>
-      prec.right(repeat1(choice($.field, $.doc_line, $.comment_line, $.blank_line))),
+      structuralBody($, seq($.field, repeat(choice($.field, $._trivia)))),
     field: ($) =>
       seq(
+        $._line_start,
         field("name", $.field_name),
         optional(field("optional", $.optional_marker)),
         field("colon", $.colon),
@@ -109,12 +112,18 @@ module.exports = grammar({
       ),
 
     _cap_definition: ($) =>
-      prec.right(seq(
-        $.line_end,
+      prec.right(seq($.line_end, repeat($._trivia), optional(seq(
+        $._indent,
         repeat(choice(field("property", $.property), $._trivia)),
-        optional(seq(field("body", $.cap_body), repeat($._trivia))),
-      )),
-    cap_body: ($) => $.text_body,
+        optional(field("body", $.cap_body)),
+        $._dedent,
+      )))),
+    cap_body: ($) => alias($._cap_text_body, $.text_body),
+    _cap_text_body: ($) => seq(
+      $._cap_text_start,
+      repeat1(choice($.text_body_line, $.blank_line)),
+      $._dedent,
+    ),
 
     task: ($) =>
       seq(
@@ -137,14 +146,16 @@ module.exports = grammar({
     job_name: ($) => $._snake_kebab_name,
 
     job_body: ($) =>
-      prec.right(seq(
-        $.line_end,
+      prec.right(seq($.line_end, repeat($._trivia), optional(seq(
+        $._indent,
         repeat(choice($.property, $._trivia)),
-        optional(seq($.text_body, repeat($._trivia))),
-      )),
+        optional(alias($._cap_text_body, $.text_body)),
+        $._dedent,
+      )))),
 
     property: ($) =>
       seq(
+        $._line_start,
         field("key", $.property_key),
         field("operator", $.assign_operator),
         field("value", $.property_value),
@@ -183,27 +194,13 @@ module.exports = grammar({
         $.line_end,
         $.text_body,
       )),
-    text_body: ($) =>
-      prec.dynamic(1, prec.right(repeat1(choice($.text_body_line, $.blank_line)))),
+    text_body: ($) => seq(
+      repeat($.blank_line),
+      $._text_indent,
+      repeat1(choice($.text_body_line, $.blank_line)),
+      $._dedent,
+    ),
     text_body_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
-    _nested_text_inline_alias: ($) => alias($._nested_text_inline, $.text_inline),
-    _nested_text_inline: ($) =>
-      choice(
-        seq($.text_line, $.line_end),
-        alias($._nested_text_block, $.text_block),
-      ),
-    _nested_text_block: ($) =>
-      prec.right(seq(
-        $.line_end,
-        alias($._nested_text_body, $.text_body),
-      )),
-    _nested_text_body: ($) =>
-      prec.dynamic(1, prec.right(repeat1(choice(
-        alias($._nested_text_body_line, $.text_body_line),
-        $.blank_line,
-      )))),
-    _nested_text_body_line: ($) =>
-      seq(field("content", alias($._nested_indented_raw_text, $.indented_raw_text)), $.newline),
 
     agic: ($) =>
       prec.right(seq(
@@ -217,16 +214,14 @@ module.exports = grammar({
       )),
     agic_name: ($) => $.snake_name,
     agic_body: ($) =>
-      prec.right(seq(
-        repeat($._trivia),
+      structuralBody($,
         choice(
           seq($._directives, optional($.settings), optional($.messages)),
           seq($.settings, optional($.messages)),
           $.messages,
           $._pass_statement,
         ),
-        repeat($._trivia),
-      )),
+      ),
 
     params: ($) =>
       seq(
@@ -254,24 +249,22 @@ module.exports = grammar({
       )),
     flow_name: ($) => $.snake_name,
     flow_body: ($) =>
-      prec.right(seq(
-        repeat($._trivia),
+      structuralBody($,
         choice(
           seq($._directives, $.statements),
           $.statements,
           $._pass_statement,
         ),
-        repeat($._trivia),
-      )),
+      ),
     statements: ($) =>
       prec.right(seq($._flow_statement, repeat(choice($._flow_statement, $._trivia)))),
     _flow_statement: ($) =>
-      choice(
+      seq($._line_start, choice(
         $.let_statement,
         $._flow_operation,
         $.invalid_flow_reserved_statement,
         $.implicit_run_statement,
-      ),
+      )),
     _flow_operation: ($) =>
       choice(
         $.run_statement,
@@ -303,7 +296,7 @@ module.exports = grammar({
           $.flow_let_keyword,
           field("name", $.local_name),
           $.assign_operator,
-          field("value", $._nested_text_inline_alias),
+          field("value", $.text_inline),
         )),
       ),
     run_statement: ($) =>
@@ -318,40 +311,11 @@ module.exports = grammar({
           field("agic", $.inline_agic),
         )),
       ),
-    implicit_run_statement: ($) =>
-      prec.dynamic(-1, prec.right(seq(
-        alias($._implicit_run_text_body_line, $.text_body_line),
-        repeat(choice(
-          alias($._implicit_run_continuation_text_body_line, $.text_body_line),
-          seq(
-            $.blank_line,
-            alias($._implicit_run_text_body_line, $.text_body_line),
-          ),
-        )),
-        optional($.blank_line),
-      ))),
-    _implicit_run_text_body_line: ($) =>
-      choice(
-        seq(
-          field(
-            "content",
-            alias($._implicit_run_keyword_prefix_raw_text, $.indented_raw_text),
-          ),
-          $.newline,
-        ),
-        seq(
-          field("content", alias($._implicit_run_raw_text, $.indented_raw_text)),
-          $.newline,
-        ),
-      ),
-    _implicit_run_continuation_text_body_line: ($) =>
-      seq(
-        field(
-          "content",
-          alias($._implicit_run_continuation_raw_text, $.indented_raw_text),
-        ),
-        $.newline,
-      ),
+    implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
+    _implicit_run_line: ($) => seq(
+      field("content", alias($._flow_raw_text, $.indented_raw_text)), $.newline,
+    ),
+
     seek_statement: ($) =>
       choice(
         seq(
@@ -370,7 +334,7 @@ module.exports = grammar({
       prec.right(seq(
         $.flow_ask_keyword,
         $.colon,
-        field("body", $._nested_text_inline_alias),
+        field("body", $.text_inline),
       )),
     scatter_statement: ($) =>
       choice(
@@ -531,15 +495,13 @@ module.exports = grammar({
           $._repeat_count_complement,
           $.colon,
           $.line_end,
-          field("body", $.statements),
-          optional($._until_complement),
+          structuralBody($, seq(field("body", $.statements), optional($._until_complement), repeat($._trivia))),
         )),
         prec.right(seq(
           $.flow_repeat_keyword,
           $.colon,
           $.line_end,
-          field("body", $.statements),
-          $._until_complement,
+          structuralBody($, seq(field("body", $.statements), $._until_complement, repeat($._trivia))),
         )),
       ),
     _repeat_count_complement: ($) =>
@@ -555,6 +517,7 @@ module.exports = grammar({
       ),
     _until_complement: ($) =>
       prec.dynamic(2, seq(
+        $._until_start,
         $.flow_until_keyword,
         field("until", $.inline_agic_body),
       )),
@@ -568,12 +531,12 @@ module.exports = grammar({
       seq(
         optional(seq(field("arrow", $.arrow), field("return", $.type))),
         $.colon,
-        field("body", $._nested_text_inline_alias),
+        field("body", $.text_inline),
       ),
     inline_agic_body: ($) =>
       seq(
         $.colon,
-        field("body", $._nested_text_inline_alias),
+        field("body", $.text_inline),
       ),
     position: ($) =>
       seq(
@@ -588,7 +551,7 @@ module.exports = grammar({
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
 
     directive: ($) =>
-      choice(
+      seq($._directive_start, choice(
         seq(
           field("key", $.recall_keyword),
           field("operator", $.assign_operator),
@@ -601,7 +564,7 @@ module.exports = grammar({
           field("value", $.directive_value),
           $.line_end,
         ),
-      ),
+      )),
     directive_key: () =>
       choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs"),
     directive_op: () => choice("=", "+=", "-="),
@@ -634,7 +597,7 @@ module.exports = grammar({
         seq($.instruct_setting, repeat($._trivia)),
       )),
     context_setting: ($) =>
-      choice(
+      seq($._setting_start, choice(
         seq(
           $.context_keyword,
           $.text_ref,
@@ -643,11 +606,11 @@ module.exports = grammar({
         prec.right(seq(
           $.context_keyword,
           $.colon,
-          $._nested_text_inline_alias,
+          $.text_inline,
         )),
-      ),
+      )),
     instruct_setting: ($) =>
-      choice(
+      seq($._setting_start, choice(
         seq(
           $.instruct_keyword,
           $.text_ref,
@@ -656,30 +619,21 @@ module.exports = grammar({
         prec.right(seq(
           $.instruct_keyword,
           $.colon,
-          $._nested_text_inline_alias,
+          $.text_inline,
         )),
-      ),
+      )),
     text_ref: ($) => choice("default", "none", $.snake_name),
     messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),
     message: ($) =>
-      choice(
-        seq($.role, $.colon, $._nested_text_inline_alias),
+      seq($._line_start, choice(
+        seq($.role, $.colon, $.text_inline),
         $.invalid_agic_reserved_message,
         $.unroled_message,
-      ),
-    unroled_message: ($) =>
-      prec.dynamic(-1, prec.right(seq(
-        alias($._unroled_message_initial_line, $.text_body_line),
-        repeat(choice(
-          alias($._unroled_message_continuation_line, $.text_body_line),
-          seq($.blank_line, alias($._unroled_message_continuation_line, $.text_body_line)),
-        )),
-        optional($.blank_line),
-      ))),
-    _unroled_message_initial_line: ($) =>
-      seq(field("content", $.indented_raw_text), $.newline),
-    _unroled_message_continuation_line: ($) =>
-      seq(field("content", $.indented_raw_text), $.newline),
+      )),
+    unroled_message: ($) => paragraph($, $._unroled_message_line),
+    _unroled_message_line: ($) => seq(
+      field("content", alias($._agic_raw_text, $.indented_raw_text)), $.newline,
+    ),
     invalid_agic_reserved_message: ($) =>
       prec.dynamic(-2, seq(
         $._agic_reserved_word,
@@ -688,7 +642,7 @@ module.exports = grammar({
       )),
     role: () => choice("user", "assistant", "tool"),
     _pass_statement: ($) =>
-      prec(1, seq($.pass_keyword, $.line_end)),
+      prec(1, seq($._line_start, $.pass_keyword, $.line_end, repeat($._trivia))),
     with_keyword: () => "with",
     struct_keyword: () => "struct",
     psyche_keyword: () => "psyche",
@@ -754,6 +708,7 @@ module.exports = grammar({
         $.flow_drop_keyword,
         $.flow_keep_keyword,
         $.flow_sort_keyword,
+        $.flow_until_keyword,
         $.flow_rank_keyword,
         $.flow_repeat_keyword,
         $.flow_par_keyword,
@@ -769,6 +724,14 @@ module.exports = grammar({
         "fold",
         "head",
         "tail",
+        $.flow_using_keyword, $.flow_if_keyword, $.flow_by_keyword,
+        $.flow_in_keyword, $.flow_lane_keyword, $.flow_lanes_keyword,
+        $.flow_ascending_keyword, $.flow_descending_keyword,
+        $.flow_time_keyword, $.flow_times_keyword,
+        $.flow_first_keyword, $.flow_last_keyword,
+        $.with_keyword, $.struct_keyword, $.psyche_keyword, $.skill_keyword,
+        $.service_keyword, $.prompt_keyword, $.task_keyword, $.chore_keyword,
+        $.agic_keyword, $.flow_keyword, $._agic_reserved_word,
       ),
     _agic_reserved_word: ($) =>
       choice(
@@ -796,10 +759,18 @@ module.exports = grammar({
     kebab_name: () => token(/[a-z][a-z0-9]*(-[a-z0-9]+)*/),
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     text_line: () => token(prec(-1, /[^#\r\n]+/)),
-    indented_raw_text: () => token(prec(-1, /[ \t][^\r\n]*/)),
-    _implicit_run_raw_text: () => token(prec(-1, /[ \t]+([^u \t\r\n][^\r\n]*|u([^n\r\n][^\r\n]*)?|un([^t\r\n][^\r\n]*)?|unt([^i\r\n][^\r\n]*)?|unti([^l\r\n][^\r\n]*)?)/)),
-    _implicit_run_keyword_prefix_raw_text: () => token(/(let|run|seek|ask|scatter|storm|gather|settle|map|keep|drop|sort|repeat|until|rank|par|top|bottom|think|use|thunk|call|do|unfold|each|fold|head|tail)[A-Za-z0-9_][^\r\n]*/),
-    _implicit_run_continuation_raw_text: () => token(prec(1, /[ \t]+[^# \t\r\n][^\r\n]*/)),
-    _nested_indented_raw_text: () => token(prec(2, /[ \t]{4,}[^\r\n]*/)),
   },
 });
+
+function structuralBody($, content) {
+  return prec.right(seq(repeat($._trivia), $._indent, content, $._dedent));
+}
+
+function paragraph($, line) {
+  const bodyLine = alias(line, $.text_body_line);
+  return prec.right(seq(
+    bodyLine,
+    repeat(choice(bodyLine, seq($.blank_line, bodyLine))),
+    optional($.blank_line),
+  ));
+}

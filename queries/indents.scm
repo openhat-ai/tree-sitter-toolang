@@ -6,8 +6,11 @@
 (skill) @indent
 (service) @indent
 (prompt) @indent
+(task) @indent
+(chore) @indent
 (context) @indent
 (instruct) @indent
 (agic) @indent
 (flow) @indent
+(repeat_statement) @indent
 (text_block) @indent

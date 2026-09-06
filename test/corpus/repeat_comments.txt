@@ -1,0 +1,72 @@
+==================
+Repeat leading comments preserve nested bodies
+==================
+flow research:
+  repeat 2 times:
+    ## Gather fresh evidence for each review.
+    run search
+    ## Refine the evidence before the next search.
+    repeat:
+      # Keep revisions within the provider quota.
+      ## Address the strongest remaining objection.
+      run revise
+      until: Stop refining.
+    until: Stop researching.
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (doc_line)
+            (statements
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))
+              (doc_line)
+              (repeat_statement
+                (flow_repeat_keyword)
+                (colon)
+                (line_end
+                  (newline))
+                (comment_line)
+                (doc_line)
+                (statements
+                  (run_statement
+                    (flow_run_keyword)
+                    (runnable
+                      (snake_name))
+                    (line_end
+                      (newline))))
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline))))))
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))))))))

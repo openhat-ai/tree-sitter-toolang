@@ -94,9 +94,9 @@ chore stale-prs:
           (text_line))
         (line_end
           (newline)))
+      (blank_line)
       (cap_body
         (text_body
-          (blank_line)
           (text_body_line
             (indented_raw_text)
             (newline))
@@ -143,8 +143,8 @@ chore stale-prs:
             (text_line))
           (line_end
             (newline)))
+        (blank_line)
         (text_body
-          (blank_line)
           (text_body_line
             (indented_raw_text)
             (newline))
@@ -173,8 +173,8 @@ chore stale-prs:
             (text_line))
           (line_end
             (newline)))
+        (blank_line)
         (text_body
-          (blank_line)
           (text_body_line
             (indented_raw_text)
             (newline)))))))

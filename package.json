@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-toolang",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Toolang grammar for tree-sitter",
   "author": "Brice Yan",
   "license": "MIT",
@@ -41,7 +41,7 @@
     }
   ],
   "scripts": {
-    "generate": "tree-sitter generate",
+    "generate": "tree-sitter generate && node scripts/generate_keywords.mjs",
     "test": "tree-sitter test",
     "build:wasm": "tree-sitter build --wasm",
     "parse": "tree-sitter parse",

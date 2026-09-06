@@ -34,7 +34,7 @@ snake_name ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
 kebab_name ::= /[a-z][a-z0-9]*(-[a-z0-9]+)*/
 snake_kebab_name ::= /[a-z][a-z0-9_-]*/
 text_line ::= /[^#\r\n]+/
-indented_raw_text ::= /[ \t][^\r\n]*/
+indented_raw_text ::= a nonblank content line at or beyond its text baseline
 integer_literal ::= /\d+/
 ```
 
@@ -45,6 +45,31 @@ Comments:
 - Normal comments and blank lines are trivia. They can separate statements and
   implicit agic bodies.
 - Inline comments are allowed where a rule uses `line_end`.
+- A final nonempty line or comment may end at EOF without a physical newline.
+
+## Block Layout
+
+- Top-level declarations start at column zero. The first substantive entry of
+  a body must be deeper than its header and establishes that body's baseline.
+  Structural siblings share that baseline; deeper structural entries require
+  an enclosing body. Dedents must reach an existing ancestor baseline.
+- Blank lines and structural comments do not establish indentation or satisfy
+  a required body. They cannot make an empty block borrow an outer statement.
+  Cap/job bodies remain optional; `pass` is allowed only in agic/flow bodies.
+- Any positive indentation width is supported. Tabs advance to eight-column
+  stops. Do not mix spaces and tabs in structural indentation or interchange
+  their spellings at the same structural level. Form feed is not indentation.
+- Explicit multiline text establishes its own baseline. Deeper Markdown
+  indentation, keywords, and `#`/`##` lines are literal content. Dedenting below
+  the text baseline ends the text block. Relative indentation and source bytes
+  are preserved. Same-line text ends on that physical line.
+- Structural `##` documentation attaches to an immediately following entry
+  at the same indentation; blank lines and ordinary comments detach it.
+- Malformed entries remain invalid during recovery. Unexpected content is
+  contained to its physical line so it cannot borrow tokens from a later header.
+
+The productions below omit the hidden layout tokens. These rules apply to
+all declaration bodies, nested repeat bodies, and multiline text consumers.
 
 ## Types
 
@@ -88,7 +113,7 @@ cap_ref ::= text_line
 ```ebnf
 struct ::= "struct" struct_name ":" line_end struct_body
 struct_name ::= type_name
-struct_body ::= (field | doc_line | comment_line | blank_line)+
+struct_body ::= trivia* field (field | trivia)*
 field ::= field_name optional_marker? ":" type line_end
 field_name ::= snake_name
 optional_marker ::= "?"
@@ -150,7 +175,7 @@ Rules:
 ```ebnf
 text_inline ::= text_line line_end | text_block
 text_block ::= line_end text_body
-text_body ::= (text_body_line | blank_line)+
+text_body ::= blank_line* text_body_line (text_body_line | blank_line)*
 text_body_line ::= indented_raw_text newline
 ```
 
@@ -224,7 +249,7 @@ unroled_message ::= unroled_message_line
 unroled_message_line ::= text_body_line
 role ::= "user" | "assistant" | "tool"
 agic_reserved_word ::= "context" | "instruct" | "user" | "assistant" | "tool"
-                      | "pass" | directive_key
+                      | "pass" | "recall" | directive_key
 invalid_agic_reserved_message ::= agic_reserved_word text_line? line_end
 pass_statement ::= "pass" line_end
 ```
@@ -266,7 +291,7 @@ flow_body ::= trivia*
               | pass_statement)
               trivia*
 
-statements ::= flow_statement+
+statements ::= flow_statement (flow_statement | trivia)*
 flow_statement ::= let_statement
                  | flow_operation
                  | invalid_flow_reserved_statement
@@ -375,14 +400,19 @@ _active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
 _reserved_statement_keyword ::= "until" | "rank" | "par" | "top" | "bottom"
                               | "think" | "use" | "thunk" | "call" | "do"
                               | "unfold" | "each" | "fold" | "head" | "tail"
+                              | _connector_keyword | _declaration_keyword
+                              | agic_reserved_word | "recall"
+_connector_keyword ::= "using" | "if" | "by" | "in" | "lane" | "lanes"
+                     | "ascending" | "descending" | "first" | "last"
+                     | "time" | "times"
+_declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
+                       | "prompt" | "task" | "chore" | "agic" | "flow"
 
-implicit_run_statement ::= _implicit_initial_line
-                           (_implicit_continuation_line
-                           | blank_line _implicit_initial_line)*
+implicit_run_statement ::= _implicit_text_line
+                           (_implicit_text_line | blank_line _implicit_text_line)*
                            blank_line?
-_implicit_initial_line ::= a nonblank flow text line that does not begin with
-                           an active or reserved statement keyword
-_implicit_continuation_line ::= any nonblank, non-comment flow text line
+_implicit_text_line ::= a nonblank, non-comment flow text line whose first
+                       complete token is not an active or reserved keyword
 
 invalid_flow_reserved_statement ::= (_active_statement_keyword
                                    | _reserved_statement_keyword)
@@ -428,22 +458,31 @@ Rules:
   at least one is required. Count-only, until-only, and combined forms are
   valid; omitting both is invalid. Unconditional loops are not supported.
 - When present, `until` is a single final condition after the nonempty repeat
-  body. The repeat's `body` field points directly to `statements`; its optional
+  body, at the same indentation as its sibling statements. Trailing trivia is
+  allowed; an early, middle, duplicate, or wrongly indented condition is invalid.
+  The repeat's `body` field points directly to `statements`; its optional
   `until` field points to `inline_agic_body`.
-- Bare flow text is shorthand for inline `run`. An adjacent nonblank line stays
-  in the same implicit run even when it begins with a flow verb. After one blank
-  line, ordinary text continues the implicit run while a lowercase boundary
-  keyword starts an explicit or reserved statement. Two blank lines, a comment,
-  the end of the flow body, or end of file ends the implicit run.
+- Bare flow text is shorthand for inline `run`. Every substantive physical
+  line, including a continuation, checks its first complete token. A lowercase
+  active or reserved keyword selects structural parsing; malformed syntax
+  cannot fall back to prose. Capitalize the word, avoid it, or use explicit
+  `run:` text when it is intended as prose.
+- Adjacent non-keyword lines and one intervening blank line stay in the same
+  implicit run. Relative Markdown indentation may continue that prose; a
+  keyword-led line at an invalid structural depth is an error. Two blank lines,
+  a structural comment, the end of the flow body, or EOF ends the implicit run.
 - `until` is a reserved boundary keyword. Only `until:` in a repeat is valid;
   bare `until` and lowercase `until ...` do not form an implicit run at a
   statement boundary.
 - Explicit statement keywords are lowercase and case-sensitive. Named and
   positional statement headers end at `line_end` and do not accept trailing
   prose punctuation.
+- Matching uses a complete lexical token: `run`, `run:`, and `run,` select
+  keyword parsing, while `runner` and `run_suffix` remain prose. Connector-only
+  words and declaration/directive heads are invalid at a Flow statement position.
 - `rank`, `par`, `top`, and `bottom` are reserved legacy words. `think`, `use`,
   and `thunk` remain reserved without statement syntax. A malformed line that
-  begins with an active or reserved flow word parses as
+  begins with an active or reserved flow word exposes a syntax error or
   `invalid_flow_reserved_statement` instead of implicit `run` text.
 
 ## Model Call Assembly
