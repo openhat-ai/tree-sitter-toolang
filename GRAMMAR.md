@@ -65,6 +65,8 @@ Comments:
   are preserved. Same-line text ends on that physical line.
 - Structural `##` documentation attaches to an immediately following entry
   at the same indentation; blank lines and ordinary comments detach it.
+- Malformed entries remain invalid during recovery. Unexpected content is
+  contained to its physical line so it cannot borrow tokens from a later header.
 
 The productions below omit the hidden layout tokens. These rules apply to
 all declaration bodies, nested repeat bodies, and multiline text consumers.

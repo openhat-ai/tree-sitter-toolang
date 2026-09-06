@@ -18,35 +18,6 @@
         ]
       }
     },
-    "parent_doc_line": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PREC",
-        "value": 2,
-        "content": {
-          "type": "PATTERN",
-          "value": "##![^\\r\\n]*(\\r?\\n)?"
-        }
-      }
-    },
-    "doc_line": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PREC",
-        "value": 1,
-        "content": {
-          "type": "PATTERN",
-          "value": "##[^\\r\\n]*(\\r?\\n)?"
-        }
-      }
-    },
-    "comment_line": {
-      "type": "TOKEN",
-      "content": {
-        "type": "PATTERN",
-        "value": "#[^\\r\\n]*(\\r?\\n)?"
-      }
-    },
     "item": {
       "type": "SEQ",
       "members": [
@@ -150,16 +121,30 @@
       "type": "CHOICE",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "parent_doc_line"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "doc_line"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "comment_line"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_comment_start"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "parent_doc_line"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "doc_line"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "comment_line"
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "SYMBOL",
@@ -4215,6 +4200,22 @@
     },
     {
       "type": "SYMBOL",
+      "name": "_comment_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "parent_doc_line"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "doc_line"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "comment_line"
+    },
+    {
+      "type": "SYMBOL",
       "name": "_indent"
     },
     {
@@ -4259,7 +4260,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_error_sentinel"
+      "name": "_error_line"
     }
   ],
   "inline": [],

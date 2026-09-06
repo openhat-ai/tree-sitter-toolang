@@ -9,6 +9,10 @@
 enum Token {
   NEWLINE,
   BLANK_LINE,
+  COMMENT_START,
+  PARENT_DOC_LINE,
+  DOC_LINE,
+  COMMENT_LINE,
   INDENT,
   DEDENT,
   LINE_START,
@@ -20,7 +24,7 @@ enum Token {
   RAW_TEXT,
   FLOW_TEXT,
   AGIC_TEXT,
-  ERROR_SENTINEL,
+  ERROR_LINE,
 };
 
 enum Mode { STRUCTURAL, TEXT };
@@ -32,15 +36,23 @@ typedef struct {
   uint8_t mode;
 } Frame;
 
-// Every frame needs six serialized bytes; reserve four bytes for the header.
-// Refuse deeper input instead of losing state during incremental parsing.
-#define MAX_FRAMES ((TREE_SITTER_SERIALIZATION_BUFFER_SIZE - 4) / 6)
+// The header includes the pending trivia lookahead. Refuse deeper input instead
+// of losing state during incremental parsing; each frame needs six bytes.
+#define HEADER_SIZE 13
+#define MAX_FRAMES ((TREE_SITTER_SERIALIZATION_BUFFER_SIZE - HEADER_SIZE) / 6)
+
+typedef struct {
+  uint32_t lines;
+  uint32_t column;
+} Trivia;
 
 typedef struct {
   Frame frames[MAX_FRAMES];
   uint16_t depth;
   bool line_started;
   bool eof_newline;
+  bool comment_started;
+  Trivia trivia;
 } Scanner;
 
 typedef struct {
@@ -113,40 +125,113 @@ static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode
   return emit(scanner, lexer, token);
 }
 
-// Trivia cannot decide ownership. Look ahead without consuming it so comments
-// preceding an outer statement stay outside a completed inner block.
-static uint32_t next_content_column(TSLexer *lexer, Indentation indent) {
+// Inspect a trivia run once. The hidden start token records this dependency in
+// Tree-sitter, so an edit anywhere in the lookahead invalidates the cached result.
+static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia) {
+  uint32_t lines = 0;
   for (;;) {
-    if (lexer->lookahead == '#') {
+    bool comment = lexer->lookahead == '#';
+    if (comment) {
       while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
         advance(lexer);
       }
     }
     if (lexer->eof(lexer)) {
-      return 0;
+      if (comment && lines == UINT32_MAX) {
+        return false;
+      }
+      trivia->lines = lines + comment;
+      trivia->column = 0;
+      return true;
     }
     if (!line_end(lexer)) {
-      return indent.column;
+      trivia->lines = lines;
+      trivia->column = indent.column;
+      return true;
     }
+    if (lines == UINT32_MAX) {
+      return false;
+    }
+    lines++;
     indent = indentation(lexer);
   }
 }
 
+static void finish_trivia_line(Scanner *scanner) {
+  scanner->comment_started = false;
+  scanner->line_started = false;
+  if (scanner->trivia.lines && --scanner->trivia.lines == 0) {
+    scanner->trivia.column = 0;
+  }
+}
+
+static void skip_indentation(TSLexer *lexer) {
+  while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+    lexer->advance(lexer, true);
+  }
+}
+
+// Comments retain their public node types and start at '#', after indentation.
+// Consuming their newline here also resets layout state during error recovery.
+static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
+  if (lexer->lookahead != '#') {
+    return false;
+  }
+  advance(lexer);
+  enum Token token = COMMENT_LINE;
+  if (lexer->lookahead == '#') {
+    advance(lexer);
+    token = lexer->lookahead == '!' ? PARENT_DOC_LINE : DOC_LINE;
+  }
+  if (!valid[token]) {
+    return false;
+  }
+  while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    advance(lexer);
+  }
+  lexer->mark_end(lexer);
+  if (line_end(lexer)) {
+    lexer->mark_end(lexer);
+  }
+  finish_trivia_line(scanner);
+  return emit(scanner, lexer, token);
+}
+
 bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid) {
   Scanner *scanner = payload;
-  if (valid[ERROR_SENTINEL]) {
-    // Resynchronize at physical newlines, but never infer layout or text while
-    // recovering. This keeps malformed entries inside their owning block.
-    indentation(lexer);
+  bool at_start = lexer->get_column(lexer) == 0;
+  if (valid[ERROR_LINE]) {
+    // All external tokens are enabled during recovery. Keep unexpected content
+    // on its physical line instead of letting recovery borrow a later header.
+    // ERROR_LINE is never accepted by a normal grammar production.
+    skip_indentation(lexer);
+    if (at_start && scan_comment(scanner, lexer, valid)) {
+      scanner->trivia = (Trivia){0};
+      return true;
+    }
     if (!line_end(lexer)) {
-      return false;
+      if (lexer->eof(lexer)) {
+        return false;
+      }
+      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        advance(lexer);
+      }
+      lexer->mark_end(lexer);
+      scanner->line_started = scanner->comment_started = false;
+      scanner->trivia = (Trivia){0};
+      return emit(scanner, lexer, ERROR_LINE);
     }
     lexer->mark_end(lexer);
-    scanner->line_started = false;
-    return emit(scanner, lexer, BLANK_LINE);
+    enum Token newline = scanner->line_started ? NEWLINE : BLANK_LINE;
+    finish_trivia_line(scanner);
+    scanner->trivia = (Trivia){0};
+    return emit(scanner, lexer, newline);
+  }
+  if (scanner->comment_started) {
+    skip_indentation(lexer);
+    return scan_comment(scanner, lexer, valid);
   }
 
-  bool at_start = lexer->get_column(lexer) == 0;
   lexer->mark_end(lexer);
   Indentation indent = indentation(lexer);
   Frame frame = scanner->frames[scanner->depth - 1];
@@ -174,7 +259,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     // bypassing the layout transition that a fresh parse would perform.
     if (valid[BLANK_LINE] && line_end(lexer)) {
       lexer->mark_end(lexer);
-      scanner->line_started = false;
+      finish_trivia_line(scanner);
       return emit(scanner, lexer, BLANK_LINE);
     }
     return false;
@@ -190,10 +275,24 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return emit(scanner, lexer, DEDENT);
   }
   if (lexer->lookahead == '#' && !literal && !opening_text) {
-    if (valid[DEDENT] && next_content_column(lexer, indent) < frame.column) {
-      return emit(scanner, lexer, DEDENT);
+    if (!valid[COMMENT_START] && !valid[DEDENT]) {
+      return false;
     }
-    return false;
+    Trivia trivia = scanner->trivia;
+    if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia)) {
+      return false;
+    }
+    enum Token token;
+    if (valid[DEDENT] && trivia.column < frame.column) {
+      token = DEDENT;
+    } else if (valid[COMMENT_START]) {
+      token = COMMENT_START;
+    } else {
+      return false;
+    }
+    scanner->trivia = trivia;
+    scanner->comment_started = token == COMMENT_START;
+    return emit(scanner, lexer, token);
   }
 
   if (!scanner->line_started && valid[DEDENT] && indent.column < frame.column) {
@@ -303,6 +402,13 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)(scanner->depth >> 8);
   buffer[size++] = (char)scanner->line_started;
   buffer[size++] = (char)scanner->eof_newline;
+  buffer[size++] = (char)scanner->comment_started;
+  for (unsigned j = 0; j < 4; j++) {
+    buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
+  }
+  for (unsigned j = 0; j < 4; j++) {
+    buffer[size++] = (char)(scanner->trivia.column >> (j * 8));
+  }
   for (unsigned i = 0; i < scanner->depth; i++) {
     Frame frame = scanner->frames[i];
     for (unsigned j = 0; j < 4; j++) {
@@ -319,18 +425,25 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   Scanner *scanner = payload;
   memset(scanner, 0, sizeof(*scanner));
   scanner->depth = 1;
-  if (length < 4) {
+  if (length < HEADER_SIZE) {
     return;
   }
   const uint8_t *bytes = (const uint8_t *)buffer;
   unsigned depth = bytes[0] | (bytes[1] << 8);
-  if (depth == 0 || depth > MAX_FRAMES || length != 4 + depth * 6) {
+  if (depth == 0 || depth > MAX_FRAMES || length != HEADER_SIZE + depth * 6) {
     return;
   }
   scanner->depth = (uint16_t)depth;
   scanner->line_started = bytes[2];
   scanner->eof_newline = bytes[3];
-  unsigned offset = 4;
+  scanner->comment_started = bytes[4];
+  unsigned offset = 5;
+  for (unsigned j = 0; j < 4; j++) {
+    scanner->trivia.lines |= (uint32_t)bytes[offset++] << (j * 8);
+  }
+  for (unsigned j = 0; j < 4; j++) {
+    scanner->trivia.column |= (uint32_t)bytes[offset++] << (j * 8);
+  }
   for (unsigned i = 0; i < depth; i++) {
     Frame *frame = &scanner->frames[i];
     for (unsigned j = 0; j < 4; j++) {

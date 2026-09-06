@@ -4,17 +4,15 @@ module.exports = grammar({
   extras: () => [/[ \t]/],
   externals: ($) => [
     $.newline, $.blank_line,
+    $._comment_start, $.parent_doc_line, $.doc_line, $.comment_line,
     $._indent, $._dedent, $._line_start, $._directive_start, $._setting_start,
     $._until_start, $._text_indent, $._cap_text_start,
-    $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_sentinel,
+    $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
   ],
   rules: {
     source_file: ($) =>
       repeat(choice($._trivia, $.item)),
 
-    parent_doc_line: () => token(prec(2, /##![^\r\n]*(\r?\n)?/)),
-    doc_line: () => token(prec(1, /##[^\r\n]*(\r?\n)?/)),
-    comment_line: () => token(/#[^\r\n]*(\r?\n)?/),
     item: ($) =>
       seq($._line_start, choice(
         $.with,
@@ -33,7 +31,10 @@ module.exports = grammar({
 
     inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional($.inline_comment), $.newline),
-    _trivia: ($) => choice($.parent_doc_line, $.doc_line, $.comment_line, $.blank_line),
+    _trivia: ($) => choice(
+      seq($._comment_start, choice($.parent_doc_line, $.doc_line, $.comment_line)),
+      $.blank_line,
+    ),
 
     with: ($) =>
       seq(

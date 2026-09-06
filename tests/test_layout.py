@@ -456,5 +456,110 @@ def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):
     root = parse(source.replace("\n", newline))
     assert not valid(root)
     owner = descendants(root, kind)[0]
-    assert descendants(owner, "ERROR")
+    # Both ERROR nodes and missing required tokens must stay under the owner.
+    assert owner.has_error
     assert descendants(owner, "text_body_line")[0].text.strip() == b"Review."
+
+
+@pytest.mark.parametrize("comment", ["# Note.", "## Note.", "##! Note."])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_incremental_malformed_headers_preserve_comment_line_boundaries(
+    comment, newline
+):
+    before = f"flow work {comment}\nflow other:\n  pass\n  bad:\n"
+    after = before.replace("flow other:", "until other:")
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for source in [before, after, before, "flow work:\n  run finish\n"]:
+        current = source.replace("\n", newline).encode()
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        ), current
+        previous = current
+    assert valid(tree.root_node)
+
+
+def test_consecutive_comments_require_linear_scanning_work():
+    def scan_work(count):
+        work = 0
+
+        def log(kind, message):
+            nonlocal work
+            if message.startswith(("consume character:", "skip character:")):
+                work += 1
+
+        parser = Parser(Language(tree_sitter_toolang.language()))
+        parser.logger = log
+        source = (
+            b"flow work:\n  run first\n"
+            + b"  ## Documentation.\n" * count
+            + b"  run last\n"
+        )
+        assert valid(parser.parse(source).root_node)
+        assert work > len(source)
+        return work
+
+    # Count lexer operations instead of timing machines or CI runners.
+    assert scan_work(128) < 3 * scan_work(64)
+
+
+@pytest.mark.parametrize("indent", ["  ", "\t"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_incremental_trivia_lookahead_tracks_content_and_dedent_edits(
+    indent, newline
+):
+    comments = [
+        indent * (i % 4) + ["# Note.", "## Step.", "##! Parent."][i % 3] + "\n"
+        for i in range(40)
+    ]
+    prefix = f"flow work:\n{indent}repeat 2 times:\n{indent * 2}run first\n"
+    tail = f"{indent * 2}run last\n{indent}run publish\n"
+    trivia = "".join(comments)
+    variants = [
+        prefix + trivia + tail,
+        prefix + trivia + tail.replace(indent * 2 + "run last", indent + "run last"),
+        prefix + "".join(comments[::2]) + tail,
+        prefix + trivia.replace(comments[2], indent * 2 + "Review.\n", 1) + tail,
+        prefix + "\n" + trivia + tail,
+        prefix + trivia.replace("# Note.", "## Changed.") + tail,
+        prefix + trivia + tail + "## Final documentation.",
+        prefix + trivia + tail,
+    ]
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for source in variants:
+        current = source.replace("\n", newline).encode()
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert valid(tree.root_node)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        ), current
+        previous = current
+
+
+@pytest.mark.parametrize(
+    "before, after",
+    [
+        (b"flow k:\n pass\n n#\n:\n", b"flow y.k:\n pass\n n#\n:\n"),
+        (b"flow :\n pass\n r:\n", b"flow \x87:\n pass\n r:\n"),
+    ],
+)
+def test_incremental_header_errors_do_not_borrow_tokens_from_later_lines(
+    before, after
+):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for current in [before, after, before]:
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert not valid(tree.root_node)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        ), current
+        previous = current
