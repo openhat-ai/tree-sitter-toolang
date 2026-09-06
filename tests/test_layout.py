@@ -6,29 +6,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-
-def parse(source):
-    return (
-        Parser(Language(tree_sitter_toolang.language()))
-        .parse(source.encode())
-        .root_node
-    )
-
-
-def descendants(node, kind):
-    return [child for child in walk(node) if child.type == kind]
-
-
-def walk(node):
-    yield node
-    for child in node.named_children:
-        yield from walk(child)
-
-
-def valid(root):
-    return not root.has_error and not any(
-        node.type.startswith("invalid_") for node in walk(root)
-    )
+from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
 
 
 def test_repeat_does_not_capture_outer_statement():
@@ -148,6 +126,8 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
     assert len(descendants(root, "flow")) == 1
 
 
+@pytest.mark.parametrize("indent", [" ", "  ", "    ", "\t"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
 @pytest.mark.parametrize(
     "header, body",
     [
@@ -165,8 +145,12 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
         ("chore review:", "Review the evidence."),
     ],
 )
-def test_declaration_bodies_end_before_following_declaration(header, body):
-    root = parse(f"{header}\n  {body}\nflow publish:\n  pass\n")
+def test_declaration_bodies_end_before_following_declaration(
+    header, body, indent, newline
+):
+    body = indent + body.replace("\n  ", "\n" + indent)
+    source = f"{header}\n{body}\nflow publish:\n{indent}pass"
+    root = parse(source.replace("\n", newline))
     assert valid(root)
     items = [child for child in root.named_children if child.type == "item"]
     assert len(items) == 2
@@ -265,52 +249,6 @@ def test_line_endings_and_eof_preserve_completed_blocks(newline, final_newline):
     assert valid(root)
     assert len(descendants(root, "repeat_statement")) == 2
     assert len(descendants(root, "run_statement")) == 2
-
-
-def fingerprint(node):
-    return (
-        node.type,
-        node.is_named,
-        node.is_missing,
-        node.has_error,
-        node.start_byte,
-        node.end_byte,
-        node.start_point,
-        node.end_point,
-        tuple(
-            (node.field_name_for_child(i), fingerprint(child))
-            for i, child in enumerate(node.children)
-        ),
-    )
-
-
-def point(source, offset):
-    prefix = source[:offset]
-    return (prefix.count(b"\n"), len(prefix.rsplit(b"\n", 1)[-1]))
-
-
-def edit_tree(tree, previous, current):
-    start = 0
-    while (
-        start < min(len(previous), len(current)) and previous[start] == current[start]
-    ):
-        start += 1
-    old_end, new_end = len(previous), len(current)
-    while (
-        old_end > start
-        and new_end > start
-        and previous[old_end - 1] == current[new_end - 1]
-    ):
-        old_end -= 1
-        new_end -= 1
-    tree.edit(
-        start_byte=start,
-        old_end_byte=old_end,
-        new_end_byte=new_end,
-        start_point=point(previous, start),
-        old_end_point=point(previous, old_end),
-        new_end_point=point(current, new_end),
-    )
 
 
 def test_incremental_edits_match_fresh_trees_through_invalid_states():
@@ -418,8 +356,7 @@ def test_metadata_to_text_preserves_the_structural_indent_prefix(
     header, prefix, replacement
 ):
     source = (
-        f"{header}\n{prefix}description = Review.\n"
-        f"{replacement}Review the evidence.\n"
+        f"{header}\n{prefix}description = Review.\n{replacement}Review the evidence.\n"
     )
     assert not valid(parse(source))
     assert valid(parse(source.replace(replacement + "Review", prefix + "Review")))
@@ -482,7 +419,43 @@ def test_incremental_malformed_headers_preserve_comment_line_boundaries(
     assert valid(tree.root_node)
 
 
-def test_consecutive_comments_require_linear_scanning_work():
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+@pytest.mark.parametrize(
+    "prefix, trivia, suffix",
+    [
+        pytest.param(
+            b"flow work:\n  run first\n",
+            b"  ## Documentation.\n",
+            b"  run last\n",
+            id="sibling-comments",
+        ),
+        pytest.param(
+            b"flow work:\n",
+            b"# Note.\n\n    ## Step.\n  ##! Parent.\n",
+            b"  run first",
+            id="leading-mixed-trivia",
+        ),
+        pytest.param(
+            b"flow work:\n  repeat 2 times:\n    repeat 1 time:\n      run first\n",
+            b"\n## Step.\n        # Note.\n",
+            b"  run publish",
+            id="nested-dedent",
+        ),
+        pytest.param(
+            b"service search:\n  transport = stdio\n",
+            b"  # Note.\n\n  ## Detail.\n",
+            b"  Search the web.\nflow next:\n  pass",
+            id="metadata-to-text",
+        ),
+        pytest.param(
+            b"flow work:\n  repeat 2 times:\n    run first\n",
+            b"  ##! Parent.\n\n# Note.\n",
+            b"## Final documentation.",
+            id="trivia-at-eof",
+        ),
+    ],
+)
+def test_trivia_runs_require_linear_scanning_work(prefix, trivia, suffix, newline):
     def scan_work(count):
         work = 0
 
@@ -493,11 +466,7 @@ def test_consecutive_comments_require_linear_scanning_work():
 
         parser = Parser(Language(tree_sitter_toolang.language()))
         parser.logger = log
-        source = (
-            b"flow work:\n  run first\n"
-            + b"  ## Documentation.\n" * count
-            + b"  run last\n"
-        )
+        source = (prefix + trivia * count + suffix).replace(b"\n", newline)
         assert valid(parser.parse(source).root_node)
         assert work > len(source)
         return work
@@ -508,9 +477,7 @@ def test_consecutive_comments_require_linear_scanning_work():
 
 @pytest.mark.parametrize("indent", ["  ", "\t"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_incremental_trivia_lookahead_tracks_content_and_dedent_edits(
-    indent, newline
-):
+def test_incremental_trivia_lookahead_tracks_content_and_dedent_edits(indent, newline):
     comments = [
         indent * (i % 4) + ["# Note.", "## Step.", "##! Parent."][i % 3] + "\n"
         for i in range(40)
@@ -549,9 +516,7 @@ def test_incremental_trivia_lookahead_tracks_content_and_dedent_edits(
         (b"flow :\n pass\n r:\n", b"flow \x87:\n pass\n r:\n"),
     ],
 )
-def test_incremental_header_errors_do_not_borrow_tokens_from_later_lines(
-    before, after
-):
+def test_incremental_header_errors_do_not_borrow_tokens_from_later_lines(before, after):
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = b""
     tree = parser.parse(previous)
