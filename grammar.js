@@ -3,7 +3,7 @@ module.exports = grammar({
 
   extras: () => [/[ \t]/],
   externals: ($) => [
-    $.newline,
+    $.newline, $.blank_line,
     $._indent, $._dedent, $._line_start, $._directive_start, $._setting_start,
     $._until_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_sentinel,
@@ -12,7 +12,6 @@ module.exports = grammar({
     source_file: ($) =>
       repeat(choice($._trivia, $.item)),
 
-    blank_line: () => token(prec(1, /\r?\n/)),
     parent_doc_line: () => token(prec(2, /##![^\r\n]*(\r?\n)?/)),
     doc_line: () => token(prec(1, /##[^\r\n]*(\r?\n)?/)),
     comment_line: () => token(/#[^\r\n]*(\r?\n)?/),

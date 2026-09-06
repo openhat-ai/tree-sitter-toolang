@@ -226,8 +226,8 @@ context:
             (type_suffix
               (array_suffix)))
           (line_end
-            (newline))))))
-  (blank_line)
+            (newline)))
+        (blank_line))))
   (item
     (instruct
       (instruct_keyword)

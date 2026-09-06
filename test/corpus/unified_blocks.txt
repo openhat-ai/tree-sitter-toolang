@@ -91,8 +91,8 @@ flow summarize:
             (runnable
               (snake_name))
             (line_end
-              (newline)))))))
-  (blank_line)
+              (newline)))
+          (blank_line)))))
   (item
     (flow
       (flow_keyword)

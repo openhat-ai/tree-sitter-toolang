@@ -398,3 +398,63 @@ def test_dedented_comment_ends_explicit_text_before_later_deeper_prose():
 @pytest.mark.parametrize("suffix", ["", "\n", "\n\n"])
 def test_blank_only_explicit_text_is_invalid(suffix):
     assert not valid(parse(f"context notes:\n{suffix}flow work:\n  pass\n"))
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "psyche review:",
+        "skill review:",
+        "service search:",
+        "prompt review:",
+        "task review:",
+        "chore review:",
+    ],
+)
+@pytest.mark.parametrize(
+    "prefix, replacement", [("        ", "\t"), ("\t", "        ")]
+)
+def test_metadata_to_text_preserves_the_structural_indent_prefix(
+    header, prefix, replacement
+):
+    source = (
+        f"{header}\n{prefix}description = Review.\n"
+        f"{replacement}Review the evidence.\n"
+    )
+    assert not valid(parse(source))
+    assert valid(parse(source.replace(replacement + "Review", prefix + "Review")))
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_incremental_blank_lines_after_layout_errors_keep_the_same_owner(newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    variants = [
+        b"flow:\n pass\n\t. \n",
+        b"flow:\n pass\n\t.\n \n",
+        b"flow:\n pass\n\t. \n",
+        b"flow:\n pass\n\n",
+    ]
+    previous = b""
+    tree = parser.parse(previous)
+    for source in variants:
+        current = source.replace(b"\n", newline)
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        ), current
+        previous = current
+    assert valid(tree.root_node)
+
+
+@pytest.mark.parametrize(
+    "kind", ["psyche", "skill", "service", "prompt", "task", "chore"]
+)
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):
+    source = f"{kind} review:\n  description =\n\n  Review.\n"
+    root = parse(source.replace("\n", newline))
+    assert not valid(root)
+    owner = descendants(root, kind)[0]
+    assert descendants(owner, "ERROR")
+    assert descendants(owner, "text_body_line")[0].text.strip() == b"Review."

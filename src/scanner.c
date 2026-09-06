@@ -8,6 +8,7 @@
 
 enum Token {
   NEWLINE,
+  BLANK_LINE,
   INDENT,
   DEDENT,
   LINE_START,
@@ -134,7 +135,15 @@ static uint32_t next_content_column(TSLexer *lexer, Indentation indent) {
 bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid) {
   Scanner *scanner = payload;
   if (valid[ERROR_SENTINEL]) {
-    return false;
+    // Resynchronize at physical newlines, but never infer layout or text while
+    // recovering. This keeps malformed entries inside their owning block.
+    indentation(lexer);
+    if (!line_end(lexer)) {
+      return false;
+    }
+    lexer->mark_end(lexer);
+    scanner->line_started = false;
+    return emit(scanner, lexer, BLANK_LINE);
   }
 
   bool at_start = lexer->get_column(lexer) == 0;
@@ -160,9 +169,13 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       scanner->line_started = false;
       return emit(scanner, lexer, NEWLINE);
     }
-    if (at_start && frame.mode == STRUCTURAL && valid[DEDENT] &&
-        next_content_column(lexer, indent) < frame.column) {
-      return emit(scanner, lexer, DEDENT);
+    // Record blank-line consumption in scanner state as well. Internal trivia
+    // can otherwise be reused at a different physical column after an edit,
+    // bypassing the layout transition that a fresh parse would perform.
+    if (valid[BLANK_LINE] && line_end(lexer)) {
+      lexer->mark_end(lexer);
+      scanner->line_started = false;
+      return emit(scanner, lexer, BLANK_LINE);
     }
     return false;
   }
@@ -206,7 +219,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     advance(lexer);
   }
 
-  if (valid[CAP_TEXT_START] && !scanner->line_started && indent.column == frame.column) {
+  bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[CAP_TEXT_START] && !scanner->line_started && at_baseline) {
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
     }
@@ -215,7 +229,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     }
   }
 
-  if (!scanner->line_started && indent.column == frame.column && indent.prefix == frame.prefix) {
+  if (!scanner->line_started && at_baseline) {
     enum Token start = LINE_START;
     if (valid[UNTIL_START] && strcmp(word, "until") == 0) {
       start = UNTIL_START;
@@ -238,8 +252,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
                 !keyword(word, flow_keywords, sizeof(flow_keywords) / sizeof(*flow_keywords))) ||
                (valid[AGIC_TEXT] &&
                 !keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords)));
-  if (valid[LINE_START] && !prose && !scanner->line_started && indent.column == frame.column &&
-      indent.prefix == frame.prefix) {
+  if (valid[LINE_START] && !prose && !scanner->line_started && at_baseline) {
     scanner->line_started = true;
     return emit(scanner, lexer, LINE_START);
   }
