@@ -34,7 +34,7 @@ jobs:
       - name: Verify grammar and CLI checks
         run: |
           npm run check
-          git diff --exit-code -- src/parser.c src/grammar.json src/node-types.json
+          git diff --exit-code -- src/parser.c src/grammar.json src/node-types.json src/keywords.h
 
       - name: Verify npm package contents
         run: npm run pack:dry-run

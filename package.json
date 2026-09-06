@@ -41,7 +41,7 @@
     }
   ],
   "scripts": {
-    "generate": "tree-sitter generate",
+    "generate": "tree-sitter generate && node scripts/generate_keywords.mjs",
     "test": "tree-sitter test",
     "build:wasm": "tree-sitter build --wasm",
     "parse": "tree-sitter parse",

@@ -17,6 +17,8 @@ FIXTURE_NAMES = (
     "script_agics.too",
     "syntax_variants.too",
     "with_caps.too",
+    "repeat_comments.too",
+    "unified_blocks.too",
 )
 
 

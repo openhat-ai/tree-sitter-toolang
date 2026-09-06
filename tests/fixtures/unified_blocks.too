@@ -1,0 +1,19 @@
+flow research:
+  repeat:
+    ## Gather and refine evidence before checking completeness.
+    repeat 2 times:
+      run:
+        Review the evidence.
+        sort is literal text inside this prompt.
+          - Preserve this Markdown indentation.
+      run revise
+    until:
+      Return true when the evidence is sufficient.
+  run publish
+
+flow summarize:
+  Summarize the published findings.
+    - Include the strongest evidence.
+  Explain any remaining uncertainty.
+
+  keep first 3

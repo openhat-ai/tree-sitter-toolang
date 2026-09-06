@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
@@ -518,10 +520,10 @@ def test_implicit_run_paragraph_boundaries_control_statement_starts():
     parser = _parser()
     source = (
         b"flow boundaries:\n"
-        b"  Review the findings\n"
-        b"  sort them by relevance.\n"
+        b"  Review the findings.\n"
+        b"  Sort them by relevance.\n"
         b"\n"
-        b"  using ordinary prose here.\n"
+        b"  Using ordinary prose here.\n"
         b"\n"
         b"  Until enough evidence exists.\n"
         b"\n"
@@ -541,8 +543,8 @@ def test_implicit_run_paragraph_boundaries_control_statement_starts():
         "implicit_run_statement",
         "implicit_run_statement",
     ]
-    assert "sort them by relevance." in _text(source, statements[0])
-    assert "using ordinary prose here." in _text(source, statements[0])
+    assert "Sort them by relevance." in _text(source, statements[0])
+    assert "Using ordinary prose here." in _text(source, statements[0])
     assert "Until enough evidence exists." in _text(source, statements[0])
     assert "Continue with the sorted findings." in _text(source, statements[2])
 
@@ -616,3 +618,113 @@ def test_with_and_agic_replace_use_and_thunk():
     assert [item.type for item in _items(tree.root_node)] == ["with", "agic"]
     assert parser.parse(b"use skill owner/reviewer\n").root_node.has_error is True
     assert parser.parse(b"thunk review:\n  pass\n").root_node.has_error is True
+
+
+@pytest.mark.parametrize(
+    ("header", "ending"),
+    [
+        ("repeat 2 times:", ""),
+        ("repeat 1 time:", "    until: Ready.\n"),
+        ("repeat:", "    until: Ready.\n"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("prefix", "trivia"),
+    [
+        ("    ## Improve the evidence.\n", ["doc_line"]),
+        ("    # Respect the provider quota.\n", ["comment_line"]),
+        ("\n", ["blank_line"]),
+        (
+            "\n    # Respect the provider quota.\n    ## Improve the evidence.\n",
+            ["blank_line", "comment_line", "doc_line"],
+        ),
+    ],
+)
+def test_repeat_leading_trivia_preserves_executable_body(
+    header, ending, prefix, trivia
+):
+    source = (
+        f"flow research:\n  {header}\n{prefix}"
+        "    run search\n    run summarize\n" + ending
+    ).encode()
+    root = _parser().parse(source).root_node
+
+    assert not root.has_error
+    loop = _statements(_items(root)[0])[0]
+    body = loop.child_by_field_name("body")
+    assert body.type == "statements"
+    assert [node.type for node in body.named_children] == [
+        "run_statement",
+        "run_statement",
+    ]
+    assert [
+        _text(source, node.child_by_field_name("runnable")).strip()
+        for node in body.named_children
+    ] == ["search", "summarize"]
+    assert [node.type for node in loop.named_children if node.type in trivia] == trivia
+    assert bool(loop.child_by_field_name("until")) == bool(ending)
+    assert not _descendants(loop, "implicit_run_statement")
+
+
+
+def test_repeat_documentation_preserves_prose_continuations_and_boundaries():
+    source = b"""flow research:
+  repeat 2 times:
+    ## Compare the evidence before deciding.
+    Explain the alternatives.
+    Run is a word in this prompt.
+
+    run summarize
+    until: Ready.
+"""
+    root = _parser().parse(source).root_node
+
+    assert not root.has_error
+    loop = _statements(_items(root)[0])[0]
+    body = loop.child_by_field_name("body")
+    assert [node.type for node in body.named_children] == [
+        "implicit_run_statement",
+        "run_statement",
+    ]
+    prose = _text(source, body.named_children[0])
+    assert "Explain the alternatives." in prose
+    assert "Run is a word in this prompt." in prose
+    assert "##" not in prose
+    assert "run summarize" not in prose
+    assert loop.child_by_field_name("until") is not None
+
+
+
+def test_repeat_comments_fixture_preserves_nested_statement_fields():
+    source = (FIXTURES_DIR / "repeat_comments.too").read_bytes()
+    root = _parser().parse(source).root_node
+
+    assert not root.has_error
+    outer = _statements(_items(root)[0])[0]
+    outer_body = outer.child_by_field_name("body")
+    assert [node.type for node in outer_body.named_children] == [
+        "run_statement",
+        "doc_line",
+        "repeat_statement",
+    ]
+    inner = outer_body.named_children[2]
+    inner_body = inner.child_by_field_name("body")
+    assert inner_body.type == "statements"
+    assert [node.type for node in inner_body.named_children] == ["run_statement"]
+    assert (
+        _text(
+            source, inner_body.named_children[0].child_by_field_name("runnable")
+        ).strip()
+        == "revise"
+    )
+    assert "Stop refining." in _text(source, inner.child_by_field_name("until"))
+    assert "Stop researching." in _text(source, outer.child_by_field_name("until"))
+
+
+
+@pytest.mark.parametrize("header", ["repeat 2 times:", "repeat:"])
+def test_repeat_comments_do_not_replace_required_statements(header):
+    source = f"flow research:\n  {header}\n    ## No executable body.\n".encode()
+    root = _parser().parse(source).root_node
+
+    assert root.has_error or _descendants(root, "invalid_flow_reserved_statement")

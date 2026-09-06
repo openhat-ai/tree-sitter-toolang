@@ -1,0 +1,123 @@
+==================
+Unified block ownership
+==================
+
+flow research:
+  repeat:
+    ## Gather and refine evidence before checking completeness.
+    repeat 2 times:
+      run:
+        Review the evidence.
+        sort is literal text inside this prompt.
+          - Preserve this Markdown indentation.
+      run revise
+    until:
+      Return true when the evidence is sufficient.
+  run publish
+
+flow summarize:
+  Summarize the published findings.
+    - Include the strongest evidence.
+  Explain any remaining uncertainty.
+
+  keep first 3
+
+---
+
+(source_file
+  (blank_line)
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (repeat_statement
+            (flow_repeat_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (doc_line)
+            (statements
+              (repeat_statement
+                (flow_repeat_keyword)
+                (integer_literal)
+                (flow_times_keyword)
+                (colon)
+                (line_end
+                  (newline))
+                (statements
+                  (run_statement
+                    (flow_run_keyword)
+                    (inline_agic
+                      (colon)
+                      (text_inline
+                        (text_block
+                          (line_end
+                            (newline))
+                          (text_body
+                            (text_body_line
+                              (indented_raw_text)
+                              (newline))
+                            (text_body_line
+                              (indented_raw_text)
+                              (newline))
+                            (text_body_line
+                              (indented_raw_text)
+                              (newline)))))))
+                  (run_statement
+                    (flow_run_keyword)
+                    (runnable
+                      (snake_name))
+                    (line_end
+                      (newline))))))
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))))))
+  (blank_line)
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (implicit_run_statement
+            (text_body_line
+              (indented_raw_text)
+              (newline))
+            (text_body_line
+              (indented_raw_text)
+              (newline))
+            (text_body_line
+              (indented_raw_text)
+              (newline))
+            (blank_line))
+          (keep_statement
+            (flow_keep_keyword)
+            (position
+              (flow_first_keyword)
+              (integer_literal))
+            (line_end
+              (newline))))))))
