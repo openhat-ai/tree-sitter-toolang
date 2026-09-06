@@ -357,9 +357,9 @@ drop_statement ::= "drop" position line_end
 sort_statement ::= "sort" ("ascending" | "descending") _by_complements
 
 repeat_statement ::= "repeat" _repeat_count_complement ":" line_end
-                     statements _until_complement?
+                     _trivia* statements _until_complement?
                    | "repeat" ":" line_end
-                     statements _until_complement
+                     _trivia* statements _until_complement
 _until_complement ::= "until" inline_agic_body
 
 inline_agic ::= return_type? ":" text_inline
@@ -426,7 +426,9 @@ Rules:
   final. Commas and `with` are not complement syntax.
 - `repeat` always has a count, a final `until` condition, or both. Its `body`
   field points directly to `statements`; its optional `until` field points to
-  `inline_agic_body`.
+  `inline_agic_body`. Leading blank lines and comments are trivia children of
+  `repeat_statement`, before `body`; they cannot become implicit-run content
+  or replace the required executable body.
 - Bare flow text is shorthand for inline `run`. An adjacent nonblank line stays
   in the same implicit run even when it begins with a flow verb. After one blank
   line, ordinary text continues the implicit run while a lowercase boundary

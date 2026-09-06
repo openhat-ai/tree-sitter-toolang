@@ -14,6 +14,7 @@ FIXTURE_NAMES = (
     "flows.too",
     "jobs.too",
     "kitchen_sink.too",
+    "repeat_comments.too",
     "script_agics.too",
     "syntax_variants.too",
     "with_caps.too",
