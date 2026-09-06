@@ -141,8 +141,10 @@ structural input; do not relocate it to make a valid loop.
 
 For this implementation:
 
-- Keep a single optional final `until` in a counted repeat. An uncounted repeat
-  still requires one. Every repeat requires at least one executable statement.
+- Count and `until` are individually optional, but every repeat must specify
+  at least one. Accept count-only, until-only, and both; reject a repeat with
+  neither. Unconditional loops are not supported in this phase.
+- Every repeat requires at least one executable statement.
 - Require `until` to be the last substantive entry at that repeat's body
   baseline. Allow trailing trivia; reject another sibling operation, a second
   condition, or `until` before the first body statement.
@@ -214,7 +216,7 @@ implementation in this repository.
 | Ownership | Empty/trivia-only bodies followed by EOF, siblings, outer conditions, and declarations are invalid. Valid dedents produce exactly the expected parent/child tree. |
 | Shared bodies | Exercise all structural-body and multiline-text consumers at several nesting depths and with different indent widths. Explicit sibling operations never become prompt content. |
 | Keywords | Test every reserved Flow head on initial and continuation lines, with no blank, one blank, and comments. Cover malformed forms, punctuation, complete-token prefixes, capitalization, explicit-run escapes, and deeper indentation. |
-| Conditions | Count-only, until-only, combined, nested count-only inner loop with outer until, wrong levels, duplicate/early/middle conditions, trailing trivia, and multiline conditions followed by outer statements. |
+| Conditions | Accept count-only, until-only, and combined forms. Reject a repeat with neither count nor until, even with a nonempty executable body. Cover nested count-only inner loops with outer until, wrong levels, duplicate/early/middle conditions, trailing trivia, and multiline conditions followed by outer statements. |
 | Trivia/text | Leading/interstitial/trailing comments; `##!`; comment attachment; literal Markdown in explicit text; relative text indentation; supported tabs, rejected mixed indentation, LF/CRLF, and EOF without newline. |
 | Incremental parsing | Edit indentation, comments, keywords, colons, text modes, and EOF. Incremental and fresh trees must match in node types, fields, text ranges, and error status; recover correctly after invalid edits. |
 | Artifacts/bindings | Regeneration is clean; all current bindings and published source packages contain and execute the scanner; highlighting, tags, and indentation queries remain valid. |
