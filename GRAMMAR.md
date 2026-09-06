@@ -424,9 +424,12 @@ Rules:
 - A positional count, selection, or order immediately follows its verb. Lane
   and named-runnable complements may exchange order. An inline runnable is
   final. Commas and `with` are not complement syntax.
-- `repeat` always has a count, a final `until` condition, or both. Its `body`
-  field points directly to `statements`; its optional `until` field points to
-  `inline_agic_body`.
+- The count and `until` condition of `repeat` are individually optional, but
+  at least one is required. Count-only, until-only, and combined forms are
+  valid; omitting both is invalid. Unconditional loops are not supported.
+- When present, `until` is a single final condition after the nonempty repeat
+  body. The repeat's `body` field points directly to `statements`; its optional
+  `until` field points to `inline_agic_body`.
 - Bare flow text is shorthand for inline `run`. An adjacent nonblank line stays
   in the same implicit run even when it begins with a flow verb. After one blank
   line, ordinary text continues the implicit run while a lowercase boundary
