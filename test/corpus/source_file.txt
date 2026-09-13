@@ -438,7 +438,8 @@ flow research(in: Part[]) -> Answer:
           (line_end
             (newline)))
         (blank_line)
-        (doc_line)
+        (item_doc_comment
+          (comment_text))
         (statements
           (run_statement
             (flow_run_keyword)
@@ -614,7 +615,7 @@ agic raw:
 ---
 
 (source_file
-  (comment_line)
+  (plain_comment)
   (item
     (with
       (with_keyword)
@@ -622,7 +623,7 @@ agic raw:
       (cap_ref
         (text_line))
       (line_end
-        (inline_comment)
+        (plain_comment)
         (newline))))
   (blank_line)
   (item

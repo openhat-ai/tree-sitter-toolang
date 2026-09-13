@@ -11,6 +11,7 @@ FIXTURE_NAMES = (
     "caps.too",
     "caps_indented.too",
     "comments.too",
+    "documentation_comments.too",
     "flows.too",
     "jobs.too",
     "kitchen_sink.too",
@@ -110,7 +111,7 @@ def test_script_agics_fixture_covers_signature_variations():
         for agic in agics
     ]
 
-    assert shebang.type == "comment_line"
+    assert shebang.type == "shebang_comment"
     assert _text(source, shebang) in {
         "#!/usr/bin/env toolang\n",
         "#!/usr/bin/env toolang\r\n",
@@ -307,11 +308,11 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
 
     assert root.has_error is False
     assert [child.type for child in root.named_children[:5]] == [
-        "comment_line",
+        "shebang_comment",
         "blank_line",
-        "parent_doc_line",
+        "module_doc_comment",
         "blank_line",
-        "doc_line",
+        "item_doc_comment",
     ]
     assert [item.type for item in items] == [
         "skill",
@@ -396,7 +397,7 @@ def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
     assert tree.root_node.has_error is False
     assert all(body is not None for body in bodies)
     assert all("#" not in _text(source, body) for body in bodies)
-    assert all(_nodes(cap, "comment_line") for cap in caps)
+    assert all(_nodes(cap, "plain_comment") for cap in caps)
 
 
 def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
@@ -490,7 +491,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
     child_types = [child.type for child in root.named_children]
     item_types = [_item_child(item).type for item in _items(root)]
 
-    assert child_types[0] == "comment_line"
+    assert child_types[0] == "plain_comment"
     assert item_types == [
         "with",
         "with",

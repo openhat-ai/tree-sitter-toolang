@@ -4,7 +4,8 @@ module.exports = grammar({
   extras: () => [/[ \t]/],
   externals: ($) => [
     $.newline, $.blank_line,
-    $._comment_start, $.parent_doc_line, $.doc_line, $.comment_line,
+    $._comment_start, $.plain_comment, $.shebang_comment,
+    $._module_doc_start, $._item_doc_start, $._param_item_doc_start, $._comment_end,
     $._indent, $._dedent, $._line_start, $._directive_start, $._setting_start,
     $._until_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
@@ -29,10 +30,25 @@ module.exports = grammar({
         $.flow,
       )),
 
-    inline_comment: () => token(seq("#", /[^\r\n]*/)),
-    line_end: ($) => seq(optional($.inline_comment), $.newline),
+    _inline_comment: () => token(seq("#", /[^\r\n]*/)),
+    line_end: ($) => seq(optional(alias($._inline_comment, $.plain_comment)), $.newline),
+    module_doc_comment: ($) => seq(
+      $._module_doc_start, optional(field("text", $.comment_text)), $._comment_end,
+    ),
+    item_doc_comment: ($) => choice(
+      seq($._item_doc_start, optional(field("text", $.comment_text)), $._comment_end),
+      seq($._param_item_doc_start, field("parameter", $.param_doc_tag), $._comment_end),
+    ),
+    param_doc_tag: ($) => seq(
+      "@param", $._doc_space, field("name", $.param_name),
+      $._doc_space, field("description", $.comment_text),
+    ),
+    _doc_space: () => token.immediate(/[ \t]+/),
+    comment_text: () => token(/[^ \t\r\n][^\r\n]*/),
     _trivia: ($) => choice(
-      seq($._comment_start, choice($.parent_doc_line, $.doc_line, $.comment_line)),
+      seq($._comment_start, choice(
+        $.module_doc_comment, $.item_doc_comment, $.plain_comment, $.shebang_comment,
+      )),
       $.blank_line,
     ),
 

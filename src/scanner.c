@@ -10,9 +10,12 @@ enum Token {
   NEWLINE,
   BLANK_LINE,
   COMMENT_START,
-  PARENT_DOC_LINE,
-  DOC_LINE,
-  COMMENT_LINE,
+  PLAIN_COMMENT,
+  SHEBANG_COMMENT,
+  MODULE_DOC_START,
+  ITEM_DOC_START,
+  PARAM_ITEM_DOC_START,
+  COMMENT_END,
   INDENT,
   DEDENT,
   LINE_START,
@@ -38,7 +41,7 @@ typedef struct {
 
 // The header includes the pending trivia lookahead. Refuse deeper input instead
 // of losing state during incremental parsing; each frame needs six bytes.
-#define HEADER_SIZE 13
+#define HEADER_SIZE 15
 #define MAX_FRAMES ((TREE_SITTER_SERIALIZATION_BUFFER_SIZE - HEADER_SIZE) / 6)
 
 typedef struct {
@@ -52,6 +55,8 @@ typedef struct {
   bool line_started;
   bool eof_newline;
   bool comment_started;
+  bool doc_started;
+  bool file_start;
   Trivia trivia;
 } Scanner;
 
@@ -110,6 +115,9 @@ static bool keyword(const char *word, const char *const *words, unsigned count) 
 
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
+  if (token != COMMENT_START) {
+    scanner->file_start = false;
+  }
   if (token == DEDENT) {
     scanner->depth--;
   }
@@ -159,6 +167,7 @@ static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia)
 
 static void finish_trivia_line(Scanner *scanner) {
   scanner->comment_started = false;
+  scanner->doc_started = false;
   scanner->line_started = false;
   if (scanner->trivia.lines && --scanner->trivia.lines == 0) {
     scanner->trivia.column = 0;
@@ -171,20 +180,55 @@ static void skip_indentation(TSLexer *lexer) {
   }
 }
 
-// Comments retain their public node types and start at '#', after indentation.
-// Consuming their newline here also resets layout state during error recovery.
+// Documentation prefixes leave fields to the grammar. Looking through the
+// first word makes the reserved tag unambiguous without a prose fallback.
 static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   if (lexer->lookahead != '#') {
     return false;
   }
+  uint32_t column = lexer->get_column(lexer);
   advance(lexer);
-  enum Token token = COMMENT_LINE;
+  enum Token token = PLAIN_COMMENT;
   if (lexer->lookahead == '#') {
     advance(lexer);
-    token = lexer->lookahead == '!' ? PARENT_DOC_LINE : DOC_LINE;
+    if (lexer->lookahead == '!') {
+      advance(lexer);
+      token = MODULE_DOC_START;
+      lexer->mark_end(lexer);
+    } else {
+      token = ITEM_DOC_START;
+      lexer->mark_end(lexer);
+      while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+      }
+      const char *tag = "@param";
+      while (*tag && lexer->lookahead == *tag) {
+        advance(lexer);
+        tag++;
+      }
+      if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
+                    lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
+                    lexer->lookahead == '\n')) {
+        token = PARAM_ITEM_DOC_START;
+      }
+    }
+  } else if (lexer->lookahead == '@') {
+    advance(lexer);
+    if (column != 0 || scanner->trivia.column != 0) {
+      return false;
+    }
+    token = MODULE_DOC_START;
+    lexer->mark_end(lexer);
+  } else if (lexer->lookahead == '!' && column == 0 && scanner->file_start) {
+    token = SHEBANG_COMMENT;
   }
   if (!valid[token]) {
     return false;
+  }
+  if (token == MODULE_DOC_START || token == ITEM_DOC_START || token == PARAM_ITEM_DOC_START) {
+    scanner->comment_started = false;
+    scanner->doc_started = true;
+    return emit(scanner, lexer, token);
   }
   while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
     advance(lexer);
@@ -200,6 +244,29 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
 bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid) {
   Scanner *scanner = payload;
   bool at_start = lexer->get_column(lexer) == 0;
+  if (scanner->doc_started) {
+    skip_indentation(lexer);
+    if (valid[ERROR_LINE]) {
+      // A trivia newline lets recovery return to the enclosing declaration
+      // list; a documentation-end token alone cannot synchronize that list.
+      if (line_end(lexer) || lexer->eof(lexer)) {
+        lexer->mark_end(lexer);
+        finish_trivia_line(scanner);
+        return emit(scanner, lexer, BLANK_LINE);
+      }
+      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        advance(lexer);
+      }
+      lexer->mark_end(lexer);
+      return emit(scanner, lexer, ERROR_LINE);
+    }
+    if (valid[COMMENT_END] && (lexer->eof(lexer) || line_end(lexer))) {
+      lexer->mark_end(lexer);
+      finish_trivia_line(scanner);
+      return emit(scanner, lexer, COMMENT_END);
+    }
+    return false;
+  }
   if (valid[ERROR_LINE]) {
     // All external tokens are enabled during recovery. Keep unexpected content
     // on its physical line instead of letting recovery borrow a later header.
@@ -390,6 +457,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 void *tree_sitter_toolang_external_scanner_create(void) {
   Scanner *scanner = ts_calloc(1, sizeof(Scanner));
   scanner->depth = 1;
+  scanner->file_start = true;
   return scanner;
 }
 
@@ -403,6 +471,8 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)scanner->line_started;
   buffer[size++] = (char)scanner->eof_newline;
   buffer[size++] = (char)scanner->comment_started;
+  buffer[size++] = (char)scanner->doc_started;
+  buffer[size++] = (char)scanner->file_start;
   for (unsigned j = 0; j < 4; j++) {
     buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
   }
@@ -425,6 +495,7 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   Scanner *scanner = payload;
   memset(scanner, 0, sizeof(*scanner));
   scanner->depth = 1;
+  scanner->file_start = true;
   if (length < HEADER_SIZE) {
     return;
   }
@@ -437,7 +508,9 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   scanner->line_started = bytes[2];
   scanner->eof_newline = bytes[3];
   scanner->comment_started = bytes[4];
-  unsigned offset = 5;
+  scanner->doc_started = bytes[5];
+  scanner->file_start = bytes[6];
+  unsigned offset = 7;
   for (unsigned j = 0; j < 4; j++) {
     scanner->trivia.lines |= (uint32_t)bytes[offset++] << (j * 8);
   }

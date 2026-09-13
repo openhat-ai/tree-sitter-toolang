@@ -53,7 +53,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.3.1"
+tree-sitter-toolang = "0.3.2"
 ```
 
 ```rust
@@ -65,6 +65,12 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 [GRAMMAR.md](GRAMMAR.md) documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
+
+Version 0.3.2 adds `#@` module documentation and `## @param NAME DESCRIPTION`
+parameter documentation, with structured CST fields and highlighting. Existing
+`##!` module comments remain accepted. Public comment nodes are now
+`plain_comment`, `shebang_comment`, `item_doc_comment`, and `module_doc_comment`;
+consumers must update old node names. See [comment syntax and migration](GRAMMAR.md#comments-and-documentation).
 
 ## Development
 
@@ -123,7 +129,7 @@ Release checklist:
    `Cargo.toml`, `Cargo.lock`, and `tree-sitter.json`.
 2. Confirm CI is green.
 3. Push the version commit to `main`.
-4. Create and push a matching tag such as `v0.3.1`.
+4. Create and push a matching tag such as `v0.3.2`.
 5. GitHub Actions publishes npm and PyPI automatically.
 6. GitHub Actions also publishes the Rust crate when `CRATES_IO_TOKEN` is set.
 

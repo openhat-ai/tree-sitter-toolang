@@ -33,7 +33,8 @@ flow research:
             (colon)
             (line_end
               (newline))
-            (doc_line)
+            (item_doc_comment
+              (comment_text))
             (statements
               (run_statement
                 (flow_run_keyword)
@@ -41,14 +42,16 @@ flow research:
                   (snake_name))
                 (line_end
                   (newline)))
-              (doc_line)
+              (item_doc_comment
+                (comment_text))
               (repeat_statement
                 (flow_repeat_keyword)
                 (colon)
                 (line_end
                   (newline))
-                (comment_line)
-                (doc_line)
+                (plain_comment)
+                (item_doc_comment
+                  (comment_text))
                 (statements
                   (run_statement
                     (flow_run_keyword)

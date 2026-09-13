@@ -80,7 +80,7 @@
         }
       ]
     },
-    "inline_comment": {
+    "_inline_comment": {
       "type": "TOKEN",
       "content": {
         "type": "SEQ",
@@ -103,8 +103,13 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "inline_comment"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_inline_comment"
+              },
+              "named": true,
+              "value": "plain_comment"
             },
             {
               "type": "BLANK"
@@ -116,6 +121,137 @@
           "name": "newline"
         }
       ]
+    },
+    "module_doc_comment": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_module_doc_start"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "text",
+              "content": {
+                "type": "SYMBOL",
+                "name": "comment_text"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_comment_end"
+        }
+      ]
+    },
+    "item_doc_comment": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_item_doc_start"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "text",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "comment_text"
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_comment_end"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_param_item_doc_start"
+            },
+            {
+              "type": "FIELD",
+              "name": "parameter",
+              "content": {
+                "type": "SYMBOL",
+                "name": "param_doc_tag"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_comment_end"
+            }
+          ]
+        }
+      ]
+    },
+    "param_doc_tag": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@param"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_doc_space"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "param_name"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_doc_space"
+        },
+        {
+          "type": "FIELD",
+          "name": "description",
+          "content": {
+            "type": "SYMBOL",
+            "name": "comment_text"
+          }
+        }
+      ]
+    },
+    "_doc_space": {
+      "type": "IMMEDIATE_TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]+"
+      }
+    },
+    "comment_text": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[^ \\t\\r\\n][^\\r\\n]*"
+      }
     },
     "_trivia": {
       "type": "CHOICE",
@@ -132,15 +268,19 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "parent_doc_line"
+                  "name": "module_doc_comment"
                 },
                 {
                   "type": "SYMBOL",
-                  "name": "doc_line"
+                  "name": "item_doc_comment"
                 },
                 {
                   "type": "SYMBOL",
-                  "name": "comment_line"
+                  "name": "plain_comment"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "shebang_comment"
                 }
               ]
             }
@@ -4204,15 +4344,27 @@
     },
     {
       "type": "SYMBOL",
-      "name": "parent_doc_line"
+      "name": "plain_comment"
     },
     {
       "type": "SYMBOL",
-      "name": "doc_line"
+      "name": "shebang_comment"
     },
     {
       "type": "SYMBOL",
-      "name": "comment_line"
+      "name": "_module_doc_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_item_doc_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_param_item_doc_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_comment_end"
     },
     {
       "type": "SYMBOL",

@@ -41,7 +41,8 @@ flow summarize:
             (colon)
             (line_end
               (newline))
-            (doc_line)
+            (item_doc_comment
+              (comment_text))
             (statements
               (repeat_statement
                 (flow_repeat_keyword)
