@@ -62,7 +62,8 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 
 ## Grammar
 
-[GRAMMAR.md](GRAMMAR.md) documents the public Toolang syntax and CST contract.
+[GRAMMAR.md](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
+documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
 
@@ -70,7 +71,8 @@ Version 0.3.2 adds `#@` module documentation and `## @param NAME DESCRIPTION`
 parameter documentation, with structured CST fields and highlighting. Existing
 `##!` module comments remain accepted. Public comment nodes are now
 `plain_comment`, `shebang_comment`, `item_doc_comment`, and `module_doc_comment`;
-consumers must update old node names. See [comment syntax and migration](GRAMMAR.md#comments-and-documentation).
+consumers must update old node names. See
+[comment syntax and migration](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#comments-and-documentation).
 
 ## Development
 
