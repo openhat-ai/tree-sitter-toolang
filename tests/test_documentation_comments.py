@@ -16,6 +16,7 @@ from test_layout_support import descendants, parse, point, valid
         ("#", "plain_comment", None),
         ("\t# Résumé.", "plain_comment", None),
         ("#!/usr/bin/env too", "shebang_comment", None),
+        ("\ufeff#!/usr/bin/env too", "plain_comment", None),
         (" #! Later.", "plain_comment", None),
         ("##", "item_doc_comment", None),
         ("\t## \t", "item_doc_comment", None),

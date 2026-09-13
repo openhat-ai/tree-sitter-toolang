@@ -260,3 +260,28 @@ def test_comment_marker_and_tag_edits_match_fresh_parses(
             parser.parse(current).root_node
         ), current
         previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_shebang_classification_tracks_inserted_and_removed_file_prefixes(newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for prefix in [b"\xef\xbb\xbf", b"", b"\n", b"", b" ", b"\xef\xbb\xbf", b""]:
+        current = (prefix + b"#!/usr/bin/env too\nflow next:\n  pass\n").replace(
+            b"\n", newline
+        )
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        )
+        assert valid(tree.root_node)
+        kind = "plain_comment" if prefix else "shebang_comment"
+        assert (
+            descendants(tree.root_node, kind)[0].text == b"#!/usr/bin/env too" + newline
+        )
+        assert not descendants(
+            tree.root_node, "shebang_comment" if prefix else "plain_comment"
+        )
+        previous = current

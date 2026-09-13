@@ -244,6 +244,9 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
 bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid) {
   Scanner *scanner = payload;
   bool at_start = lexer->get_column(lexer) == 0;
+  // A runtime may skip a leading BOM but still report column zero. Preserve
+  // that distinction in the comment-start state for incremental reuse.
+  scanner->file_start = scanner->file_start && lexer->is_at_included_range_start(lexer);
   if (scanner->doc_started) {
     skip_indentation(lexer);
     if (valid[ERROR_LINE]) {

@@ -52,6 +52,8 @@ ranges exclude the newline. A final comment may end at EOF without a newline.
   them. Inline `##`, `#@`, `##!`, and `#!` remain plain comments.
 - `#!` is a **shebang comment** only at byte zero. Later or indented shebangs
   are plain comments. The interpreter text is not validated or executed.
+  If the Tree-sitter runtime skips a leading BOM, `#!` after it is still a
+  plain comment.
 - `##` is an **item doc comment**. Consecutive lines document the immediately
   following supported item or statement at the same indentation. Blank lines,
   plain/module comments, other syntax, and scope endings interrupt attachment.
