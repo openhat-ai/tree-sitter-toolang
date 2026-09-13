@@ -21,13 +21,16 @@ x+        one or more
 ```ebnf
 newline ::= "\n" | "\r\n"
 blank_line ::= newline
-line_end ::= inline_comment? newline
+line_end ::= plain_comment? newline
 
-parent_doc_line ::= "##!" /[^\r\n]*/ newline
-doc_line ::= "##" /[^\r\n]*/ newline
-comment_line ::= "#" /[^\r\n]*/ newline
-inline_comment ::= "#" /[^\r\n]*/
-trivia ::= parent_doc_line | doc_line | comment_line | blank_line
+plain_comment ::= "#" /[^\r\n]*/ newline?
+shebang_comment ::= "#!" /[^\r\n]*/ newline
+module_doc_comment ::= ("#@" | "##!") horizontal_space? comment_text? newline
+item_doc_comment ::= "##" horizontal_space? (param_doc_tag | comment_text)? newline
+param_doc_tag ::= "@param" horizontal_space param_name horizontal_space comment_text
+comment_text ::= /[^ \t\r\n][^\r\n]*/
+horizontal_space ::= /[ \t]+/
+trivia ::= plain_comment | shebang_comment | module_doc_comment | item_doc_comment | blank_line
 
 pascal_name ::= /[A-Z][A-Za-z0-9]*/
 snake_name ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
@@ -38,14 +41,75 @@ indented_raw_text ::= a nonblank content line at or beyond its text baseline
 integer_literal ::= /\d+/
 ```
 
-Comments:
+### Comments and Documentation
 
-- `##` documents the next item or statement.
-- `##!` documents the parent. At the top level, it documents the program.
-- Normal comments and blank lines are trivia. They can separate statements and
-  implicit agic bodies.
-- Inline comments are allowed where a rule uses `line_end`.
-- A final nonempty line or comment may end at EOF without a physical newline.
+All four categories are comments; the CST has no generic comment wrapper.
+Each physical comment line produces one node. Full-line ranges start at `#`
+after indentation and include the newline when present. Inline `plain_comment`
+ranges exclude the newline. A final comment may end at EOF without a newline.
+
+- `#` is a **plain comment**, including inline comments where `line_end` allows
+  them. Inline `##`, `#@`, `##!`, and `#!` remain plain comments.
+- `#!` is a **shebang comment** only at byte zero. Later or indented shebangs
+  are plain comments. The interpreter text is not validated or executed.
+  If the Tree-sitter runtime skips a leading BOM, `#!` after it is still a
+  plain comment.
+- `##` is an **item doc comment**. Consecutive lines document the immediately
+  following supported item or statement at the same indentation. Blank lines,
+  plain/module comments, other syntax, and scope endings interrupt attachment.
+  Consumers own attachment; the parser exposes individual lines.
+- `#@` is a **module doc comment** at column zero between top-level declarations
+  or before/after them. It documents the complete module, interrupts item-doc
+  attachment, and does not supply a runnable's calling description. Indented
+  structural `#@` is invalid. Prefer `#@` in new source; the old `##!` spelling
+  remains accepted, including its historical indented structural positions.
+  Consumers collect column-zero module docs; accepting indented legacy comments
+  does not add parent-documentation semantics.
+- Inside explicit text blocks, every marker remains literal text at or beyond
+  the text baseline, including the first text line.
+
+`## @param NAME DESCRIPTION` documents one runnable parameter. Spaces/tabs after
+`##` are optional; those after `@param` and the name are required. The name uses
+`param_name`, including `_`. A description is required on the same physical
+line; Unicode, punctuation, `#`, and further `@` characters remain text. There
+is no continuation syntax. Types and optionality come from the signature.
+
+Only the exact leading word `@param` is reserved: `@parameter`, `@parametric`,
+`@return`, or `@param` later in prose remain ordinary item-doc text. A malformed
+reserved tag is a syntax error, never plain documentation, and recovery stays
+on that physical line. Module docs never interpret tags. Unknown or duplicate
+parameter names are syntactically valid; consumers validate binding and combine
+runnable/parameter descriptions for help and calling hints.
+
+| Public node | Fields |
+| --- | --- |
+| `plain_comment`, `shebang_comment` | Leaves with full source text. |
+| `module_doc_comment` | Optional `text: comment_text`. |
+| `item_doc_comment` | Optional `text: comment_text` or `parameter: param_doc_tag`, never both. |
+| `param_doc_tag` | Required `name: param_name` and `description: comment_text`; queryable `"@param"` token. |
+
+Empty doc comments omit `text`. Field ranges exclude markers and leading
+separating whitespace, preserve trailing whitespace, and use exact UTF-8 byte
+positions. Consumers trim contributions and join nonempty module-doc text in
+source order. `param_doc_tag` is a child of item documentation, not a fifth
+comment category.
+
+```too
+#!/usr/bin/env too
+#@ Tools for concise summaries.
+
+## Summarize material when a short overview is needed.
+## @param _ Source material to summarize.
+## @param style Preferred summary style.
+agic summarize(_: Text, style?: Text):
+  Summarize {{_}}.
+```
+
+Version 0.3.2 changes public CST names: `comment_line` and `inline_comment`
+become `plain_comment`, first-line shebangs become `shebang_comment`, `doc_line`
+becomes `item_doc_comment`, and `parent_doc_line` becomes `module_doc_comment`.
+Update queries and node consumers together. Existing `##!` source remains
+valid; do not replace marker-like strings inside literal prompts or history.
 
 ## Block Layout
 

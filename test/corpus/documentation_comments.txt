@@ -1,0 +1,186 @@
+================================================================================
+Comment kinds and structured parameter fields
+================================================================================
+#!/usr/bin/env too
+# Plain.
+#@ Module.
+##! Compatible module.
+## Item.
+## @param _ Input.
+##@param style Preferred style.
+agic(_: Text, style?: Text):
+  pass
+
+---
+
+(source_file
+  (shebang_comment)
+  (plain_comment)
+  (module_doc_comment
+    (comment_text))
+  (module_doc_comment
+    (comment_text))
+  (item_doc_comment
+    (comment_text))
+  (item_doc_comment
+    (param_doc_tag
+      (param_name)
+      (comment_text)))
+  (item_doc_comment
+    (param_doc_tag
+      (param_name
+        (snake_name))
+      (comment_text)))
+  (item
+    (agic
+      (agic_keyword)
+      (params
+        (lparen)
+        (param
+          (param_name)
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
+        (comma)
+        (param
+          (param_name
+            (snake_name))
+          (optional_marker)
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (agic_body
+        (pass_keyword)
+        (line_end
+          (newline))))))
+
+================================================================================
+Empty docs and non-reserved parameter-like prose
+================================================================================
+##
+#@
+##!
+## @parameter Text.
+## Use @param in prose.
+#@ @param _ Plain module text.
+flow:
+  pass
+
+---
+
+(source_file
+  (item_doc_comment)
+  (module_doc_comment)
+  (module_doc_comment)
+  (item_doc_comment
+    (comment_text))
+  (item_doc_comment
+    (comment_text))
+  (module_doc_comment
+    (comment_text))
+  (item
+    (flow
+      (flow_keyword)
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (pass_keyword)
+        (line_end
+          (newline))))))
+
+================================================================================
+Legacy indentation, inline comments and literal markers
+================================================================================
+flow work: #@ Inline plain.
+  ##! Legacy nested comment.
+  run:
+    #@ Literal module marker.
+    ## @param _ Literal tag.
+    ##! Literal legacy marker.
+#@ Next module contribution.
+flow next:
+  pass
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (plain_comment)
+        (newline))
+      (flow_body
+        (module_doc_comment
+          (comment_text))
+        (statements
+          (run_statement
+            (flow_run_keyword)
+            (inline_agic
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline))
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline))
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))))))
+  (module_doc_comment
+    (comment_text))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (pass_keyword)
+        (line_end
+          (newline))))))
+
+================================================================================
+Malformed parameter tag preserves following declaration
+================================================================================
+## @param name? Invalid optional marker.
+flow next:
+  pass
+
+---
+
+(source_file
+  (ERROR
+    (param_name
+      (snake_name)))
+  (blank_line)
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (pass_keyword)
+        (line_end
+          (newline))))))
+

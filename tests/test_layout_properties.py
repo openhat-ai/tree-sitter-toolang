@@ -79,9 +79,9 @@ def program_shape(statements):
             )
         else:
             assert statement.type in {
-                "comment_line",
-                "doc_line",
-                "parent_doc_line",
+                "plain_comment",
+                "item_doc_comment",
+                "module_doc_comment",
                 "blank_line",
             }
     return result
@@ -109,6 +109,10 @@ def test_generated_layout_preserves_the_independent_statement_tree(seed):
 
 
 EDIT_SOURCES = [
+    pytest.param(
+        b"#!/usr/bin/env too\n#@ Module.\n##! Legacy.\n## Item.\n##@param _ Input.\nagic(_: Text):\n  pass\n",
+        id="documentation",
+    ),
     pytest.param(
         b"flow work:\n  repeat:\n    Review.\n    until: Ready.\n  run publish",
         id="repeat",
@@ -138,6 +142,10 @@ EDIT_FRAGMENTS = [
     b"\r\n",
     b"#",
     b"##! Doc.\n",
+    b"#@ Module.\n",
+    b"#!/usr/bin/env too\n",
+    b"## @param _ Input.\n",
+    b"##@param x",
     b"run:",
     b"until: Ready.",
     b"\nflow work:\n  pass",
@@ -210,4 +218,70 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
             assert owners == publish_depth
         else:
             assert not valid(tree.root_node)
+        previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+@pytest.mark.parametrize(
+    "prefix, indent, suffix",
+    [
+        (b"", b"", b"flow next:\n  pass\n"),
+        (b"flow work:\n  run first\n", b"  ", b"  run last\n"),
+        (b"agic work:\n  user:\n", b"    ", b"flow next:\n  pass\n"),
+    ],
+)
+def test_comment_marker_and_tag_edits_match_fresh_parses(
+    prefix, indent, suffix, newline
+):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    comments = [
+        b"#",
+        b"#!",
+        b"#!/usr/bin/env too",
+        b"##",
+        b"#@",
+        b"##!",
+        b"## @param",
+        b"## @param _",
+        b"## @param _ Input.",
+        b"## @parameter _ Prose.",
+        b"## @param x? Invalid.",
+        b"##\t@param\tstyle\tDescription.",
+    ]
+    tag = "## @param _ Résumé.".encode()
+    comments.extend(tag[:end] for end in range(len(tag) + 1))
+    for comment in comments + list(reversed(comments)):
+        current = (prefix + indent + comment + b"\n" + suffix).replace(b"\n", newline)
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        ), current
+        previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_shebang_classification_tracks_inserted_and_removed_file_prefixes(newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for prefix in [b"\xef\xbb\xbf", b"", b"\n", b"", b" ", b"\xef\xbb\xbf", b""]:
+        current = (prefix + b"#!/usr/bin/env too\nflow next:\n  pass\n").replace(
+            b"\n", newline
+        )
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(
+            parser.parse(current).root_node
+        )
+        assert valid(tree.root_node)
+        kind = "plain_comment" if prefix else "shebang_comment"
+        assert (
+            descendants(tree.root_node, kind)[0].text == b"#!/usr/bin/env too" + newline
+        )
+        assert not descendants(
+            tree.root_node, "shebang_comment" if prefix else "plain_comment"
+        )
         previous = current

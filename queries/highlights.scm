@@ -1,10 +1,11 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
 ; Maintain this file in this repository and consume it from tooling.
 
-(comment_line) @comment
-(parent_doc_line) @comment.documentation
-(doc_line) @comment.documentation
-(inline_comment) @comment
+(plain_comment) @comment
+(shebang_comment) @comment
+(module_doc_comment) @comment.documentation
+(item_doc_comment) @comment.documentation
+(param_doc_tag "@param" @keyword name: (param_name) @variable.parameter)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword
