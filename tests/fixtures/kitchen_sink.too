@@ -32,7 +32,7 @@ context:
   Use the current run context when preparing the final user message.
 
 agic respond:
-  instruct default
+  instruct = default
 
 agic summarize:
   user:
@@ -50,14 +50,14 @@ agic review(_: Part[], path: Text, focus?: Text) -> ReviewResult:
   tools = shell, filesystem
   recall = far, near
 
-  instruct default
+  instruct = default
 
-  context default
+  context = default
   user:
     Review {{path}} carefully.
     {{focus}}
 
 agic raw:
-  instruct none
-  context none
+  instruct = none
+  context = none
   user: none

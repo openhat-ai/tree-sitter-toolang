@@ -1,0 +1,381 @@
+==================
+Shared directives and flow clauses
+==================
+
+instruct:
+  Follow the requested output contract.
+
+context project:
+  Use the supplied project context.
+
+agic expand(_) -> Text[]:
+  lanes = default
+  recall = far, near
+  instruct = default
+  context = project
+  hands = none
+  handoffs = *
+  prompts = *
+  user: Expand {{_}}.
+
+agic merge(_):
+  user: Incorporate {{_}} into {{_1._}}.
+
+flow research(_):
+  models = *
+  tools -= *
+  psyches = none
+  skills = *
+  services = *
+  prompts = *
+  lanes = 4
+  recall = near, far
+  instruct = default
+  context = project
+  hands = expand, agic:merge
+  handoffs = none
+  scatter using expand
+  settle using merge:
+    from:
+      Initial report.
+  repeat 5 times windowing 3:
+    run: Improve {{_}}.
+    until: Compare {{_}} with {{_1._}} and {{_2._}}.
+
+flow seeded(_):
+  scatter:
+    Expand {{_}}.
+  settle:
+    Incorporate {{_}} into {{_1._}}.
+    from:
+      Initial report.
+
+---
+
+(source_file
+  (blank_line)
+  (item
+    (instruct
+      (instruct_keyword)
+      (colon)
+      (instruct_body
+        (text_inline
+          (text_block
+            (line_end
+              (newline))
+            (text_body
+              (text_body_line
+                (indented_raw_text)
+                (newline))
+              (blank_line)))))))
+  (item
+    (context
+      (context_keyword)
+      (context_name
+        (snake_name))
+      (colon)
+      (context_body
+        (text_inline
+          (text_block
+            (line_end
+              (newline))
+            (text_body
+              (text_body_line
+                (indented_raw_text)
+                (newline))
+              (blank_line)))))))
+  (item
+    (agic
+      (agic_keyword)
+      (agic_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (arrow)
+      (type
+        (base_type
+          (builtin_type))
+        (type_suffix
+          (array_suffix)))
+      (colon)
+      (line_end
+        (newline))
+      (agic_body
+        (directive
+          (directive_key)
+          (assign_operator)
+          (default_keyword)
+          (line_end
+            (newline)))
+        (directive
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_source)
+            (comma)
+            (recall_source))
+          (line_end
+            (newline)))
+        (directive
+          (instruct_keyword)
+          (assign_operator)
+          (text_ref
+            (default_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (context_keyword)
+          (assign_operator)
+          (text_ref
+            (snake_name))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (assign_operator)
+          (route_value
+            (none_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (assign_operator)
+          (route_value
+            (all_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (messages
+          (message
+            (role)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline))))
+          (blank_line)))))
+  (item
+    (agic
+      (agic_keyword)
+      (agic_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (agic_body
+        (messages
+          (message
+            (role)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline))))
+          (blank_line)))))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (directive_op)
+          (directive_value)
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (assign_operator)
+          (integer_literal)
+          (line_end
+            (newline)))
+        (directive
+          (recall_keyword)
+          (assign_operator)
+          (recall_value
+            (recall_source)
+            (comma)
+            (recall_source))
+          (line_end
+            (newline)))
+        (directive
+          (instruct_keyword)
+          (assign_operator)
+          (text_ref
+            (default_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (context_keyword)
+          (assign_operator)
+          (text_ref
+            (snake_name))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (assign_operator)
+          (route_value
+            (runnable_ref)
+            (comma)
+            (runnable_ref))
+          (line_end
+            (newline)))
+        (directive
+          (directive_key)
+          (assign_operator)
+          (route_value
+            (none_keyword))
+          (line_end
+            (newline)))
+        (statements
+          (scatter_statement
+            (flow_scatter_keyword)
+            (flow_using_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (settle_statement
+            (flow_settle_keyword)
+            (flow_using_keyword)
+            (runnable
+              (snake_name))
+            (colon)
+            (line_end
+              (newline))
+            (flow_from_keyword)
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))))
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (flow_windowing_keyword)
+            (integer_literal)
+            (colon)
+            (line_end
+              (newline))
+            (statements
+              (run_statement
+                (flow_run_keyword)
+                (inline_agic
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline))))))
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))
+            (blank_line))))))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (scatter_statement
+            (flow_scatter_keyword)
+            (inline_agic
+              (colon)
+              (text_inline
+                (text_block
+                  (line_end
+                    (newline))
+                  (text_body
+                    (text_body_line
+                      (indented_raw_text)
+                      (newline)))))))
+          (settle_statement
+            (flow_settle_keyword)
+            (inline_agic
+              (colon)
+              (line_end
+                (newline))
+              (text_body
+                (text_body_line
+                  (indented_raw_text)
+                  (newline))))
+            (flow_from_keyword)
+            (colon)
+            (text_inline
+              (text_block
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline)))))))))))

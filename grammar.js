@@ -6,8 +6,8 @@ module.exports = grammar({
     $.newline, $.blank_line,
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._module_doc_start, $._item_doc_start, $._param_item_doc_start, $._comment_end,
-    $._indent, $._dedent, $._line_start, $._directive_start, $._setting_start,
-    $._until_start, $._text_indent, $._cap_text_start,
+    $._indent, $._dedent, $._line_start, $._directive_start,
+    $._until_start, $._from_start, $._settle_indent, $._settle_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
   ],
   rules: {
@@ -232,8 +232,7 @@ module.exports = grammar({
     agic_body: ($) =>
       structuralBody($,
         choice(
-          seq($._directives, optional($.settings), optional($.messages)),
-          seq($.settings, optional($.messages)),
+          seq($._directives, optional($.messages)),
           $.messages,
           $._pass_statement,
         ),
@@ -354,17 +353,9 @@ module.exports = grammar({
       )),
     scatter_statement: ($) =>
       choice(
-        seq(
-          $.flow_scatter_keyword,
-          field("count", $.integer_literal),
-          $._named_using_complement,
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_scatter_keyword,
-          field("count", $.integer_literal),
-          $._inline_using_complement,
-        )),
+        seq($.flow_scatter_keyword, $._named_using_complement, $.line_end),
+        prec.right(seq($.flow_scatter_keyword, optional($.flow_using_keyword),
+          field("runnable", $.inline_agic))),
       ),
     storm_statement: ($) =>
       seq(
@@ -386,16 +377,31 @@ module.exports = grammar({
       ),
     settle_statement: ($) =>
       choice(
-        seq(
-          $.flow_settle_keyword,
-          $._named_using_complement,
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_settle_keyword,
-          $._inline_using_complement,
-        )),
+        seq($.flow_settle_keyword, $._named_using_complement, $.line_end),
+        seq($.flow_settle_keyword, $._named_using_complement, $.colon, $.line_end,
+          structuralBody($, seq($._from_complement, repeat($._trivia)))),
+        prec.right(seq($.flow_settle_keyword, optional($.flow_using_keyword),
+          field("runnable", alias($._settle_inline_line, $.inline_agic)))),
+        prec.right(seq($.flow_settle_keyword, optional($.flow_using_keyword),
+          field("runnable", alias($._settle_inline_block, $.inline_agic)),
+          optional($._from_complement), repeat($._trivia), $._dedent)),
       ),
+    _settle_inline_line: ($) => seq(
+      optional(seq(field("arrow", $.arrow), field("return", $.type))),
+      $.colon, field("body", alias($._settle_line, $.text_inline)),
+    ),
+    _settle_line: ($) => seq($.text_line, $.line_end),
+    _settle_inline_block: ($) => seq(
+      optional(seq(field("arrow", $.arrow), field("return", $.type))),
+      $.colon, $.line_end, repeat($._trivia), $._settle_indent,
+      field("body", alias($._settle_text_body, $.text_body)),
+    ),
+    _settle_text_body: ($) => seq(
+      $._settle_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent,
+    ),
+    _from_complement: ($) => seq(
+      $._from_start, $.flow_from_keyword, $.colon, field("from", $.text_inline),
+    ),
     map_statement: ($) =>
       seq(
         $.flow_map_keyword,
@@ -509,17 +515,22 @@ module.exports = grammar({
         prec.right(seq(
           $.flow_repeat_keyword,
           $._repeat_count_complement,
+          optional($._window_complement),
           $.colon,
           $.line_end,
           structuralBody($, seq(field("body", $.statements), optional($._until_complement), repeat($._trivia))),
         )),
         prec.right(seq(
           $.flow_repeat_keyword,
+          optional($._window_complement),
           $.colon,
           $.line_end,
           structuralBody($, seq(field("body", $.statements), $._until_complement, repeat($._trivia))),
         )),
       ),
+    _window_complement: ($) => seq(
+      $.flow_windowing_keyword, field("window", $.integer_literal),
+    ),
     _repeat_count_complement: ($) =>
       choice(
         seq(
@@ -566,79 +577,36 @@ module.exports = grammar({
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
 
-    directive: ($) =>
-      seq($._directive_start, choice(
-        seq(
-          field("key", $.recall_keyword),
-          field("operator", $.assign_operator),
-          field("value", $.recall_value),
-          $.line_end,
-        ),
-        seq(
-          field("key", $.directive_key),
-          field("operator", $.directive_op),
-          field("value", $.directive_value),
-          $.line_end,
-        ),
-      )),
-    directive_key: () =>
-      choice("models", "tools", "skills", "services", "psyches", "hands", "handoffs"),
+    directive: ($) => seq($._directive_start, choice(
+      seq(field("key", alias($._query_directive_key, $.directive_key)),
+        field("operator", $.directive_op), field("value", $.directive_value)),
+      seq(field("key", alias($._route_directive_key, $.directive_key)),
+        field("operator", $.assign_operator), field("value", $.route_value)),
+      seq(field("key", $.recall_keyword), field("operator", $.assign_operator),
+        field("value", $.recall_value)),
+      seq(field("key", alias("lanes", $.directive_key)),
+        field("operator", $.assign_operator),
+        field("value", choice($.integer_literal, $.default_keyword))),
+      seq(field("key", choice($.instruct_keyword, $.context_keyword)),
+        field("operator", $.assign_operator), field("value", $.text_ref)),
+    ), $.line_end),
+    _query_directive_key: () => choice("models", "tools", "skills", "services", "psyches", "prompts"),
+    _route_directive_key: () => choice("hands", "handoffs"),
+    directive_key: ($) => choice($._query_directive_key, $._route_directive_key,
+      "lanes", $.recall_keyword, $.instruct_keyword, $.context_keyword),
     directive_op: () => choice("=", "+=", "-="),
-    directive_value: () => token(prec(-1, /[^#\r\n]+/)),
-    recall_value: ($) =>
-      choice(
-        $.recall_auto_keyword,
-        $.recall_none_keyword,
-        $.recall_far_keyword,
-        $.recall_near_keyword,
-        seq($.recall_far_keyword, $.comma, $.recall_near_keyword),
-      ),
+    directive_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
+    route_value: ($) => choice($.none_keyword, $.all_keyword,
+      seq($.runnable_ref, repeat(seq($.comma, $.runnable_ref)))),
+    runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
+    recall_value: ($) => choice($.none_keyword, $.all_keyword, $.default_keyword,
+      seq($.recall_source, repeat(seq($.comma, $.recall_source)))),
+    recall_source: () => choice("far", "near"),
     _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
-
-    settings: ($) =>
-      prec.right(choice(
-        seq(
-          $.context_setting,
-          repeat($._trivia),
-          $.instruct_setting,
-          repeat($._trivia),
-        ),
-        seq(
-          $.instruct_setting,
-          repeat($._trivia),
-          $.context_setting,
-          repeat($._trivia),
-        ),
-        seq($.context_setting, repeat($._trivia)),
-        seq($.instruct_setting, repeat($._trivia)),
-      )),
-    context_setting: ($) =>
-      seq($._setting_start, choice(
-        seq(
-          $.context_keyword,
-          $.text_ref,
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.context_keyword,
-          $.colon,
-          $.text_inline,
-        )),
-      )),
-    instruct_setting: ($) =>
-      seq($._setting_start, choice(
-        seq(
-          $.instruct_keyword,
-          $.text_ref,
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.instruct_keyword,
-          $.colon,
-          $.text_inline,
-        )),
-      )),
-    text_ref: ($) => choice("default", "none", $.snake_name),
+    text_ref: ($) => choice($.default_keyword, $.none_keyword, $.snake_name),
+    default_keyword: () => "default",
+    none_keyword: () => "none",
+    all_keyword: () => "*",
     messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),
     message: ($) =>
       seq($._line_start, choice(
@@ -687,6 +655,8 @@ module.exports = grammar({
     flow_rank_keyword: () => "rank",
     flow_repeat_keyword: () => "repeat",
     flow_until_keyword: () => "until",
+    flow_from_keyword: () => "from",
+    flow_windowing_keyword: () => "windowing",
     flow_using_keyword: () => "using",
     flow_if_keyword: () => "if",
     flow_by_keyword: () => "by",
@@ -706,10 +676,6 @@ module.exports = grammar({
     flow_use_keyword: () => "use",
     thunk_keyword: () => "thunk",
     recall_keyword: () => "recall",
-    recall_auto_keyword: () => "auto",
-    recall_none_keyword: () => "none",
-    recall_far_keyword: () => "far",
-    recall_near_keyword: () => "near",
     _flow_reserved_word: ($) =>
       choice(
         $.flow_run_keyword,
@@ -724,7 +690,7 @@ module.exports = grammar({
         $.flow_drop_keyword,
         $.flow_keep_keyword,
         $.flow_sort_keyword,
-        $.flow_until_keyword,
+        $.flow_until_keyword, $.flow_from_keyword, $.flow_windowing_keyword,
         $.flow_rank_keyword,
         $.flow_repeat_keyword,
         $.flow_par_keyword,
@@ -741,7 +707,7 @@ module.exports = grammar({
         "head",
         "tail",
         $.flow_using_keyword, $.flow_if_keyword, $.flow_by_keyword,
-        $.flow_in_keyword, $.flow_lane_keyword, $.flow_lanes_keyword,
+        $.flow_in_keyword, $.flow_lane_keyword,
         $.flow_ascending_keyword, $.flow_descending_keyword,
         $.flow_time_keyword, $.flow_times_keyword,
         $.flow_first_keyword, $.flow_last_keyword,
@@ -751,11 +717,8 @@ module.exports = grammar({
       ),
     _agic_reserved_word: ($) =>
       choice(
-        $.context_keyword,
-        $.instruct_keyword,
         $.role,
         $.pass_keyword,
-        $.recall_keyword,
         $.directive_key,
       ),
 

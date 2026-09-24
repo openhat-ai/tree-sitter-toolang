@@ -1,9 +1,9 @@
 agic chat(_: Part[]) -> Part[]:
   models = gpt-5
   tools += shell
-  hands += summarize
+  hands = summarize
 
-  instruct default
+  instruct = default
 
   {{_}}
 
@@ -12,10 +12,10 @@ agic task(_: Part[]) -> Part[]:
   tools += shell, filesystem
   skills += review
   services += github
-  hands += plan, execute
+  hands = plan, execute
   handoffs = support
 
-  instruct default
+  instruct = default
 
   user:
     {{_}}
@@ -25,6 +25,6 @@ agic chore:
   tools += shell
   handoffs = support, billing
 
-  instruct default
+  instruct = default
   user:
     Run the scheduled maintenance chore and report the result.

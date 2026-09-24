@@ -122,7 +122,7 @@ EDIT_SOURCES = [
         id="metadata",
     ),
     pytest.param(
-        "agic work:\r\n  context:\r\n    Résumé.\r\n  user: Review.".encode(),
+        "context:\r\n  Résumé.\r\nagic work:\r\n  context = default\r\n  user: Review.".encode(),
         id="agic-unicode",
     ),
     pytest.param(

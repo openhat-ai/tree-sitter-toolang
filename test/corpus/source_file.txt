@@ -262,11 +262,11 @@ Agic With Directives And Blocks
 agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
-  hands += summarize
+  hands = summarize
   recall = far, near
 
-  instruct default
-  context default
+  instruct = default
+  context = default
 
   user:
     Review {{path}} carefully.
@@ -333,32 +333,36 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
             (newline)))
         (directive
           (directive_key)
-          (directive_op)
-          (directive_value)
+          (assign_operator)
+          (route_value
+            (runnable_ref))
           (line_end
             (newline)))
         (directive
           (recall_keyword)
           (assign_operator)
           (recall_value
-            (recall_far_keyword)
+            (recall_source)
             (comma)
-            (recall_near_keyword))
+            (recall_source))
           (line_end
             (newline)))
         (blank_line)
-        (settings
-          (instruct_setting
-            (instruct_keyword)
-            (text_ref)
-            (line_end
-              (newline)))
-          (context_setting
-            (context_keyword)
-            (text_ref)
-            (line_end
-              (newline)))
-          (blank_line))
+        (directive
+          (instruct_keyword)
+          (assign_operator)
+          (text_ref
+            (default_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (context_keyword)
+          (assign_operator)
+          (text_ref
+            (default_keyword))
+          (line_end
+            (newline)))
+        (blank_line)
         (messages
           (message
             (role)
@@ -385,7 +389,7 @@ flow research(in: Part[]) -> Answer:
   run normalize
   seek alice review
   ask: Approve the plan?
-  scatter 5 using -> SearchJob:
+  scatter using -> SearchJob:
     Create five search jobs.
   storm 3 in 2 lanes using sample
   keep in 8 lanes if:
@@ -464,7 +468,6 @@ flow research(in: Part[]) -> Answer:
                 (newline))))
           (scatter_statement
             (flow_scatter_keyword)
-            (integer_literal)
             (flow_using_keyword)
             (inline_agic
               (arrow)
@@ -608,8 +611,8 @@ Comments
 with skill briceyan/pdf-processing # inline comment
 
 agic raw:
-  instruct none
-  context none
+  instruct = none
+  context = none
   user: none
 
 ---
@@ -635,17 +638,20 @@ agic raw:
       (line_end
         (newline))
       (agic_body
-        (settings
-          (instruct_setting
-            (instruct_keyword)
-            (text_ref)
-            (line_end
-              (newline)))
-          (context_setting
-            (context_keyword)
-            (text_ref)
-            (line_end
-              (newline))))
+        (directive
+          (instruct_keyword)
+          (assign_operator)
+          (text_ref
+            (none_keyword))
+          (line_end
+            (newline)))
+        (directive
+          (context_keyword)
+          (assign_operator)
+          (text_ref
+            (none_keyword))
+          (line_end
+            (newline)))
         (messages
           (message
             (role)
@@ -677,8 +683,8 @@ agic recall:
           (recall_keyword)
           (assign_operator)
           (recall_value
-            (recall_far_keyword)
+            (recall_source)
             (comma)
-            (recall_near_keyword))
+            (recall_source))
           (line_end
             (newline)))))))

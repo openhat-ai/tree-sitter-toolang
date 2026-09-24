@@ -173,7 +173,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     parser = _parser()
     source = (
         b"flow fields:\n"
-        b"  scatter 4 using generate\n"
+        b"  scatter using generate\n"
         b"  storm 4 in 2 lanes using sample\n"
         b"  gather using combine\n"
         b"  settle using merge\n"
@@ -208,7 +208,7 @@ def test_readable_flow_complements_have_flat_public_fields():
         assert runnable is not None and runnable.type == "runnable"
         assert statement.child_by_field_name("agic") is None
 
-    assert _text(source, statements[0].child_by_field_name("count")).strip() == "4"
+    assert statements[0].child_by_field_name("count") is None
     lane_statements = (
         statements[1],
         statements[4],

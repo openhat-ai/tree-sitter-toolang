@@ -15,6 +15,7 @@ FIXTURE_NAMES = (
     "flows.too",
     "jobs.too",
     "kitchen_sink.too",
+    "flow_upgrade.too",
     "script_agics.too",
     "syntax_variants.too",
     "with_caps.too",
@@ -364,21 +365,9 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
         "user",
     ]
     assert [
-        child.type
-        for child in body.named_children
-        if child.type in {"settings", "messages"}
-    ] == [
-        "settings",
-        "messages",
-    ]
-    assert [
-        child.type
-        for child in _nodes(body, "settings")[0].named_children
-        if child.type.endswith("_setting")
-    ] == [
-        "instruct_setting",
-        "context_setting",
-    ]
+        _text(source, node.child_by_field_name("key")).strip()
+        for node in _nodes(body, "directive")
+    ][-2:] == ["instruct", "context"]
     assert "text_block" in str(messages[0])
 
 
@@ -459,6 +448,7 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
         "models",
         "tools",
         "hands",
+        "instruct",
     ]
     assert task_directive_keys == [
         "models",
@@ -467,14 +457,9 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
         "services",
         "hands",
         "handoffs",
+        "instruct",
     ]
-    assert [
-        child.type
-        for child in _nodes(chore_body, "settings")[0].named_children
-        if child.type.endswith("_setting")
-    ] == [
-        "instruct_setting",
-    ]
+    assert _text(source, _nodes(chore_body, "directive")[-1].child_by_field_name("key")) == "instruct"
     assert chore_message_roles == [
         "user",
     ]
@@ -533,7 +518,7 @@ def test_directive_value_is_trimmed_line_payload():
 def test_recall_directive_uses_canonical_keyword_values():
     parser = _parser()
     source = (
-        b"agic automatic:\n  recall = auto\n"
+        b"agic automatic:\n  recall = default\n"
         b"agic disabled:\n  recall = none\n"
         b"agic distant:\n  recall = far\n"
         b"agic recent:\n  recall = near\n"
@@ -554,7 +539,7 @@ def test_recall_directive_uses_canonical_keyword_values():
         for directive in directives
     )
     assert [_text(source, value).strip() for value in values] == [
-        "auto",
+        "default",
         "none",
         "far",
         "near",
@@ -564,11 +549,11 @@ def test_recall_directive_uses_canonical_keyword_values():
         [child.type for child in value.named_children]
         for value in values
     ] == [
-        ["recall_auto_keyword"],
-        ["recall_none_keyword"],
-        ["recall_far_keyword"],
-        ["recall_near_keyword"],
-        ["recall_far_keyword", "comma", "recall_near_keyword"],
+        ["default_keyword"],
+        ["none_keyword"],
+        ["recall_source"],
+        ["recall_source"],
+        ["recall_source", "comma", "recall_source"],
     ]
 
 
@@ -577,8 +562,8 @@ def test_recall_directive_rejects_noncanonical_forms():
 
     for source in (
         b"agic bad:\n  recall = line\n",
-        b"agic bad:\n  recall = default\n",
-        b"agic bad:\n  recall = near, far\n",
+        b"agic bad:\n  recall = auto\n",
+        b"agic bad:\n  recall = none, far\n",
         b"agic bad:\n  recall += far\n",
     ):
         tree = parser.parse(source)
@@ -636,18 +621,9 @@ def test_kitchen_sink_agic_signature_directives_and_blocks():
         "focus",
     ]
     assert body is not None
-    assert len([child for child in body.named_children if child.type == "directive"]) == 6
-    settings = _nodes(body, "settings")[0] if _nodes(body, "settings") else None
+    assert len([child for child in body.named_children if child.type == "directive"]) == 8
     messages = _messages(body)
-    assert settings is not None
-    assert [
-        child.type
-        for child in settings.named_children
-        if child.type.endswith("_setting")
-    ] == [
-        "instruct_setting",
-        "context_setting",
-    ]
+    assert [_text(source, node.child_by_field_name("key")) for node in _nodes(body, "directive")][-2:] == ["instruct", "context"]
     assert [
         _text(source, _nodes(message, "role")[0]).strip()
         for message in messages
@@ -659,7 +635,7 @@ def test_kitchen_sink_agic_signature_directives_and_blocks():
 
 def test_parameter_types_can_be_omitted():
     parser = _parser()
-    source = b"agic ok(_: Part[], focus):\n  instruct none\n"
+    source = b"agic ok(_: Part[], focus):\n  instruct = none\n"
 
     tree = parser.parse(source)
     params = _item_child(_items(tree.root_node)[0]).child_by_field_name("params")
@@ -672,7 +648,7 @@ def test_parameter_types_can_be_omitted():
 
 def test_agic_name_can_be_omitted():
     parser = _parser()
-    source = b"agic:\n  instruct none\n"
+    source = b"agic:\n  instruct = none\n"
 
     tree = parser.parse(source)
     agic = _item_child(_items(tree.root_node)[0])
@@ -681,35 +657,16 @@ def test_agic_name_can_be_omitted():
     assert agic.child_by_field_name("name") is None
 
 
-def test_agic_settings_support_inline_bodies():
-    parser = _parser()
-    source = (
-        b"agic search:\n"
-        b"  context abc\n"
-        b"  instruct:\n"
-        b"      hello world\n"
-        b"\n"
-        b"  Query:\n"
-        b"  {{_}}\n"
-    )
-
-    tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
-    settings = _nodes(body, "settings")[0]
-    messages = _messages(body)
-
-    assert tree.root_node.has_error is False
-    assert _nodes(settings, "context_setting")
-    instruct_setting = _nodes(settings, "instruct_setting")[0]
-    assert "text_block" in str(instruct_setting)
-    assert "hello world" in _text(source, instruct_setting)
-    assert len(messages) == 1
-    assert "Query:" in _text(source, messages[0])
+def test_agic_settings_reject_inline_bodies():
+    for key in ("instruct", "context"):
+        source = f"agic search:\n  {key}:\n    hello world\n".encode()
+        root = _parser().parse(source).root_node
+        assert root.has_error or _nodes(root, "invalid_agic_reserved_message")
 
 
 def test_agic_instruction_blocks_must_precede_messages():
     parser = _parser()
-    source = b"agic bad:\n  user: hello\n  instruct default\n"
+    source = b"agic bad:\n  user: hello\n  instruct = default\n"
 
     tree = parser.parse(source)
 
@@ -720,19 +677,19 @@ def test_agic_instruction_blocks_must_precede_messages():
 def test_unroled_messages_do_not_fallback_from_reserved_words():
     parser = _parser()
     invalid_sources = [
-        b"agic bad:\n  instruct default\n  recall = none\n",
+        b"agic bad:\n  instruct default\n",
         b"agic bad:\n  user content\n",
         b"agic bad:\n  assistant content\n",
         b"agic bad:\n  tool content\n",
         b"agic bad:\n  pass content\n",
         b"agic bad:\n  models are mentioned as text\n",
-        b"agic bad:\n  context project extra\n",
+        b"agic bad:\n  context = project extra\n",
     ]
-    valid_setting = b"agic ok:\n  context project\n"
+    valid_setting = b"agic ok:\n  context = project\n"
     explicit_message = (
         b"agic ok:\n"
         b"  user:\n"
-        b"    context project is just text\n"
+        b"    context = project is just text\n"
         b"    user: this is also text\n"
         b"    models are also text\n"
     )
@@ -745,14 +702,14 @@ def test_unroled_messages_do_not_fallback_from_reserved_words():
     assert parser.parse(explicit_message).root_node.has_error is False
 
 
-def test_agic_context_and_instruct_are_each_allowed_once():
+def test_agic_duplicate_selections_are_preserved_for_semantic_validation():
     parser = _parser()
-    source = b"agic bad:\n  context default\n  instruct default\n  context none\n"
+    source = b"agic bad:\n  context = default\n  instruct = default\n  context = none\n"
 
     tree = parser.parse(source)
 
     assert tree.root_node.has_error is False
-    assert _nodes(tree.root_node, "invalid_agic_reserved_message")
+    assert len(_nodes(tree.root_node, "directive")) == 3
 
 
 def test_agic_roled_messages_support_user_assistant_and_tool():

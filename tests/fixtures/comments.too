@@ -19,4 +19,4 @@ prompt review: # inline prompt header comment
 agic review(_: Part[], focus?: Text) -> ReviewResult: # inline agic header comment
   models = gpt-5 # inline directive comment
 
-  instruct default
+  instruct = default

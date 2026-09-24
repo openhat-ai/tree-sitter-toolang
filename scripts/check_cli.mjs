@@ -50,7 +50,8 @@ try {
   }
 
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
-    join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"), DOCUMENTATION_FIXTURE);
+    join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
+    join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
