@@ -39,10 +39,10 @@ context report:
 
 agic report() -> Text:
   handoffs = support, billing
-  hands += summarize
+  hands = summarize
   recall = near
 
-  instruct strict_json
-  context report
+  instruct = strict_json
+  context = report
   user:
     Generate a concise report.

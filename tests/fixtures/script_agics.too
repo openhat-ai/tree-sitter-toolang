@@ -26,7 +26,7 @@ agic score(_: Part[], rubric?: Json) -> Number:
     Score {{_}} using {{rubric}}.
 
 agic render(template: Text, data: Json, notes?: Part[]) -> Part[]:
-  instruct default
+  instruct = default
   user:
     Render {{template}} with {{data}}.
     {{notes}}

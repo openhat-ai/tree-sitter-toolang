@@ -20,8 +20,8 @@ flow research(_: Part[]) -> Answer:
   run -> Note: Extract one note.
 
   ## Expand one item into a list.
-  scatter 5 using plan_searches
-  scatter 5 using -> SearchJob:
+  scatter using plan_searches
+  scatter using -> SearchJob:
     Create five search jobs.
   storm 3 using sample_direction in 2 lanes
   storm 3 in 2 lanes using -> SearchJob:
@@ -58,7 +58,7 @@ flow delegate:
   ask: Approve this result?
 
 flow bindings:
-  let jobs = scatter 5 using plan_searches
+  let jobs = scatter using plan_searches
   let run publish
   let guidance =
     Prefer primary sources.

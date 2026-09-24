@@ -1,0 +1,47 @@
+instruct:
+  Follow the requested output contract.
+
+context project:
+  Use the supplied project context.
+
+agic expand(_) -> Text[]:
+  lanes = default
+  recall = far, near
+  instruct = default
+  context = project
+  hands = none
+  handoffs = *
+  prompts = *
+  user: Expand {{_}}.
+
+agic merge(_):
+  user: Incorporate {{_}} into {{_1._}}.
+
+flow research(_):
+  models = *
+  tools -= *
+  psyches = none
+  skills = *
+  services = *
+  prompts = *
+  lanes = 4
+  recall = near, far
+  instruct = default
+  context = project
+  hands = expand, agic:merge
+  handoffs = none
+  scatter using expand
+  settle using merge:
+    from:
+      Initial report.
+  repeat 5 times windowing 3:
+    run: Improve {{_}}.
+    until: Compare {{_}} with {{_1._}} and {{_2._}}.
+
+flow seeded(_):
+  scatter:
+    Expand {{_}}.
+  settle:
+    Incorporate {{_}} into {{_1._}}.
+    from:
+      Initial report.

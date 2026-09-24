@@ -20,8 +20,9 @@ enum Token {
   DEDENT,
   LINE_START,
   DIRECTIVE_START,
-  SETTING_START,
   UNTIL_START,
+  FROM_START,
+  SETTLE_TEXT_START,
   TEXT_INDENT,
   CAP_TEXT_START,
   RAW_TEXT,
@@ -30,7 +31,7 @@ enum Token {
   ERROR_LINE,
 };
 
-enum Mode { STRUCTURAL, TEXT };
+enum Mode { STRUCTURAL, TEXT, SETTLE_TEXT };
 enum Prefix { NONE, SPACES, TABS, MIXED };
 
 typedef struct {
@@ -339,9 +340,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return false;
   }
 
-  bool literal = frame.mode == TEXT && indent.column >= frame.column;
+  bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
   bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
-  if (frame.mode == TEXT && !literal && !scanner->line_started && valid[DEDENT]) {
+  if (frame.mode != STRUCTURAL && !literal && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
   if (lexer->lookahead == '#' && !literal && !opening_text) {
@@ -388,7 +389,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     advance(lexer);
   }
 
+  if (frame.mode == SETTLE_TEXT && indent.column == frame.column &&
+      strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
+    return emit(scanner, lexer, DEDENT);
+  }
+
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[SETTLE_TEXT_START] && !scanner->line_started && at_baseline &&
+      strcmp(word, "from") != 0) {
+    return push(scanner, lexer, indent, SETTLE_TEXT, SETTLE_TEXT_START);
+  }
   if (valid[CAP_TEXT_START] && !scanner->line_started && at_baseline) {
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
@@ -402,9 +412,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     enum Token start = LINE_START;
     if (valid[UNTIL_START] && strcmp(word, "until") == 0) {
       start = UNTIL_START;
-    } else if (valid[SETTING_START] &&
-               (strcmp(word, "context") == 0 || strcmp(word, "instruct") == 0)) {
-      start = SETTING_START;
+    } else if (valid[FROM_START] && strcmp(word, "from") == 0) {
+      start = FROM_START;
     } else if (valid[DIRECTIVE_START] &&
                (strcmp(word, "recall") == 0 ||
                 keyword(word, directive_keywords,

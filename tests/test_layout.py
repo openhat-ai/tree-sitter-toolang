@@ -81,7 +81,7 @@ def test_invalid_structure_never_becomes_a_valid_program(source):
         "run:",
         "seek reviewer:",
         "ask:",
-        "scatter 2 using:",
+        "scatter using:",
         "storm 2 in 2 lanes using:",
         "gather using:",
         "settle using:",
@@ -132,7 +132,7 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
     "header, body",
     [
         ("struct Item:", "value: Text"),
-        ("agic work:", "tools = search\n  context none\n  user: Review."),
+        ("agic work:", "tools = search\n  context = none\n  user: Review."),
         ("flow work:", "run improve"),
         (
             "service search:",
@@ -289,7 +289,7 @@ def test_incremental_edits_match_fresh_trees_through_invalid_states():
     "source",
     [
         b"flow work:\n  repeat:\n    repeat 2 times:\n      run:\n        Evidence.\n    until: Ready.\n  run publish\n",
-        b"agic work:\n\ttools = search\n\tcontext:\n\t\t# Heading.\n\tuser: Review.\n",
+        b"context:\n\t# Heading.\nagic work:\n\ttools = search\n\tcontext = default\n\tuser: Review.\n",
         b"service search:\r\n  transport = stdio\r\n  Search.\r\nflow work:\r\n  pass\r\n",
     ],
 )

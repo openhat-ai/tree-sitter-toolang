@@ -278,28 +278,24 @@ param ::= param_name optional_marker? (":" type)?
 param_name ::= "_" | snake_name
 
 agic_body ::= trivia*
-               (directives settings? messages?
-               | settings messages?
+               (directives messages?
                | messages
                | pass_statement)
                trivia*
 
 directives ::= directive+
-directive ::= directive_key directive_op directive_value line_end
+directive ::= query_key directive_op directive_value line_end
+            | ("hands" | "handoffs") "=" route_value line_end
             | "recall" "=" recall_value line_end
-directive_key ::= "models" | "tools" | "skills" | "services" | "psyches"
-                | "hands" | "handoffs"
+            | "lanes" "=" (integer_literal | "default") line_end
+            | ("instruct" | "context") "=" text_ref line_end
+query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
 directive_op ::= "=" | "+=" | "-="
-directive_value ::= /[^#\r\n]+/
-
-recall_value ::= "auto" | "none" | "far" | "near" | "far" "," "near"
-
-settings ::= context_setting instruct_setting?
-           | instruct_setting context_setting?
-context_setting ::= "context" text_ref line_end
-                  | "context" ":" text_inline
-instruct_setting ::= "instruct" text_ref line_end
-                   | "instruct" ":" text_inline
+directive_value ::= /[^ \t#\r\n][^#\r\n]*/
+route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
+runnable_ref ::= (snake_name "::")* ("agic:" | "flow:")? snake_name
+recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
+recall_source ::= "far" | "near"
 text_ref ::= "default" | "none" | snake_name
 
 messages ::= message+
@@ -325,10 +321,22 @@ Rules:
   declares no primary input.
 - An explicit `_` without a type also defaults to `Part[]`.
 - An untyped named parameter defaults to `Text`.
-- An omitted return type defaults to `Part[]`.
-- Directives must appear before settings and messages.
-- `context ref` and `instruct ref` select named/default/none settings.
-  `context:` and `instruct:` provide inline setting bodies.
+- An omitted declaration return type defaults to `Text`. Adhoc operation defaults
+  and signature validation belong to the consumer.
+- Agic and flow share directives, which precede messages or statements.
+- Query directives support `=`, `+=`, and `-=`. List and value directives only
+  support `=`. Every directive requires a nonempty value; list special values
+  stand alone. Duplicate configuration directives are rejected by the consumer.
+- `instruct = name` and `context = name` select explicit top-level declarations.
+  `none` disables the selected layer. `default` selects the module's unnamed
+  declaration, with a system fallback when absent. An unknown explicit name
+  is an error. Omission inherits the parent's resolved selection, or defaults
+  at a root; inherited selections retain their declaring module.
+- Runnable-local inline bodies and bare prompt references are not supported.
+- Hands/handoffs are CSV references, not match queries. Recall supports either
+  source order; `auto` is not a special value. Root recall defaults to far/near.
+- All directives expose `key`, `operator`, and `value` fields. Prompt selectors
+  are directives rather than a separate `settings` subtree.
 - Bare text in an agic body is an unroled message. Runtime treats it as a user
   message.
 - Unroled messages are fallback messages. A line starting with an agic reserved
@@ -421,9 +429,8 @@ _by_complements ::= _named_by_complement line_end
                   | _inline_by_complement
                   | _lanes_complement _inline_by_complement
 
-scatter_statement ::= "scatter" integer_literal
-                      (_named_using_complement line_end
-                      | _inline_using_complement)
+scatter_statement ::= "scatter" (_named_using_complement line_end
+                      | "using"? inline_agic)
 
 storm_statement ::= "storm" integer_literal _using_complements
 
@@ -431,9 +438,10 @@ gather_statement ::= "gather"
                      (_named_using_complement line_end
                      | _inline_using_complement)
 
-settle_statement ::= "settle"
-                     (_named_using_complement line_end
-                     | _inline_using_complement)
+settle_statement ::= "settle" (_named_using_complement line_end
+                     | _named_using_complement ":" line_end from_block
+                     | "using"? inline_agic_with_optional_from)
+from_block ::= "from" ":" text_inline
 
 map_statement ::= "map" _using_complements
 
@@ -445,10 +453,11 @@ drop_statement ::= "drop" position line_end
 
 sort_statement ::= "sort" ("ascending" | "descending") _by_complements
 
-repeat_statement ::= "repeat" _repeat_count_complement ":" line_end
+repeat_statement ::= "repeat" _repeat_count_complement window_complement? ":" line_end
                      statements _until_complement?
-                   | "repeat" ":" line_end
+                   | "repeat" window_complement? ":" line_end
                      statements _until_complement
+window_complement ::= "windowing" integer_literal
 _until_complement ::= "until" inline_agic_body
 
 inline_agic ::= return_type? ":" text_inline
@@ -518,6 +527,17 @@ Rules:
 - A positional count, selection, or order immediately follows its verb. Lane
   and named-runnable complements may exchange order. An inline runnable is
   final. Commas and `with` are not complement syntax.
+- Settle's optional trailing `from:` supplies initializer Content. A named reducer
+  uses `settle using name:` with an indented `from:`. An adhoc multiline reducer
+  uses `settle:` (or `settle using:`); `from:` is at the reducer text's baseline,
+  after nonempty reducer text. Deeper `from:` text stays literal. The `runnable`
+  field excludes the initializer; the sibling `from` field contains `text_inline`.
+  Without `from`, runtime seeds from the first source element. Settle retains one
+  previous frame and has no window clause.
+- `windowing N` precedes the repeat header colon and exposes the `window` integer
+  field. Runtime validates positive N and defaults it to 3. Count plus until
+  means at most N iterations, checking the condition after each body. Insufficient
+  history makes until false without calling its evaluator.
 - The count and `until` condition of `repeat` are individually optional, but
   at least one is required. Count-only, until-only, and combined forms are
   valid; omitting both is invalid. Unconditional loops are not supported.
@@ -560,10 +580,8 @@ Records with a role and `Part[]`.
   JSON parts; and `Part` values to parts directly.
 - Runtime part values use short `kind` names such as `text`, `json`, `image`,
   `audio`, `video`, `file`, `tool_call`, and `tool_result`.
-- `recall` is singular and agic-only. Its canonical values are `auto`, `none`,
-  `far`, `near`, and `far, near`; omission means `auto`. `line` is a reserved
-  runtime local, not a recall source.
-- `far`, `near`, and `line` are reserved read-only runtime locals. Named
-  parameters and flow bindings cannot use them.
-- `hands` authorizes runnable targets for `_too__run`; `handoffs` authorizes
-  runnable targets for `_too__execute`.
+- `recall` is shared by agic and flow. It selects `far`/`near` sources and the
+  runtime variables `_far`, `_near`, and `_past`. `none` selects no sources;
+  `default` uses the system default; `*` selects all available sources.
+- `hands` authorizes runnable targets for `_toolang/run`; `handoffs` authorizes
+  runnable targets for `_toolang/execute`.

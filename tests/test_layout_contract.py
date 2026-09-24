@@ -70,7 +70,7 @@ def test_declaration_body_optionality_at_eof_and_next_item(
             assert items[1].child_by_field_name("name").text == b"next"
 
 
-@pytest.mark.parametrize("head", ["context", "instruct", "user", "assistant", "tool"])
+@pytest.mark.parametrize("head", ["user", "assistant", "tool"])
 @pytest.mark.parametrize("indent", ["  ", "\t"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_agic_explicit_bodies_preserve_literal_bytes_and_end_before_siblings(
