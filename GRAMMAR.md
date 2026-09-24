@@ -1,7 +1,27 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar. Parser-only helpers are
-intentionally omitted.
+This document describes the public Toolang grammar in version 0.3.3. The source
+of truth is [grammar.js](grammar.js), together with the layout scanner in
+[src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
+separately from parsing rules. Documents under `docs/plans/` record historical
+feature definitions rather than the current syntax reference.
+
+## Changes in 0.3.3
+
+- Agics and flows share query directives (`models`, `tools`, `skills`,
+  `services`, `psyches`, `prompts`), route lists (`hands`, `handoffs`), `recall`,
+  `lanes`, and named `instruct`/`context` selectors. Selectors use `=`; local
+  `instruct:`/`context:` blocks and bare selector references are invalid.
+- Replace `recall = auto` with `recall = far, near`. Query directives accept
+  `=`, `+=`, and `-=`; all other directives accept only `=`.
+- `scatter` no longer takes a count. Use `scatter using name` or `scatter:`
+  for list generation; use `storm N using name` for a counted expansion.
+- `settle` accepts a trailing `from:` initializer. `repeat` accepts
+  `windowing N` before its header colon. See [Flow](#flow) for clause ownership
+  and examples.
+- CST consumers should read shared `directive` nodes (`key`, `operator`,
+  `value`), the separate `settle_statement.from` field, and
+  `repeat_statement.window`. Prompt selectors have no `settings` subtree.
 
 ## Notation
 
@@ -24,9 +44,10 @@ blank_line ::= newline
 line_end ::= plain_comment? newline
 
 plain_comment ::= "#" /[^\r\n]*/ newline?
-shebang_comment ::= "#!" /[^\r\n]*/ newline
-module_doc_comment ::= ("#@" | "##!") horizontal_space? comment_text? newline
-item_doc_comment ::= "##" horizontal_space? (param_doc_tag | comment_text)? newline
+shebang_comment ::= "#!" /[^\r\n]*/ comment_end
+module_doc_comment ::= ("#@" | "##!") horizontal_space? comment_text? comment_end
+item_doc_comment ::= "##" horizontal_space? (param_doc_tag | comment_text)? comment_end
+comment_end ::= newline | EOF
 param_doc_tag ::= "@param" horizontal_space param_name horizontal_space comment_text
 comment_text ::= /[^ \t\r\n][^\r\n]*/
 horizontal_space ::= /[ \t]+/
@@ -247,8 +268,8 @@ Rules:
 
 - `context`, `instruct`, agic messages, flow inline bodies, and flow conditions
   all use `text_inline`.
-- This grammar no longer supports Markdown fenced bodies for caps, context,
-  instruct, or messages.
+- Markdown fences are ordinary text inside an indented body, not block
+  delimiters. Indentation determines where the body ends.
 
 ## Context And Instruct
 
@@ -283,13 +304,15 @@ agic_body ::= trivia*
                | pass_statement)
                trivia*
 
-directives ::= directive+
+directives ::= directive (directive | trivia)*
 directive ::= query_key directive_op directive_value line_end
             | ("hands" | "handoffs") "=" route_value line_end
             | "recall" "=" recall_value line_end
             | "lanes" "=" (integer_literal | "default") line_end
             | ("instruct" | "context") "=" text_ref line_end
 query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
+directive_key ::= query_key | "hands" | "handoffs" | "recall" | "lanes"
+                | "instruct" | "context"
 directive_op ::= "=" | "+=" | "-="
 directive_value ::= /[^ \t#\r\n][^#\r\n]*/
 route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
@@ -299,7 +322,7 @@ recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
 recall_source ::= "far" | "near"
 text_ref ::= "default" | "none" | snake_name
 
-messages ::= message+
+messages ::= message (message | trivia)*
 message ::= role ":" text_inline
           | invalid_agic_reserved_message
           | unroled_message
@@ -325,15 +348,21 @@ Rules:
 - An omitted declaration return type defaults to `Text`. Adhoc operation defaults
   and signature validation belong to the consumer.
 - Agic and flow share directives, which precede messages or statements.
+  An agic may contain only directives; a flow with directives still requires
+  at least one statement. `pass` is a standalone body alternative and cannot
+  follow directives.
 - Query directives support `=`, `+=`, and `-=`. List and value directives only
   support `=`. Every directive requires a nonempty value; list special values
-  stand alone. Duplicate configuration directives are rejected by the consumer.
+  stand alone. The consumer rejects duplicate `hands`, `handoffs`, `recall`,
+  `lanes`, `instruct`, and `context` directives; query directives may repeat.
+  Positive counts and query-expression semantics are validated after parsing.
 - `instruct = name` and `context = name` select explicit top-level declarations.
   `none` disables the selected layer. `default` selects the module's unnamed
   declaration, with a system fallback when absent. An unknown explicit name
   is an error. Omission inherits the parent's resolved selection, or defaults
   at a root; inherited selections retain their declaring module.
-- Runnable-local inline bodies and bare prompt references are not supported.
+- Runnable-local `instruct:`/`context:` bodies and bare selector references are
+  not supported.
 - Hands/handoffs are CSV references, not match queries. Recall supports either
   source order; `auto` is not a special value. Root recall defaults to far/near.
 - Route references accept portable exported flow names, including uppercase
@@ -445,6 +474,8 @@ gather_statement ::= "gather"
 settle_statement ::= "settle" (_named_using_complement line_end
                      | _named_using_complement ":" line_end from_block
                      | "using"? inline_agic_with_optional_from)
+inline_agic_with_optional_from ::= return_type? ":" text_line line_end
+                                | return_type? ":" line_end text_body from_block?
 from_block ::= "from" ":" text_inline
 
 map_statement ::= "map" _using_complements
@@ -474,7 +505,8 @@ _active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
                             | "storm" | "gather" | "settle" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
-_reserved_statement_keyword ::= "until" | "rank" | "par" | "top" | "bottom"
+_reserved_statement_keyword ::= "until" | "from" | "windowing"
+                              | "rank" | "par" | "top" | "bottom"
                               | "think" | "use" | "thunk" | "call" | "do"
                               | "unfold" | "each" | "fold" | "head" | "tail"
                               | _connector_keyword | _declaration_keyword
@@ -562,6 +594,9 @@ Rules:
 - `until` is a reserved boundary keyword. Only `until:` in a repeat is valid;
   bare `until` and lowercase `until ...` do not form an implicit run at a
   statement boundary.
+- `from` and `windowing` are also reserved. `from:` is valid only as a settle
+  initializer; `windowing N` is valid only in a repeat header. Use explicit
+  `run:` text when these words begin prose.
 - Explicit statement keywords are lowercase and case-sensitive. Named and
   positional statement headers end at `line_end` and do not accept trailing
   prose punctuation.
@@ -572,6 +607,60 @@ Rules:
   and `thunk` remain reserved without statement syntax. A malformed line that
   begins with an active or reserved flow word exposes a syntax error or
   `invalid_flow_reserved_statement` instead of implicit `run` text.
+
+### Shared Directives and Flow Clauses Example
+
+```too
+instruct:
+  Follow the requested output contract.
+
+context project:
+  Use the supplied project context.
+
+agic expand(_) -> Text[]:
+  prompts = *
+  context = project
+  user: Expand {{_}} into items.
+
+agic merge(_):
+  user: Incorporate {{_}} into {{_1._}}.
+
+flow research(_):
+  tools -= *
+  hands = expand, agic:merge
+  handoffs = none
+  recall = far, near
+  lanes = 4
+  instruct = default
+  context = project
+  scatter using expand
+  settle using merge:
+    from: Initial report.
+  repeat 5 times windowing 3:
+    run: Improve {{_}}.
+    until: Compare {{_}} with {{_1._}} and {{_2._}} for stability.
+
+flow seeded(_):
+  scatter:
+    Expand {{_}} into items.
+  settle:
+    Incorporate {{_}} into {{_1._}}.
+    from:
+      Initial report.
+```
+
+For named settle reducers, a header colon requires an indented `from:` clause.
+For multiline inline reducers, `from:` follows the reducer text at the same
+baseline. An inline reducer written entirely on the header line cannot have a
+following initializer. Settle's `runnable` field is a `runnable` or `inline_agic`;
+its optional `from` field is `text_inline`. An inline reducer's `body` field is
+`text_inline` for same-line text and `text_body` for multiline text.
+
+Repeat exposes required `body: statements`, optional `count: integer_literal`
+and `window: integer_literal`, and optional `until: inline_agic_body`. The
+condition is the final entry inside the repeat body, not a dedented sibling of
+the repeat. [tests/fixtures/flow_upgrade.too](tests/fixtures/flow_upgrade.too)
+contains further complete-source examples.
 
 ## Model Call Assembly
 
