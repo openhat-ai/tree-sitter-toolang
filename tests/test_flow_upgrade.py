@@ -112,8 +112,9 @@ def test_nested_repeat_and_settle_clause_ownership():
     assert b"Inner." in inner.child_by_field_name("until").text
 
 
-def test_settle_incremental_edits_match_fresh_parse():
-    source = b"flow work:\n  settle:\n    Merge {{_}}.\n    from:\n      Seed.\n  run next\n"
+@pytest.mark.parametrize("heading", [b"", b"    # Heading\n", b"    ## @param literal\n"])
+def test_settle_incremental_edits_match_fresh_parse(heading):
+    source = b"flow work:\n  settle:\n" + heading + b"    Merge {{_}}.\n    from:\n      Seed.\n  run next\n"
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = source
     tree = parser.parse(source)
@@ -124,3 +125,28 @@ def test_settle_incremental_edits_match_fresh_parse():
             tree = parser.parse(current, tree)
             assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node)
             previous = current
+
+
+@pytest.mark.parametrize("prefix", ["# Heading", "## Heading", "#@ Heading", "##! Heading", "#! Heading"])
+@pytest.mark.parametrize("initializer", [False, True])
+def test_settle_leading_comment_markers_are_literal_reducer_text(prefix, initializer):
+    source = f"flow work:\n  settle:\n    {prefix}\n    Merge {{{{_}}}}.\n"
+    if initializer:
+        source += "    from: Seed.\n    # Structural trailing comment.\n"
+    source += "  run next\n"
+    root = parse(source)
+    assert valid(root)
+    settle = descendants(root, "settle_statement")[0]
+    reducer = settle.child_by_field_name("runnable").child_by_field_name("body")
+    assert reducer.text.decode().lstrip().startswith(prefix)
+    assert not descendants(reducer, "plain_comment")
+    assert not descendants(reducer, "item_doc_comment")
+
+
+@pytest.mark.parametrize("name", ["DeepSearch", "deep-search", "_review"])
+@pytest.mark.parametrize("qualified", [False, True])
+def test_routes_accept_portable_exported_flow_names(name, qualified):
+    ref = f"flows::{name}::flow:{name}" if qualified else name
+    root = parse(f"agic caller:\n  hands = {ref}\n  Work.\n")
+    assert valid(root)
+    assert descendants(root, "runnable_ref")[0].text.decode() == ref

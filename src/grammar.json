@@ -2465,7 +2465,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_indent"
+          "name": "_settle_indent"
         },
         {
           "type": "FIELD",
@@ -3802,7 +3802,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "([a-z][a-z0-9_]*::)*(agic:|flow:)?[a-z][a-z0-9_]*"
+        "value": "([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*"
       }
     },
     "recall_value": {
@@ -4737,6 +4737,10 @@
     {
       "type": "SYMBOL",
       "name": "_from_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_settle_indent"
     },
     {
       "type": "SYMBOL",

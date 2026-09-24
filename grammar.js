@@ -7,7 +7,7 @@ module.exports = grammar({
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._module_doc_start, $._item_doc_start, $._param_item_doc_start, $._comment_end,
     $._indent, $._dedent, $._line_start, $._directive_start,
-    $._until_start, $._from_start, $._settle_text_start, $._text_indent, $._cap_text_start,
+    $._until_start, $._from_start, $._settle_indent, $._settle_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
   ],
   rules: {
@@ -393,7 +393,7 @@ module.exports = grammar({
     _settle_line: ($) => seq($.text_line, $.line_end),
     _settle_inline_block: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, $.line_end, repeat($._trivia), $._indent,
+      $.colon, $.line_end, repeat($._trivia), $._settle_indent,
       field("body", alias($._settle_text_body, $.text_body)),
     ),
     _settle_text_body: ($) => seq(
@@ -598,7 +598,7 @@ module.exports = grammar({
     directive_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
     route_value: ($) => choice($.none_keyword, $.all_keyword,
       seq($.runnable_ref, repeat(seq($.comma, $.runnable_ref)))),
-    runnable_ref: () => token(/([a-z][a-z0-9_]*::)*(agic:|flow:)?[a-z][a-z0-9_]*/),
+    runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
     recall_value: ($) => choice($.none_keyword, $.all_keyword, $.default_keyword,
       seq($.recall_source, repeat(seq($.comma, $.recall_source)))),
     recall_source: () => choice("far", "near"),

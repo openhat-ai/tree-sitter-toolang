@@ -293,7 +293,8 @@ query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
 directive_op ::= "=" | "+=" | "-="
 directive_value ::= /[^ \t#\r\n][^#\r\n]*/
 route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
-runnable_ref ::= (snake_name "::")* ("agic:" | "flow:")? snake_name
+runnable_ref ::= (public_name "::")* ("agic:" | "flow:")? public_name
+public_name ::= /[A-Za-z_][A-Za-z0-9_-]*/
 recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
 recall_source ::= "far" | "near"
 text_ref ::= "default" | "none" | snake_name
@@ -335,6 +336,9 @@ Rules:
 - Runnable-local inline bodies and bare prompt references are not supported.
 - Hands/handoffs are CSV references, not match queries. Recall supports either
   source order; `auto` is not a special value. Root recall defaults to far/near.
+- Route references accept portable exported flow names, including uppercase
+  letters, leading underscores, and hyphens; authored declaration names still
+  use snake_case.
 - All directives expose `key`, `operator`, and `value` fields. Prompt selectors
   are directives rather than a separate `settings` subtree.
 - Bare text in an agic body is an unroled message. Runtime treats it as a user

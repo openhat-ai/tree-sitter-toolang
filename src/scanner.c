@@ -22,6 +22,7 @@ enum Token {
   DIRECTIVE_START,
   UNTIL_START,
   FROM_START,
+  SETTLE_INDENT,
   SETTLE_TEXT_START,
   TEXT_INDENT,
   CAP_TEXT_START,
@@ -342,10 +343,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
   bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
+  // Settle opens a structural clause scope, then a literal reducer at the same
+  // baseline. Preserve leading Markdown through both transitions.
+  bool opening_settle = valid[SETTLE_INDENT] && indent.column > frame.column;
+  bool starting_settle_text = valid[SETTLE_TEXT_START] && indent.column == frame.column &&
+                             indent.prefix == frame.prefix;
   if (frame.mode != STRUCTURAL && !literal && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
-  if (lexer->lookahead == '#' && !literal && !opening_text) {
+  if (lexer->lookahead == '#' && !literal && !opening_text &&
+      !opening_settle && !starting_settle_text) {
     if (!valid[COMMENT_START] && !valid[DEDENT]) {
       return false;
     }
@@ -371,6 +378,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
   if (!scanner->line_started && opening_text) {
     return push(scanner, lexer, indent, TEXT, TEXT_INDENT);
+  }
+  if (!scanner->line_started && opening_settle) {
+    return push(scanner, lexer, indent, STRUCTURAL, SETTLE_INDENT);
   }
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {
     return push(scanner, lexer, indent, STRUCTURAL, INDENT);
