@@ -1,0 +1,122 @@
+==================
+Exec targets and repeat boundaries
+==================
+flow grow(next: Text):
+  repeat 2 times:
+    exec: Complete {{next}}.
+  exec grow_v2 # Ready.
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name
+            (snake_name))
+          (colon)
+          (type
+            (base_type
+              (builtin_type))))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (statements
+              (exec_statement
+                (flow_exec_keyword)
+                (inline_agic
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline)))))))
+          (exec_statement
+            (flow_exec_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (plain_comment)
+              (newline))))))))
+
+==================
+Exec inline layout and following statements
+==================
+flow grow:
+  repeat 2 times:
+    exec -> Text:
+      Complete {{_}}.
+    run after_inline
+    until: Ready.
+  exec grow
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (statements
+              (exec_statement
+                (flow_exec_keyword)
+                (inline_agic
+                  (arrow)
+                  (type
+                    (base_type
+                      (builtin_type)))
+                  (colon)
+                  (text_inline
+                    (text_block
+                      (line_end
+                        (newline))
+                      (text_body
+                        (text_body_line
+                          (indented_raw_text)
+                          (newline)))))))
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline))))
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline)))))
+          (exec_statement
+            (flow_exec_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline))))))))

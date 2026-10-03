@@ -559,6 +559,40 @@
     }
   },
   {
+    "type": "exec_statement",
+    "named": true,
+    "fields": {
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "inline_agic",
+            "named": true
+          },
+          {
+            "type": "runnable",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_exec_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "field",
     "named": true,
     "fields": {
@@ -1049,13 +1083,28 @@
   {
     "type": "invalid_flow_reserved_statement",
     "named": true,
-    "fields": {},
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "local_name",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
           "type": "agic_keyword",
+          "named": true
+        },
+        {
+          "type": "assign_operator",
           "named": true
         },
         {
@@ -1088,6 +1137,10 @@
         },
         {
           "type": "flow_drop_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_exec_keyword",
           "named": true
         },
         {
@@ -2815,6 +2868,10 @@
           "named": true
         },
         {
+          "type": "exec_statement",
+          "named": true
+        },
+        {
           "type": "gather_statement",
           "named": true
         },
@@ -3487,6 +3544,10 @@
   },
   {
     "type": "flow_drop_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_exec_keyword",
     "named": true
   },
   {

@@ -397,7 +397,8 @@ flow_body ::= trivia*
               trivia*
 
 statements ::= flow_statement (flow_statement | trivia)*
-flow_statement ::= let_statement
+flow_statement ::= exec_statement
+                 | let_statement
                  | flow_operation
                  | invalid_flow_reserved_statement
                  | implicit_run_statement
@@ -419,6 +420,9 @@ let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
                 | "let" local_name "=" text_inline
 local_name ::= snake_name
+
+exec_statement ::= "exec" runnable line_end
+                 | "exec" inline_agic
 
 run_statement ::= "run" runnable line_end
                 | "run" inline_agic
@@ -501,7 +505,7 @@ inline_agic_body ::= ":" text_inline
 runnable ::= snake_name
 agent ::= snake_name
 
-_active_statement_keyword ::= "let" | "run" | "seek" | "ask" | "scatter"
+_active_statement_keyword ::= "let" | "exec" | "run" | "seek" | "ask" | "scatter"
                             | "storm" | "gather" | "settle" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
@@ -546,6 +550,15 @@ Rules:
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
   precedence over the BODY form.
+- `exec` replaces the current runnable with a named agic/flow or an inline agic;
+  the outgoing runnable does not resume. Its `target` field is a `runnable` or
+  `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
+  Exec is not bindable and accepts no argument lists or modifiers. Named targets
+  end at the line boundary. Inline bodies retain normal text/template syntax
+  and optional return types. Invalid bindings expose
+  `invalid_flow_reserved_statement`. Keyword prefixes and explicit text remain
+  literal. Target resolution and branch-local recursion checks belong to
+  runtime, not the grammar.
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.

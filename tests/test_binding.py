@@ -13,6 +13,7 @@ FIXTURE_NAMES = (
     "comments.too",
     "documentation_comments.too",
     "flows.too",
+    "exec.too",
     "jobs.too",
     "kitchen_sink.too",
     "flow_upgrade.too",
@@ -858,6 +859,7 @@ def test_queries_are_packaged():
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY
     assert "@definition" in tree_sitter_toolang.TAGS_QUERY
     for keyword in (
+        "flow_exec_keyword",
         "flow_sort_keyword",
         "flow_using_keyword",
         "flow_if_keyword",
