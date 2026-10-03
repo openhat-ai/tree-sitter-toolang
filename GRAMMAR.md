@@ -1,6 +1,6 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar in version 0.3.3. The source
+This document describes the public Toolang grammar in version 0.3.4. The source
 of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
@@ -690,4 +690,4 @@ Records with a role and `Part[]`.
   runtime variables `_far`, `_near`, and `_past`. `none` selects no sources;
   `default` uses the system default; `*` selects all available sources.
 - `hands` authorizes runnable targets for `_toolang/run`; `handoffs` authorizes
-  runnable targets for `_toolang/execute`.
+  runnable targets for `_toolang/exec`.
