@@ -30,6 +30,7 @@ enum Token {
   FLOW_TEXT,
   AGIC_TEXT,
   ERROR_LINE,
+  EXEC_BINDING_START,
 };
 
 enum Mode { STRUCTURAL, TEXT, SETTLE_TEXT };
@@ -338,6 +339,17 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   if (!at_start) {
+    if (valid[EXEC_BINDING_START]) {
+      // Reserve the complete token after `let [name =]`, not text prefixes.
+      const char *expected = "exec";
+      while (*expected && lexer->lookahead == *expected) {
+        advance(lexer);
+        expected++;
+      }
+      if (!*expected && !word_character(lexer->lookahead)) {
+        return emit(scanner, lexer, EXEC_BINDING_START);
+      }
+    }
     return false;
   }
 

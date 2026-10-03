@@ -13,6 +13,7 @@ static const char *const flow_keywords[] = {
   "do",
   "drop",
   "each",
+  "exec",
   "first",
   "flow",
   "fold",

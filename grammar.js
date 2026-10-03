@@ -9,6 +9,7 @@ module.exports = grammar({
     $._indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._settle_indent, $._settle_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
+    $._exec_binding_start,
   ],
   rules: {
     source_file: ($) =>
@@ -276,6 +277,8 @@ module.exports = grammar({
     _flow_statement: ($) =>
       seq($._line_start, choice(
         $.let_statement,
+        $.exec_statement,
+        alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
         $.implicit_run_statement,
@@ -314,6 +317,26 @@ module.exports = grammar({
           field("value", $.text_inline),
         )),
       ),
+    exec_statement: ($) =>
+      choice(
+        seq(
+          $.flow_exec_keyword,
+          field("target", $.runnable),
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.flow_exec_keyword,
+          field("target", $.inline_agic),
+        )),
+      ),
+    _invalid_exec_binding: ($) => seq(
+      $.flow_let_keyword,
+      optional(seq(field("name", $.local_name), $.assign_operator)),
+      $._exec_binding_start,
+      $.flow_exec_keyword,
+      optional($.text_line),
+      $.line_end,
+    ),
     run_statement: ($) =>
       choice(
         seq(
@@ -641,6 +664,7 @@ module.exports = grammar({
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
     flow_run_keyword: () => "run",
+    flow_exec_keyword: () => "exec",
     flow_let_keyword: () => "let",
     flow_seek_keyword: () => "seek",
     flow_ask_keyword: () => "ask",
@@ -679,6 +703,7 @@ module.exports = grammar({
     _flow_reserved_word: ($) =>
       choice(
         $.flow_run_keyword,
+        $.flow_exec_keyword,
         $.flow_let_keyword,
         $.flow_seek_keyword,
         $.flow_ask_keyword,

@@ -51,7 +51,8 @@ try {
 
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
-    join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE);
+    join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
+    join(REPO_ROOT, "tests", "fixtures", "exec.too"));
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -73,6 +74,19 @@ try {
   ]) {
     if (!documentationHtml.includes(expected)) {
       throw new Error(`Documentation highlighting was missing: ${expected}\n${documentationHtml}`);
+    }
+  }
+
+  const execHtml = runCli(
+    "highlight", "--config-path", configPath, "--html",
+    join(REPO_ROOT, "tests", "fixtures", "exec.too"),
+  );
+  for (const expected of [
+    "<span style='color: #334455'>exec</span>",
+    "<span style='color: #556677'>        exec remains literal inside inline text.</span>",
+  ]) {
+    if (!execHtml.includes(expected)) {
+      throw new Error(`Exec highlighting was missing: ${expected}\n${execHtml}`);
     }
   }
 

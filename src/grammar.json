@@ -1682,6 +1682,19 @@
             },
             {
               "type": "SYMBOL",
+              "name": "exec_statement"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_invalid_exec_binding"
+              },
+              "named": true,
+              "value": "invalid_flow_reserved_statement"
+            },
+            {
+              "type": "SYMBOL",
               "name": "_flow_operation"
             },
             {
@@ -1830,6 +1843,111 @@
               }
             ]
           }
+        }
+      ]
+    },
+    "exec_statement": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "flow_exec_keyword"
+            },
+            {
+              "type": "FIELD",
+              "name": "target",
+              "content": {
+                "type": "SYMBOL",
+                "name": "runnable"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
+        },
+        {
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "flow_exec_keyword"
+              },
+              {
+                "type": "FIELD",
+                "name": "target",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "inline_agic"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "_invalid_exec_binding": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "flow_let_keyword"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "name",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "local_name"
+                  }
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "assign_operator"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_exec_binding_start"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_exec_keyword"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "text_line"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "line_end"
         }
       ]
     },
@@ -4203,6 +4321,10 @@
       "type": "STRING",
       "value": "run"
     },
+    "flow_exec_keyword": {
+      "type": "STRING",
+      "value": "exec"
+    },
     "flow_let_keyword": {
       "type": "STRING",
       "value": "let"
@@ -4349,6 +4471,10 @@
         {
           "type": "SYMBOL",
           "name": "flow_run_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_exec_keyword"
         },
         {
           "type": "SYMBOL",
@@ -4769,6 +4895,10 @@
     {
       "type": "SYMBOL",
       "name": "_error_line"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_exec_binding_start"
     }
   ],
   "inline": [],
