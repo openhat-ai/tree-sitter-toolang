@@ -1,6 +1,7 @@
 # Toolang Grammar
 
-Syntax and public CST reference for grammar **0.3.4**. The authored sources are
+Syntax and public concrete syntax tree (CST) reference for grammar **0.3.4**.
+The authored sources are
 [grammar.js](grammar.js) and the layout scanner in [src/scanner.c](src/scanner.c).
 Use [node-types.json](src/node-types.json) for the complete node/field inventory
 and [CHANGELOG](CHANGELOG.md) for version changes.
@@ -9,6 +10,16 @@ This reference describes parsing. Type defaults, name resolution, validation and
 execution belong to [Toolang](https://github.com/openhat-ai/toolang); successful
 parsing does not establish runtime validity or availability of a feature.
 [Plans](docs/plans/) are design records, not the current reference.
+
+Quick navigation:
+
+- [Notation and syntax checks](#notation)
+- [Comments](#comments-and-documentation) and [block layout](#block-layout)
+- [Declarations](#program), [signatures](#signatures) and [directives](#shared-directives)
+- [Text and messages](#text)
+- [Flow statement forms](#statement-forms), [bindings](#bindings-and-exec),
+  [settle initializers](#settle-initializers) and [repeat conditions](#repeat-conditions)
+- [Compatibility](#compatibility) and [version changes](CHANGELOG.md)
 
 ## Notation
 
@@ -31,7 +42,9 @@ table are notation, not runnable source.
 Consumers checking syntax must reject `ERROR`, missing nodes and named
 `invalid_agic_reserved_message` / `invalid_flow_reserved_statement` nodes.
 The latter preserve malformed reserved-word lines in the tree and need not set
-`root_node.has_error`. Keep them distinct from valid fallback prose.
+`root_node.has_error`. Keep them distinct from valid fallback prose. The
+[test helpers](tests/test_layout_support.py) show how to walk the tree and check
+its validity.
 
 ## Lexical Structure
 
@@ -125,8 +138,8 @@ ranges, malformed tags and literal-marker cases.
   a required body. Cap/job bodies may be empty. Agics/flows have a standalone
   `pass` alternative; `pass` cannot follow directives or other body entries.
 - Any positive indentation width is accepted. Tabs advance to eight-column
-  stops. Mixed spaces/tabs, interchangeable indentation spellings at the same
-  structural level, and form-feed indentation are invalid.
+  stops. Mixed spaces/tabs in structural indentation, interchangeable indentation
+  spellings at the same structural level, and form-feed indentation are invalid.
 - Explicit multiline text establishes a separate baseline. Deeper Markdown,
   keywords and comment markers are literal; dedenting below that baseline ends
   the text. Relative indentation and source bytes are preserved.
@@ -371,17 +384,20 @@ body alternative.
 
 ### Statement Forms
 
-The table is schematic: `NAME`, `AGENT` and `LOCAL` are snake names; `N` is an
+The table is schematic: `NAME` and `AGENT` are snake names; `N` is an
 integer literal; `TEXT` is `text_inline`; `TYPE` is a type. `INLINE` means
 `[-> TYPE]: TEXT`, and `TARGET` means `NAME` or `INLINE`. Square brackets denote
-optional syntax. Named targets end at the line boundary and take no argument
-list. `using`, `if` and `by` must be immediately followed by their target.
+optional syntax. The target in a named `run`, `exec` or `seek` form ends at the
+line boundary; these forms accept no argument lists or trailing modifiers.
+`using`, `if` and `by` must be immediately followed by their target, but their
+named-target complements can have trailing lanes as described below. CST entries
+use `field: node_type`; a field name alone does not specify its node type.
 
 | Statement | Accepted forms | Notable CST fields |
 | --- | --- | --- |
-| `run` | `run TARGET` | Named `runnable` or inline `agic`. |
-| `exec` | `exec TARGET` | `target: runnable` or `inline_agic`. |
-| `seek` | `seek AGENT TARGET` | `agent`, then named `runnable` or inline `agic`. |
+| `run` | `run TARGET` | Named `runnable: runnable` or inline `agic: inline_agic`. |
+| `exec` | `exec TARGET` | `target: runnable` or `target: inline_agic`. |
+| `seek` | `seek AGENT TARGET` | `agent: agent`, then `runnable: runnable` or `agic: inline_agic`. |
 | `ask` | `ask: TEXT` | `body: text_inline`. |
 | `scatter` | `scatter using NAME`; `scatter [using] INLINE` | `runnable`; no count. |
 | `storm` | `storm N USING` | `count`, `runnable`, optional `lanes`. |
@@ -391,6 +407,7 @@ list. `using`, `if` and `by` must be immediately followed by their target.
 | `keep`, `drop` | `keep/drop first N`; `keep/drop last N`; `keep/drop IF` | `selection: position`, or `runnable` with optional `lanes`. |
 | `sort` | `sort ascending BY`; `sort descending BY` | `order`, `runnable`, optional `lanes`. |
 | `repeat` | Count and/or `until`, with optional `windowing`, as below | `body`, optional `count`, `window`, `until`. |
+| `let` | `let NAME = OPERATION`; `let OPERATION`; `let NAME = TEXT` | Optional `name`, and either `statement` or `value: text_inline`; see [bindings](#bindings-and-exec). |
 
 `USING`, `IF` and `BY` are the following complement patterns, with `WORD` replaced
 by `using`, `if` or `by` respectively:
@@ -407,7 +424,9 @@ runnable ::= snake_name
 ```
 
 Counts, positional selections and sort order immediately follow the verb.
-Inline targets are final; commas and `with` are not complement syntax.
+Named complements may put lanes before or after `using`/`if`/`by` and their
+target. Inline targets are final, so lanes must precede their connector.
+Commas and `with` are not complement syntax.
 `one_integer` means any decimal spelling of 1, including `01`; all other
 integer literals require the plural `lanes`. The same agreement applies to
 `time`/`times` in repeat headers. Integer range constraints are not checked here.
@@ -417,7 +436,19 @@ for multiline settle targets described below. `position` exposes `side` and
 `count` fields. See [flow tests](tests/test_flow_syntax.py) and
 [exec tests](tests/test_exec.py).
 
+```too
+agic rewrite:
+  Rewrite {{_}} clearly.
+
+flow alternatives:
+  storm 2 using rewrite in 2 lanes
+  map in 2 lanes using rewrite
+  map in 2 lanes using: Rewrite {{_}} concisely.
+```
+
 ### Bindings and Exec
+
+`OPERATION` in the table means a `flow_operation` from the Flow production.
 
 ```ebnf
 let_statement ::= "let" snake_name "=" flow_operation
