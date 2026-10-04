@@ -9,15 +9,17 @@ findings and inspect only changed or unresolved claims.
 
 ## Target layout
 
-Keep **two current documentation files**:
+Keep **three documentation files at the repository root**:
 
 | File | Responsibility | Required improvements |
 | --- | --- | --- |
-| `README.md` | Repository entry point: purpose, installation/integration, development and publishing. | Shorten repeated syntax/version summaries; link to GRAMMAR. Clarify authored/generated files, packaged queries and where checks live. Preserve accurate installation and publishing steps. |
+| `README.md` | Repository entry point: purpose, installation/integration, development and publishing. | Shorten repeated syntax/version summaries; link to GRAMMAR and CHANGELOG. Clarify authored/generated files, packaged queries and where checks live. Preserve accurate installation and publishing steps. |
 | `GRAMMAR.md` | Current source syntax, layout, public CST and parser compatibility. | Reorganize by syntax family, consolidate shared rules, keep CST fields beside their constructs, and remove detailed runtime semantics and general style advice. |
+| `CHANGELOG.md` | User-visible grammar-package changes by release. | Add a concise change record for syntax, public CST, queries, compatibility and important parser/integration fixes; explain breaking changes and migration. |
 
 Keep existing `docs/plans/` as clearly labeled design/history records. Add no
-index, knowledge base, separate CST catalog or style guide.
+index, knowledge base, separate CST catalog or style guide. Keep GRAMMAR at the
+root as the core reference; do not add version-specific documentation folders.
 
 ## GRAMMAR outline and improvements
 
@@ -29,8 +31,8 @@ index, knowledge base, separate CST catalog or style guide.
    context/instruct, agics/flows and shared directives. Define shared syntax once.
 4. **Text and flow statements:** message/prose boundaries, statement forms,
    bindability, named/inline targets, and `from`/`windowing`/`until` placement.
-5. **Compatibility:** distinguish accepted legacy forms, reserved invalid words
-   and relevant CST changes. Remove historical narrative from current rules.
+5. **Compatibility:** distinguish currently accepted legacy forms and reserved
+   invalid words. Put chronological syntax/CST changes in CHANGELOG.
 
 Use a consistent pattern: **forms → parsing constraints → notable CST fields →
 minimal example**. Link to generated node types and existing fixtures/tests for
@@ -38,14 +40,28 @@ exhaustive detail. Remove Model Call Assembly, runtime defaults, value shapes,
 execution lifecycle, authorization and evaluation guarantees. Keep explanations
 needed to understand parsing; do not remove parser-enforced constraints.
 
+## Change record
+
+- Keep `Unreleased` first, followed by actual releases in reverse chronological
+  order with `YYYY-MM-DD` dates and verified tag/comparison links. Use only
+  nonempty change categories; explain impact and migration for breaking changes.
+- Record changes observable by authors and parser consumers. Omit internal-only
+  refactors/tests and documentation rewording. Reuse these entries for GitHub
+  Release notes instead of maintaining another release-history document.
+- GRAMMAR follows the current implementation; Git tags preserve earlier
+  references. Backfill only verified release changes from existing notes/history,
+  without a full historical audit or invented entries for this docs cleanup.
+
 ## Implementation and acceptance
 
-- [ ] Reorganize README and GRAMMAR using the layout above; change no other guide,
-  parser source, generated artifact, test, version or release workflow.
+- [ ] Reorganize README and GRAMMAR and add CHANGELOG using the layout above;
+  change no other guide, parser source, generated artifact, test, version or
+  release workflow.
 - [ ] Verify claims against `grammar.js`, `src/scanner.c`, `src/node-types.json`
   and existing tests. Retain comment/literal boundaries and recovery edge cases.
 - [ ] Check complete examples; label fragments, EBNF and intentionally invalid
-  samples. Validate links and preserve required existing heading anchors.
+  samples. Validate links and preserve required existing heading anchors;
+  verify every changelog entry against its actual release and evidence.
 - [ ] Run `npm run check`, `.venv/bin/python -m pytest tests`, `cargo test` and
   `git diff --check`. Generated artifacts must remain unchanged.
 
