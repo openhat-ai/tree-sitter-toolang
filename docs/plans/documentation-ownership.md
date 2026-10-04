@@ -9,17 +9,20 @@ findings and inspect only changed or unresolved claims.
 
 ## Target layout
 
-Keep **three documentation files at the repository root**:
+Keep **four documentation files**: three at the root and one maintainer guide.
 
 | File | Responsibility | Required improvements |
 | --- | --- | --- |
-| `README.md` | Repository entry point: purpose, installation/integration, development and publishing. | Shorten repeated syntax/version summaries; link to GRAMMAR and CHANGELOG. Clarify authored/generated files, packaged queries and where checks live. Preserve accurate installation and publishing steps. |
+| `README.md` | Entry point for parser users and contributors: purpose, installation/integration and a short development section. | Keep minimal working examples and check commands; link to GRAMMAR, CHANGELOG and publishing guidance. Remove repeated syntax/version summaries and the detailed Publishing section. |
 | `GRAMMAR.md` | Current source syntax, layout, public CST and parser compatibility. | Reorganize by syntax family, consolidate shared rules, keep CST fields beside their constructs, and remove detailed runtime semantics and general style advice. |
 | `CHANGELOG.md` | User-visible grammar-package changes by release. | Add a concise change record for syntax, public CST, queries, compatibility and important parser/integration fixes; explain breaking changes and migration. |
+| `docs/publishing.md` | Release-maintainer instructions. | Extract the current Publishing section: prerequisites, package validation, version/changelog preparation, tag-triggered publication and release verification. Check instructions against the existing release workflow. |
 
 Keep existing `docs/plans/` as clearly labeled design/history records. Add no
 index, knowledge base, separate CST catalog or style guide. Keep GRAMMAR at the
 root as the core reference; do not add version-specific documentation folders.
+README links to the publishing guide without repeating its steps. Use repository
+URLs for linked documents not included in published packages.
 
 ## GRAMMAR outline and improvements
 
@@ -54,14 +57,16 @@ needed to understand parsing; do not remove parser-enforced constraints.
 
 ## Implementation and acceptance
 
-- [ ] Reorganize README and GRAMMAR and add CHANGELOG using the layout above;
-  change no other guide, parser source, generated artifact, test, version or
-  release workflow.
+- [ ] Shorten README, reorganize GRAMMAR, add CHANGELOG and extract publishing
+  instructions to `docs/publishing.md`. Change no other guide, parser source,
+  generated artifact, test, version or release workflow.
 - [ ] Verify claims against `grammar.js`, `src/scanner.c`, `src/node-types.json`
   and existing tests. Retain comment/literal boundaries and recovery edge cases.
 - [ ] Check complete examples; label fragments, EBNF and intentionally invalid
   samples. Validate links and preserve required existing heading anchors;
-  verify every changelog entry against its actual release and evidence.
+  verify every changelog entry against its actual release and evidence. Check
+  publishing instructions against `.github/workflows/release.yml`; README links
+  must also work from package-registry pages.
 - [ ] Run `npm run check`, `.venv/bin/python -m pytest tests`, `cargo test` and
   `git diff --check`. Generated artifacts must remain unchanged.
 
