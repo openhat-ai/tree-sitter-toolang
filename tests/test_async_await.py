@@ -171,6 +171,56 @@ def test_incomplete_headers_do_not_borrow_operands_from_the_next_line(binding, s
     assert not valid(root), root
 
 
+@pytest.mark.parametrize("binding", BINDINGS)
+@pytest.mark.parametrize("statement", [
+    "async run", "async run ->", "async run -> Text:",
+    "async run worker extra", "async runworker",
+])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_invalid_async_run_preserves_following_statements_and_declarations(binding, statement, newline):
+    root = parse((
+        f"flow first:\n  {binding}{statement}\n  run after\n\n"
+        "flow second:\n  run finish\n"
+    ).replace("\n", newline))
+    assert not valid(root), root
+    assert [node.text.strip() for node in descendants(root, "flow_name")] == [b"first", b"second"]
+    targets = [node.child_by_field_name("runnable").text.strip()
+               for node in descendants(root, "run_statement")
+               if node.child_by_field_name("runnable")]
+    assert b"after" in targets, root
+    assert b"finish" in targets, root
+
+
+@pytest.mark.parametrize("binding", BINDINGS)
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_incremental_async_header_repair_preserves_following_code(binding, newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    for malformed, repaired in [
+        ("async run", "async run worker"),
+        ("async run ->", "async run -> Text: Research."),
+        ("async run -> Text:", "async run -> Text: Research."),
+        ("async run worker extra", "async run worker"),
+        ("async runworker", "async run worker"),
+    ]:
+        def source(header):
+            return (
+                f"flow first:\n  {binding}{header}\n  run after\n\n"
+                "flow second:\n  run finish\n"
+            ).encode().replace(b"\n", newline)
+
+        previous = source(malformed)
+        tree = parser.parse(previous)
+        for header, expected_valid in [(repaired, True), (malformed, False)]:
+            current = source(header)
+            edit_tree(tree, previous, current)
+            tree = parser.parse(current, tree)
+            root = tree.root_node
+            assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
+            assert valid(root) == expected_valid
+            assert [node.text.strip() for node in descendants(root, "flow_name")] == [b"first", b"second"]
+            previous = current
+
+
 @pytest.mark.parametrize("prefix", [
     "asyncio", "asynchronous", "async_task", "async2",
     "awaited", "awaiter", "await_job", "await2", "Async", "Await", "all",

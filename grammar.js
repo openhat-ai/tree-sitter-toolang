@@ -403,8 +403,21 @@ module.exports = grammar({
       choice(
         seq($._required_space, field("runnable", $.runnable), $.line_end),
         prec.right(seq(optional($._required_space), field("agic", $.inline_agic))),
+        alias($._invalid_modified_run_tail, $.invalid_flow_reserved_statement),
       ),
     ),
+    // Keep a malformed modified run on its own line even after its target
+    // tokens have committed the lexer to structural parsing.
+    _invalid_modified_run_tail: ($) => prec.dynamic(-2, prec(-1, seq(
+      optional($._required_space),
+      choice(
+        seq($.runnable, optional($.text_line)),
+        seq($.arrow, optional(seq($.type, optional($.colon), optional($.text_line)))),
+        seq($.colon, optional($.text_line)),
+        optional($.text_line),
+      ),
+      $.line_end,
+    ))),
     await_statement: ($) => seq(
       $.flow_await_keyword,
       field("operand", $.local_reference),

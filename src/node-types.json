@@ -1166,11 +1166,19 @@
           "named": true
         },
         {
+          "type": "arrow",
+          "named": true
+        },
+        {
           "type": "assign_operator",
           "named": true
         },
         {
           "type": "chore_keyword",
+          "named": true
+        },
+        {
+          "type": "colon",
           "named": true
         },
         {
@@ -1358,6 +1366,10 @@
           "named": true
         },
         {
+          "type": "runnable",
+          "named": true
+        },
+        {
           "type": "service_keyword",
           "named": true
         },
@@ -1379,6 +1391,10 @@
         },
         {
           "type": "thunk_keyword",
+          "named": true
+        },
+        {
+          "type": "type",
           "named": true
         },
         {
@@ -2642,6 +2658,10 @@
       "types": [
         {
           "type": "flow_run_keyword",
+          "named": true
+        },
+        {
+          "type": "invalid_flow_reserved_statement",
           "named": true
         },
         {

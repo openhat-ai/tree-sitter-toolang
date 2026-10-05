@@ -668,6 +668,9 @@ Rules:
   lanes, or other async operators are introduced. The downstream contract starts
   a child owned by the current run; only `let h = async run ...` retains its
   handle. Bare async run and nameless `let async run ...` preserve `_`.
+  Malformed target tails can appear as `invalid_flow_reserved_statement` inside
+  `run_statement`, keeping following statements and declarations intact.
+  Consumers must reject these diagnostic descendants before executing the run.
 - `await h` exposes `await_statement` with a required `operand: local_reference`
   and `flow_await_keyword`. The operand is exactly one snake_name or `_`; local
   lookup and handle validation belong to runtime. It accepts no expressions,

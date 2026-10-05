@@ -1,4 +1,93 @@
 ==================
+Malformed async targets preserve following code
+==================
+flow first:
+  async run
+  run after
+  let job = async run worker extra
+  let async run -> Text:
+  run finish
+
+flow second:
+  run complete
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (run_statement
+            (flow_async_keyword)
+            (flow_run_keyword)
+            (invalid_flow_reserved_statement
+              (line_end
+                (newline))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (run_statement
+              (flow_async_keyword)
+              (flow_run_keyword)
+              (invalid_flow_reserved_statement
+                (runnable
+                  (snake_name))
+                (text_line)
+                (line_end
+                  (newline)))))
+          (let_statement
+            (flow_let_keyword)
+            (run_statement
+              (flow_async_keyword)
+              (flow_run_keyword)
+              (invalid_flow_reserved_statement
+                (arrow)
+                (type
+                  (base_type
+                    (builtin_type)))
+                (colon)
+                (line_end
+                  (newline)))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (blank_line)))))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline))))))))
+
+==================
 Async run targets and binding wrappers
 ==================
 flow launch:
