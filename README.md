@@ -12,6 +12,9 @@ This repository publishes:
 
 ### Python
 
+Building from this branch requires Python 3.11 or newer. The published
+`0.4.0a1` release still supports Python 3.10.
+
 ```bash
 python -m pip install tree-sitter-toolang tree-sitter
 ```
@@ -118,6 +121,12 @@ cargo test
 
 Trusted publishers are configured in GitHub Actions with
 [release.yml](.github/workflows/release.yml).
+
+Python wheels use the `cp311-abi3` tag for compatibility with Python 3.11 and
+later. Both wheel and release workflows build Linux x86_64 and ARM64 wheels
+on separate native runners, covering manylinux and musllinux. macOS universal2
+and Windows AMD64 builds are also retained. Every wheel build runs the full
+Python test suite.
 
 To publish the Rust crate automatically, add the repository secret
 `CRATES_IO_TOKEN`.

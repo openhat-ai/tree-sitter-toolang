@@ -7,7 +7,7 @@ name = "tree-sitter-toolang"
 version = "0.4.0-alpha.1"
 description = "Toolang grammar for tree-sitter"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["incremental", "parsing", "toolang", "tree-sitter"]
@@ -15,7 +15,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -38,13 +37,13 @@ core = ["tree-sitter~=0.25"]
 tests = ["pytest>=8", "tree-sitter~=0.25"]
 
 [tool.cibuildwheel]
-build = "cp310-*"
+build = "cp311-*"
 build-frontend = "build"
 test-requires = ["pytest>=8", "tree-sitter~=0.25"]
 test-command = "pytest {project}/tests"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
+archs = ["native"]
 
 [tool.cibuildwheel.macos]
 archs = ["universal2"]
