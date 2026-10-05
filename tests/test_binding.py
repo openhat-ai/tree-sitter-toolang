@@ -15,6 +15,7 @@ FIXTURE_NAMES = (
     "flows.too",
     "flow_arrays.too",
     "exec.too",
+    "spawn.too",
     "jobs.too",
     "kitchen_sink.too",
     "flow_upgrade.too",
@@ -861,6 +862,7 @@ def test_queries_are_packaged():
     assert "@definition" in tree_sitter_toolang.TAGS_QUERY
     for keyword in (
         "flow_exec_keyword",
+        "flow_spawn_keyword",
         "flow_generate_keyword",
         "flow_reduce_keyword",
         "flow_sort_keyword",

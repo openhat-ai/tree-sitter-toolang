@@ -52,6 +52,7 @@ static const char *const flow_keywords[] = {
   "skill",
   "skills",
   "sort",
+  "spawn",
   "storm",
   "struct",
   "tail",

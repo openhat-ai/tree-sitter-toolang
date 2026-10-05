@@ -1260,6 +1260,10 @@
           "named": true
         },
         {
+          "type": "flow_spawn_keyword",
+          "named": true
+        },
+        {
           "type": "flow_storm_keyword",
           "named": true
         },
@@ -1609,6 +1613,10 @@
           },
           {
             "type": "sort_statement",
+            "named": true
+          },
+          {
+            "type": "spawn_statement",
             "named": true
           }
         ]
@@ -2846,6 +2854,40 @@
     }
   },
   {
+    "type": "spawn_statement",
+    "named": true,
+    "fields": {
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "inline_agic",
+            "named": true
+          },
+          {
+            "type": "runnable",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_spawn_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "statements",
     "named": true,
     "fields": {},
@@ -2927,6 +2969,10 @@
         },
         {
           "type": "sort_statement",
+          "named": true
+        },
+        {
+          "type": "spawn_statement",
           "named": true
         }
       ]
@@ -3552,6 +3598,10 @@
   },
   {
     "type": "flow_sort_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_spawn_keyword",
     "named": true
   },
   {
