@@ -1,13 +1,12 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar, including unreleased changes
-since version 0.4.0-alpha.1.
+This document describes the public Toolang grammar in version 0.4.0-alpha.2.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
 
-## Unreleased Changes
+## Changes in 0.4.0-alpha.2
 
 - Add `spawn R`, `spawn: BODY`, and `spawn -> T: BODY` in flow and repeat
   bodies, with optional `let job =` or nameless `let` wrappers. The public
@@ -19,7 +18,7 @@ feature definitions rather than the current syntax reference.
   keyword prefixes such as `spawned` remain literal.
 - This implements the [approved spawn syntax](docs/plans/flow-spawn.md).
   Execution, handle binding, and canonical formatting require downstream Toolang
-  support. This change introduces no async/await syntax or package version bump.
+  support. This release introduces no async/await syntax.
 
 ## Changes in 0.4.0-alpha.1
 
