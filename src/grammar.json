@@ -3606,8 +3606,22 @@
       "name": "snake_name"
     },
     "local_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "snake_name"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "flow_spawn_keyword"
+          },
+          "named": true,
+          "value": "snake_name"
+        }
+      ]
     },
     "integer_literal": {
       "type": "TOKEN",

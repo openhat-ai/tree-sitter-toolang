@@ -602,6 +602,8 @@ Rules:
   precedence over the BODY form. Malformed spawn or collection heads, including
   removed collection keywords, on the same line cannot fall back to Content.
   For literal text beginning with these words, use an indented Content block.
+  `spawn` remains valid as a local name before `=`: `let spawn = BODY` is a named
+  assignment, while `let spawn R` is a nameless operation binding.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.

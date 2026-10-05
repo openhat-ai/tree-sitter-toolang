@@ -2,6 +2,7 @@
 Spawn targets and binding wrappers
 ==================
 flow launch:
+  let spawn = Launch description.
   spawn worker
   let job = spawn worker
   let spawn worker
@@ -22,6 +23,15 @@ flow launch:
         (newline))
       (flow_body
         (statements
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline))))
           (spawn_statement
             (flow_spawn_keyword)
             (runnable

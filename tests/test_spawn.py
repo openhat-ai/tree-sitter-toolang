@@ -11,6 +11,37 @@ from test_layout_support import descendants, edit_tree, fingerprint, parse, vali
 BINDINGS = ["", "let job = ", "let "]
 
 
+@pytest.mark.parametrize("value,kind", [
+    ("Hello.", "text_inline"),
+    ("\n    spawn remains literal.", "text_inline"),
+    ("run worker", "run_statement"),
+    ("spawn worker", "spawn_statement"),
+])
+@pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
+def test_spawn_remains_a_local_name_before_assignment(value, kind, ending):
+    source = f"flow launch:\n  let spawn = {value}".replace("\n", ending or "\n") + ending
+    root = parse(source)
+    assert valid(root), root
+    wrapper, = descendants(root, "let_statement")
+    name = wrapper.child_by_field_name("name")
+    assert name.type == "local_name"
+    assert name.text.strip() == b"spawn"
+    assert name.named_children[0].type == "snake_name"
+    assert not descendants(name, "flow_spawn_keyword")
+    result = wrapper.child_by_field_name("value" if kind == "text_inline" else "statement")
+    assert result.type == kind
+    assert len(descendants(root, "spawn_statement")) == (kind == "spawn_statement")
+
+
+@pytest.mark.parametrize("value", ["spawn", "spawn a process", "spawn using: Research."])
+def test_spawn_local_name_does_not_hide_a_malformed_spawn_value(value):
+    root = parse(f"flow launch:\n  let spawn = {value}\n")
+    assert not valid(root), root
+    assert not descendants(root, "implicit_run_statement")
+    assert all(node.child_by_field_name("value") is None
+               for node in descendants(root, "let_statement")), root
+
+
 @pytest.mark.parametrize("binding", BINDINGS)
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 @pytest.mark.parametrize("nested", [False, True])
@@ -163,6 +194,8 @@ def test_incremental_spawn_edits_match_fresh_nodes_fields_ranges_and_errors(newl
     bodies = [
         b"run worker", b"spawn worker", b"let job = run worker",
         b"let job = spawn worker", b"let spawn worker",
+        b"let spawn = run worker", b"let spawn = spawn worker",
+        b"let spawn = Hello.", b"let spawn = spawn a process", b"let spawn worker",
         b"let job = spawn", b"let job = spawn a process", b"let job = spawned is text.",
         b"let job = spawn: Research {{_}}.", b"let job = spawn -> Text: Research.",
         b"let job = spawn -> Text:\n    Research {{_}}.",

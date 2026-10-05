@@ -1,4 +1,5 @@
 flow launch:
+  let spawn = Launch description.
   ## Start independent work.
   let job = spawn research # Retain the handle.
   spawn record_audit

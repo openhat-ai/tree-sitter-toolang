@@ -604,7 +604,8 @@ module.exports = grammar({
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
-    local_name: ($) => $.snake_name,
+    // A new statement keyword must not invalidate existing `let spawn = ...`.
+    local_name: ($) => choice($.snake_name, alias($.flow_spawn_keyword, $.snake_name)),
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
