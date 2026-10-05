@@ -1,0 +1,6 @@
+flow research:
+  let job = spawn -> Text[]:
+    List three sources about {{_}}.
+  run: Prepare a summary outline.
+  let sources = await job
+  run: Summarize {{sources}} using this outline: {{_}}.

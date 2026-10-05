@@ -10,7 +10,8 @@ feature definitions rather than the current syntax reference.
 ## Unreleased
 
 - Add `async run` with the existing named and inline run targets, and `await h`
-  for a single local handle reference. Both support named and nameless `let`.
+  for a single local handle from either `async run` or `spawn`. Both support
+  named and nameless `let`.
   This implements the grammar scope of the
   [async run and handle await definition](https://github.com/openhat-ai/toolang/pull/685).
   Await blocks are excluded.
@@ -657,9 +658,10 @@ Rules:
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.
-- `async` is accepted only immediately before `run`. It preserves the public
-  `run_statement` node and its existing `runnable` or `agic` target field, adding
-  the optional `async: flow_async_keyword` field. All three run targets work:
+- `async` is a prefix modifier attached to a statement, currently supported only
+  by `run`. It adds the optional `async: flow_async_keyword` field to
+  `run_statement`, preserving its `runnable` or `agic` target field. There is no
+  separate async statement or wrapper node. All three run targets work:
   `async run R`, `async run: BODY`, and `async run -> T: BODY`. The return type
   describes eventual output. A named target requires a space or tab after `run`;
   `async runworker` cannot split into two tokens. No argument lists, `using`,
@@ -672,6 +674,9 @@ Rules:
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
   The existing `let_statement` fields distinguish the binding destination
   (`name`) from the awaited operand inside `statement`; no new wrapper is added.
+  `local_reference` denotes a read, unlike the binding's `local_name`; only the
+  reference permits `_`. The same node represents async and spawn handles
+  because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single
   required `target` field (`runnable` or `inline_agic`). Named targets are bare
   snake_names and end at the line boundary; no `using`, argument lists, lane/count
@@ -747,16 +752,18 @@ Rules:
   begins with an active or reserved flow word exposes a syntax error or
   `invalid_flow_reserved_statement` instead of implicit `run` text.
 
-### Async and Await Binding Contract
+### Launch and Await Bindings
 
 These are downstream runtime effects; the parser only represents their distinct
 syntax. Only successful statements write destinations; failures preserve existing
-bindings. For async run, success means admission.
+bindings. For async run and spawn, success means admission.
 
 | Source | Successful binding effect |
 | --- | --- |
 | `async run R` or `let async run R` | Launch without retaining a handle; preserve `_`. |
 | `let h = async run R` | Store the handle in `h`; preserve `_`. |
+| `spawn R` or `let spawn R` | Launch an independent root without retaining a handle; preserve every local. |
+| `let h = spawn R` | Store the root's handle in `h`; preserve `_`. |
 | `await h` | Write the complete result to `_`; preserve `h` when `h` is not `_`. |
 | `let x = await h` | Write the result to `x`; preserve other bindings, including `h` and `_` when distinct. |
 | `let await h` | Wait and discard the result; preserve every binding. |
@@ -764,10 +771,27 @@ bindings. For async run, success means admission.
 
 `await _` reads the current handle and replaces `_` on success. Named or nameless
 let can await `_` without replacing it. Explicit `let _ = ...` remains invalid.
-An operand may also name a spawn handle. Unknown or non-handle locals are
-syntactically valid and require runtime validation. `Run` and `Future` are not
+The same await forms and binding effects apply to async-child and spawned-root
+handles. Await reads the complete result, including arrays, and retained handles
+can be awaited repeatedly. Awaiting a spawned root does not make it a child or
+transfer lifetime ownership. Unknown or non-handle locals are syntactically valid
+and require runtime validation. `Run` and `Future` are not
 built-in or reserved type names; an authored `struct Run` remains valid, and
 generic notation such as `Run<Text>` is not source syntax.
+
+Bind a launch before awaiting its handle; `await spawn R` and
+`let result = await spawn R` are invalid nested operations. Bare spawn does not
+put a handle into `_`. For example, this flow starts independent work, prepares
+an outline, and then reads the spawned run's array result into `sources`:
+
+```too
+flow research:
+  let job = spawn -> Text[]:
+    List three sources about {{_}}.
+  run: Prepare a summary outline.
+  let sources = await job
+  run: Summarize {{sources}} using this outline: {{_}}.
+```
 
 ### Shared Directives and Flow Clauses Example
 

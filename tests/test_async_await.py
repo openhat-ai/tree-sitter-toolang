@@ -80,6 +80,50 @@ def test_await_operand_is_distinct_from_result_binding(binding, operand, ending,
     assert_binding(root, statement, binding)
 
 
+@pytest.mark.parametrize("target", [
+    " research", ": Research {{_}}.", ":\n  Research {{_}}.",
+    " -> Text[]: Research {{_}}.", " -> Text[]:\n  Research {{_}}.",
+])
+@pytest.mark.parametrize("name", ["job", "spawn"])
+@pytest.mark.parametrize("nested", [False, True])
+@pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
+def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested, ending):
+    indent = "    " if nested else "  "
+    prefix = "flow launch:\n" + ("  repeat 2 times:\n" if nested else "")
+    source = prefix + indent + f"let {name} = spawn" + target.replace("\n", "\n" + indent)
+    for statement in [f"await {name}", f"let result = await {name}",
+                      f"let await {name}", f"let {name} = await {name}"]:
+        source += "\n" + indent + statement
+    source = source.replace("\n", ending or "\n") + ending
+    root = parse(source)
+    assert valid(root), root
+    launch, = descendants(root, "spawn_statement")
+    assert launch.parent.child_by_field_name("name").text.strip() == name.encode()
+    assert launch.parent.child_by_field_name("statement") == launch
+    assert launch.child_by_field_name("target").type == (
+        "runnable" if target == " research" else "inline_agic"
+    )
+    awaits = descendants(root, "await_statement")
+    assert len(awaits) == 4
+    for index, (statement, destination) in enumerate(zip(awaits, [None, "result", None, name])):
+        assert statement.child_by_field_name("operand").type == "local_reference"
+        assert statement.child_by_field_name("operand").text.strip() == name.encode()
+        if index == 0:
+            assert statement.parent.type == "statements"
+        else:
+            wrapper = statement.parent
+            assert wrapper.type == "let_statement"
+            assert wrapper.child_by_field_name("statement") == statement
+            assert wrapper.child_by_field_name("value") is None
+            local = wrapper.child_by_field_name("name")
+            assert (local.text.strip().decode() if local else None) == destination
+    child_root = parse(source.replace("= spawn", "= async run", 1))
+    assert valid(child_root), child_root
+    assert [str(node) for node in descendants(child_root, "await_statement")] == [
+        str(node) for node in awaits
+    ]
+
+
 @pytest.mark.parametrize("binding", BINDINGS)
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 @pytest.mark.parametrize("statement", [
@@ -92,6 +136,10 @@ def test_await_operand_is_distinct_from_result_binding(binding, operand, ending,
     "async run agent/research", "async run agent.research", "async run \"research\"",
     "async exec research", "async spawn research", "async map using research",
     "async generate 2 using research", "async await h", "async async run research",
+    "async let job = run research", "async reduce using research",
+    "async seek agent research", "async ask: Choose.", "async keep first 1",
+    "async drop first 1", "async sort ascending by score",
+    "async repeat 2 times:\n    run research",
     "async run async research", "async run research async",
     "async runworker", "async runner", "async run_worker", "async run2",
     "run async research", "run research async",
@@ -100,6 +148,8 @@ def test_await_operand_is_distinct_from_result_binding(binding, operand, ending,
     "await 42", 'await "h"', "await H", "await _h", "await _1",
     "await h -> Text", "await h: Result.", "await h\n    Result.",
     "await h in 2 lanes", "await h timeout 2", "await async run research",
+    "await spawn research", "await spawn: Research.", "await spawn -> Text: Research.",
+    "await (spawn research)",
     "await:", "await:\n    run research", "await in 2 lanes:\n    run research",
     "await all h", "await all:\n    run research",
 ])
@@ -243,6 +293,10 @@ def test_incremental_async_await_edits_match_fresh_fields_ranges_and_errors(newl
     tree = parser.parse(previous)
     bodies = [
         b"run research", b"async run research", b"async runresearch", b"let job = async run research",
+        b"let job = spawn research\n  await job",
+        b"let job = spawn -> Text[]:\n    Research.\n  let result = await job",
+        b"let spawn = spawn research\n  let await spawn\n  let spawn = await spawn",
+        b"let job = await spawn research",
         b"let async run research", b"async run: Research.",
         b"let job = async run -> Text:\n    Research {{_}}.",
         b"let job = async run -> Text:", b"let job = async spawn research",

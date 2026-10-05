@@ -289,7 +289,7 @@ module.exports = grammar({
     _flow_operation: ($) =>
       choice(
         $.run_statement,
-        $._async_await_operation,
+        $.await_statement,
         $.spawn_statement,
         $.seek_statement,
         $.ask_statement,
@@ -302,11 +302,9 @@ module.exports = grammar({
     _collection_operation: ($) => choice(
       $.generate_statement, $.map_statement, $.reduce_statement,
     ),
-    _async_await_operation: ($) => choice(
-      alias($._async_run_statement, $.run_statement), $.await_statement,
-    ),
     _bound_operation: ($) => choice(
-      $.run_statement, $.seek_statement, $.ask_statement,
+      // Modified runs must pass the binding guard so async prefixes stay text.
+      alias($._run, $.run_statement), $.seek_statement, $.ask_statement,
       $.keep_statement, $.drop_statement, $.sort_statement, $.repeat_statement,
       seq($._collection_binding_start, choice(
         $._collection_operation,
@@ -317,7 +315,7 @@ module.exports = grammar({
         alias($._invalid_spawn_operation, $.invalid_flow_reserved_statement),
       )),
       seq($._async_await_binding_start, choice(
-        $._async_await_operation,
+        $.run_statement, $.await_statement,
         alias($._invalid_async_await_operation, $.invalid_flow_reserved_statement),
       )),
     ),
@@ -389,34 +387,24 @@ module.exports = grammar({
       optional($.text_line),
       $.line_end,
     ),
-    run_statement: ($) =>
+    run_statement: ($) => choice(
+      $._run,
+      seq($._async_modifier, $._run_after_modifier),
+    ),
+    _async_modifier: ($) => field("async", $.flow_async_keyword),
+    _run: ($) => choice(
+      seq($.flow_run_keyword, field("runnable", $.runnable), $.line_end),
+      prec.right(seq($.flow_run_keyword, field("agic", $.inline_agic))),
+    ),
+    // A modifier consumes the statement-head boundary; keep runworker indivisible.
+    // Preserve the unmodified run's existing target ranges above.
+    _run_after_modifier: ($) => seq(
+      $.flow_run_keyword,
       choice(
-        seq(
-          $.flow_run_keyword,
-          field("runnable", $.runnable),
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_run_keyword,
-          field("agic", $.inline_agic),
-        )),
+        seq($._required_space, field("runnable", $.runnable), $.line_end),
+        prec.right(seq(optional($._required_space), field("agic", $.inline_agic))),
       ),
-    _async_run_statement: ($) =>
-      choice(
-        seq(
-          field("async", $.flow_async_keyword),
-          $.flow_run_keyword,
-          $._required_space,
-          field("runnable", $.runnable),
-          $.line_end,
-        ),
-        prec.right(seq(
-          field("async", $.flow_async_keyword),
-          $.flow_run_keyword,
-          optional($._required_space),
-          field("agic", $.inline_agic),
-        )),
-      ),
+    ),
     await_statement: ($) => seq(
       $.flow_await_keyword,
       field("operand", $.local_reference),

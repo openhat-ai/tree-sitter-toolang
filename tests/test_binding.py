@@ -17,6 +17,7 @@ FIXTURE_NAMES = (
     "exec.too",
     "spawn.too",
     "async_await.too",
+    "spawn_await.too",
     "jobs.too",
     "kitchen_sink.too",
     "flow_upgrade.too",

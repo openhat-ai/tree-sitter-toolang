@@ -280,3 +280,74 @@ flow launch:
               (snake_name))
             (line_end
               (newline))))))))
+
+==================
+Spawn handles use ordinary await binding wrappers
+==================
+flow launch:
+  let job = spawn research
+  await job
+  let result = await job
+  let await job
+  let job = await job
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (spawn_statement
+              (flow_spawn_keyword)
+              (runnable
+                (snake_name))
+              (line_end
+                (newline))))
+          (await_statement
+            (flow_await_keyword)
+            (local_reference
+              (snake_name))
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (await_statement
+              (flow_await_keyword)
+              (local_reference
+                (snake_name))
+              (line_end
+                (newline))))
+          (let_statement
+            (flow_let_keyword)
+            (await_statement
+              (flow_await_keyword)
+              (local_reference
+                (snake_name))
+              (line_end
+                (newline))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (await_statement
+              (flow_await_keyword)
+              (local_reference
+                (snake_name))
+              (line_end
+                (newline)))))))))
