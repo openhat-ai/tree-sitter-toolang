@@ -1,12 +1,12 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar on the current branch,
-including unreleased changes after 0.3.4. The source of truth is [grammar.js](grammar.js), together with the layout scanner in
+This document describes the public Toolang grammar in version 0.4.0-alpha.1.
+The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
 
-## Unreleased Flow Call Syntax
+## Changes in 0.4.0-alpha.1
 
 This breaking syntax change implements the grammar portion of the approved
 [Flow array definition](https://github.com/openhat-ai/toolang/blob/main/docs/plans/flow-array-semantics.md).
