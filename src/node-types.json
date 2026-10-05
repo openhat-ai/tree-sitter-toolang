@@ -817,9 +817,29 @@
     }
   },
   {
-    "type": "gather_statement",
+    "type": "generate_statement",
     "named": true,
     "fields": {
+      "count": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "integer_literal",
+            "named": true
+          }
+        ]
+      },
+      "lanes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "integer_literal",
+            "named": true
+          }
+        ]
+      },
       "runnable": {
         "multiple": false,
         "required": true,
@@ -840,7 +860,19 @@
       "required": true,
       "types": [
         {
-          "type": "flow_gather_keyword",
+          "type": "flow_generate_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_in_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_lane_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_lanes_keyword",
           "named": true
         },
         {
@@ -1156,6 +1188,10 @@
           "named": true
         },
         {
+          "type": "flow_generate_keyword",
+          "named": true
+        },
+        {
           "type": "flow_if_keyword",
           "named": true
         },
@@ -1193,6 +1229,10 @@
         },
         {
           "type": "flow_rank_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_reduce_keyword",
           "named": true
         },
         {
@@ -1536,7 +1576,11 @@
             "named": true
           },
           {
-            "type": "gather_statement",
+            "type": "generate_statement",
+            "named": true
+          },
+          {
+            "type": "invalid_flow_reserved_statement",
             "named": true
           },
           {
@@ -1548,6 +1592,10 @@
             "named": true
           },
           {
+            "type": "reduce_statement",
+            "named": true
+          },
+          {
             "type": "repeat_statement",
             "named": true
           },
@@ -1556,23 +1604,11 @@
             "named": true
           },
           {
-            "type": "scatter_statement",
-            "named": true
-          },
-          {
             "type": "seek_statement",
             "named": true
           },
           {
-            "type": "settle_statement",
-            "named": true
-          },
-          {
             "type": "sort_statement",
-            "named": true
-          },
-          {
-            "type": "storm_statement",
             "named": true
           }
         ]
@@ -2215,6 +2251,82 @@
     }
   },
   {
+    "type": "reduce_statement",
+    "named": true,
+    "fields": {
+      "from": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "text_inline",
+            "named": true
+          }
+        ]
+      },
+      "runnable": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "inline_agic",
+            "named": true
+          },
+          {
+            "type": "runnable",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "colon",
+          "named": true
+        },
+        {
+          "type": "flow_from_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_reduce_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_using_keyword",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "repeat_statement",
     "named": true,
     "fields": {
@@ -2402,44 +2514,6 @@
     }
   },
   {
-    "type": "scatter_statement",
-    "named": true,
-    "fields": {
-      "runnable": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "inline_agic",
-            "named": true
-          },
-          {
-            "type": "runnable",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_scatter_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_using_keyword",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "seek_statement",
     "named": true,
     "fields": {
@@ -2550,82 +2624,6 @@
       "types": [
         {
           "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "settle_statement",
-    "named": true,
-    "fields": {
-      "from": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text_inline",
-            "named": true
-          }
-        ]
-      },
-      "runnable": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "inline_agic",
-            "named": true
-          },
-          {
-            "type": "runnable",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "colon",
-          "named": true
-        },
-        {
-          "type": "flow_from_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_settle_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_using_keyword",
           "named": true
         },
         {
@@ -2872,7 +2870,7 @@
           "named": true
         },
         {
-          "type": "gather_statement",
+          "type": "generate_statement",
           "named": true
         },
         {
@@ -2908,6 +2906,10 @@
           "named": true
         },
         {
+          "type": "reduce_statement",
+          "named": true
+        },
+        {
           "type": "repeat_statement",
           "named": true
         },
@@ -2916,15 +2918,7 @@
           "named": true
         },
         {
-          "type": "scatter_statement",
-          "named": true
-        },
-        {
           "type": "seek_statement",
-          "named": true
-        },
-        {
-          "type": "settle_statement",
           "named": true
         },
         {
@@ -2933,80 +2927,6 @@
         },
         {
           "type": "sort_statement",
-          "named": true
-        },
-        {
-          "type": "storm_statement",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "storm_statement",
-    "named": true,
-    "fields": {
-      "count": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "integer_literal",
-            "named": true
-          }
-        ]
-      },
-      "lanes": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "integer_literal",
-            "named": true
-          }
-        ]
-      },
-      "runnable": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "inline_agic",
-            "named": true
-          },
-          {
-            "type": "runnable",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "flow_in_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_lane_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_lanes_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_storm_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_using_keyword",
-          "named": true
-        },
-        {
-          "type": "line_end",
           "named": true
         }
       ]
@@ -3563,6 +3483,10 @@
     "named": true
   },
   {
+    "type": "flow_generate_keyword",
+    "named": true
+  },
+  {
     "type": "flow_if_keyword",
     "named": true
   },
@@ -3600,6 +3524,10 @@
   },
   {
     "type": "flow_rank_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_reduce_keyword",
     "named": true
   },
   {

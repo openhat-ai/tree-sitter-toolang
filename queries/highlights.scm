@@ -26,8 +26,10 @@
 (flow_ask_keyword) @keyword
 (flow_scatter_keyword) @keyword
 (flow_storm_keyword) @keyword
+(flow_generate_keyword) @keyword
 (flow_gather_keyword) @keyword
 (flow_settle_keyword) @keyword
+(flow_reduce_keyword) @keyword
 (flow_map_keyword) @keyword
 (flow_keep_keyword) @keyword
 (flow_drop_keyword) @keyword

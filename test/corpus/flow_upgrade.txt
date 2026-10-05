@@ -34,8 +34,8 @@ flow research(_):
   context = project
   hands = expand, agic:merge
   handoffs = none
-  scatter using expand
-  settle using merge:
+  run expand
+  reduce using merge:
     from:
       Initial report.
   repeat 5 times windowing 3:
@@ -43,9 +43,9 @@ flow research(_):
     until: Compare {{_}} with {{_1._}} and {{_2._}}.
 
 flow seeded(_):
-  scatter:
+  run -> Text[]:
     Expand {{_}}.
-  settle:
+  reduce:
     Incorporate {{_}} into {{_1._}}.
     from:
       Initial report.
@@ -281,15 +281,14 @@ flow seeded(_):
           (line_end
             (newline)))
         (statements
-          (scatter_statement
-            (flow_scatter_keyword)
-            (flow_using_keyword)
+          (run_statement
+            (flow_run_keyword)
             (runnable
               (snake_name))
             (line_end
               (newline)))
-          (settle_statement
-            (flow_settle_keyword)
+          (reduce_statement
+            (flow_reduce_keyword)
             (flow_using_keyword)
             (runnable
               (snake_name))
@@ -347,9 +346,15 @@ flow seeded(_):
         (newline))
       (flow_body
         (statements
-          (scatter_statement
-            (flow_scatter_keyword)
+          (run_statement
+            (flow_run_keyword)
             (inline_agic
+              (arrow)
+              (type
+                (base_type
+                  (builtin_type))
+                (type_suffix
+                  (array_suffix)))
               (colon)
               (text_inline
                 (text_block
@@ -359,8 +364,8 @@ flow seeded(_):
                     (text_body_line
                       (indented_raw_text)
                       (newline)))))))
-          (settle_statement
-            (flow_settle_keyword)
+          (reduce_statement
+            (flow_reduce_keyword)
             (inline_agic
               (colon)
               (line_end

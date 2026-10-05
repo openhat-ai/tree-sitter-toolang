@@ -13,10 +13,8 @@ STATEMENT_TYPES = {
     "run_statement",
     "seek_statement",
     "ask_statement",
-    "scatter_statement",
-    "storm_statement",
-    "gather_statement",
-    "settle_statement",
+    "generate_statement",
+    "reduce_statement",
     "map_statement",
     "keep_statement",
     "drop_statement",
@@ -92,14 +90,14 @@ def test_flow_fixture_covers_complete_statement_set():
     assert [statement.type for statement in research] == [
         "run_statement",
         "run_statement",
-        "scatter_statement",
-        "scatter_statement",
-        "storm_statement",
-        "storm_statement",
-        "gather_statement",
-        "gather_statement",
-        "settle_statement",
-        "settle_statement",
+        "run_statement",
+        "run_statement",
+        "generate_statement",
+        "generate_statement",
+        "run_statement",
+        "run_statement",
+        "reduce_statement",
+        "reduce_statement",
         "map_statement",
         "map_statement",
         "keep_statement",
@@ -128,7 +126,7 @@ def test_flow_fixture_covers_complete_statement_set():
     runnable_statements = [
         statement
         for index, statement in enumerate(research[2:20], start=2)
-        if index not in {12, 15}
+        if index not in {3, 7, 12, 15}
     ]
     assert all(
         statement.child_by_field_name("runnable") is not None
@@ -156,7 +154,7 @@ def test_flow_fixture_covers_complete_statement_set():
         "repeat_statement",
     ]
     assert _text(source, bindings[0].child_by_field_name("name")).strip() == "jobs"
-    assert bindings[0].child_by_field_name("statement").type == "scatter_statement"
+    assert bindings[0].child_by_field_name("statement").type == "run_statement"
     assert bindings[1].child_by_field_name("name") is None
     assert bindings[1].child_by_field_name("statement").type == "run_statement"
     assert "Prefer primary sources." in _text(
@@ -173,10 +171,10 @@ def test_readable_flow_complements_have_flat_public_fields():
     parser = _parser()
     source = (
         b"flow fields:\n"
-        b"  scatter using generate\n"
-        b"  storm 4 in 2 lanes using sample\n"
-        b"  gather using combine\n"
-        b"  settle using merge\n"
+        b"  run generate\n"
+        b"  generate 4 in 2 lanes using sample\n"
+        b"  run combine\n"
+        b"  reduce using merge\n"
         b"  map in 2 lanes using convert\n"
         b"  keep if useful in 2 lanes\n"
         b"  drop in 2 lanes if duplicate\n"
@@ -191,10 +189,10 @@ def test_readable_flow_complements_have_flat_public_fields():
 
     assert tree.root_node.has_error is False
     assert [statement.type for statement in statements] == [
-        "scatter_statement",
-        "storm_statement",
-        "gather_statement",
-        "settle_statement",
+        "run_statement",
+        "generate_statement",
+        "run_statement",
+        "reduce_statement",
         "map_statement",
         "keep_statement",
         "drop_statement",
@@ -331,32 +329,30 @@ def test_let_uses_equals_for_operation_results_and_content_locals():
     assert legacy.root_node.has_error is True
 
 
-def test_marked_complements_reorder_while_positional_complements_stay_first():
+def test_lane_clauses_precede_collection_targets_and_other_complements_keep_their_order():
     parser = _parser()
     valid = (
         b"flow valid:\n"
         b"  keep last 3\n"
         b"  drop first 2\n"
-        b"  storm 4 in 2 lanes using sample\n"
-        b"  storm 4 using sample in 2 lanes\n"
+        b"  generate 4 in 2 lanes using sample\n"
         b"  map in 2 lanes using convert\n"
-        b"  map using convert in 2 lanes\n"
         b"  keep in 2 lanes if useful\n"
         b"  keep if useful in 2 lanes\n"
         b"  drop in 2 lanes if duplicate\n"
         b"  drop if duplicate in 2 lanes\n"
         b"  sort descending in 2 lanes by score\n"
         b"  sort ascending by score in 1 lane\n"
-        b"  map in 2 lanes using -> Note: Convert this item.\n"
+        b"  map in 2 lanes -> Note: Convert this item.\n"
         b"  keep in 2 lanes if -> Boolean: Check this item.\n"
         b"  sort descending in 2 lanes by -> Number: Score this item.\n"
     )
     invalid = [
-        "storm in 2 lanes 4 using sample",
+        "generate in 2 lanes 4 using sample",
         "sort by score descending",
         "map in 2 lanes in 3 lanes using convert",
         "map using first using second",
-        "map using -> Note in 2 lanes: Convert this item.",
+        "map -> Note in 2 lanes: Convert this item.",
         "sort descending, by score",
         "map in 2 lanes",
         "map in 2 lanes with convert",

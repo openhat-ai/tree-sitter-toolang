@@ -389,16 +389,16 @@ flow research(in: Part[]) -> Answer:
   run normalize
   seek alice review
   ask: Approve the plan?
-  scatter using -> SearchJob:
+  run -> SearchJob[]:
     Create five search jobs.
-  storm 3 in 2 lanes using sample
+  generate 3 in 2 lanes using sample
   keep in 8 lanes if:
     Return true for useful jobs.
   drop last 1
   sort descending in 3 lanes by relevance
-  map in 5 lanes using -> Note:
+  map in 5 lanes -> Note:
     Extract one note.
-  gather using -> Answer:
+  run -> Answer:
     Synthesize notes.
   let draft = run summarize
   repeat 5 times:
@@ -466,16 +466,17 @@ flow research(in: Part[]) -> Answer:
               (text_line)
               (line_end
                 (newline))))
-          (scatter_statement
-            (flow_scatter_keyword)
-            (flow_using_keyword)
+          (run_statement
+            (flow_run_keyword)
             (inline_agic
               (arrow)
               (type
                 (base_type
                   (user_type
                     (type_name
-                      (pascal_name)))))
+                      (pascal_name))))
+                (type_suffix
+                  (array_suffix)))
               (colon)
               (text_inline
                 (text_block
@@ -485,8 +486,8 @@ flow research(in: Part[]) -> Answer:
                     (text_body_line
                       (indented_raw_text)
                       (newline)))))))
-          (storm_statement
-            (flow_storm_keyword)
+          (generate_statement
+            (flow_generate_keyword)
             (integer_literal)
             (flow_in_keyword)
             (integer_literal)
@@ -535,7 +536,6 @@ flow research(in: Part[]) -> Answer:
             (flow_in_keyword)
             (integer_literal)
             (flow_lanes_keyword)
-            (flow_using_keyword)
             (inline_agic
               (arrow)
               (type
@@ -552,9 +552,8 @@ flow research(in: Part[]) -> Answer:
                     (text_body_line
                       (indented_raw_text)
                       (newline)))))))
-          (gather_statement
-            (flow_gather_keyword)
-            (flow_using_keyword)
+          (run_statement
+            (flow_run_keyword)
             (inline_agic
               (arrow)
               (type
