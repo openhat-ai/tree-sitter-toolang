@@ -56,7 +56,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.4.0-alpha.1"
+tree-sitter-toolang = "0.4.0-alpha.2"
 ```
 
 ```rust
@@ -70,14 +70,19 @@ documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
 
+Version 0.4.0-alpha.2 adds named and inline `spawn` targets, including typed
+inline targets and optional let bindings. See the
+[spawn syntax notes](GRAMMAR.md#changes-in-040-alpha2). Execution and handle
+semantics require matching Toolang runtime support.
+
 Version 0.4.0-alpha.1 uses `run` in place of `scatter`/`gather`, renames
 `storm`/`settle` to `generate`/`reduce`, and requires `using` only for named
 collection targets. See the [migration notes](GRAMMAR.md#changes-in-040-alpha1).
 These forms require a matching Toolang runtime release.
 
 Install this prerelease explicitly with
-`python -m pip install tree-sitter-toolang==0.4.0a1` or
-`npm install tree-sitter-toolang@0.4.0-alpha.1`.
+`python -m pip install tree-sitter-toolang==0.4.0a2` or
+`npm install tree-sitter-toolang@0.4.0-alpha.2`.
 
 Version 0.3.4 adds named and inline `exec` statements in flows and repeats.
 See the [Flow reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#flow)
