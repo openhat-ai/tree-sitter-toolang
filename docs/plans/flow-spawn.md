@@ -95,17 +95,15 @@ Reject spawn with a missing target/body; `spawn using R`; `spawn using: BODY`;
 after spawn. Apply the same rules after `let` and `let name =`. A valid named
 target may not acquire a second target or inline body.
 
-Keywords are case-sensitive. Keep `Spawn a process`, `SPAWN a process`, and
-prefixes such as `spawned`, `spawner`, and `spawn_task` as ordinary text, including
-after `let name =`. Keep spawn literal inside explicit text bodies,
+Keep prefixes such as `spawned`, `spawner`, and `spawn_task` as ordinary text,
+including after `let name =`. Keep spawn literal inside explicit text bodies,
 Agic messages, comments, and templates. Do not reserve async/await/all or change
 their existing prose behavior in this PR; `async spawn ...` is not a spawn
 operation. Later async/await work owns those keyword boundaries.
 
-This reservation breaks implicit prose starting with the complete spawn keyword.
-Use `run: spawn a process` for an implicit-run prompt. Preserve a literal let
-value by moving it into the existing indented text form, or capitalize the first
-word when that text is intended:
+Authoring advice (non-normative): this reservation affects prose starting with
+lowercase spawn. A user intending literal text could use an existing indented
+block or choose capitalized wording, for example:
 
 ```too
 let text =
@@ -114,9 +112,8 @@ let text =
 let text = Spawn a process
 ```
 
-The block preserves the lowercase content exactly; the second form stores the
-capitalized text. Formatting must preserve that distinction and must not collapse
-the block into a same-line value beginning with reserved lowercase spawn.
+These are writing suggestions using existing text syntax, not new grammar forms,
+acceptance requirements, or additional formatter behavior for this feature.
 
 ## Runtime Adoption Boundary
 
@@ -160,14 +157,11 @@ a consequence of parsing spawn.
    local for named let, and canonically formats both unbound forms as bare spawn.
 2. Reject every malformed/reserved form above in all three bindings, including
    `let text = spawn a process`, named-let text fallback, and partial edits.
-   Accept the block and capitalized-text alternatives above as literal values;
-   preserve their content and validity through formatting. Keep keyword prefixes
-   and explicit text/Agic bodies literal. Undefined/same-name targets still parse
-   normally.
+   Keep keyword prefixes and explicit text/Agic bodies literal.
+   Undefined/same-name targets still parse normally.
 3. Fresh and incremental parsing must agree on node kinds, fields, ranges, and
    errors when switching run/spawn, target forms, bindings, indentation, malformed
-   syntax, and prose, including edits between lowercase spawn, capitalized text,
-   and text blocks. Highlight only real spawn keywords.
+   syntax, and prose. Highlight only real spawn keywords.
 4. Existing run/exec/collection/repeat and let corpus behavior stays unchanged.
    Inspect generated node-types and package bindings; generated files reproduce.
    Run `npm run check`, `.venv/bin/python -m pytest tests`, and `cargo test`.
