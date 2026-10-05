@@ -12,7 +12,7 @@ from setuptools.command.egg_info import egg_info
 
 
 PACKAGE_NAME = "tree_sitter_toolang"
-MINIMUM_ABI = "0x030A0000"
+MINIMUM_ABI = "0x030B0000"
 
 
 class Build(build):
@@ -44,7 +44,7 @@ class BdistWheel(bdist_wheel):
     def get_tag(self):
         python, abi, platform = super().get_tag()
         if python.startswith("cp"):
-            python, abi = "cp310", "abi3"
+            python, abi = "cp311", "abi3"
         return python, abi, platform
 
 
