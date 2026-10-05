@@ -482,7 +482,7 @@ _lanes_complement ::= "in" _one_integer_literal "lane"
 _repeat_count_complement ::= _one_integer_literal "time"
                            | _other_integer_literal "times"
 
-_named_using_complement  ::= "using" runnable
+_named_using_complement  ::= "using" horizontal_space runnable
 _named_if_complement     ::= "if" runnable
 _inline_if_complement    ::= "if" inline_agic
 _named_by_complement     ::= "by" runnable

@@ -79,7 +79,7 @@ for syntax and CST fields.
 Version 0.3.3 shares configuration directives between agics and flows, removes
 the count from `scatter`, adds optional `from:` initializers to `settle`, and
 adds `windowing N` to `repeat`. See the
-[current syntax and migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#changes-in-033).
+[0.3.3 migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#changes-in-033).
 
 Documentation comments use `#@` for modules and `##` for items, including
 `## @param NAME DESCRIPTION`. The legacy `##!` module marker remains accepted.
