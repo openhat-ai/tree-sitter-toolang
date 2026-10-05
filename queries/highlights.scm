@@ -21,6 +21,7 @@
 (flow_keyword) @keyword
 (flow_run_keyword) @keyword
 (flow_exec_keyword) @keyword
+(flow_spawn_keyword) @keyword
 (flow_let_keyword) @keyword
 (flow_seek_keyword) @keyword
 (flow_ask_keyword) @keyword

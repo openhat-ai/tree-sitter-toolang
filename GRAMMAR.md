@@ -1,10 +1,25 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar in version 0.4.0-alpha.1.
+This document describes the public Toolang grammar, including unreleased changes
+since version 0.4.0-alpha.1.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
+
+## Unreleased Changes
+
+- Add `spawn R`, `spawn: BODY`, and `spawn -> T: BODY` in flow and repeat
+  bodies, with optional `let job =` or nameless `let` wrappers. The public
+  `spawn_statement.target` field is a required `runnable | inline_agic` union;
+  `flow_spawn_keyword` identifies the keyword.
+- Reserve complete lowercase `spawn` at statement boundaries and after let
+  prefixes. Existing prose such as `let text = spawn a process` now reports a
+  syntax error instead of becoming Content. Existing explicit text bodies and
+  keyword prefixes such as `spawned` remain literal.
+- This implements the [approved spawn syntax](docs/plans/flow-spawn.md).
+  Execution, handle binding, and canonical formatting require downstream Toolang
+  support. This change introduces no async/await syntax or package version bump.
 
 ## Changes in 0.4.0-alpha.1
 
@@ -27,8 +42,8 @@ execution or stored values.
   cannot become implicit runs or same-line `let name = BODY` text. Explicit
   `run:` bodies and indented Content bindings can still contain literal text.
 - `run`, `exec`, `seek`, `keep`/`drop` predicates, `sort`, and `repeat` retain
-  their target and clause syntax. This grammar adds no async, await, or spawn
-  syntax and no `produce` or `gen` alias.
+  their target and clause syntax. The collection migration added no async,
+  await, or spawn syntax and no `produce` or `gen` alias.
 
 | Previous source | Replacement |
 | --- | --- |
@@ -447,6 +462,7 @@ flow_statement ::= exec_statement
                  | implicit_run_statement
 
 flow_operation ::= run_statement
+                 | spawn_statement
                  | seek_statement
                  | ask_statement
                  | generate_statement
@@ -467,6 +483,9 @@ exec_statement ::= "exec" runnable line_end
 
 run_statement ::= "run" runnable line_end
                 | "run" inline_agic
+
+spawn_statement ::= "spawn" runnable line_end
+                  | "spawn" inline_agic
 
 seek_statement ::= "seek" agent runnable line_end
                  | "seek" agent inline_agic
@@ -535,7 +554,7 @@ inline_agic_body ::= ":" text_inline
 runnable ::= snake_name
 agent ::= snake_name
 
-_active_statement_keyword ::= "let" | "exec" | "run" | "seek" | "ask"
+_active_statement_keyword ::= "let" | "exec" | "run" | "spawn" | "seek" | "ask"
                             | "generate" | "reduce" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
@@ -580,9 +599,11 @@ Rules:
   compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form. Malformed or removed collection heads on the
-  same line cannot fall back to Content. For literal text beginning
-  with these words, use an indented Content block.
+  precedence over the BODY form. Malformed spawn or collection heads, including
+  removed collection keywords, on the same line cannot fall back to Content.
+  For literal text beginning with these words, use an indented Content block.
+  `spawn` remains valid as a local name before `=`: `let spawn = BODY` is a named
+  assignment, while `let spawn R` is a nameless operation binding.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
@@ -595,6 +616,17 @@ Rules:
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.
+- `spawn` uses the same named and inline target forms as `run`, exposing a single
+  required `target` field (`runnable` or `inline_agic`). Named targets are bare
+  snake_names and end at the line boundary; no `using`, argument lists, lane/count
+  clauses, or async modifiers are accepted. Inline targets reuse text bodies,
+  templates, and optional return types; the return type describes the target's
+  eventual output, not its launch handle.
+  The downstream runtime contract starts an independent root run: bare spawn and
+  `let spawn ...` preserve `_`, while `let job = spawn ...` retains the handle.
+  Both unbound forms retain their distinct CST; canonical formatting and handle
+  semantics belong to Toolang. The grammar does not resolve targets, choose
+  threads, execute work, or add Future types or await syntax.
 - `generate`, `map`, and `reduce` require `using` before a named runnable,
   separated from its name by at least one space or tab. `usingworker` is a
   complete name, not a connector followed by `worker`. Inline runnables must

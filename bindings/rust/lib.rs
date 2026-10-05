@@ -51,6 +51,49 @@ mod tests {
     }
 
     #[test]
+    fn spawn_targets_and_bindings_are_available() {
+        let language = super::LANGUAGE.into();
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&language).unwrap();
+        let source = "flow launch:\n  spawn worker\n  let job = spawn -> Text: Research.\n";
+        let tree = parser.parse(source, None).unwrap();
+        assert!(!tree.root_node().has_error());
+        let statements = tree
+            .root_node()
+            .named_child(0)
+            .unwrap()
+            .named_child(0)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap()
+            .named_child(0)
+            .unwrap();
+        let bare = statements.named_child(0).unwrap();
+        assert_eq!(bare.kind(), "spawn_statement");
+        assert_eq!(
+            bare.child_by_field_name("target").unwrap().kind(),
+            "runnable"
+        );
+        let bound = statements.named_child(1).unwrap();
+        assert_eq!(bound.kind(), "let_statement");
+        assert_eq!(
+            bound
+                .child_by_field_name("name")
+                .unwrap()
+                .utf8_text(source.as_bytes())
+                .unwrap()
+                .trim(),
+            "job"
+        );
+        let spawn = bound.child_by_field_name("statement").unwrap();
+        assert_eq!(spawn.kind(), "spawn_statement");
+        assert_eq!(
+            spawn.child_by_field_name("target").unwrap().kind(),
+            "inline_agic"
+        );
+    }
+
+    #[test]
     fn can_load_language() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

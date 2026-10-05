@@ -32,6 +32,7 @@ enum Token {
   ERROR_LINE,
   EXEC_BINDING_START,
   COLLECTION_BINDING_START,
+  SPAWN_BINDING_START,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -340,9 +341,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   if (!at_start) {
-    if (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START]) {
-      // Commit collection heads after `let name =` to operation parsing, even
-      // when malformed. A same-line Content fallback would hide migration errors.
+    if (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
+        valid[SPAWN_BINDING_START]) {
+      // Commit reserved heads after let bindings to operation parsing, even
+      // when malformed. A same-line Content fallback would hide syntax errors.
       char word[32] = {0};
       unsigned length = 0;
       while (word_character(lexer->lookahead)) {
@@ -353,6 +355,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       }
       if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
         return emit(scanner, lexer, EXEC_BINDING_START);
+      }
+      if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
+        return emit(scanner, lexer, SPAWN_BINDING_START);
       }
       if (valid[COLLECTION_BINDING_START] &&
           keyword(word, collection_binding_keywords,

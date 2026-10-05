@@ -1,0 +1,23 @@
+flow launch:
+  let spawn = Launch description.
+  ## Start independent work.
+  let job = spawn research # Retain the handle.
+  spawn record_audit
+  repeat 2 times:
+    repeat 3 times:
+      let nested_job = spawn -> Text:
+        Research {{_}}.
+        spawn remains literal inside inline text.
+    let spawn: Record the attempt.
+    spawn record_audit
+    run continue_work
+    until: Ready.
+  run:
+    spawn remains literal inside explicit text.
+    {{spawn}}
+  spawned and spawner remain ordinary prose.
+
+agic research:
+  spawn remains literal in an unroled message.
+  user: spawn remains literal in a roled message.
+  # spawn is also literal in a comment.

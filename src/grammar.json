@@ -1718,6 +1718,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "spawn_statement"
+        },
+        {
+          "type": "SYMBOL",
           "name": "seek_statement"
         },
         {
@@ -1820,6 +1824,33 @@
               ]
             }
           ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_spawn_binding_start"
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "spawn_statement"
+                },
+                {
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_invalid_spawn_operation"
+                  },
+                  "named": true,
+                  "value": "invalid_flow_reserved_statement"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1832,6 +1863,35 @@
           {
             "type": "SYMBOL",
             "name": "_collection_binding_word"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "text_line"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "SYMBOL",
+            "name": "line_end"
+          }
+        ]
+      }
+    },
+    "_invalid_spawn_operation": {
+      "type": "PREC_DYNAMIC",
+      "value": -2,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "flow_spawn_keyword"
           },
           {
             "type": "CHOICE",
@@ -1969,6 +2029,53 @@
               {
                 "type": "SYMBOL",
                 "name": "flow_exec_keyword"
+              },
+              {
+                "type": "FIELD",
+                "name": "target",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "inline_agic"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "spawn_statement": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "flow_spawn_keyword"
+            },
+            {
+              "type": "FIELD",
+              "name": "target",
+              "content": {
+                "type": "SYMBOL",
+                "name": "runnable"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "line_end"
+            }
+          ]
+        },
+        {
+          "type": "PREC_RIGHT",
+          "value": 0,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "flow_spawn_keyword"
               },
               {
                 "type": "FIELD",
@@ -3499,8 +3606,22 @@
       "name": "snake_name"
     },
     "local_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "snake_name"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "flow_spawn_keyword"
+          },
+          "named": true,
+          "value": "snake_name"
+        }
+      ]
     },
     "integer_literal": {
       "type": "TOKEN",
@@ -4265,6 +4386,10 @@
       "type": "STRING",
       "value": "exec"
     },
+    "flow_spawn_keyword": {
+      "type": "STRING",
+      "value": "spawn"
+    },
     "flow_let_keyword": {
       "type": "STRING",
       "value": "let"
@@ -4419,6 +4544,10 @@
         {
           "type": "SYMBOL",
           "name": "flow_exec_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_spawn_keyword"
         },
         {
           "type": "SYMBOL",
@@ -4868,6 +4997,10 @@
     {
       "type": "SYMBOL",
       "name": "_collection_binding_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_spawn_binding_start"
     }
   ],
   "inline": [],

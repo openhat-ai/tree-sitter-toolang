@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { deepStrictEqual } from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,9 +8,22 @@ import { spawnSync } from "node:child_process";
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
 const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too");
+const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
+
+const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
+deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, {
+  target: {
+    multiple: false,
+    required: true,
+    types: [
+      { type: "inline_agic", named: true },
+      { type: "runnable", named: true },
+    ],
+  },
+});
 
 function runCli(...args) {
   const result = spawnSync("npx", ["tree-sitter", ...args], {
@@ -53,7 +67,7 @@ try {
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
-    join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE);
+    join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -88,6 +102,21 @@ try {
   ]) {
     if (!execHtml.includes(expected)) {
       throw new Error(`Exec highlighting was missing: ${expected}\n${execHtml}`);
+    }
+  }
+
+  const spawnHtml = runCli(
+    "highlight", "--config-path", configPath, "--html", SPAWN_FIXTURE,
+  );
+  for (const expected of [
+    "<span style='color: #334455'>spawn</span>",
+    "<span style='color: #556677'>        spawn remains literal inside inline text.</span>",
+    "<span style='color: #556677'>    spawn remains literal inside explicit text.</span>",
+    "<span style='color: #556677'>  spawn remains literal in an unroled message.</span>",
+    "<span style='color: #112233'># spawn is also literal in a comment.</span>",
+  ]) {
+    if (!spawnHtml.includes(expected)) {
+      throw new Error(`Spawn highlighting was missing: ${expected}\n${spawnHtml}`);
     }
   }
 

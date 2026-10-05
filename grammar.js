@@ -9,7 +9,7 @@ module.exports = grammar({
     $._indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
-    $._exec_binding_start, $._collection_binding_start,
+    $._exec_binding_start, $._collection_binding_start, $._spawn_binding_start,
   ],
   rules: {
     source_file: ($) =>
@@ -286,6 +286,7 @@ module.exports = grammar({
     _flow_operation: ($) =>
       choice(
         $.run_statement,
+        $.spawn_statement,
         $.seek_statement,
         $.ask_statement,
         $._collection_operation,
@@ -304,9 +305,16 @@ module.exports = grammar({
         $._collection_operation,
         alias($._invalid_collection_operation, $.invalid_flow_reserved_statement),
       )),
+      seq($._spawn_binding_start, choice(
+        $.spawn_statement,
+        alias($._invalid_spawn_operation, $.invalid_flow_reserved_statement),
+      )),
     ),
     _invalid_collection_operation: ($) => prec.dynamic(-2, seq(
       $._collection_binding_word, optional($.text_line), $.line_end,
+    )),
+    _invalid_spawn_operation: ($) => prec.dynamic(-2, seq(
+      $.flow_spawn_keyword, optional($.text_line), $.line_end,
     )),
     let_statement: ($) =>
       choice(
@@ -336,6 +344,18 @@ module.exports = grammar({
         ),
         prec.right(seq(
           $.flow_exec_keyword,
+          field("target", $.inline_agic),
+        )),
+      ),
+    spawn_statement: ($) =>
+      choice(
+        seq(
+          $.flow_spawn_keyword,
+          field("target", $.runnable),
+          $.line_end,
+        ),
+        prec.right(seq(
+          $.flow_spawn_keyword,
           field("target", $.inline_agic),
         )),
       ),
@@ -584,7 +604,8 @@ module.exports = grammar({
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
-    local_name: ($) => $.snake_name,
+    // A new statement keyword must not invalidate existing `let spawn = ...`.
+    local_name: ($) => choice($.snake_name, alias($.flow_spawn_keyword, $.snake_name)),
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
@@ -654,6 +675,7 @@ module.exports = grammar({
     pass_keyword: () => "pass",
     flow_run_keyword: () => "run",
     flow_exec_keyword: () => "exec",
+    flow_spawn_keyword: () => "spawn",
     flow_let_keyword: () => "let",
     flow_seek_keyword: () => "seek",
     flow_ask_keyword: () => "ask",
@@ -694,6 +716,7 @@ module.exports = grammar({
     _flow_reserved_word: ($) =>
       choice(
         $.flow_exec_keyword,
+        $.flow_spawn_keyword,
         $.flow_let_keyword,
         $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
         $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
