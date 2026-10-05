@@ -12,8 +12,10 @@ fixtures, and generated artifacts. The
 [runtime definition](https://github.com/openhat-ai/toolang/pull/687) owns Flow and
 Agic execution, inputs, receipts, authorization, controls, and lifecycle.
 
-Exclude async/await syntax, Future types, new directives, runtime tool arguments,
-and execution behavior. Spawn requires neither async-run nor await-block grammar.
+Exclude async/await syntax, Future types, thread-selection syntax, new directives,
+runtime tool arguments, and execution behavior. The runtime definition chooses a
+new empty thread; thread creation and executor/run lifetimes are not parser rules.
+Spawn requires neither async-run nor await-block grammar.
 Package versioning/publication remains a separate PR after implementation.
 
 ## Verified Baseline
