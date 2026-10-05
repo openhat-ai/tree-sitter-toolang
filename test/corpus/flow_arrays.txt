@@ -1,0 +1,263 @@
+==================
+Collection target fields and bindings
+==================
+flow work:
+  generate 0 using sample
+  let batches = generate 2 in 1 lane -> Text[]: Produce one batch.
+  map in 2 lanes using transform
+  let map -> Text: Transform {{_}}.
+  let report = reduce using merge:
+    from: Initial report.
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (generate_statement
+            (flow_generate_keyword)
+            (integer_literal)
+            (flow_using_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (generate_statement
+              (flow_generate_keyword)
+              (integer_literal)
+              (flow_in_keyword)
+              (integer_literal)
+              (flow_lane_keyword)
+              (inline_agic
+                (arrow)
+                (type
+                  (base_type
+                    (builtin_type))
+                  (type_suffix
+                    (array_suffix)))
+                (colon)
+                (text_inline
+                  (text_line)
+                  (line_end
+                    (newline))))))
+          (map_statement
+            (flow_map_keyword)
+            (flow_in_keyword)
+            (integer_literal)
+            (flow_lanes_keyword)
+            (flow_using_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (map_statement
+              (flow_map_keyword)
+              (inline_agic
+                (arrow)
+                (type
+                  (base_type
+                    (builtin_type)))
+                (colon)
+                (text_inline
+                  (text_line)
+                  (line_end
+                    (newline))))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (reduce_statement
+              (flow_reduce_keyword)
+              (flow_using_keyword)
+              (runnable
+                (snake_name))
+              (colon)
+              (line_end
+                (newline))
+              (flow_from_keyword)
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))))))))
+
+==================
+Inline reducer and initializer in a binding
+==================
+flow work:
+  let report = reduce -> Text:
+    Merge {{_}} with {{_1._}}.
+    from: Initial report.
+  run publish
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (reduce_statement
+              (flow_reduce_keyword)
+              (inline_agic
+                (arrow)
+                (type
+                  (base_type
+                    (builtin_type)))
+                (colon)
+                (line_end
+                  (newline))
+                (text_body
+                  (text_body_line
+                    (indented_raw_text)
+                    (newline))))
+              (flow_from_keyword)
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline)))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline))))))))
+
+==================
+Removed collection heads remain diagnostic nodes
+==================
+flow work:
+  scatter using expand
+  gather using merge
+  storm 2 using sample
+  settle using merge
+  let old_items = scatter using expand
+  let old_report = gather using merge
+  let old_samples = storm 2 using sample
+  let old_result = settle using merge
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (invalid_flow_reserved_statement
+            (flow_scatter_keyword)
+            (text_line)
+            (line_end
+              (newline)))
+          (invalid_flow_reserved_statement
+            (flow_gather_keyword)
+            (text_line)
+            (line_end
+              (newline)))
+          (invalid_flow_reserved_statement
+            (flow_storm_keyword)
+            (text_line)
+            (line_end
+              (newline)))
+          (invalid_flow_reserved_statement
+            (flow_settle_keyword)
+            (text_line)
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (invalid_flow_reserved_statement
+              (flow_scatter_keyword)
+              (text_line)
+              (line_end
+                (newline))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (invalid_flow_reserved_statement
+              (flow_gather_keyword)
+              (text_line)
+              (line_end
+                (newline))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (invalid_flow_reserved_statement
+              (flow_storm_keyword)
+              (text_line)
+              (line_end
+                (newline))))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (invalid_flow_reserved_statement
+              (flow_settle_keyword)
+              (text_line)
+              (line_end
+                (newline)))))))))
+
+==================
+Inline using in a binding exposes an error
+==================
+flow work:
+  let items = map using: Transform.
+
+---
+
+(source_file
+  (ERROR
+    (flow_keyword)
+    (flow_name
+      (snake_name))
+    (colon)
+    (line_end
+      (newline))
+    (flow_let_keyword)
+    (local_name
+      (snake_name))
+    (assign_operator)
+    (flow_map_keyword)
+    (flow_using_keyword)
+    (blank_line)))

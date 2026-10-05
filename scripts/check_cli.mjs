@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
+const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
@@ -52,7 +53,7 @@ try {
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
-    join(REPO_ROOT, "tests", "fixtures", "exec.too"));
+    join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -87,6 +88,16 @@ try {
   ]) {
     if (!execHtml.includes(expected)) {
       throw new Error(`Exec highlighting was missing: ${expected}\n${execHtml}`);
+    }
+  }
+
+  const collectionHtml = runCli(
+    "highlight", "--config-path", configPath, "--html", COLLECTION_FIXTURE,
+  );
+  for (const keyword of ["generate", "reduce", "map", "using", "from"]) {
+    const expected = `<span style='color: #334455'>${keyword}</span>`;
+    if (!collectionHtml.includes(expected)) {
+      throw new Error(`Collection highlighting was missing: ${expected}\n${collectionHtml}`);
     }
   }
 

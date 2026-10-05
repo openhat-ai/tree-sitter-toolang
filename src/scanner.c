@@ -22,8 +22,8 @@ enum Token {
   DIRECTIVE_START,
   UNTIL_START,
   FROM_START,
-  SETTLE_INDENT,
-  SETTLE_TEXT_START,
+  REDUCE_INDENT,
+  REDUCE_TEXT_START,
   TEXT_INDENT,
   CAP_TEXT_START,
   RAW_TEXT,
@@ -31,9 +31,10 @@ enum Token {
   AGIC_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
+  COLLECTION_BINDING_START,
 };
 
-enum Mode { STRUCTURAL, TEXT, SETTLE_TEXT };
+enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
 enum Prefix { NONE, SPACES, TABS, MIXED };
 
 typedef struct {
@@ -339,15 +340,24 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   if (!at_start) {
-    if (valid[EXEC_BINDING_START]) {
-      // Reserve the complete token after `let [name =]`, not text prefixes.
-      const char *expected = "exec";
-      while (*expected && lexer->lookahead == *expected) {
+    if (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START]) {
+      // Commit collection heads after `let name =` to operation parsing, even
+      // when malformed. A same-line Content fallback would hide migration errors.
+      char word[32] = {0};
+      unsigned length = 0;
+      while (word_character(lexer->lookahead)) {
+        if (length < sizeof(word) - 1) {
+          word[length++] = (char)lexer->lookahead;
+        }
         advance(lexer);
-        expected++;
       }
-      if (!*expected && !word_character(lexer->lookahead)) {
+      if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
         return emit(scanner, lexer, EXEC_BINDING_START);
+      }
+      if (valid[COLLECTION_BINDING_START] &&
+          keyword(word, collection_binding_keywords,
+                  sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
+        return emit(scanner, lexer, COLLECTION_BINDING_START);
       }
     }
     return false;
@@ -355,16 +365,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
   bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
-  // Settle opens a structural clause scope, then a literal reducer at the same
+  // Reduce opens a structural clause scope, then a literal reducer at the same
   // baseline. Preserve leading Markdown through both transitions.
-  bool opening_settle = valid[SETTLE_INDENT] && indent.column > frame.column;
-  bool starting_settle_text = valid[SETTLE_TEXT_START] && indent.column == frame.column &&
+  bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
+  bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
                              indent.prefix == frame.prefix;
   if (frame.mode != STRUCTURAL && !literal && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
   if (lexer->lookahead == '#' && !literal && !opening_text &&
-      !opening_settle && !starting_settle_text) {
+      !opening_reduce && !starting_reduce_text) {
     if (!valid[COMMENT_START] && !valid[DEDENT]) {
       return false;
     }
@@ -391,8 +401,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (!scanner->line_started && opening_text) {
     return push(scanner, lexer, indent, TEXT, TEXT_INDENT);
   }
-  if (!scanner->line_started && opening_settle) {
-    return push(scanner, lexer, indent, STRUCTURAL, SETTLE_INDENT);
+  if (!scanner->line_started && opening_reduce) {
+    return push(scanner, lexer, indent, STRUCTURAL, REDUCE_INDENT);
   }
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {
     return push(scanner, lexer, indent, STRUCTURAL, INDENT);
@@ -411,15 +421,15 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     advance(lexer);
   }
 
-  if (frame.mode == SETTLE_TEXT && indent.column == frame.column &&
+  if (frame.mode == REDUCE_TEXT && indent.column == frame.column &&
       strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
-  if (valid[SETTLE_TEXT_START] && !scanner->line_started && at_baseline &&
+  if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
       strcmp(word, "from") != 0) {
-    return push(scanner, lexer, indent, SETTLE_TEXT, SETTLE_TEXT_START);
+    return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);
   }
   if (valid[CAP_TEXT_START] && !scanner->line_started && at_baseline) {
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {

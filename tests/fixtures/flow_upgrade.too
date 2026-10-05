@@ -30,8 +30,8 @@ flow research(_):
   context = project
   hands = expand, agic:merge
   handoffs = none
-  scatter using expand
-  settle using merge:
+  run expand
+  reduce using merge:
     from:
       Initial report.
   repeat 5 times windowing 3:
@@ -39,9 +39,9 @@ flow research(_):
     until: Compare {{_}} with {{_1._}} and {{_2._}}.
 
 flow seeded(_):
-  scatter:
+  run -> Text[]:
     Expand {{_}}.
-  settle:
+  reduce:
     Incorporate {{_}} into {{_1._}}.
     from:
       Initial report.

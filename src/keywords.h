@@ -19,6 +19,7 @@ static const char *const flow_keywords[] = {
   "fold",
   "from",
   "gather",
+  "generate",
   "handoffs",
   "hands",
   "head",
@@ -40,6 +41,7 @@ static const char *const flow_keywords[] = {
   "psyches",
   "rank",
   "recall",
+  "reduce",
   "repeat",
   "run",
   "scatter",
@@ -100,4 +102,13 @@ static const char *const directive_keywords[] = {
   "services",
   "skills",
   "tools",
+};
+static const char *const collection_binding_keywords[] = {
+  "gather",
+  "generate",
+  "map",
+  "reduce",
+  "scatter",
+  "settle",
+  "storm",
 };

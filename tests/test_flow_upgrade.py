@@ -51,29 +51,29 @@ def test_malformed_directives_cannot_become_prose(kind, selection):
 
 
 
-@pytest.mark.parametrize("head", ["settle:", "settle using:", "settle -> Text:"])
+@pytest.mark.parametrize("head", ["reduce:", "reduce -> Text:"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 @pytest.mark.parametrize("indent", ["  ", "\t"])
-def test_settle_fields_separate_reducer_and_initializer(head, newline, indent):
+def test_reduce_fields_separate_reducer_and_initializer(head, newline, indent):
     source = (f"flow work:\n{indent}{head}\n{indent*2}Combine {{{{_}}}} with {{{{_1._}}}}.\n"
               f"{indent*3}from: literal nested text\n\n{indent*2}from:\n{indent*3}Seed.\n"
               f"{indent}run next\n").replace("\n", newline)
     root = parse(source)
     assert valid(root)
-    settle = descendants(root, "settle_statement")[0]
-    reducer = settle.child_by_field_name("runnable")
+    reduce = descendants(root, "reduce_statement")[0]
+    reducer = reduce.child_by_field_name("runnable")
     assert reducer.type == "inline_agic"
     body = reducer.child_by_field_name("body").text
     assert b"from: literal nested text" in body
     assert b"Seed." not in body
-    assert b"Seed." in settle.child_by_field_name("from").text
+    assert b"Seed." in reduce.child_by_field_name("from").text
     assert len(descendants(root, "run_statement")) == 1
 
 
 @pytest.mark.parametrize("statement", [
-    "settle using merge", "settle: Combine {{_}}.", "settle:\n    Combine {{_}}.",
-    "settle using merge:\n    from: Seed.", "settle using merge:\n    from:\n      Seed.",
-    "scatter using generate", "scatter:\n    Generate items.", "storm 5 using generate",
+    "reduce using merge", "reduce: Combine {{_}}.", "reduce:\n    Combine {{_}}.",
+    "reduce using merge:\n    from: Seed.", "reduce using merge:\n    from:\n      Seed.",
+    "run generate", "run -> Text[]:\n    Generate items.", "generate 5 using generate",
     "repeat 5 times windowing 3:\n    run improve\n    until: Stable.",
     "repeat windowing 2:\n    run improve\n    until: Stable.",
     "repeat 5 times windowing 1:\n    run improve",
@@ -83,21 +83,21 @@ def test_flow_upgrade_forms(statement):
 
 
 @pytest.mark.parametrize("statement", [
-    "scatter 3 using generate", "settle using merge:\n    from:",
-    "settle:\n    from: Missing reducer.", "settle:\n    Merge.\n    from Seed.",
-    "settle using merge:\n    from: Seed.\n    from: Duplicate.",
-    "settle windowing 3:\n    Merge.", "repeat windowing 3:\n    run improve",
+    "scatter 3 using generate", "reduce using merge:\n    from:",
+    "reduce:\n    from: Missing reducer.", "reduce:\n    Merge.\n    from Seed.",
+    "reduce using merge:\n    from: Seed.\n    from: Duplicate.",
+    "reduce windowing 3:\n    Merge.", "repeat windowing 3:\n    run improve",
     "repeat 5 times windowing:\n    run improve", "from: Orphaned.",
 ])
 def test_invalid_flow_upgrade_forms(statement):
     assert not valid(parse(f"flow work:\n  {statement}\n"))
 
 
-def test_nested_repeat_and_settle_clause_ownership():
+def test_nested_repeat_and_reduce_clause_ownership():
     root = parse("""flow work:
   repeat 5 times windowing 3:
     repeat windowing 1:
-      settle:
+      reduce:
         Merge {{_}}.
         from: Seed.
       until: Inner.
@@ -113,8 +113,8 @@ def test_nested_repeat_and_settle_clause_ownership():
 
 
 @pytest.mark.parametrize("heading", [b"", b"    # Heading\n", b"    ## @param literal\n"])
-def test_settle_incremental_edits_match_fresh_parse(heading):
-    source = b"flow work:\n  settle:\n" + heading + b"    Merge {{_}}.\n    from:\n      Seed.\n  run next\n"
+def test_reduce_incremental_edits_match_fresh_parse(heading):
+    source = b"flow work:\n  reduce:\n" + heading + b"    Merge {{_}}.\n    from:\n      Seed.\n  run next\n"
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = source
     tree = parser.parse(source)
@@ -129,15 +129,15 @@ def test_settle_incremental_edits_match_fresh_parse(heading):
 
 @pytest.mark.parametrize("prefix", ["# Heading", "## Heading", "#@ Heading", "##! Heading", "#! Heading"])
 @pytest.mark.parametrize("initializer", [False, True])
-def test_settle_leading_comment_markers_are_literal_reducer_text(prefix, initializer):
-    source = f"flow work:\n  settle:\n    {prefix}\n    Merge {{{{_}}}}.\n"
+def test_reduce_leading_comment_markers_are_literal_reducer_text(prefix, initializer):
+    source = f"flow work:\n  reduce:\n    {prefix}\n    Merge {{{{_}}}}.\n"
     if initializer:
         source += "    from: Seed.\n    # Structural trailing comment.\n"
     source += "  run next\n"
     root = parse(source)
     assert valid(root)
-    settle = descendants(root, "settle_statement")[0]
-    reducer = settle.child_by_field_name("runnable").child_by_field_name("body")
+    reduce = descendants(root, "reduce_statement")[0]
+    reducer = reduce.child_by_field_name("runnable").child_by_field_name("body")
     assert reducer.text.decode().lstrip().startswith(prefix)
     assert not descendants(reducer, "plain_comment")
     assert not descendants(reducer, "item_doc_comment")

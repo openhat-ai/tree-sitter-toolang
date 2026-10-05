@@ -13,6 +13,7 @@ let header = "// Generated from grammar.js; do not edit.\n";
 for (const [context, rule] of [
   ["flow", "_flow_reserved_word"], ["agic", "_agic_reserved_word"],
   ["directive", "directive_key"],
+  ["collection_binding", "_collection_binding_word"],
 ]) {
   const values = [...new Set(words(rules[rule]))].sort();
   header += `static const char *const ${context}_keywords[] = {\n`;

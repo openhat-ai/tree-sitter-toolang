@@ -13,5 +13,5 @@
 (agic) @indent
 (flow) @indent
 (repeat_statement) @indent
-(settle_statement) @indent
+(reduce_statement) @indent
 (text_block) @indent

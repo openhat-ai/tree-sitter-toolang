@@ -67,6 +67,11 @@ documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
 
+The unreleased grammar uses `run` in place of `scatter`/`gather`, renames
+`storm`/`settle` to `generate`/`reduce`, and requires `using` only for named
+collection targets. See the [migration notes](GRAMMAR.md#unreleased-flow-call-syntax).
+These forms require a matching Toolang runtime release.
+
 Version 0.3.4 adds named and inline `exec` statements in flows and repeats.
 See the [Flow reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#flow)
 for syntax and CST fields.
@@ -74,7 +79,7 @@ for syntax and CST fields.
 Version 0.3.3 shares configuration directives between agics and flows, removes
 the count from `scatter`, adds optional `from:` initializers to `settle`, and
 adds `windowing N` to `repeat`. See the
-[current syntax and migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#changes-in-033).
+[0.3.3 migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#changes-in-033).
 
 Documentation comments use `#@` for modules and `##` for items, including
 `## @param NAME DESCRIPTION`. The legacy `##!` module marker remains accepted.

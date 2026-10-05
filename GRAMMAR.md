@@ -1,10 +1,53 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar in version 0.3.4. The source
-of truth is [grammar.js](grammar.js), together with the layout scanner in
+This document describes the public Toolang grammar on the current branch,
+including unreleased changes after 0.3.4. The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
+
+## Unreleased Flow Call Syntax
+
+This breaking syntax change implements the grammar portion of the approved
+[Flow array definition](https://github.com/openhat-ai/toolang/blob/main/docs/plans/flow-array-semantics.md).
+A matching Toolang runtime is required; parser support alone does not change
+execution or stored values.
+
+- Use `run` for a single call, including array-producing and array-consuming
+  calls. `scatter` and `gather` are removed. Inline `run` defaults to Text, so a
+  former implicit array-producing `scatter:` needs `run -> Text[]:`.
+- Rename `storm` to `generate` and `settle` to `reduce`. Their public statement
+  nodes become `generate_statement` and `reduce_statement`; count, lanes,
+  runnable, and initializer fields retain their existing meanings.
+- For `generate`, `map`, and `reduce`, a named runnable requires `using` and an
+  inline runnable must omit it. `generate` and `map` put an optional lane clause
+  before the target. Let binding and discard wrappers use the same rules.
+- Removed statement nodes are no longer emitted. Their keyword nodes remain
+  reserved for migration diagnostics. Removed or malformed collection heads
+  cannot become implicit runs or same-line `let name = BODY` text. Explicit
+  `run:` bodies and indented Content bindings can still contain literal text.
+- `run`, `exec`, `seek`, `keep`/`drop` predicates, `sort`, and `repeat` retain
+  their target and clause syntax. This grammar adds no async, await, or spawn
+  syntax and no `produce` or `gen` alias.
+
+| Previous source | Replacement |
+| --- | --- |
+| `scatter using expand` | `run expand` |
+| `scatter [using]: BODY` | `run -> Text[]: BODY` |
+| `scatter [using] -> T[]: BODY` | `run -> T[]: BODY` |
+| `gather using merge` | `run merge` |
+| `gather using [-> T]: BODY` | `run [-> T]: BODY` |
+| `storm N [in P lanes] using worker` | `generate N [in P lanes] using worker` |
+| `storm N [in P lanes] using [-> T]: BODY` | `generate N [in P lanes] [-> T]: BODY` |
+| `settle using merge` | `reduce using merge` |
+| `settle [using] [-> T]: BODY` | `reduce [-> T]: BODY` |
+| `map [in P lanes] using [-> T]: BODY` | `map [in P lanes] [-> T]: BODY` |
+
+Move a trailing lane clause before the target in `generate` and `map`. Preserve
+bindings, explicit return types, counts, and `from:` initializers. Array behavior
+and the removal of runtime shape/dim are owned by the Toolang definition, not by
+the grammar. The following 0.3.3 notes describe that historical release;
+this section supersedes its collection statement syntax.
 
 ## Changes in 0.3.3
 
@@ -406,10 +449,8 @@ flow_statement ::= exec_statement
 flow_operation ::= run_statement
                  | seek_statement
                  | ask_statement
-                 | scatter_statement
-                 | storm_statement
-                 | gather_statement
-                 | settle_statement
+                 | generate_statement
+                 | reduce_statement
                  | map_statement
                  | keep_statement
                  | drop_statement
@@ -441,18 +482,14 @@ _lanes_complement ::= "in" _one_integer_literal "lane"
 _repeat_count_complement ::= _one_integer_literal "time"
                            | _other_integer_literal "times"
 
-_named_using_complement  ::= "using" runnable
-_inline_using_complement ::= "using" inline_agic
+_named_using_complement  ::= "using" horizontal_space runnable
 _named_if_complement     ::= "if" runnable
 _inline_if_complement    ::= "if" inline_agic
 _named_by_complement     ::= "by" runnable
 _inline_by_complement    ::= "by" inline_agic
 
-_using_complements ::= _named_using_complement line_end
-                     | _lanes_complement _named_using_complement line_end
-                     | _named_using_complement _lanes_complement line_end
-                     | _inline_using_complement
-                     | _lanes_complement _inline_using_complement
+_runnable_complements ::= _lanes_complement?
+                          (_named_using_complement line_end | inline_agic)
 
 _if_complements ::= _named_if_complement line_end
                   | _lanes_complement _named_if_complement line_end
@@ -466,23 +503,16 @@ _by_complements ::= _named_by_complement line_end
                   | _inline_by_complement
                   | _lanes_complement _inline_by_complement
 
-scatter_statement ::= "scatter" (_named_using_complement line_end
-                      | "using"? inline_agic)
+generate_statement ::= "generate" integer_literal _runnable_complements
 
-storm_statement ::= "storm" integer_literal _using_complements
-
-gather_statement ::= "gather"
-                     (_named_using_complement line_end
-                     | _inline_using_complement)
-
-settle_statement ::= "settle" (_named_using_complement line_end
+reduce_statement ::= "reduce" (_named_using_complement line_end
                      | _named_using_complement ":" line_end from_block
-                     | "using"? inline_agic_with_optional_from)
+                     | inline_agic_with_optional_from)
 inline_agic_with_optional_from ::= return_type? ":" text_line line_end
                                 | return_type? ":" line_end text_body from_block?
 from_block ::= "from" ":" text_inline
 
-map_statement ::= "map" _using_complements
+map_statement ::= "map" _runnable_complements
 
 position ::= ("first" | "last") integer_literal
 keep_statement ::= "keep" position line_end
@@ -505,11 +535,12 @@ inline_agic_body ::= ":" text_inline
 runnable ::= snake_name
 agent ::= snake_name
 
-_active_statement_keyword ::= "let" | "exec" | "run" | "seek" | "ask" | "scatter"
-                            | "storm" | "gather" | "settle" | "map" | "keep"
+_active_statement_keyword ::= "let" | "exec" | "run" | "seek" | "ask"
+                            | "generate" | "reduce" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
-_reserved_statement_keyword ::= "until" | "from" | "windowing"
+_reserved_statement_keyword ::= "scatter" | "storm" | "gather" | "settle"
+                              | "until" | "from" | "windowing"
                               | "rank" | "par" | "top" | "bottom"
                               | "think" | "use" | "thunk" | "call" | "do"
                               | "unfold" | "each" | "fold" | "head" | "tail"
@@ -542,14 +573,16 @@ Rules:
   Flow directives reuse agic directive syntax and must appear before statements.
 - `let name = statement` writes the result to a named local. `let statement`
   discards the result and does not update `_`. `let name = BODY` evaluates
-  authored Content and creates or replaces a `dim=0` named local whose single
-  value is `Part[]`, without starting a child run. The `Part[]` type is implicit
-  and omitted from source. Type annotations and collection bindings are outside
-  this grammar version; a future extension must preserve `let name = BODY` as
-  the compatible shorthand. A statement binding instead infers its value type
+  authored Content and creates or replaces a named local with a complete
+  `Part[]` value, without starting a child run. The `Part[]` type is implicit
+  and omitted from source. Local type annotations and array literals are not
+  binding syntax; a future extension must preserve `let name = BODY` as the
+  compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form.
+  precedence over the BODY form. Malformed or removed collection heads on the
+  same line cannot fall back to Content. For literal text beginning
+  with these words, use an indented Content block.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
@@ -562,26 +595,31 @@ Rules:
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.
-- `using`, `if`, and `by` must be followed immediately by a named or inline
-  runnable. `if` selects with a Boolean result, while `by` sorts with a Number
-  result; result validation is semantic.
-- `scatter` and `storm` expand one item into a list. `gather` and `settle`
-  reduce a list to one item. `map` transforms every list item. `keep` and `drop`
-  select by `first N`, `last N`, or a Boolean runnable. `sort` orders items by
-  an explicit ascending or descending numeric score.
+- `generate`, `map`, and `reduce` require `using` before a named runnable,
+  separated from its name by at least one space or tab. `usingworker` is a
+  complete name, not a connector followed by `worker`. Inline runnables must
+  omit `using`. Inline targets may declare a return type; their default is Text.
+  `if` and `by` still introduce
+  either named or inline runnables. Predicate and score type validation is semantic.
+- `generate N` calls the same runnable N times; `map` transforms each outer array
+  item; `reduce` combines outer items sequentially. Complete array-valued results
+  remain nested. These are runtime contracts. `keep` and `drop` select by
+  `first N`, `last N`, or a Boolean runnable. `sort` orders outer items by an
+  explicit ascending or descending numeric score.
 - `in N lane|lanes` limits independent child-run concurrency without changing
   result order. Literal `1`, including a leading-zero spelling, requires
   `lane`; every other integer requires `lanes`. The same agreement applies to
   `repeat N time|times:`.
-- A positional count, selection, or order immediately follows its verb. Lane
-  and named-runnable complements may exchange order. An inline runnable is
-  final. Commas and `with` are not complement syntax.
-- Settle's optional trailing `from:` supplies initializer Content. A named reducer
-  uses `settle using name:` with an indented `from:`. An adhoc multiline reducer
-  uses `settle:` (or `settle using:`); `from:` is at the reducer text's baseline,
+- A positional count, selection, or order immediately follows its verb.
+  Generate and map require the lane clause before the named or inline target.
+  Keep/drop and sort still allow lanes before or after a named target. An inline
+  runnable is final. Commas and `with` are not complement syntax.
+- Reduce's optional trailing `from:` supplies initializer Content. A named reducer
+  uses `reduce using name:` with an indented `from:`. An inline multiline reducer
+  uses `reduce:`; `from:` is at the reducer text's baseline,
   after nonempty reducer text. Deeper `from:` text stays literal. The `runnable`
   field excludes the initializer; the sibling `from` field contains `text_inline`.
-  Without `from`, runtime seeds from the first source element. Settle retains one
+  Without `from`, runtime seeds from the first source element. Reduce retains one
   previous frame and has no window clause.
 - `windowing N` precedes the repeat header colon and exposes the `window` integer
   field. Runtime validates positive N and defaults it to 3. Count plus until
@@ -607,7 +645,7 @@ Rules:
 - `until` is a reserved boundary keyword. Only `until:` in a repeat is valid;
   bare `until` and lowercase `until ...` do not form an implicit run at a
   statement boundary.
-- `from` and `windowing` are also reserved. `from:` is valid only as a settle
+- `from` and `windowing` are also reserved. `from:` is valid only as a reduce
   initializer; `windowing N` is valid only in a repeat header. Use explicit
   `run:` text when these words begin prose.
 - Explicit statement keywords are lowercase and case-sensitive. Named and
@@ -646,26 +684,26 @@ flow research(_):
   lanes = 4
   instruct = default
   context = project
-  scatter using expand
-  settle using merge:
+  run expand
+  reduce using merge:
     from: Initial report.
   repeat 5 times windowing 3:
     run: Improve {{_}}.
     until: Compare {{_}} with {{_1._}} and {{_2._}} for stability.
 
 flow seeded(_):
-  scatter:
+  run -> Text[]:
     Expand {{_}} into items.
-  settle:
+  reduce:
     Incorporate {{_}} into {{_1._}}.
     from:
       Initial report.
 ```
 
-For named settle reducers, a header colon requires an indented `from:` clause.
+For named reduce reducers, a header colon requires an indented `from:` clause.
 For multiline inline reducers, `from:` follows the reducer text at the same
 baseline. An inline reducer written entirely on the header line cannot have a
-following initializer. Settle's `runnable` field is a `runnable` or `inline_agic`;
+following initializer. Reduce's `runnable` field is a `runnable` or `inline_agic`;
 its optional `from` field is `text_inline`. An inline reducer's `body` field is
 `text_inline` for same-line text and `text_body` for multiline text.
 

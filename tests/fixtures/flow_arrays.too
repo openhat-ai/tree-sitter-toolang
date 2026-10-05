@@ -1,0 +1,25 @@
+##! Complete values and strict collection targets.
+agic split(_) -> Text[]:
+  Split {{_}} into topics.
+
+agic usingexplain(_) -> Text:
+  Explain {{_}}.
+
+flow summarize(_) -> Text:
+  run split
+  let alternatives = generate 3 in 2 lanes using usingexplain
+  map -> Text[]: Expand {{_}} into examples.
+  keep first 3
+  run: Summarize {{_}}.
+
+flow seeded(_):
+  generate 0 -> Text[]: List related topics.
+  reduce -> Text[]:
+    Merge {{_}} with {{_1._}}.
+    from: An initial list of topics.
+
+flow bindings(_):
+  let jobs = generate 2: Produce one job.
+  let map in 1 lane using usingexplain
+  let report = reduce using usingexplain:
+    from: Initial report.

@@ -7,9 +7,9 @@ module.exports = grammar({
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._module_doc_start, $._item_doc_start, $._param_item_doc_start, $._comment_end,
     $._indent, $._dedent, $._line_start, $._directive_start,
-    $._until_start, $._from_start, $._settle_indent, $._settle_text_start, $._text_indent, $._cap_text_start,
+    $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
-    $._exec_binding_start,
+    $._exec_binding_start, $._collection_binding_start,
   ],
   rules: {
     source_file: ($) =>
@@ -288,23 +288,33 @@ module.exports = grammar({
         $.run_statement,
         $.seek_statement,
         $.ask_statement,
-        $.scatter_statement,
-        $.storm_statement,
-        $.gather_statement,
-        $.settle_statement,
-        $.map_statement,
+        $._collection_operation,
         $.keep_statement,
         $.drop_statement,
         $.sort_statement,
         $.repeat_statement,
       ),
+    _collection_operation: ($) => choice(
+      $.generate_statement, $.map_statement, $.reduce_statement,
+    ),
+    _bound_operation: ($) => choice(
+      $.run_statement, $.seek_statement, $.ask_statement,
+      $.keep_statement, $.drop_statement, $.sort_statement, $.repeat_statement,
+      seq($._collection_binding_start, choice(
+        $._collection_operation,
+        alias($._invalid_collection_operation, $.invalid_flow_reserved_statement),
+      )),
+    ),
+    _invalid_collection_operation: ($) => prec.dynamic(-2, seq(
+      $._collection_binding_word, optional($.text_line), $.line_end,
+    )),
     let_statement: ($) =>
       choice(
         seq(
           $.flow_let_keyword,
           field("name", $.local_name),
           $.assign_operator,
-          field("statement", $._flow_operation),
+          field("statement", $._bound_operation),
         ),
         seq(
           $.flow_let_keyword,
@@ -374,53 +384,35 @@ module.exports = grammar({
         $.colon,
         field("body", $.text_inline),
       )),
-    scatter_statement: ($) =>
-      choice(
-        seq($.flow_scatter_keyword, $._named_using_complement, $.line_end),
-        prec.right(seq($.flow_scatter_keyword, optional($.flow_using_keyword),
-          field("runnable", $.inline_agic))),
-      ),
-    storm_statement: ($) =>
+    generate_statement: ($) =>
       seq(
-        $.flow_storm_keyword,
+        $.flow_generate_keyword,
         field("count", $.integer_literal),
-        $._using_complements,
+        $._runnable_complements,
       ),
-    gather_statement: ($) =>
+    reduce_statement: ($) =>
       choice(
-        seq(
-          $.flow_gather_keyword,
-          $._named_using_complement,
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_gather_keyword,
-          $._inline_using_complement,
-        )),
-      ),
-    settle_statement: ($) =>
-      choice(
-        seq($.flow_settle_keyword, $._named_using_complement, $.line_end),
-        seq($.flow_settle_keyword, $._named_using_complement, $.colon, $.line_end,
+        seq($.flow_reduce_keyword, $._named_using_complement, $.line_end),
+        seq($.flow_reduce_keyword, $._named_using_complement, $.colon, $.line_end,
           structuralBody($, seq($._from_complement, repeat($._trivia)))),
-        prec.right(seq($.flow_settle_keyword, optional($.flow_using_keyword),
-          field("runnable", alias($._settle_inline_line, $.inline_agic)))),
-        prec.right(seq($.flow_settle_keyword, optional($.flow_using_keyword),
-          field("runnable", alias($._settle_inline_block, $.inline_agic)),
+        prec.right(seq($.flow_reduce_keyword,
+          field("runnable", alias($._reduce_inline_line, $.inline_agic)))),
+        prec.right(seq($.flow_reduce_keyword,
+          field("runnable", alias($._reduce_inline_block, $.inline_agic)),
           optional($._from_complement), repeat($._trivia), $._dedent)),
       ),
-    _settle_inline_line: ($) => seq(
+    _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, field("body", alias($._settle_line, $.text_inline)),
+      $.colon, field("body", alias($._reduce_line, $.text_inline)),
     ),
-    _settle_line: ($) => seq($.text_line, $.line_end),
-    _settle_inline_block: ($) => seq(
+    _reduce_line: ($) => seq($.text_line, $.line_end),
+    _reduce_inline_block: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, $.line_end, repeat($._trivia), $._settle_indent,
-      field("body", alias($._settle_text_body, $.text_body)),
+      $.colon, $.line_end, repeat($._trivia), $._reduce_indent,
+      field("body", alias($._reduce_text_body, $.text_body)),
     ),
-    _settle_text_body: ($) => seq(
-      $._settle_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent,
+    _reduce_text_body: ($) => seq(
+      $._reduce_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent,
     ),
     _from_complement: ($) => seq(
       $._from_start, $.flow_from_keyword, $.colon, field("from", $.text_inline),
@@ -428,7 +420,7 @@ module.exports = grammar({
     map_statement: ($) =>
       seq(
         $.flow_map_keyword,
-        $._using_complements,
+        $._runnable_complements,
       ),
     keep_statement: ($) =>
       choice(
@@ -463,13 +455,10 @@ module.exports = grammar({
     _named_using_complement: ($) =>
       seq(
         $.flow_using_keyword,
+        $._using_space,
         field("runnable", $.runnable),
       ),
-    _inline_using_complement: ($) =>
-      seq(
-        $.flow_using_keyword,
-        field("runnable", $.inline_agic),
-      ),
+    _using_space: () => token.immediate(/[ \t]+/),
     _named_if_complement: ($) =>
       seq(
         $.flow_if_keyword,
@@ -490,13 +479,13 @@ module.exports = grammar({
         $.flow_by_keyword,
         field("runnable", $.inline_agic),
       ),
-    _using_complements: ($) =>
-      choice(
-        seq($._named_using_complement, $.line_end),
-        seq($._lanes_complement, $._named_using_complement, $.line_end),
-        seq($._named_using_complement, $._lanes_complement, $.line_end),
-        $._inline_using_complement,
-        seq($._lanes_complement, $._inline_using_complement),
+    _runnable_complements: ($) =>
+      seq(
+        optional($._lanes_complement),
+        choice(
+          seq($._named_using_complement, $.line_end),
+          field("runnable", $.inline_agic),
+        ),
       ),
     _if_complements: ($) =>
       choice(
@@ -670,8 +659,10 @@ module.exports = grammar({
     flow_ask_keyword: () => "ask",
     flow_scatter_keyword: () => "scatter",
     flow_storm_keyword: () => "storm",
+    flow_generate_keyword: () => "generate",
     flow_gather_keyword: () => "gather",
     flow_settle_keyword: () => "settle",
+    flow_reduce_keyword: () => "reduce",
     flow_map_keyword: () => "map",
     flow_keep_keyword: () => "keep",
     flow_drop_keyword: () => "drop",
@@ -702,22 +693,13 @@ module.exports = grammar({
     recall_keyword: () => "recall",
     _flow_reserved_word: ($) =>
       choice(
-        $.flow_run_keyword,
         $.flow_exec_keyword,
         $.flow_let_keyword,
-        $.flow_seek_keyword,
-        $.flow_ask_keyword,
-        $.flow_scatter_keyword,
-        $.flow_storm_keyword,
-        $.flow_gather_keyword,
-        $.flow_settle_keyword,
-        $.flow_map_keyword,
-        $.flow_drop_keyword,
-        $.flow_keep_keyword,
-        $.flow_sort_keyword,
+        $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
+        $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
+        $._collection_binding_word,
         $.flow_until_keyword, $.flow_from_keyword, $.flow_windowing_keyword,
         $.flow_rank_keyword,
-        $.flow_repeat_keyword,
         $.flow_par_keyword,
         $.flow_top_keyword,
         $.flow_bottom_keyword,
@@ -740,6 +722,11 @@ module.exports = grammar({
         $.service_keyword, $.prompt_keyword, $.task_keyword, $.chore_keyword,
         $.agic_keyword, $.flow_keyword, $._agic_reserved_word,
       ),
+    _collection_binding_word: ($) => choice(
+      $.flow_scatter_keyword, $.flow_gather_keyword,
+      $.flow_storm_keyword, $.flow_settle_keyword,
+      $.flow_generate_keyword, $.flow_map_keyword, $.flow_reduce_keyword,
+    ),
     _agic_reserved_word: ($) =>
       choice(
         $.role,
