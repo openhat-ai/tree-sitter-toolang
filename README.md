@@ -53,7 +53,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.3.4"
+tree-sitter-toolang = "0.4.0-alpha.1"
 ```
 
 ```rust
@@ -67,10 +67,14 @@ documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
 
-The unreleased grammar uses `run` in place of `scatter`/`gather`, renames
+Version 0.4.0-alpha.1 uses `run` in place of `scatter`/`gather`, renames
 `storm`/`settle` to `generate`/`reduce`, and requires `using` only for named
-collection targets. See the [migration notes](GRAMMAR.md#unreleased-flow-call-syntax).
+collection targets. See the [migration notes](GRAMMAR.md#changes-in-040-alpha1).
 These forms require a matching Toolang runtime release.
+
+Install this prerelease explicitly with
+`python -m pip install tree-sitter-toolang==0.4.0a1` or
+`npm install tree-sitter-toolang@0.4.0-alpha.1`.
 
 Version 0.3.4 adds named and inline `exec` statements in flows and repeats.
 See the [Flow reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#flow)
@@ -106,6 +110,7 @@ python -m venv .venv
 
 npm run check
 .venv/bin/python -m pytest tests
+.venv/bin/python -m unittest discover -s scripts -p 'test_*.py'
 cargo test
 ```
 
@@ -142,10 +147,15 @@ Release checklist:
 1. Bump the version in `package.json`, `package-lock.json`, `pyproject.toml`,
    `Cargo.toml`, `Cargo.lock`, and `tree-sitter.json`.
 2. Confirm CI is green.
-3. Push the version commit to `main`.
-4. Create and push a matching tag such as `v0.3.4`.
+3. Merge the version bump PR into `main`.
+4. Create and push a matching tag such as `v0.4.0-alpha.1`.
 5. GitHub Actions publishes npm and PyPI automatically.
 6. GitHub Actions also publishes the Rust crate when `CRATES_IO_TOKEN` is set.
 
 The release workflow skips npm, PyPI, or crates.io if that version already
 exists on the registry. The git tag must match the package version.
+
+Prereleases use `X.Y.Z-alpha.N`, `X.Y.Z-beta.N`, or `X.Y.Z-rc.N` consistently
+in source metadata and tags. Python packaging normalizes these to `X.Y.ZaN`,
+`X.Y.ZbN`, or `X.Y.ZrcN`; for example, `0.4.0-alpha.1` is published on PyPI as
+`0.4.0a1`. npm prereleases use the `next` dist-tag; stable releases use `latest`.

@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.metadata.outputs.version }}
+      npm_tag: ${{ steps.metadata.outputs.npm_tag }}
       npm_exists: ${{ steps.metadata.outputs.npm_exists }}
       pypi_exists: ${{ steps.metadata.outputs.pypi_exists }}
       crates_exists: ${{ steps.metadata.outputs.crates_exists }}
@@ -28,42 +29,40 @@ jobs:
           python3 <<'PY'
           import json
           import os
+          import sys
           import tomllib
           import urllib.error
           import urllib.request
           from pathlib import Path
 
+          sys.path.insert(0, "scripts")
+          from release_versions import release_settings
+
           package = json.loads(Path("package.json").read_text())
+          package_lock = json.loads(Path("package-lock.json").read_text())
+          grammar = json.loads(Path("tree-sitter.json").read_text())
           pyproject = tomllib.loads(Path("pyproject.toml").read_text())
-          cargo_lines = Path("Cargo.toml").read_text().splitlines()
+          cargo = tomllib.loads(Path("Cargo.toml").read_text())
+          cargo_lock = tomllib.loads(Path("Cargo.lock").read_text())
 
           versions = {
               "package.json": package["version"],
+              "package-lock.json": package_lock["version"],
+              "package-lock.json root": package_lock["packages"][""]["version"],
+              "tree-sitter.json": grammar["metadata"]["version"],
               "pyproject.toml": pyproject["project"]["version"],
+              "Cargo.toml": cargo["package"]["version"],
+              "Cargo.lock": next(
+                  item["version"] for item in cargo_lock["package"]
+                  if item["name"] == package["name"]
+              ),
           }
-
-          cargo_version = None
-          in_package = False
-          for line in cargo_lines:
-              stripped = line.strip()
-              if stripped == "[package]":
-                  in_package = True
-                  continue
-              if in_package and stripped.startswith("["):
-                  break
-              if in_package and stripped.startswith("version = "):
-                  cargo_version = stripped.split('"')[1]
-                  break
-
-          if cargo_version is None:
-              raise SystemExit("Could not find package.version in Cargo.toml")
-
-          versions["Cargo.toml"] = cargo_version
           unique_versions = set(versions.values())
           if len(unique_versions) != 1:
               raise SystemExit(f"Version mismatch across metadata files: {versions}")
 
           version = unique_versions.pop()
+          python_version, npm_tag = release_settings(version)
           tag_version = os.environ["REF_NAME"].removeprefix("v")
           if version != tag_version:
               raise SystemExit(
@@ -72,7 +71,7 @@ jobs:
 
           package_name = package["name"]
 
-          def version_exists(url: str, key: str) -> bool:
+          def version_exists(url: str, key: str, expected_version: str) -> bool:
               try:
                   with urllib.request.urlopen(url, timeout=15) as response:
                       data = json.load(response)
@@ -80,7 +79,7 @@ jobs:
                   if exc.code == 404:
                       return False
                   raise
-              return version in data.get(key, {})
+              return expected_version in data.get(key, {})
 
           def crates_version_exists(crate_name: str) -> bool:
               request = urllib.request.Request(
@@ -99,15 +98,18 @@ jobs:
           npm_exists = version_exists(
               f"https://registry.npmjs.org/{package_name}",
               "versions",
+              version,
           )
           pypi_exists = version_exists(
               f"https://pypi.org/pypi/{package_name}/json",
               "releases",
+              python_version,
           )
           crates_exists = crates_version_exists(package_name)
 
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as fh:
               fh.write(f"version={version}\n")
+              fh.write(f"npm_tag={npm_tag}\n")
               fh.write(f"npm_exists={'true' if npm_exists else 'false'}\n")
               fh.write(f"pypi_exists={'true' if pypi_exists else 'false'}\n")
               fh.write(f"crates_exists={'true' if crates_exists else 'false'}\n")
@@ -140,7 +142,7 @@ jobs:
           npm run pack:dry-run
 
       - name: Publish to npm
-        run: npm publish --provenance
+        run: npm publish --provenance --tag "${{ needs.validate.outputs.npm_tag }}"
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
