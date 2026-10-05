@@ -1,13 +1,15 @@
 # Define Flow Spawn Grammar
 
-Status: Proposed; feature definition only. No grammar or parser behavior changes
-in this PR. The complete definition requires human approval before implementation.
+Status: Proposed; feature definition only. The human selected no implicit binding
+for bare spawn; retaining its handle requires a named let. No grammar or parser
+behavior changes in this PR. The complete definition still requires approval.
 
 ## Goal and Scope
 
-Add a bindable `spawn` operation to Flow and repeat bodies, using the named and
-inline target forms of run. Toolang will start an independent root and return an
-admission receipt. This repository owns syntax, CST, keyword boundaries, queries,
+Add a `spawn` operation with optional named binding to Flow and repeat bodies,
+using the named and inline target forms of run. Toolang starts an independent
+root; a named let retains its admission handle, while bare spawn discards it.
+This repository owns syntax, CST, keyword boundaries, queries,
 fixtures, and generated artifacts. The
 [runtime definition](https://github.com/openhat-ai/toolang/pull/687) owns Flow and
 Agic execution, inputs, receipts, authorization, controls, and lifecycle.
@@ -21,7 +23,8 @@ Package versioning/publication remains a separate PR after implementation.
 ## Verified Baseline
 
 Current main has run and exec named/inline forms. Exec exposes a target union and
-rejects let bindings; run is bindable. Collection operations demonstrate reserved
+rejects let bindings; run is bindable and `let run R` discards its output.
+Collection operations demonstrate reserved
 keyword handling on named let right-hand sides. The scanner obtains reserved
 words from generated keywords.h. Spawn has no statement or keyword node and can
 currently be implicit Flow prose or a let text value. This is a syntax change,
@@ -30,11 +33,12 @@ not an alias for an existing operation.
 ## Syntax and CST
 
 ```too
-flow launch -> Json:
+flow launch -> Text:
   let job = spawn investigate
-  let spawn record_audit
+  spawn record_audit
   spawn -> Text:
     Research the request and save the findings.
+  run: Independent work has been started.
 ```
 
 | Form | CST |
@@ -44,6 +48,12 @@ flow launch -> Json:
 | `spawn -> T: BODY` | Same inline_agic, with its existing return field |
 | `let job = spawn ...` | let_statement.name is job; statement is spawn_statement |
 | `let spawn ...` | let_statement.statement is spawn_statement, with no name |
+
+Bare spawn is the standard unbound form: it preserves `_` and all other locals.
+Only `let job = spawn ...` retains a handle for later use or future await support.
+Retain `let spawn ...` as an equivalent explicit discard, following the existing
+nameless let rule; it is unnecessary for ordinary examples. Both unbound forms
+format canonically as bare spawn. No separate discard token or CST field is needed.
 
 - Introduce `spawn_statement` with one required `target` field, union
   `runnable | inline_agic`, and a named `flow_spawn_keyword` node. Match exec's
@@ -56,7 +66,8 @@ flow launch -> Json:
   annotation describes the target's eventual output, not the receipt type.
 - Add spawn to unbound and bindable operation alternatives. Use existing let
   wrappers with no new fields. A bare statement has no explicit binding node;
-  runtime decides the default binding. Do not support nested statement expressions.
+  runtime must lower it with no binding, not the ordinary run default `_`.
+  Do not support nested statement expressions or change existing local-name syntax.
 - Permit it wherever current bindable operations are accepted in a Flow or
   repeat body. Preserve repeat conditions, dedents, following statements, comments,
   and LF/CRLF/EOF behavior. The inline body is Agic text, not a nested Flow block.
@@ -94,10 +105,17 @@ let text =
 
 ## Runtime Adoption Boundary
 
-The consuming Toolang PR must lower SpawnStmt, infer receipt output independently
-of inline target type, implement default/named/discard bindings, and cover
-format/description/diagnostics and prepared-cache compatibility. Agic launches
-through a runtime tool and needs no new Agic grammar or directive.
+The consuming Toolang PR must lower bare and nameless-let SpawnStmt with
+binding=None, and named-let SpawnStmt with the authored local name. Infer the
+retained handle independently of inline target type; keep durable receipts even
+when unbound. Cover canonical formatting, descriptions, diagnostics, and prepared
+cache compatibility. Agic launches through a runtime tool and needs no new Agic
+grammar or directive.
+
+This follows the future-producing launch rule: spawn and later async run retain
+their handles only through an explicit named let. Ordinary synchronous run keeps
+its `_` default. No implicit handle is available for later await when discarded;
+await syntax and value typing remain outside this grammar PR.
 
 Grammar acceptance alone does not implement execution. Publish a grammar version
 before Toolang pins/consumes it, and coordinate downstream syntax documentation
@@ -122,7 +140,9 @@ a consequence of parsing spawn.
 1. Parse all three binding forms across named, untyped inline, and typed inline
    targets in Flow and repeat bodies. Assert exact node/field shapes and no
    implicit-text fallback. Include one-line and multiline bodies, templates,
-   comments, adjacent statements, dedents, and LF/CRLF/EOF.
+   comments, adjacent statements, dedents, and LF/CRLF/EOF. Verify the consuming
+   runtime preserves all locals for bare/nameless-let spawn, binds only the named
+   local for named let, and canonically formats both unbound forms as bare spawn.
 2. Reject every malformed/reserved form above in all three bindings, including
    named-let text fallback and partial edits. Keep keyword prefixes and explicit
    text/Agic bodies literal. Undefined/same-name targets still parse normally.
