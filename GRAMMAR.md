@@ -595,9 +595,11 @@ Rules:
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.
-- `generate`, `map`, and `reduce` require `using` immediately before a named
-  runnable and prohibit `using` before an inline runnable. Inline targets may
-  declare a return type; their default is Text. `if` and `by` still introduce
+- `generate`, `map`, and `reduce` require `using` before a named runnable,
+  separated from its name by at least one space or tab. `usingworker` is a
+  complete name, not a connector followed by `worker`. Inline runnables must
+  omit `using`. Inline targets may declare a return type; their default is Text.
+  `if` and `by` still introduce
   either named or inline runnables. Predicate and score type validation is semantic.
 - `generate N` calls the same runnable N times; `map` transforms each outer array
   item; `reduce` combines outer items sequentially. Complete array-valued results

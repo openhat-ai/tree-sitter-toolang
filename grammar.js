@@ -455,8 +455,10 @@ module.exports = grammar({
     _named_using_complement: ($) =>
       seq(
         $.flow_using_keyword,
+        $._using_space,
         field("runnable", $.runnable),
       ),
+    _using_space: () => token.immediate(/[ \t]+/),
     _named_if_complement: ($) =>
       seq(
         $.flow_if_keyword,

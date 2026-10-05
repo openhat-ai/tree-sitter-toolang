@@ -2754,6 +2754,10 @@
           "name": "flow_using_keyword"
         },
         {
+          "type": "SYMBOL",
+          "name": "_using_space"
+        },
+        {
           "type": "FIELD",
           "name": "runnable",
           "content": {
@@ -2762,6 +2766,13 @@
           }
         }
       ]
+    },
+    "_using_space": {
+      "type": "IMMEDIATE_TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[ \\t]+"
+      }
     },
     "_named_if_complement": {
       "type": "SEQ",
