@@ -198,6 +198,36 @@
     "fields": {}
   },
   {
+    "type": "await_statement",
+    "named": true,
+    "fields": {
+      "operand": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "local_reference",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_await_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "base_type",
     "named": true,
     "fields": {},
@@ -1156,6 +1186,14 @@
           "named": true
         },
         {
+          "type": "flow_async_keyword",
+          "named": true
+        },
+        {
+          "type": "flow_await_keyword",
+          "named": true
+        },
+        {
           "type": "flow_bottom_keyword",
           "named": true
         },
@@ -1576,6 +1614,10 @@
             "named": true
           },
           {
+            "type": "await_statement",
+            "named": true
+          },
+          {
             "type": "drop_statement",
             "named": true
           },
@@ -1673,6 +1715,21 @@
     "children": {
       "multiple": false,
       "required": true,
+      "types": [
+        {
+          "type": "snake_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "local_reference",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
       "types": [
         {
           "type": "snake_name",
@@ -2347,6 +2404,10 @@
             "named": true
           },
           {
+            "type": "await_statement",
+            "named": true
+          },
+          {
             "type": "drop_statement",
             "named": true
           },
@@ -2550,6 +2611,16 @@
         "types": [
           {
             "type": "inline_agic",
+            "named": true
+          }
+        ]
+      },
+      "async": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flow_async_keyword",
             "named": true
           }
         ]
@@ -2971,6 +3042,10 @@
       "types": [
         {
           "type": "ask_statement",
+          "named": true
+        },
+        {
+          "type": "await_statement",
           "named": true
         },
         {
@@ -3602,6 +3677,14 @@
   },
   {
     "type": "flow_ask_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_async_keyword",
+    "named": true
+  },
+  {
+    "type": "flow_await_keyword",
     "named": true
   },
   {

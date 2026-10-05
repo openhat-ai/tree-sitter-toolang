@@ -247,17 +247,28 @@ flow work:
 ---
 
 (source_file
-  (ERROR
-    (flow_keyword)
-    (flow_name
-      (snake_name))
-    (colon)
-    (line_end
-      (newline))
-    (flow_let_keyword)
-    (local_name
-      (snake_name))
-    (assign_operator)
-    (flow_map_keyword)
-    (flow_using_keyword)
-    (blank_line)))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (map_statement
+              (flow_map_keyword)
+              (ERROR
+                (flow_using_keyword))
+              (inline_agic
+                (colon)
+                (text_inline
+                  (text_line)
+                  (line_end
+                    (newline)))))))))))

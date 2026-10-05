@@ -20,6 +20,8 @@
 (agic_keyword) @keyword
 (flow_keyword) @keyword
 (flow_run_keyword) @keyword
+(flow_async_keyword) @keyword
+(flow_await_keyword) @keyword
 (flow_exec_keyword) @keyword
 (flow_spawn_keyword) @keyword
 (flow_let_keyword) @keyword

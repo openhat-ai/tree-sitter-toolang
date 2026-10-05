@@ -116,10 +116,10 @@ def test_same_name_spawn_target_is_left_to_runtime_validation():
 
 
 @pytest.mark.parametrize("prefix", [
-    "spawned", "spawner", "spawn_task", "spawn2", "async spawn", "await", "all",
+    "spawned", "spawner", "spawn_task", "spawn2", "all",
 ])
 @pytest.mark.parametrize("binding", ["", "let note = "])
-def test_spawn_prefixes_and_future_keywords_remain_text(prefix, binding):
+def test_spawn_prefixes_and_all_remain_text(prefix, binding):
     root = parse(f"flow launch:\n  {binding}{prefix} is ordinary text.\n")
     assert valid(root), root
     assert not descendants(root, "spawn_statement")

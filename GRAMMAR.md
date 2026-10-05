@@ -1,10 +1,29 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar in version 0.4.0-alpha.3.
+This document describes the current public Toolang grammar, including unreleased
+changes since version 0.4.0-alpha.3.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
+
+## Unreleased
+
+- Add `async run` with the existing named and inline run targets, and `await h`
+  for a single local handle reference. Both support named and nameless `let`.
+  This implements the grammar scope of the
+  [async run and handle await definition](https://github.com/openhat-ai/toolang/pull/685).
+  Await blocks are excluded.
+- `run_statement` gains an optional `async: flow_async_keyword` field; existing
+  `runnable` and `agic` fields are unchanged. `await_statement.operand` is a
+  required `local_reference` containing a snake_name or `_`.
+- Complete lowercase `async` and `await` now select syntax at flow statement
+  and same-line let-value boundaries. Malformed uses cannot become prose.
+  Move affected literal text into an explicit text body or capitalize its first
+  word. Keyword prefixes, agic messages, and explicit text remain literal.
+  These new keywords are also excluded from variable names.
+- Execution, handle validation, binding effects, and formatting require matching
+  Toolang support. No built-in handle type or generic type syntax is added.
 
 ## Changes in 0.4.0-alpha.3
 
@@ -482,6 +501,7 @@ flow_statement ::= exec_statement
 
 flow_operation ::= run_statement
                  | spawn_statement
+                 | await_statement
                  | seek_statement
                  | ask_statement
                  | generate_statement
@@ -496,15 +516,18 @@ let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
                 | "let" local_name "=" text_inline
 local_name ::= variable_name
+local_reference ::= snake_name | "_"
 
 exec_statement ::= "exec" runnable line_end
                  | "exec" inline_agic
 
-run_statement ::= "run" runnable line_end
-                | "run" inline_agic
+run_statement ::= "async"? "run" runnable line_end
+                | "async"? "run" inline_agic
 
 spawn_statement ::= "spawn" runnable line_end
                   | "spawn" inline_agic
+
+await_statement ::= "await" local_reference line_end
 
 seek_statement ::= "seek" agent runnable line_end
                  | "seek" agent inline_agic
@@ -573,6 +596,7 @@ runnable ::= snake_name
 agent ::= snake_name
 
 _active_statement_keyword ::= "let" | "exec" | "run" | "spawn" | "seek" | "ask"
+                            | "async" | "await"
                             | "generate" | "reduce" | "map" | "keep"
                             | "drop" | "sort" | "repeat"
 
@@ -617,9 +641,10 @@ Rules:
   compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form. `until`, malformed spawn or collection heads,
-  including removed collection keywords, cannot fall back to same-line Content.
-  For literal text beginning with these words, use an indented Content block.
+  precedence over the BODY form. `until`, malformed spawn, async, await, or
+  collection heads, including removed collection keywords, cannot fall back to
+  same-line Content. For literal text beginning with these words, use an
+  indented Content block.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
@@ -632,6 +657,21 @@ Rules:
 - `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
   another agent with a named runnable or inline agic. `ask` requests input from
   the human owner.
+- `async` is accepted only immediately before `run`. It preserves the public
+  `run_statement` node and its existing `runnable` or `agic` target field, adding
+  the optional `async: flow_async_keyword` field. All three run targets work:
+  `async run R`, `async run: BODY`, and `async run -> T: BODY`. The return type
+  describes eventual output. A named target requires a space or tab after `run`;
+  `async runworker` cannot split into two tokens. No argument lists, `using`,
+  lanes, or other async operators are introduced. The downstream contract starts
+  a child owned by the current run; only `let h = async run ...` retains its
+  handle. Bare async run and nameless `let async run ...` preserve `_`.
+- `await h` exposes `await_statement` with a required `operand: local_reference`
+  and `flow_await_keyword`. The operand is exactly one snake_name or `_`; local
+  lookup and handle validation belong to runtime. It accepts no expressions,
+  field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
+  The existing `let_statement` fields distinguish the binding destination
+  (`name`) from the awaited operand inside `statement`; no new wrapper is added.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single
   required `target` field (`runnable` or `inline_agic`). Named targets are bare
   snake_names and end at the line boundary; no `using`, argument lists, lane/count
@@ -642,7 +682,8 @@ Rules:
   `let spawn ...` preserve `_`, while `let job = spawn ...` retains the handle.
   Both unbound forms retain their distinct CST; canonical formatting and handle
   semantics belong to Toolang. The grammar does not resolve targets, choose
-  threads, execute work, or add Future types or await syntax.
+  threads, execute work, or add handle types. Handle awaiting uses the separate
+  `await_statement` syntax.
 - `generate`, `map`, and `reduce` require `using` before a named runnable,
   separated from its name by at least one space or tab. `usingworker` is a
   complete name, not a connector followed by `worker`. Inline runnables must
@@ -705,6 +746,28 @@ Rules:
   and `thunk` remain reserved without statement syntax. A malformed line that
   begins with an active or reserved flow word exposes a syntax error or
   `invalid_flow_reserved_statement` instead of implicit `run` text.
+
+### Async and Await Binding Contract
+
+These are downstream runtime effects; the parser only represents their distinct
+syntax. Only successful statements write destinations; failures preserve existing
+bindings. For async run, success means admission.
+
+| Source | Successful binding effect |
+| --- | --- |
+| `async run R` or `let async run R` | Launch without retaining a handle; preserve `_`. |
+| `let h = async run R` | Store the handle in `h`; preserve `_`. |
+| `await h` | Write the complete result to `_`; preserve `h` when `h` is not `_`. |
+| `let x = await h` | Write the result to `x`; preserve other bindings, including `h` and `_` when distinct. |
+| `let await h` | Wait and discard the result; preserve every binding. |
+| `let h = await h` | Replace `h` with its result explicitly; preserve `_`. |
+
+`await _` reads the current handle and replaces `_` on success. Named or nameless
+let can await `_` without replacing it. Explicit `let _ = ...` remains invalid.
+An operand may also name a spawn handle. Unknown or non-handle locals are
+syntactically valid and require runtime validation. `Run` and `Future` are not
+built-in or reserved type names; an authored `struct Run` remains valid, and
+generic notation such as `Run<Text>` is not source syntax.
 
 ### Shared Directives and Flow Clauses Example
 

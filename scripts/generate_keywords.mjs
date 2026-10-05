@@ -14,6 +14,7 @@ for (const [context, rule] of [
   ["flow", "_flow_reserved_word"], ["agic", "_agic_reserved_word"],
   ["directive", "directive_key"],
   ["collection_binding", "_collection_binding_word"],
+  ["async_await_binding", "_async_await_binding_word"],
 ]) {
   const values = [...new Set(words(rules[rule]))].sort();
   header += `static const char *const ${context}_keywords[] = {\n`;

@@ -4,6 +4,8 @@ static const char *const flow_keywords[] = {
   "ascending",
   "ask",
   "assistant",
+  "async",
+  "await",
   "bottom",
   "by",
   "call",
@@ -113,11 +115,17 @@ static const char *const collection_binding_keywords[] = {
   "settle",
   "storm",
 };
+static const char *const async_await_binding_keywords[] = {
+  "async",
+  "await",
+};
 static const char *const variable_keywords[] = {
   "agic",
   "ascending",
   "ask",
   "assistant",
+  "async",
+  "await",
   "bottom",
   "by",
   "call",

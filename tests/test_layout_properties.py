@@ -113,6 +113,14 @@ def test_generated_layout_preserves_the_independent_statement_tree(seed):
 
 EDIT_SOURCES = [
     pytest.param(
+        b"flow launch:\n  let h = async run research\n  await h\n  let x = await h\n  let await h\n  let h = await h\n",
+        id="async-await-bindings",
+    ),
+    pytest.param(
+        b"flow launch:\n  let await = Text.\n  repeat 2 times:\n    let async = async run:\n      await is literal.\n    await async\n    until: Ready.\n",
+        id="async-await-layout",
+    ),
+    pytest.param(
         b"#!/usr/bin/env too\n#@ Module.\n##! Legacy.\n## Item.\n##@param _ Input.\nagic(_: Text):\n  pass\n",
         id="documentation",
     ),
@@ -150,6 +158,8 @@ EDIT_FRAGMENTS = [
     b"## @param _ Input.\n",
     b"##@param x",
     b"run:",
+    b"async run",
+    b"await h",
     b"until: Ready.",
     b"\nflow work:\n  pass",
     "Résumé".encode(),
