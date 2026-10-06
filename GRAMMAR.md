@@ -1,12 +1,12 @@
 # Toolang Grammar
 
-This document describes the current Toolang grammar, including unreleased changes.
+This document describes the public Toolang grammar in version 0.4.0-alpha.3.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
 
-## Unreleased
+## Changes in 0.4.0-alpha.3
 
 - Implement [flexible repeat conditions](docs/plans/flexible-repeat-conditions.md):
   zero or one `until NAME` or `until: BODY` at any body position, with optional
