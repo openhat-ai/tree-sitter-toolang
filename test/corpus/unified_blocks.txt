@@ -41,9 +41,9 @@ flow summarize:
             (colon)
             (line_end
               (newline))
-            (item_doc_comment
-              (comment_text))
-            (statements
+            (repeat_body
+              (item_doc_comment
+                (comment_text))
               (repeat_statement
                 (flow_repeat_keyword)
                 (integer_literal)
@@ -51,7 +51,7 @@ flow summarize:
                 (colon)
                 (line_end
                   (newline))
-                (statements
+                (repeat_body
                   (run_statement
                     (flow_run_keyword)
                     (inline_agic
@@ -75,18 +75,19 @@ flow summarize:
                     (runnable
                       (snake_name))
                     (line_end
-                      (newline))))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_block
-                  (line_end
-                    (newline))
-                  (text_body
-                    (text_body_line
-                      (indented_raw_text)
-                      (newline)))))))
+                      (newline)))))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_block
+                      (line_end
+                        (newline))
+                      (text_body
+                        (text_body_line
+                          (indented_raw_text)
+                          (newline)))))))))
           (run_statement
             (flow_run_keyword)
             (runnable

@@ -11,26 +11,14 @@ from test_layout_support import descendants, edit_tree, fingerprint, parse, vali
 BINDINGS = ["", "let job = ", "let "]
 
 
-@pytest.mark.parametrize("value,kind", [
-    ("Hello.", "text_inline"),
-    ("\n    spawn remains literal.", "text_inline"),
-    ("run worker", "run_statement"),
-    ("spawn worker", "spawn_statement"),
+@pytest.mark.parametrize("value", [
+    "Hello.", "\n    spawn remains literal.", "run worker", "spawn worker",
 ])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
-def test_spawn_remains_a_local_name_before_assignment(value, kind, ending):
+def test_spawn_keyword_cannot_be_a_local_name(value, ending):
     source = f"flow launch:\n  let spawn = {value}".replace("\n", ending or "\n") + ending
     root = parse(source)
-    assert valid(root), root
-    wrapper, = descendants(root, "let_statement")
-    name = wrapper.child_by_field_name("name")
-    assert name.type == "local_name"
-    assert name.text.strip() == b"spawn"
-    assert name.named_children[0].type == "snake_name"
-    assert not descendants(name, "flow_spawn_keyword")
-    result = wrapper.child_by_field_name("value" if kind == "text_inline" else "statement")
-    assert result.type == kind
-    assert len(descendants(root, "spawn_statement")) == (kind == "spawn_statement")
+    assert not valid(root), root
 
 
 @pytest.mark.parametrize("value", ["spawn", "spawn a process", "spawn using: Research."])
@@ -164,7 +152,7 @@ def test_spawn_inline_text_ends_before_following_statements(binding, header, ind
     assert not descendants(target, "spawn_statement")
     run, = descendants(loop, "run_statement")
     assert run.child_by_field_name("runnable").text.strip() == b"after_inline"
-    assert loop.child_by_field_name("until").text.strip() == b": Ready."
+    assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"worker"
 
 
@@ -183,7 +171,7 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert b"spawn remains literal inside inline text." in targets[2].text
     assert not descendants(descendants(root, "agic")[0], "flow_spawn_keyword")
     assert len(descendants(root, "flow_spawn_keyword")) == 5
-    assert any(b"{{spawn}}" in node.text for node in descendants(root, "text_body"))
+    assert any(b"{{description}}" in node.text for node in descendants(root, "text_body"))
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

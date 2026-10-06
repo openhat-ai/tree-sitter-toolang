@@ -1,5 +1,5 @@
 flow launch:
-  let spawn = Launch description.
+  let description = Launch description.
   ## Start independent work.
   let job = spawn research # Retain the handle.
   spawn record_audit
@@ -14,7 +14,7 @@ flow launch:
     until: Ready.
   run:
     spawn remains literal inside explicit text.
-    {{spawn}}
+    {{description}}
   spawned and spawner remain ordinary prose.
 
 agic research:

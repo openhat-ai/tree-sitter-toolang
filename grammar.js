@@ -10,6 +10,7 @@ module.exports = grammar({
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._collection_binding_start, $._spawn_binding_start,
+    $._until_binding_start, $._variable_name,
   ],
   rules: {
     source_file: ($) =>
@@ -251,7 +252,7 @@ module.exports = grammar({
         optional(field("optional", $.optional_marker)),
         optional(seq(field("colon", $.colon), field("type", $.type))),
       ),
-    param_name: ($) => choice("_", $.snake_name),
+    param_name: ($) => choice("_", alias($._variable_name, $.snake_name)),
 
     flow: ($) =>
       prec.right(seq(
@@ -279,6 +280,7 @@ module.exports = grammar({
         $.let_statement,
         $.exec_statement,
         alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_until_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
         $.implicit_run_statement,
@@ -364,6 +366,14 @@ module.exports = grammar({
       optional(seq(field("name", $.local_name), $.assign_operator)),
       $._exec_binding_start,
       $.flow_exec_keyword,
+      optional($.text_line),
+      $.line_end,
+    ),
+    _invalid_until_binding: ($) => seq(
+      $.flow_let_keyword,
+      optional(seq(field("name", $.local_name), $.assign_operator)),
+      $._until_binding_start,
+      $.flow_until_keyword,
       optional($.text_line),
       $.line_end,
     ),
@@ -542,24 +552,25 @@ module.exports = grammar({
         $.flow_ascending_keyword,
         $.flow_descending_keyword,
       )),
-    repeat_statement: ($) =>
-      choice(
-        prec.right(seq(
-          $.flow_repeat_keyword,
-          $._repeat_count_complement,
-          optional($._window_complement),
-          $.colon,
-          $.line_end,
-          structuralBody($, seq(field("body", $.statements), optional($._until_complement), repeat($._trivia))),
-        )),
-        prec.right(seq(
-          $.flow_repeat_keyword,
-          optional($._window_complement),
-          $.colon,
-          $.line_end,
-          structuralBody($, seq(field("body", $.statements), $._until_complement, repeat($._trivia))),
-        )),
+    repeat_statement: ($) => prec.right(seq(
+      $.flow_repeat_keyword,
+      optional($._repeat_count_complement),
+      optional($._window_complement),
+      $.colon,
+      $.line_end,
+      field("body", $.repeat_body),
+    )),
+    repeat_body: ($) => structuralBody($, choice(
+      seq(
+        $._repeat_statements,
+        optional(seq(field("until", $.until_clause), repeat($._trivia), optional($._repeat_statements))),
       ),
+      seq(field("until", $.until_clause), repeat($._trivia), $._repeat_statements),
+    )),
+    _repeat_statements: ($) => prec.right(seq(
+      field("statement", $._flow_statement),
+      repeat(choice(field("statement", $._flow_statement), $._trivia)),
+    )),
     _window_complement: ($) => seq(
       $.flow_windowing_keyword, field("window", $.integer_literal),
     ),
@@ -574,11 +585,14 @@ module.exports = grammar({
           $.flow_times_keyword,
         ),
       ),
-    _until_complement: ($) =>
+    until_clause: ($) =>
       prec.dynamic(2, seq(
         $._until_start,
         $.flow_until_keyword,
-        field("until", $.inline_agic_body),
+        choice(
+          seq(field("target", $.runnable), $.line_end),
+          field("target", $.inline_agic_body),
+        ),
       )),
     invalid_flow_reserved_statement: ($) =>
       prec.dynamic(-2, seq(
@@ -604,8 +618,7 @@ module.exports = grammar({
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
-    // A new statement keyword must not invalidate existing `let spawn = ...`.
-    local_name: ($) => choice($.snake_name, alias($.flow_spawn_keyword, $.snake_name)),
+    local_name: ($) => alias($._variable_name, $.snake_name),
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),

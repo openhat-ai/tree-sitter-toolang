@@ -33,6 +33,8 @@ enum Token {
   EXEC_BINDING_START,
   COLLECTION_BINDING_START,
   SPAWN_BINDING_START,
+  UNTIL_BINDING_START,
+  VARIABLE_NAME,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -185,6 +187,45 @@ static void skip_indentation(TSLexer *lexer) {
   }
 }
 
+static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
+  skip_indentation(lexer);
+  lexer->mark_end(lexer);
+  char word[32] = {0};
+  unsigned length = 0;
+  bool variable = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
+  while (word_character(lexer->lookahead)) {
+    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
+      variable = false;
+    }
+    if (length < sizeof(word) - 1) {
+      word[length++] = (char)lexer->lookahead;
+    }
+    advance(lexer);
+  }
+  // Reserve operation heads after both let prefixes before Content can consume
+  // them. The start tokens are zero-width; the grammar consumes the keyword.
+  if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
+    return emit(scanner, lexer, EXEC_BINDING_START);
+  }
+  if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
+    return emit(scanner, lexer, SPAWN_BINDING_START);
+  }
+  if (valid[UNTIL_BINDING_START] && strcmp(word, "until") == 0) {
+    return emit(scanner, lexer, UNTIL_BINDING_START);
+  }
+  if (valid[COLLECTION_BINDING_START] &&
+      keyword(word, collection_binding_keywords,
+              sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
+    return emit(scanner, lexer, COLLECTION_BINDING_START);
+  }
+  if (valid[VARIABLE_NAME] && variable &&
+      !keyword(word, variable_keywords, sizeof(variable_keywords) / sizeof(*variable_keywords))) {
+    lexer->mark_end(lexer);
+    return emit(scanner, lexer, VARIABLE_NAME);
+  }
+  return false;
+}
+
 // Documentation prefixes leave fields to the grammar. Looking through the
 // first word makes the reserved tag unambiguous without a prose fallback.
 static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
@@ -273,6 +314,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       finish_trivia_line(scanner);
       return emit(scanner, lexer, COMMENT_END);
     }
+    if (valid[VARIABLE_NAME]) {
+      return scan_inline_token(scanner, lexer, valid);
+    }
     return false;
   }
   if (valid[ERROR_LINE]) {
@@ -305,6 +349,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (scanner->comment_started) {
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
+  }
+  if (!at_start && (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
+                    valid[SPAWN_BINDING_START] || valid[UNTIL_BINDING_START] ||
+                    valid[VARIABLE_NAME])) {
+    // A let value may start on the next line. Leave newline/EOF handling below
+    // in control after skipping header whitespace, before inspecting a word.
+    skip_indentation(lexer);
+    if (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+      return scan_inline_token(scanner, lexer, valid);
+    }
   }
 
   lexer->mark_end(lexer);
@@ -341,30 +395,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   if (!at_start) {
-    if (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
-        valid[SPAWN_BINDING_START]) {
-      // Commit reserved heads after let bindings to operation parsing, even
-      // when malformed. A same-line Content fallback would hide syntax errors.
-      char word[32] = {0};
-      unsigned length = 0;
-      while (word_character(lexer->lookahead)) {
-        if (length < sizeof(word) - 1) {
-          word[length++] = (char)lexer->lookahead;
-        }
-        advance(lexer);
-      }
-      if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
-        return emit(scanner, lexer, EXEC_BINDING_START);
-      }
-      if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
-        return emit(scanner, lexer, SPAWN_BINDING_START);
-      }
-      if (valid[COLLECTION_BINDING_START] &&
-          keyword(word, collection_binding_keywords,
-                  sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
-        return emit(scanner, lexer, COLLECTION_BINDING_START);
-      }
-    }
     return false;
   }
 

@@ -77,6 +77,7 @@ def test_reduce_fields_separate_reducer_and_initializer(head, newline, indent):
     "repeat 5 times windowing 3:\n    run improve\n    until: Stable.",
     "repeat windowing 2:\n    run improve\n    until: Stable.",
     "repeat 5 times windowing 1:\n    run improve",
+    "repeat windowing 3:\n    run improve",
 ])
 def test_flow_upgrade_forms(statement):
     assert valid(parse(f"flow work:\n  {statement}\n"))
@@ -86,7 +87,7 @@ def test_flow_upgrade_forms(statement):
     "scatter 3 using generate", "reduce using merge:\n    from:",
     "reduce:\n    from: Missing reducer.", "reduce:\n    Merge.\n    from Seed.",
     "reduce using merge:\n    from: Seed.\n    from: Duplicate.",
-    "reduce windowing 3:\n    Merge.", "repeat windowing 3:\n    run improve",
+    "reduce windowing 3:\n    Merge.",
     "repeat 5 times windowing:\n    run improve", "from: Orphaned.",
 ])
 def test_invalid_flow_upgrade_forms(statement):
@@ -108,8 +109,8 @@ def test_nested_repeat_and_reduce_clause_ownership():
     outer, inner = descendants(root, "repeat_statement")
     assert outer.child_by_field_name("window").text == b"3"
     assert inner.child_by_field_name("window").text == b"1"
-    assert b"Outer." in outer.child_by_field_name("until").text
-    assert b"Inner." in inner.child_by_field_name("until").text
+    assert b"Outer." in outer.child_by_field_name("body").child_by_field_name("until").text
+    assert b"Inner." in inner.child_by_field_name("body").child_by_field_name("until").text
 
 
 @pytest.mark.parametrize("heading", [b"", b"    # Heading\n", b"    ## @param literal\n"])

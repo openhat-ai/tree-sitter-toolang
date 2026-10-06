@@ -23,6 +23,7 @@ FIXTURE_NAMES = (
     "syntax_variants.too",
     "with_caps.too",
     "repeat_comments.too",
+    "flexible_repeat.too",
     "unified_blocks.too",
 )
 

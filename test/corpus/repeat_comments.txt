@@ -33,9 +33,9 @@ flow research:
             (colon)
             (line_end
               (newline))
-            (item_doc_comment
-              (comment_text))
-            (statements
+            (repeat_body
+              (item_doc_comment
+                (comment_text))
               (run_statement
                 (flow_run_keyword)
                 (runnable
@@ -49,27 +49,29 @@ flow research:
                 (colon)
                 (line_end
                   (newline))
-                (plain_comment)
-                (item_doc_comment
-                  (comment_text))
-                (statements
+                (repeat_body
+                  (plain_comment)
+                  (item_doc_comment
+                    (comment_text))
                   (run_statement
                     (flow_run_keyword)
                     (runnable
                       (snake_name))
                     (line_end
-                      (newline))))
+                      (newline)))
+                  (until_clause
+                    (flow_until_keyword)
+                    (inline_agic_body
+                      (colon)
+                      (text_inline
+                        (text_line)
+                        (line_end
+                          (newline)))))))
+              (until_clause
                 (flow_until_keyword)
                 (inline_agic_body
                   (colon)
                   (text_inline
                     (text_line)
                     (line_end
-                      (newline))))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline))))))))))
+                      (newline))))))))))))

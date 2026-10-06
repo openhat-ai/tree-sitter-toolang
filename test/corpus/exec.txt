@@ -36,7 +36,7 @@ flow grow(next: Text):
             (colon)
             (line_end
               (newline))
-            (statements
+            (repeat_body
               (exec_statement
                 (flow_exec_keyword)
                 (inline_agic
@@ -84,7 +84,7 @@ flow grow:
             (colon)
             (line_end
               (newline))
-            (statements
+            (repeat_body
               (exec_statement
                 (flow_exec_keyword)
                 (inline_agic
@@ -106,14 +106,15 @@ flow grow:
                 (runnable
                   (snake_name))
                 (line_end
-                  (newline))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline)))))
+                  (newline)))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline)))))))
           (exec_statement
             (flow_exec_keyword)
             (runnable

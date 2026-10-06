@@ -2335,6 +2335,114 @@
     }
   },
   {
+    "type": "repeat_body",
+    "named": true,
+    "fields": {
+      "statement": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "ask_statement",
+            "named": true
+          },
+          {
+            "type": "drop_statement",
+            "named": true
+          },
+          {
+            "type": "exec_statement",
+            "named": true
+          },
+          {
+            "type": "generate_statement",
+            "named": true
+          },
+          {
+            "type": "implicit_run_statement",
+            "named": true
+          },
+          {
+            "type": "invalid_flow_reserved_statement",
+            "named": true
+          },
+          {
+            "type": "keep_statement",
+            "named": true
+          },
+          {
+            "type": "let_statement",
+            "named": true
+          },
+          {
+            "type": "map_statement",
+            "named": true
+          },
+          {
+            "type": "reduce_statement",
+            "named": true
+          },
+          {
+            "type": "repeat_statement",
+            "named": true
+          },
+          {
+            "type": "run_statement",
+            "named": true
+          },
+          {
+            "type": "seek_statement",
+            "named": true
+          },
+          {
+            "type": "sort_statement",
+            "named": true
+          },
+          {
+            "type": "spawn_statement",
+            "named": true
+          }
+        ]
+      },
+      "until": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "until_clause",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "repeat_statement",
     "named": true,
     "fields": {
@@ -2343,7 +2451,7 @@
         "required": true,
         "types": [
           {
-            "type": "statements",
+            "type": "repeat_body",
             "named": true
           }
         ]
@@ -2354,16 +2462,6 @@
         "types": [
           {
             "type": "integer_literal",
-            "named": true
-          }
-        ]
-      },
-      "until": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "inline_agic_body",
             "named": true
           }
         ]
@@ -2384,10 +2482,6 @@
       "required": true,
       "types": [
         {
-          "type": "blank_line",
-          "named": true
-        },
-        {
           "type": "colon",
           "named": true
         },
@@ -2404,31 +2498,11 @@
           "named": true
         },
         {
-          "type": "flow_until_keyword",
-          "named": true
-        },
-        {
           "type": "flow_windowing_keyword",
           "named": true
         },
         {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
           "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -3310,6 +3384,40 @@
         },
         {
           "type": "text_body_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "until_clause",
+    "named": true,
+    "fields": {
+      "target": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "inline_agic_body",
+            "named": true
+          },
+          {
+            "type": "runnable",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "flow_until_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
           "named": true
         }
       ]

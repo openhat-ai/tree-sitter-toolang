@@ -1,10 +1,23 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar in version 0.4.0-alpha.2.
+This document describes the current Toolang grammar, including unreleased changes.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
+
+## Unreleased
+
+- Implement [flexible repeat conditions](docs/plans/flexible-repeat-conditions.md):
+  zero or one `until NAME` or `until: BODY` at any body position, with optional
+  count and window. Every repeat still requires an ordinary Flow statement.
+- **CST migration:** read `repeat_statement.body: repeat_body`, its repeated
+  `statement` fields, and optional `until: until_clause` with a required `target`.
+  The old root-level `until` field is removed; consumers must adopt these paths
+  with the matching grammar package. Nodes retain source order.
+- **Source migration:** rename keyword-named variables and parameters together
+  with their references. Move same-line let text starting with `until` into an
+  indented text body. Variable naming follows [Lexical Structure](#lexical-structure).
 
 ## Changes in 0.4.0-alpha.2
 
@@ -117,7 +130,14 @@ snake_kebab_name ::= /[a-z][a-z0-9_-]*/
 text_line ::= /[^#\r\n]+/
 indented_raw_text ::= a nonblank content line at or beyond its text baseline
 integer_literal ::= /\d+/
+variable_name ::= a full match of /[a-z][a-z0-9_]*/ that is not a keyword
 ```
+
+Variable names use exact, case-sensitive keyword membership. The keyword rules
+and reserved-word groups in `grammar.js`, including legacy words, are the source
+of truth; `src/keywords.h` is generated from them. `local_name` and named
+`param_name` use this rule and retain their `snake_name` CST child. `_` is the
+special primary-input parameter. Other identifier categories retain their rules.
 
 ### Comments and Documentation
 
@@ -353,7 +373,7 @@ return_type ::= "->" type
 
 params ::= "(" (param ("," param)*)? ")"
 param ::= param_name optional_marker? (":" type)?
-param_name ::= "_" | snake_name
+param_name ::= "_" | variable_name
 
 agic_body ::= trivia*
                (directives messages?
@@ -475,7 +495,7 @@ flow_operation ::= run_statement
 let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
                 | "let" local_name "=" text_inline
-local_name ::= snake_name
+local_name ::= variable_name
 
 exec_statement ::= "exec" runnable line_end
                  | "exec" inline_agic
@@ -540,12 +560,11 @@ drop_statement ::= "drop" position line_end
 
 sort_statement ::= "sort" ("ascending" | "descending") _by_complements
 
-repeat_statement ::= "repeat" _repeat_count_complement window_complement? ":" line_end
-                     statements _until_complement?
-                   | "repeat" window_complement? ":" line_end
-                     statements _until_complement
+repeat_statement ::= "repeat" _repeat_count_complement? window_complement? ":" line_end repeat_body
+repeat_body ::= trivia* (statements (until_clause trivia* statements?)?
+                       | until_clause trivia* statements)
 window_complement ::= "windowing" integer_literal
-_until_complement ::= "until" inline_agic_body
+until_clause ::= "until" (runnable line_end | inline_agic_body)
 
 inline_agic ::= return_type? ":" text_inline
 inline_agic_body ::= ":" text_inline
@@ -598,11 +617,9 @@ Rules:
   compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form. Malformed spawn or collection heads, including
-  removed collection keywords, on the same line cannot fall back to Content.
+  precedence over the BODY form. `until`, malformed spawn or collection heads,
+  including removed collection keywords, cannot fall back to same-line Content.
   For literal text beginning with these words, use an indented Content block.
-  `spawn` remains valid as a local name before `=`: `let spawn = BODY` is a named
-  assignment, while `let spawn R` is a nameless operation binding.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
@@ -653,17 +670,17 @@ Rules:
   Without `from`, runtime seeds from the first source element. Reduce retains one
   previous frame and has no window clause.
 - `windowing N` precedes the repeat header colon and exposes the `window` integer
-  field. Runtime validates positive N and defaults it to 3. Count plus until
-  means at most N iterations, checking the condition after each body. Insufficient
-  history makes until false without calling its evaluator.
-- The count and `until` condition of `repeat` are individually optional, but
-  at least one is required. Count-only, until-only, and combined forms are
-  valid; omitting both is invalid. Unconditional loops are not supported.
-- When present, `until` is a single final condition after the nonempty repeat
-  body, at the same indentation as its sibling statements. Trailing trivia is
-  allowed; an early, middle, duplicate, or wrongly indented condition is invalid.
-  The repeat's `body` field points directly to `statements`; its optional
-  `until` field points to `inline_agic_body`.
+  field. Count and condition are independently optional, including `repeat:`.
+  Runtime owns count/window values, Boolean output, name resolution, condition
+  execution at its source position, and history behavior.
+- A repeat body requires at least one ordinary Flow statement and permits zero
+  or one `until` before, between, or after its statements at the same indentation.
+  Nested repeats own their conditions. Empty/condition-only bodies, duplicate
+  conditions, and conditions outside repeats are invalid.
+- `until NAME` accepts an unresolved bare `snake_name`; `until: BODY` accepts
+  ordinary inline or multiline text and templates. Qualified targets, arguments,
+  modifiers, named colon bodies, output annotations, and result bindings are
+  invalid. Deeper explicit text remains literal; a baseline sibling ends it.
 - Bare flow text is shorthand for inline `run`. Every substantive physical
   line, including a continuation, checks its first complete token. A lowercase
   active or reserved keyword selects structural parsing; malformed syntax
@@ -673,9 +690,8 @@ Rules:
   implicit run. Relative Markdown indentation may continue that prose; a
   keyword-led line at an invalid structural depth is an error. Two blank lines,
   a structural comment, the end of the flow body, or EOF ends the implicit run.
-- `until` is a reserved boundary keyword. Only `until:` in a repeat is valid;
-  bare `until` and lowercase `until ...` do not form an implicit run at a
-  statement boundary.
+- `until` is a reserved boundary keyword. At a statement boundary it begins a
+  repeat condition or a diagnostic, and cannot become implicit run text.
 - `from` and `windowing` are also reserved. `from:` is valid only as a reduce
   initializer; `windowing N` is valid only in a repeat header. Use explicit
   `run:` text when these words begin prose.
@@ -738,11 +754,14 @@ following initializer. Reduce's `runnable` field is a `runnable` or `inline_agic
 its optional `from` field is `text_inline`. An inline reducer's `body` field is
 `text_inline` for same-line text and `text_body` for multiline text.
 
-Repeat exposes required `body: statements`, optional `count: integer_literal`
-and `window: integer_literal`, and optional `until: inline_agic_body`. The
-condition is the final entry inside the repeat body, not a dedented sibling of
-the repeat. [tests/fixtures/flow_upgrade.too](tests/fixtures/flow_upgrade.too)
-contains further complete-source examples.
+Repeat exposes required `body: repeat_body` and optional `count: integer_literal`
+and `window: integer_literal`. The body's ordinary nodes have repeated `statement`
+fields; its optional `until: until_clause` has required `target: runnable | inline_agic_body`
+and a named `flow_until_keyword` child. Statements, condition, and trivia are direct
+children in source order, without a `statements` wrapper. Count preceding statement
+fields to obtain the condition index; a nested repeat counts as one and trivia as
+zero. [tests/fixtures/flexible_repeat.too](tests/fixtures/flexible_repeat.too)
+contains complete-source examples.
 
 ## Model Call Assembly
 

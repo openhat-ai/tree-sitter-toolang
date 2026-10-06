@@ -121,7 +121,7 @@ def test_flow_fixture_covers_complete_statement_set():
     inline_sort = research[19].child_by_field_name("runnable")
     assert inline_sort is not None and inline_sort.type == "inline_agic"
     assert inline_sort.child_by_field_name("return") is None
-    assert research[20].child_by_field_name("until") is not None
+    assert research[20].child_by_field_name("body").child_by_field_name("until") is not None
     assert not _descendants(research[20], "until_statement")
     runnable_statements = [
         statement
@@ -226,8 +226,10 @@ def test_readable_flow_complements_have_flat_public_fields():
 
     repeat = statements[9]
     assert _text(source, repeat.child_by_field_name("count")).strip() == "2"
-    assert repeat.child_by_field_name("body").type == "statements"
-    assert repeat.child_by_field_name("until").type == "inline_agic_body"
+    assert repeat.child_by_field_name("body").type == "repeat_body"
+    clause = repeat.child_by_field_name("body").child_by_field_name("until")
+    assert clause.type == "until_clause"
+    assert clause.child_by_field_name("target").type == "inline_agic_body"
 
 
 def test_unnamed_flow_supports_signatures():
@@ -435,7 +437,7 @@ def test_legacy_and_reserved_words_do_not_fall_back_to_bare_runs():
         _assert_invalid_flow_statement(parser, statement)
 
 
-def test_repeat_requires_count_or_final_until():
+def test_repeat_preserves_counted_and_trailing_condition_forms():
     parser = _parser()
     valid = (
         b"flow counted:\n"
@@ -470,10 +472,10 @@ def test_repeat_requires_count_or_final_until():
         False,
     ]
     assert all(
-        repeat.child_by_field_name("body").type == "statements"
+        repeat.child_by_field_name("body").type == "repeat_body"
         for repeat in repeats
     )
-    assert [repeat.child_by_field_name("until") is not None for repeat in repeats] == [
+    assert [repeat.child_by_field_name("body").child_by_field_name("until") is not None for repeat in repeats] == [
         False,
         True,
         True,
@@ -481,7 +483,7 @@ def test_repeat_requires_count_or_final_until():
     assert not any(
         _descendants(repeat, node_type)
         for repeat in repeats
-        for node_type in ("repeat_body", "repeat_until_body", "until_statement")
+        for node_type in ("statements", "repeat_until_body", "until_statement")
     )
     for statement in invalid:
         _assert_invalid_flow_statement(parser, statement)
@@ -648,17 +650,18 @@ def test_repeat_leading_trivia_preserves_executable_body(
     assert not root.has_error
     loop = _statements(_items(root)[0])[0]
     body = loop.child_by_field_name("body")
-    assert body.type == "statements"
-    assert [node.type for node in body.named_children] == [
+    assert body.type == "repeat_body"
+    statements = body.children_by_field_name("statement")
+    assert [node.type for node in statements] == [
         "run_statement",
         "run_statement",
     ]
     assert [
         _text(source, node.child_by_field_name("runnable")).strip()
-        for node in body.named_children
+        for node in statements
     ] == ["search", "summarize"]
-    assert [node.type for node in loop.named_children if node.type in trivia] == trivia
-    assert bool(loop.child_by_field_name("until")) == bool(ending)
+    assert [node.type for node in body.named_children if node.type in trivia] == trivia
+    assert bool(loop.child_by_field_name("body").child_by_field_name("until")) == bool(ending)
     assert not _descendants(loop, "implicit_run_statement")
 
 
@@ -678,16 +681,17 @@ def test_repeat_documentation_preserves_prose_continuations_and_boundaries():
     assert not root.has_error
     loop = _statements(_items(root)[0])[0]
     body = loop.child_by_field_name("body")
-    assert [node.type for node in body.named_children] == [
+    statements = body.children_by_field_name("statement")
+    assert [node.type for node in statements] == [
         "implicit_run_statement",
         "run_statement",
     ]
-    prose = _text(source, body.named_children[0])
+    prose = _text(source, statements[0])
     assert "Explain the alternatives." in prose
     assert "Run is a word in this prompt." in prose
     assert "##" not in prose
     assert "run summarize" not in prose
-    assert loop.child_by_field_name("until") is not None
+    assert loop.child_by_field_name("body").child_by_field_name("until") is not None
 
 
 
@@ -699,22 +703,25 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     outer = _statements(_items(root)[0])[0]
     outer_body = outer.child_by_field_name("body")
     assert [node.type for node in outer_body.named_children] == [
+        "item_doc_comment",
         "run_statement",
         "item_doc_comment",
         "repeat_statement",
+        "until_clause",
     ]
-    inner = outer_body.named_children[2]
+    inner = outer_body.children_by_field_name("statement")[1]
     inner_body = inner.child_by_field_name("body")
-    assert inner_body.type == "statements"
-    assert [node.type for node in inner_body.named_children] == ["run_statement"]
+    assert inner_body.type == "repeat_body"
+    statements = inner_body.children_by_field_name("statement")
+    assert [node.type for node in statements] == ["run_statement"]
     assert (
         _text(
-            source, inner_body.named_children[0].child_by_field_name("runnable")
+            source, statements[0].child_by_field_name("runnable")
         ).strip()
         == "revise"
     )
-    assert "Stop refining." in _text(source, inner.child_by_field_name("until"))
-    assert "Stop researching." in _text(source, outer.child_by_field_name("until"))
+    assert "Stop refining." in _text(source, inner.child_by_field_name("body").child_by_field_name("until"))
+    assert "Stop researching." in _text(source, outer.child_by_field_name("body").child_by_field_name("until"))
 
 
 

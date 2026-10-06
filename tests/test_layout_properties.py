@@ -16,7 +16,7 @@ def make_program(rng, depth=0):
     for index in range(rng.randint(1, 3)):
         if depth < 3 and (index == 0 or rng.random() < 0.4):
             count = rng.choice([None, 1, 2])
-            condition = count is None or rng.choice([False, True])
+            condition = rng.choice([False, True])
             result.append(("repeat", count, condition, make_program(rng, depth + 1)))
         else:
             result.append(("run", f"step_{rng.randrange(1000000)}"))
@@ -63,12 +63,14 @@ def program_shape(statements):
             )
         elif statement.type == "repeat_statement":
             count = statement.child_by_field_name("count")
-            condition = statement.child_by_field_name("until")
+            condition = statement.child_by_field_name("body").child_by_field_name("until")
             if condition is not None:
-                assert condition.type == "inline_agic_body"
-                assert condition.child_by_field_name("body").text.strip() == b"Ready."
+                assert condition.type == "until_clause"
+                target = condition.child_by_field_name("target")
+                assert target.type == "inline_agic_body"
+                assert target.child_by_field_name("body").text.strip() == b"Ready."
             body = statement.child_by_field_name("body")
-            assert body.type == "statements"
+            assert body.type == "repeat_body"
             result.append(
                 (
                     "repeat",
@@ -83,6 +85,7 @@ def program_shape(statements):
                 "item_doc_comment",
                 "module_doc_comment",
                 "blank_line",
+                "until_clause",
             }
     return result
 

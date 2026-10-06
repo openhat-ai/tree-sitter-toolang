@@ -314,7 +314,7 @@ flow seeded(_):
             (colon)
             (line_end
               (newline))
-            (statements
+            (repeat_body
               (run_statement
                 (flow_run_keyword)
                 (inline_agic
@@ -322,15 +322,16 @@ flow seeded(_):
                   (text_inline
                     (text_line)
                     (line_end
-                      (newline))))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline))))
-            (blank_line))))))
+                      (newline)))))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline)))))
+              (blank_line)))))))
   (item
     (flow
       (flow_keyword)

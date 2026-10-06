@@ -20,4 +20,16 @@ for (const [context, rule] of [
   header += values.map(word => `  ${JSON.stringify(word)},\n`).join("");
   header += "};\n";
 }
+// Variable names exclude language keywords in every context, including legacy
+// reserved words. Ordinary identifier and text patterns are not keyword lists.
+const variableKeywords = new Set([
+  ...words(rules._flow_reserved_word),
+  ...Object.entries(rules)
+    .filter(([name]) => name.endsWith("_keyword"))
+    .flatMap(([, rule]) => words(rule)),
+]);
+header += "static const char *const variable_keywords[] = {\n";
+header += [...variableKeywords].filter(word => /^[a-z][a-z0-9_]*$/.test(word))
+  .sort().map(word => `  ${JSON.stringify(word)},\n`).join("");
+header += "};\n";
 writeFileSync("src/keywords.h", header);

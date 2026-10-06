@@ -1,0 +1,26 @@
+agic is_done(_) -> Boolean:
+  user: Return true when {{_}} is complete.
+
+flow improve(_):
+  repeat:
+    ## Check before any work.
+    until is_done
+    run inspect
+  repeat 2 times windowing 3:
+    Describe the evidence.
+    until: Compare {{_}} with {{_1._}}.
+    run revise
+  repeat 1 time:
+    repeat:
+      until:
+        until remains literal inside condition text.
+        ## Literal documentation.
+      run revise
+    until is_done
+  repeat 0 times:
+    run inspect
+  repeat windowing 2:
+    let note =
+      until remains literal inside explicit Content.
+    run inspect
+  run publish
