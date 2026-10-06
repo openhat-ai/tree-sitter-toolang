@@ -62,8 +62,7 @@ def test_variable_name_regex_boundaries(source, name):
         container = "local_name" if "let " in source else "param_name"
         node, = descendants(root, container)
         assert node.text.decode() == name
-        if container == "local_name":
-            assert node.child_count == 0
+        assert node.child_count == 0
 
 
 @pytest.mark.parametrize("source", CONTEXTS)

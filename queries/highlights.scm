@@ -67,7 +67,7 @@
 (role) @keyword
 
 (assign_operator) @operator
-(directive_op) @operator
+(directive_operator) @operator
 (arrow) @operator
 
 (colon) @punctuation.delimiter
@@ -77,8 +77,7 @@
 (optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
 
-(cap_ref
-  (text_line) @constant)
+(with reference: (text_line) @constant)
 (directive_value) @constant
 (recall_value) @constant
 (route_value) @constant
@@ -88,21 +87,17 @@
 (none_keyword) @constant.builtin
 (all_keyword) @constant.builtin
 
-(property_value) @string
 (text_line) @string
 (indented_raw_text) @string
 
 (struct
-  name: (struct_name
-    (type_name) @type))
+  name: (type_name) @type)
 
 (agic
-  name: (agic_name
-    (snake_name) @function))
+  name: (runnable_name) @function)
 
 (flow
-  name: (flow_name
-    (snake_name) @function))
+  name: (runnable_name) @function)
 
 (psyche
   name: (cap_name) @type)
@@ -123,12 +118,10 @@
   name: (job_name) @function)
 
 (context
-  name: (context_name
-    (snake_name) @function))
+  name: (identifier) @function)
 
 (instruct
-  name: (instruct_name
-    (snake_name) @function))
+  name: (identifier) @function)
 
 [
   (task)
@@ -136,14 +129,9 @@
 ] @type
 
 (param
-  name: (param_name
-    (snake_name) @property))
+  name: (param_name) @property)
 
 (field
-  name: (field_name
-    (snake_name) @property))
+  name: (identifier) @property)
 
-(type
-  (base_type
-    (user_type
-      (type_name) @type)))
+(type base: (type_name) @type)

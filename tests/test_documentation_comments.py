@@ -88,6 +88,7 @@ def test_parameter_fields_use_signature_names_and_preserve_description(
     assert tag.end_byte == len(line.encode())
     param = tag.child_by_field_name("name")
     assert param.type == "param_name" and param.text == name.encode()
+    assert param.child_count == 0
     body = tag.child_by_field_name("description")
     assert body.type == "comment_text" and body.text == description.encode()
     assert param.end_byte + len(space) == body.start_byte

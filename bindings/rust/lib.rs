@@ -62,8 +62,6 @@ mod tests {
             .root_node()
             .named_child(0)
             .unwrap()
-            .named_child(0)
-            .unwrap()
             .child_by_field_name("body")
             .unwrap()
             .named_child(0)
@@ -72,7 +70,7 @@ mod tests {
         assert_eq!(bare.kind(), "spawn_statement");
         assert_eq!(
             bare.child_by_field_name("target").unwrap().kind(),
-            "runnable"
+            "runnable_name"
         );
         let bound = statements.named_child(1).unwrap();
         assert_eq!(bound.kind(), "let_statement");
@@ -104,8 +102,6 @@ mod tests {
             .root_node()
             .named_child(0)
             .unwrap()
-            .named_child(0)
-            .unwrap()
             .child_by_field_name("body")
             .unwrap()
             .named_child(0)
@@ -119,7 +115,7 @@ mod tests {
         assert_eq!(condition.kind(), "until_clause");
         assert_eq!(body.named_child(1).unwrap(), condition);
         let target = condition.child_by_field_name("target").unwrap();
-        assert_eq!(target.kind(), "runnable");
+        assert_eq!(target.kind(), "runnable_name");
         assert_eq!(target.utf8_text(source.as_bytes()).unwrap().trim(), "done");
         let mut cursor = body.walk();
         let statements: Vec<_> = body
@@ -146,8 +142,6 @@ mod tests {
                 .root_node()
                 .named_child(0)
                 .unwrap()
-                .named_child(0)
-                .unwrap()
                 .child_by_field_name("body")
                 .unwrap()
                 .named_child(0)
@@ -167,7 +161,7 @@ mod tests {
             );
             assert_eq!(
                 statement.child_by_field_name(target).unwrap().kind(),
-                "runnable"
+                "runnable_name"
             );
             for (index, name) in [(1, None), (2, Some("x")), (3, None), (4, Some("h"))] {
                 let node = statements.named_child(index).unwrap();
@@ -201,8 +195,6 @@ mod tests {
         assert!(!tree.root_node().has_error());
         let statements = tree
             .root_node()
-            .named_child(0)
-            .unwrap()
             .named_child(0)
             .unwrap()
             .child_by_field_name("body")

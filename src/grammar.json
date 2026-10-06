@@ -13,12 +13,12 @@
           },
           {
             "type": "SYMBOL",
-            "name": "item"
+            "name": "_item"
           }
         ]
       }
     },
-    "item": {
+    "_item": {
       "type": "SEQ",
       "members": [
         {
@@ -222,7 +222,7 @@
           "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "param_name"
+            "name": "_param_name"
           }
         },
         {
@@ -316,7 +316,7 @@
           "name": "reference",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_ref"
+            "name": "text_line"
           }
         },
         {
@@ -333,7 +333,7 @@
           "name": "base",
           "content": {
             "type": "SYMBOL",
-            "name": "base_type"
+            "name": "_base_type"
           }
         },
         {
@@ -343,13 +343,13 @@
             "name": "suffix",
             "content": {
               "type": "SYMBOL",
-              "name": "type_suffix"
+              "name": "array_suffix"
             }
           }
         }
       ]
     },
-    "base_type": {
+    "_base_type": {
       "type": "CHOICE",
       "members": [
         {
@@ -358,42 +358,37 @@
         },
         {
           "type": "SYMBOL",
-          "name": "user_type"
+          "name": "type_name"
         }
       ]
     },
     "builtin_type": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "Text"
-        },
-        {
-          "type": "STRING",
-          "value": "Number"
-        },
-        {
-          "type": "STRING",
-          "value": "Boolean"
-        },
-        {
-          "type": "STRING",
-          "value": "Json"
-        },
-        {
-          "type": "STRING",
-          "value": "Part"
-        }
-      ]
-    },
-    "user_type": {
-      "type": "SYMBOL",
-      "name": "type_name"
-    },
-    "type_suffix": {
-      "type": "SYMBOL",
-      "name": "array_suffix"
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "Text"
+          },
+          {
+            "type": "STRING",
+            "value": "Number"
+          },
+          {
+            "type": "STRING",
+            "value": "Boolean"
+          },
+          {
+            "type": "STRING",
+            "value": "Json"
+          },
+          {
+            "type": "STRING",
+            "value": "Part"
+          }
+        ]
+      }
     },
     "array_suffix": {
       "type": "STRING",
@@ -415,7 +410,7 @@
           "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "struct_name"
+            "name": "type_name"
           }
         },
         {
@@ -439,10 +434,6 @@
           }
         }
       ]
-    },
-    "struct_name": {
-      "type": "SYMBOL",
-      "name": "type_name"
     },
     "struct_body": {
       "type": "PREC_RIGHT",
@@ -505,7 +496,7 @@
           "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "field_name"
+            "name": "identifier"
           }
         },
         {
@@ -545,10 +536,6 @@
           "name": "line_end"
         }
       ]
-    },
-    "field_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
     },
     "psyche": {
       "type": "SEQ",
@@ -736,8 +723,13 @@
                         "type": "FIELD",
                         "name": "body",
                         "content": {
-                          "type": "SYMBOL",
-                          "name": "cap_body"
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_cap_text_body"
+                          },
+                          "named": true,
+                          "value": "text_body"
                         }
                       },
                       {
@@ -758,15 +750,6 @@
           }
         ]
       }
-    },
-    "cap_body": {
-      "type": "ALIAS",
-      "content": {
-        "type": "SYMBOL",
-        "name": "_cap_text_body"
-      },
-      "named": true,
-      "value": "text_body"
     },
     "_cap_text_body": {
       "type": "SEQ",
@@ -875,10 +858,6 @@
       "type": "SYMBOL",
       "name": "_snake_kebab_name"
     },
-    "cap_ref": {
-      "type": "SYMBOL",
-      "name": "text_line"
-    },
     "job_name": {
       "type": "SYMBOL",
       "name": "_snake_kebab_name"
@@ -969,7 +948,7 @@
           "name": "key",
           "content": {
             "type": "SYMBOL",
-            "name": "property_key"
+            "name": "identifier"
           }
         },
         {
@@ -985,7 +964,7 @@
           "name": "value",
           "content": {
             "type": "SYMBOL",
-            "name": "property_value"
+            "name": "text_line"
           }
         },
         {
@@ -993,14 +972,6 @@
           "name": "line_end"
         }
       ]
-    },
-    "property_key": {
-      "type": "SYMBOL",
-      "name": "snake_name"
-    },
-    "property_value": {
-      "type": "SYMBOL",
-      "name": "text_line"
     },
     "instruct": {
       "type": "SEQ",
@@ -1021,7 +992,7 @@
               "name": "name",
               "content": {
                 "type": "SYMBOL",
-                "name": "instruct_name"
+                "name": "identifier"
               }
             },
             {
@@ -1042,18 +1013,10 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "instruct_body"
+            "name": "text_inline"
           }
         }
       ]
-    },
-    "instruct_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
-    },
-    "instruct_body": {
-      "type": "SYMBOL",
-      "name": "text_inline"
     },
     "context": {
       "type": "SEQ",
@@ -1074,7 +1037,7 @@
               "name": "name",
               "content": {
                 "type": "SYMBOL",
-                "name": "context_name"
+                "name": "identifier"
               }
             },
             {
@@ -1095,18 +1058,10 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "context_body"
+            "name": "text_inline"
           }
         }
       ]
-    },
-    "context_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
-    },
-    "context_body": {
-      "type": "SYMBOL",
-      "name": "text_inline"
     },
     "text_inline": {
       "type": "CHOICE",
@@ -1222,7 +1177,7 @@
                 "name": "name",
                 "content": {
                   "type": "SYMBOL",
-                  "name": "agic_name"
+                  "name": "runnable_name"
                 }
               },
               {
@@ -1297,10 +1252,6 @@
           }
         ]
       }
-    },
-    "agic_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
     },
     "agic_body": {
       "type": "PREC_RIGHT",
@@ -1422,7 +1373,7 @@
           "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "param_name"
+            "name": "_param_name"
           }
         },
         {
@@ -1472,12 +1423,17 @@
         }
       ]
     },
-    "param_name": {
+    "_param_name": {
       "type": "CHOICE",
       "members": [
         {
-          "type": "STRING",
-          "value": "_"
+          "type": "ALIAS",
+          "content": {
+            "type": "STRING",
+            "value": "_"
+          },
+          "named": true,
+          "value": "param_name"
         },
         {
           "type": "ALIAS",
@@ -1486,7 +1442,7 @@
             "name": "_variable_name"
           },
           "named": true,
-          "value": "snake_name"
+          "value": "param_name"
         }
       ]
     },
@@ -1512,7 +1468,7 @@
                 "name": "name",
                 "content": {
                   "type": "SYMBOL",
-                  "name": "flow_name"
+                  "name": "runnable_name"
                 }
               },
               {
@@ -1587,10 +1543,6 @@
           }
         ]
       }
-    },
-    "flow_name": {
-      "type": "SYMBOL",
-      "name": "snake_name"
     },
     "flow_body": {
       "type": "PREC_RIGHT",
@@ -2103,7 +2055,7 @@
               "name": "target",
               "content": {
                 "type": "SYMBOL",
-                "name": "runnable"
+                "name": "runnable_name"
               }
             },
             {
@@ -2150,7 +2102,7 @@
               "name": "target",
               "content": {
                 "type": "SYMBOL",
-                "name": "runnable"
+                "name": "runnable_name"
               }
             },
             {
@@ -2392,7 +2344,7 @@
               "name": "runnable",
               "content": {
                 "type": "SYMBOL",
-                "name": "runnable"
+                "name": "runnable_name"
               }
             },
             {
@@ -2446,7 +2398,7 @@
                   "name": "runnable",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "runnable"
+                    "name": "runnable_name"
                   }
                 },
                 {
@@ -2526,7 +2478,7 @@
                   "members": [
                     {
                       "type": "SYMBOL",
-                      "name": "runnable"
+                      "name": "runnable_name"
                     },
                     {
                       "type": "CHOICE",
@@ -2758,7 +2710,7 @@
               "name": "agent",
               "content": {
                 "type": "SYMBOL",
-                "name": "agent"
+                "name": "agent_name"
               }
             },
             {
@@ -2766,7 +2718,7 @@
               "name": "runnable",
               "content": {
                 "type": "SYMBOL",
-                "name": "runnable"
+                "name": "runnable_name"
               }
             },
             {
@@ -2790,7 +2742,7 @@
                 "name": "agent",
                 "content": {
                   "type": "SYMBOL",
-                  "name": "agent"
+                  "name": "agent_name"
                 }
               },
               {
@@ -3330,7 +3282,7 @@
           "name": "runnable",
           "content": {
             "type": "SYMBOL",
-            "name": "runnable"
+            "name": "runnable_name"
           }
         }
       ]
@@ -3354,7 +3306,7 @@
           "name": "runnable",
           "content": {
             "type": "SYMBOL",
-            "name": "runnable"
+            "name": "runnable_name"
           }
         }
       ]
@@ -3388,7 +3340,7 @@
           "name": "runnable",
           "content": {
             "type": "SYMBOL",
-            "name": "runnable"
+            "name": "runnable_name"
           }
         }
       ]
@@ -3949,7 +3901,7 @@
                     "name": "target",
                     "content": {
                       "type": "SYMBOL",
-                      "name": "runnable"
+                      "name": "runnable_name"
                     }
                   },
                   {
@@ -4093,13 +4045,13 @@
         }
       ]
     },
-    "runnable": {
+    "runnable_name": {
       "type": "SYMBOL",
-      "name": "snake_name"
+      "name": "_identifier"
     },
-    "agent": {
+    "agent_name": {
       "type": "SYMBOL",
-      "name": "snake_name"
+      "name": "_identifier"
     },
     "local_name": {
       "type": "SYMBOL",
@@ -4157,7 +4109,7 @@
                   "name": "operator",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "directive_op"
+                    "name": "directive_operator"
                   }
                 },
                 {
@@ -4323,92 +4275,128 @@
       ]
     },
     "_query_directive_key": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "models"
-        },
-        {
-          "type": "STRING",
-          "value": "tools"
-        },
-        {
-          "type": "STRING",
-          "value": "skills"
-        },
-        {
-          "type": "STRING",
-          "value": "services"
-        },
-        {
-          "type": "STRING",
-          "value": "psyches"
-        },
-        {
-          "type": "STRING",
-          "value": "prompts"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "models"
+          },
+          {
+            "type": "STRING",
+            "value": "tools"
+          },
+          {
+            "type": "STRING",
+            "value": "skills"
+          },
+          {
+            "type": "STRING",
+            "value": "services"
+          },
+          {
+            "type": "STRING",
+            "value": "psyches"
+          },
+          {
+            "type": "STRING",
+            "value": "prompts"
+          }
+        ]
+      }
     },
     "_route_directive_key": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "hands"
-        },
-        {
-          "type": "STRING",
-          "value": "handoffs"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "hands"
+          },
+          {
+            "type": "STRING",
+            "value": "handoffs"
+          }
+        ]
+      }
     },
     "directive_key": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_query_directive_key"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_route_directive_key"
-        },
-        {
-          "type": "STRING",
-          "value": "lanes"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "recall_keyword"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "instruct_keyword"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "context_keyword"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "models"
+          },
+          {
+            "type": "STRING",
+            "value": "tools"
+          },
+          {
+            "type": "STRING",
+            "value": "skills"
+          },
+          {
+            "type": "STRING",
+            "value": "services"
+          },
+          {
+            "type": "STRING",
+            "value": "psyches"
+          },
+          {
+            "type": "STRING",
+            "value": "prompts"
+          },
+          {
+            "type": "STRING",
+            "value": "hands"
+          },
+          {
+            "type": "STRING",
+            "value": "handoffs"
+          },
+          {
+            "type": "STRING",
+            "value": "lanes"
+          },
+          {
+            "type": "STRING",
+            "value": "recall"
+          },
+          {
+            "type": "STRING",
+            "value": "instruct"
+          },
+          {
+            "type": "STRING",
+            "value": "context"
+          }
+        ]
+      }
     },
-    "directive_op": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "="
-        },
-        {
-          "type": "STRING",
-          "value": "+="
-        },
-        {
-          "type": "STRING",
-          "value": "-="
-        }
-      ]
+    "directive_operator": {
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "="
+          },
+          {
+            "type": "STRING",
+            "value": "+="
+          },
+          {
+            "type": "STRING",
+            "value": "-="
+          }
+        ]
+      }
     },
     "directive_value": {
       "type": "TOKEN",
@@ -4509,17 +4497,20 @@
       ]
     },
     "recall_source": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "far"
-        },
-        {
-          "type": "STRING",
-          "value": "near"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "far"
+          },
+          {
+            "type": "STRING",
+            "value": "near"
+          }
+        ]
+      }
     },
     "_directives": {
       "type": "PREC_RIGHT",
@@ -4563,7 +4554,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "snake_name"
+          "name": "identifier"
         }
       ]
     },
@@ -4764,21 +4755,24 @@
       }
     },
     "role": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "user"
-        },
-        {
-          "type": "STRING",
-          "value": "assistant"
-        },
-        {
-          "type": "STRING",
-          "value": "tool"
-        }
-      ]
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "user"
+          },
+          {
+            "type": "STRING",
+            "value": "assistant"
+          },
+          {
+            "type": "STRING",
+            "value": "tool"
+          }
+        ]
+      }
     },
     "_pass_statement": {
       "type": "PREC",
@@ -5366,17 +5360,17 @@
       }
     },
     "type_name": {
-      "type": "SYMBOL",
-      "name": "pascal_name"
-    },
-    "pascal_name": {
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
         "value": "[A-Z][A-Za-z0-9]*"
       }
     },
-    "snake_name": {
+    "identifier": {
+      "type": "SYMBOL",
+      "name": "_identifier"
+    },
+    "_identifier": {
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
@@ -5398,6 +5392,10 @@
       }
     },
     "text_line": {
+      "type": "SYMBOL",
+      "name": "_text_line"
+    },
+    "_text_line": {
       "type": "TOKEN",
       "content": {
         "type": "PREC",

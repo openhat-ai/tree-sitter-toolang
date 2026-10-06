@@ -52,7 +52,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
     if target.startswith(" missing_name"):
-        assert node.type == "runnable"
+        assert node.type == "runnable_name"
         assert node.text.strip() == b"missing_name"
     else:
         assert node.type == "inline_agic"
@@ -163,7 +163,7 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert valid(root), root
     targets = [node.child_by_field_name("target") for node in descendants(root, "spawn_statement")]
     assert [node.type for node in targets] == [
-        "runnable", "runnable", "inline_agic", "inline_agic", "runnable",
+        "runnable_name", "runnable_name", "inline_agic", "inline_agic", "runnable_name",
     ]
     outer, inner = descendants(root, "repeat_statement")
     assert len(descendants(outer, "spawn_statement")) == 3

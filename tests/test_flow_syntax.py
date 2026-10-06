@@ -6,6 +6,8 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
+from test_layout_support import declarations
+
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
 STATEMENT_TYPES = {
@@ -33,11 +35,7 @@ def _text(source: bytes, node) -> str:
 
 
 def _items(root):
-    return [
-        child.named_children[0]
-        for child in root.named_children
-        if child.type == "item"
-    ]
+    return declarations(root)
 
 
 def _descendants(node, node_type: str):
@@ -203,7 +201,7 @@ def test_readable_flow_complements_have_flat_public_fields():
 
     for statement in statements[:8]:
         runnable = statement.child_by_field_name("runnable")
-        assert runnable is not None and runnable.type == "runnable"
+        assert runnable is not None and runnable.type == "runnable_name"
         assert statement.child_by_field_name("agic") is None
 
     assert statements[0].child_by_field_name("count") is None

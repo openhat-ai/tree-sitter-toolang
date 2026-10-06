@@ -1,10 +1,18 @@
 # Toolang Grammar
 
-This document describes the public Toolang grammar as of version 0.4.0-alpha.4.
+This document describes the current public Toolang grammar, including unreleased
+changes since version 0.4.0-alpha.4.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
+
+## Unreleased
+
+- Simplify the public CST without changing accepted source syntax: expose
+  declarations directly, use leaf names and tokens, and remove forwarding body
+  and type nodes. This is a breaking change for CST consumers; see
+  [CST node contract](#cst-node-contract) for the migration.
 
 ## Changes in 0.4.0-alpha.4
 
@@ -133,6 +141,60 @@ x+        one or more
 /.../     lexical token
 ```
 
+## CST Node Contract
+
+Grammar reuse is separate from the public tree. Lexical matching and grouping
+rules are hidden. In valid syntax, a public name or lexical token directly
+owns its text and has no children. Fields identify the role within a parent. Shared nodes describe the
+same syntax across contexts; specialized names retain distinct constraints.
+
+| Public node | Meaning |
+| --- | --- |
+| `identifier` | Ordinary lowercase name used for fields, property keys, context/instruct declarations, and named text references. |
+| `runnable_name` | Named agic/flow declaration or call target; distinct from an inline agic. |
+| `type_name` | Authored type name in a declaration or type reference; distinct from `builtin_type`. |
+| `local_name` | Non-keyword local binding or await handle name; excludes `_`. |
+| `param_name` | Parameter name in a signature or documentation, including primary input `_`. |
+| `cap_name`, `job_name`, `agent_name` | Capability, job, and agent names with their existing lexical rules. |
+| `text_line`, `text_inline`, `text_body` | Reusable text forms; fields distinguish values, references, and bodies. |
+| `directive_operator`, `assign_operator` | Query directive operator (`=`, `+=`, `-=`) and assignment-only operator (`=`). |
+| `array_suffix` | One `[]` suffix; `type.suffix` may contain several. |
+
+`source_file` contains declarations and trivia directly. `type.base` points to
+`builtin_type` or `type_name`; `type.suffix` points to `array_suffix` leaves.
+Structural bodies such as `flow_body`, `agic_body`, `job_body`, and `repeat_body`
+remain because they contain distinct statement, directive, property, or condition
+structures. `runnable_ref` remains distinct from `runnable_name`: route lists
+allow qualified references with namespaces and optional runnable kinds.
+`text_ref` retains its `default_keyword`, `none_keyword`, or
+`identifier` child to distinguish its alternatives; route and recall values
+retain their selections and list elements.
+
+CST migration from earlier versions:
+
+| Previous shape | Current shape |
+| --- | --- |
+| `item → declaration` | Direct declaration under `source_file`. |
+| `agic_name / flow_name / runnable → snake_name` | `runnable_name` leaf. |
+| `field_name / property_key / context_name / instruct_name → snake_name` | `identifier` leaf. |
+| `struct_name / user_type → type_name → pascal_name` | `type_name` leaf. |
+| `local_name / param_name → snake_name` | The same semantic node as a leaf; `_` parameters have the same leaf shape. |
+| `agent → snake_name` | `agent_name` leaf. |
+| `directive_op` | `directive_operator` leaf. |
+| `builtin_type / role / directive_key / recall_source / assign_operator → anonymous token` | The named token directly owns its text. |
+| `base_type → builtin_type / user_type` | Direct `type.base: builtin_type / type_name`. |
+| `type_suffix → array_suffix` | Direct `type.suffix: array_suffix`. |
+| `cap_ref / property_value → text_line` | Direct `reference` / `value` field pointing to `text_line`. |
+| `cap_body → text_body` | Direct `body: text_body`. |
+| `context_body / instruct_body → text_inline` | Direct `body: text_inline`. |
+
+Field names and surviving nodes' source ranges are preserved. Update queries to
+capture the new leaf or direct child. Consumers should enumerate declarations
+without unwrapping `item`, and read cap text directly from its `body` node rather
+than searching for a second `text_body`. No runtime behavior or binding rule is
+changed. Consumers must reject missing tokens, `ERROR` nodes, and `invalid_*`
+diagnostics before interpreting declarations.
+
 ## Lexical Structure
 
 ```ebnf
@@ -150,8 +212,7 @@ comment_text ::= /[^ \t\r\n][^\r\n]*/
 horizontal_space ::= /[ \t]+/
 trivia ::= plain_comment | shebang_comment | module_doc_comment | item_doc_comment | blank_line
 
-pascal_name ::= /[A-Z][A-Za-z0-9]*/
-snake_name ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
+identifier ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
 kebab_name ::= /[a-z][a-z0-9]*(-[a-z0-9]+)*/
 snake_kebab_name ::= /[a-z][a-z0-9_-]*/
 text_line ::= /[^#\r\n]+/
@@ -162,8 +223,8 @@ variable_name ::= a full match of /[a-z][a-z0-9_]*/ that is not a keyword
 
 Variable names use exact, case-sensitive keyword membership. The keyword rules
 and reserved-word groups in `grammar.js`, including legacy words, are the source
-of truth; `src/keywords.h` is generated from them. `local_name` is a leaf using
-this rule; named `param_name` retains its `snake_name` CST child. `_` is the
+of truth; `src/keywords.h` is generated from them. `local_name` and `param_name`
+are leaves using this rule; `param_name` additionally accepts `_`. `_` is the
 special primary-input parameter name and a reserved flow word; it is not a
 `local_name`. Other identifier categories retain their rules.
 
@@ -264,12 +325,10 @@ all declaration bodies, nested repeat bodies, and multiline text consumers.
 ## Types
 
 ```ebnf
-type ::= base_type type_suffix*
-base_type ::= builtin_type | user_type
+type ::= (builtin_type | type_name) array_suffix*
 builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
-user_type ::= type_name
-type_name ::= pascal_name
-type_suffix ::= "[]"
+type_name ::= /[A-Z][A-Za-z0-9]*/
+array_suffix ::= "[]"
 ```
 
 Rules:
@@ -293,32 +352,26 @@ item ::= with | struct | psyche | skill | service | prompt | task | chore
 ## With
 
 ```ebnf
-with ::= "with" cap_kind cap_ref line_end
+with ::= "with" cap_kind text_line line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
-cap_ref ::= text_line
 ```
 
 ## Struct
 
 ```ebnf
-struct ::= "struct" struct_name ":" line_end struct_body
-struct_name ::= type_name
+struct ::= "struct" type_name ":" line_end struct_body
 struct_body ::= trivia* field (field | trivia)*
-field ::= field_name optional_marker? ":" type line_end
-field_name ::= snake_name
+field ::= identifier optional_marker? ":" type line_end
 optional_marker ::= "?"
 ```
 
 ## Caps
 
 ```ebnf
-cap ::= cap_kind cap_name ":" line_end (property | trivia)* cap_body? trivia*
+cap ::= cap_kind cap_name ":" line_end (property | trivia)* text_body? trivia*
 cap_name ::= snake_kebab_name
 
-cap_body ::= text_body
-property ::= property_key "=" property_value line_end
-property_key ::= snake_name
-property_value ::= text_line
+property ::= identifier "=" text_line line_end
 ```
 
 Rules:
@@ -326,7 +379,7 @@ Rules:
 - The public CST exposes `psyche`, `skill`, `service`, and `prompt` directly.
 - All four cap declarations expose the same `kind`, `name`, repeated `property`,
   and optional `body` fields. The body is the declaration's indented text block
-  and is always exposed as `cap_body`.
+  and is exposed directly as `text_body`.
 - Properties form a leading prefix before the text body. Once the text body
   starts, later property-looking lines remain text.
 - Runtime validates property keys and cap-specific constraints after parsing.
@@ -343,7 +396,7 @@ Rules:
   primary-input placeholder. Prompt declarations have no parameter directive or
   typed signature.
 - Placeholder extraction and substitution are language semantics; placeholders
-  remain part of the raw `cap_body` text in the CST.
+  remain part of the raw `text_body` text in the CST.
 
 ## Jobs
 
@@ -379,13 +432,9 @@ Rules:
 ## Context And Instruct
 
 ```ebnf
-context ::= "context" context_name? ":" context_body
-context_name ::= snake_name
-context_body ::= text_inline
+context ::= "context" identifier? ":" text_inline
 
-instruct ::= "instruct" instruct_name? ":" instruct_body
-instruct_name ::= snake_name
-instruct_body ::= text_inline
+instruct ::= "instruct" identifier? ":" text_inline
 ```
 
 Defaults:
@@ -395,8 +444,7 @@ Defaults:
 ## Agic
 
 ```ebnf
-agic ::= "agic" agic_name? params? return_type? ":" line_end agic_body
-agic_name ::= snake_name
+agic ::= "agic" runnable_name? params? return_type? ":" line_end agic_body
 return_type ::= "->" type
 
 params ::= "(" (param ("," param)*)? ")"
@@ -410,7 +458,7 @@ agic_body ::= trivia*
                trivia*
 
 directives ::= directive (directive | trivia)*
-directive ::= query_key directive_op directive_value line_end
+directive ::= query_key directive_operator directive_value line_end
             | ("hands" | "handoffs") "=" route_value line_end
             | "recall" "=" recall_value line_end
             | "lanes" "=" (integer_literal | "default") line_end
@@ -418,14 +466,14 @@ directive ::= query_key directive_op directive_value line_end
 query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
 directive_key ::= query_key | "hands" | "handoffs" | "recall" | "lanes"
                 | "instruct" | "context"
-directive_op ::= "=" | "+=" | "-="
+directive_operator ::= "=" | "+=" | "-="
 directive_value ::= /[^ \t#\r\n][^#\r\n]*/
 route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
 runnable_ref ::= (public_name "::")* ("agic:" | "flow:")? public_name
 public_name ::= /[A-Za-z_][A-Za-z0-9_-]*/
 recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
 recall_source ::= "far" | "near"
-text_ref ::= "default" | "none" | snake_name
+text_ref ::= "default" | "none" | identifier
 
 messages ::= message (message | trivia)*
 message ::= role ":" text_inline
@@ -492,8 +540,7 @@ Rules:
 ## Flow
 
 ```ebnf
-flow ::= "flow" flow_name? params? return_type? ":" line_end flow_body
-flow_name ::= snake_name
+flow ::= "flow" runnable_name? params? return_type? ":" line_end flow_body
 
 flow_body ::= trivia*
               (directives statements
@@ -526,19 +573,19 @@ let_statement ::= "let" local_name "=" flow_operation
                 | "let" local_name "=" text_inline
 local_name ::= variable_name
 
-exec_statement ::= "exec" runnable line_end
+exec_statement ::= "exec" runnable_name line_end
                  | "exec" inline_agic
 
-run_statement ::= "async"? "run" runnable line_end
+run_statement ::= "async"? "run" runnable_name line_end
                 | "async"? "run" inline_agic
 
-spawn_statement ::= "spawn" runnable line_end
+spawn_statement ::= "spawn" runnable_name line_end
                   | "spawn" inline_agic
 
 await_statement ::= "await" local_name line_end
 
-seek_statement ::= "seek" agent runnable line_end
-                 | "seek" agent inline_agic
+seek_statement ::= "seek" agent_name runnable_name line_end
+                 | "seek" agent_name inline_agic
 
 ask_statement ::= "ask" ":" text_inline
 
@@ -551,10 +598,10 @@ _lanes_complement ::= "in" _one_integer_literal "lane"
 _repeat_count_complement ::= _one_integer_literal "time"
                            | _other_integer_literal "times"
 
-_named_using_complement  ::= "using" horizontal_space runnable
-_named_if_complement     ::= "if" runnable
+_named_using_complement  ::= "using" horizontal_space runnable_name
+_named_if_complement     ::= "if" runnable_name
 _inline_if_complement    ::= "if" inline_agic
-_named_by_complement     ::= "by" runnable
+_named_by_complement     ::= "by" runnable_name
 _inline_by_complement    ::= "by" inline_agic
 
 _runnable_complements ::= _lanes_complement?
@@ -595,13 +642,13 @@ repeat_statement ::= "repeat" _repeat_count_complement? window_complement? ":" l
 repeat_body ::= trivia* (statements (until_clause trivia* statements?)?
                        | until_clause trivia* statements)
 window_complement ::= "windowing" integer_literal
-until_clause ::= "until" (runnable line_end | inline_agic_body)
+until_clause ::= "until" (runnable_name line_end | inline_agic_body)
 
 inline_agic ::= return_type? ":" text_inline
 inline_agic_body ::= ":" text_inline
 
-runnable ::= snake_name
-agent ::= snake_name
+runnable_name ::= identifier
+agent_name ::= identifier
 
 _active_statement_keyword ::= "let" | "exec" | "run" | "spawn" | "seek" | "ask"
                             | "async" | "await"
@@ -656,7 +703,7 @@ Rules:
   A named binding missing `=` produces `invalid_flow_reserved_statement`,
   keeping its diagnostic local during both fresh and incremental parsing.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
-  the outgoing runnable does not resume. Its `target` field is a `runnable` or
+  the outgoing runnable does not resume. Its `target` field is a `runnable_name` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
   Exec is not bindable and accepts no argument lists or modifiers. Named targets
   end at the line boundary. Inline bodies retain normal text/template syntax
@@ -692,8 +739,8 @@ Rules:
   The same node represents async and spawn handles
   because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single
-  required `target` field (`runnable` or `inline_agic`). Named targets are bare
-  snake_names and end at the line boundary; no `using`, argument lists, lane/count
+  required `target` field (`runnable_name` or `inline_agic`). Named targets are bare
+  runnable names and end at the line boundary; no `using`, argument lists, lane/count
   clauses, or async modifiers are accepted. Inline targets reuse text bodies,
   templates, and optional return types; the return type describes the target's
   eventual output, not its launch handle.
@@ -737,7 +784,7 @@ Rules:
   or one `until` before, between, or after its statements at the same indentation.
   Nested repeats own their conditions. Empty/condition-only bodies, duplicate
   conditions, and conditions outside repeats are invalid.
-- `until NAME` accepts an unresolved bare `snake_name`; `until: BODY` accepts
+- `until NAME` accepts an unresolved bare `runnable_name`; `until: BODY` accepts
   ordinary inline or multiline text and templates. Qualified targets, arguments,
   modifiers, named colon bodies, output annotations, and result bindings are
   invalid. Deeper explicit text remains literal; a baseline sibling ends it.

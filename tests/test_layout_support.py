@@ -73,3 +73,9 @@ def edit_tree(tree, previous, current):
         old_end_point=point(previous, old_end),
         new_end_point=point(current, new_end),
     )
+
+
+def declarations(root):
+    kinds = {"with", "struct", "psyche", "skill", "service", "prompt",
+             "task", "chore", "context", "instruct", "agic", "flow"}
+    return [node for node in root.named_children if node.type in kinds]

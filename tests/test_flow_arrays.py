@@ -38,7 +38,7 @@ def test_collection_targets_and_bindings(head, kind, count, lanes, binding, targ
     operation, = descendants(root, kind)
     runnable = operation.child_by_field_name("runnable")
     if output is None and target.startswith(" using"):
-        assert runnable.type == "runnable"
+        assert runnable.type == "runnable_name"
         assert runnable.text == b"worker"
         assert len(descendants(operation, "flow_using_keyword")) == 1
     else:

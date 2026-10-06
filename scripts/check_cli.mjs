@@ -22,7 +22,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
     required: true,
     types: [
       { type: "inline_agic", named: true },
-      { type: "runnable", named: true },
+      { type: "runnable_name", named: true },
     ],
   },
 });
@@ -34,7 +34,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
     multiple: false, required: false, types: [{ type: "flow_async_keyword", named: true }],
   },
   runnable: {
-    multiple: false, required: false, types: [{ type: "runnable", named: true }],
+    multiple: false, required: false, types: [{ type: "runnable_name", named: true }],
   },
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
@@ -45,6 +45,26 @@ deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, 
 deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
   type: "local_name", named: true, fields: {},
+});
+
+for (const name of [
+  "identifier", "runnable_name", "type_name", "local_name", "param_name",
+  "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
+  "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
+]) {
+  const node = nodeTypes.find(node => node.type === name);
+  deepStrictEqual(node.named, true, name);
+  deepStrictEqual(node.fields ?? {}, {}, name);
+  deepStrictEqual(node.children, undefined, name);
+}
+deepStrictEqual(nodeTypes.find(node => node.type === "type").fields, {
+  base: {
+    multiple: false, required: true,
+    types: [{ type: "builtin_type", named: true }, { type: "type_name", named: true }],
+  },
+  suffix: {
+    multiple: true, required: false, types: [{ type: "array_suffix", named: true }],
+  },
 });
 
 const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
@@ -62,7 +82,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
   target: {
     multiple: false,
     required: true,
-    types: [{ type: "inline_agic_body", named: true }, { type: "runnable", named: true }],
+    types: [{ type: "inline_agic_body", named: true }, { type: "runnable_name", named: true }],
   },
 });
 
