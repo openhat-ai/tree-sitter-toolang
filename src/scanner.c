@@ -31,11 +31,9 @@ enum Token {
   AGIC_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
-  COLLECTION_BINDING_START,
-  SPAWN_BINDING_START,
+  OPERATION_BINDING_START,
   RESERVED_BINDING_START,
   VARIABLE_NAME,
-  ASYNC_AWAIT_BINDING_START,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -208,23 +206,15 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
   if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
     return emit(scanner, lexer, EXEC_BINDING_START);
   }
-  if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
-    return emit(scanner, lexer, SPAWN_BINDING_START);
-  }
-  if (valid[ASYNC_AWAIT_BINDING_START] &&
-      keyword(word, async_await_binding_keywords,
-              sizeof(async_await_binding_keywords) / sizeof(*async_await_binding_keywords))) {
-    return emit(scanner, lexer, ASYNC_AWAIT_BINDING_START);
-  }
   if (valid[RESERVED_BINDING_START] &&
       keyword(word, reserved_binding_keywords,
               sizeof(reserved_binding_keywords) / sizeof(*reserved_binding_keywords))) {
     return emit(scanner, lexer, RESERVED_BINDING_START);
   }
-  if (valid[COLLECTION_BINDING_START] &&
-      keyword(word, collection_binding_keywords,
-              sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
-    return emit(scanner, lexer, COLLECTION_BINDING_START);
+  if (valid[OPERATION_BINDING_START] &&
+      keyword(word, operation_binding_keywords,
+              sizeof(operation_binding_keywords) / sizeof(*operation_binding_keywords))) {
+    return emit(scanner, lexer, OPERATION_BINDING_START);
   }
   if (valid[VARIABLE_NAME] && variable &&
       !keyword(word, variable_keywords, sizeof(variable_keywords) / sizeof(*variable_keywords))) {
@@ -358,9 +348,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
-  if (!at_start && (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
-                    valid[SPAWN_BINDING_START] || valid[RESERVED_BINDING_START] ||
-                    valid[VARIABLE_NAME] || valid[ASYNC_AWAIT_BINDING_START])) {
+  if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
+                    valid[RESERVED_BINDING_START] || valid[VARIABLE_NAME])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);

@@ -1,6 +1,7 @@
 {
   "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
   "name": "toolang",
+  "word": "_word",
   "rules": {
     "source_file": {
       "type": "REPEAT",
@@ -308,7 +309,7 @@
           "name": "kind",
           "content": {
             "type": "SYMBOL",
-            "name": "cap_kind"
+            "name": "_cap_kind"
           }
         },
         {
@@ -354,7 +355,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "builtin_type"
+          "name": "_builtin_type"
         },
         {
           "type": "SYMBOL",
@@ -362,33 +363,55 @@
         }
       ]
     },
-    "builtin_type": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+    "_builtin_type": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "Text"
           },
-          {
+          "named": true,
+          "value": "builtin_type"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "Number"
           },
-          {
+          "named": true,
+          "value": "builtin_type"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "Boolean"
           },
-          {
+          "named": true,
+          "value": "builtin_type"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "Json"
           },
-          {
+          "named": true,
+          "value": "builtin_type"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "Part"
-          }
-        ]
-      }
+          },
+          "named": true,
+          "value": "builtin_type"
+        }
+      ]
     },
     "array_suffix": {
       "type": "STRING",
@@ -1747,158 +1770,78 @@
       ]
     },
     "_bound_operation": {
-      "type": "CHOICE",
+      "type": "SEQ",
       "members": [
         {
-          "type": "ALIAS",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_run"
-          },
-          "named": true,
-          "value": "run_statement"
-        },
-        {
           "type": "SYMBOL",
-          "name": "seek_statement"
+          "name": "_operation_binding_start"
         },
         {
-          "type": "SYMBOL",
-          "name": "ask_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "keep_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "drop_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "sort_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "repeat_statement"
-        },
-        {
-          "type": "SEQ",
+          "type": "CHOICE",
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_collection_binding_start"
+              "name": "_flow_operation"
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_collection_operation"
-                },
-                {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_collection_operation"
-                  },
-                  "named": true,
-                  "value": "invalid_flow_reserved_statement"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_spawn_binding_start"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "spawn_statement"
-                },
-                {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_spawn_operation"
-                  },
-                  "named": true,
-                  "value": "invalid_flow_reserved_statement"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_async_await_binding_start"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "run_statement"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "await_statement"
-                },
-                {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_async_await_operation"
-                  },
-                  "named": true,
-                  "value": "invalid_flow_reserved_statement"
-                }
-              ]
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_invalid_bound_operation"
+              },
+              "named": true,
+              "value": "invalid_flow_reserved_statement"
             }
           ]
         }
       ]
     },
-    "_invalid_collection_operation": {
-      "type": "PREC_DYNAMIC",
-      "value": -2,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_collection_binding_word"
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "text_line"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          },
-          {
-            "type": "SYMBOL",
-            "name": "line_end"
-          }
-        ]
-      }
+    "_binding_operation_word": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "flow_run_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_seek_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_ask_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_keep_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_drop_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_sort_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_repeat_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_collection_binding_word"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "flow_spawn_keyword"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_async_await_binding_word"
+        }
+      ]
     },
-    "_invalid_spawn_operation": {
+    "_invalid_bound_operation": {
       "type": "PREC_DYNAMIC",
       "value": -2,
       "content": {
@@ -1906,43 +1849,19 @@
         "members": [
           {
             "type": "SYMBOL",
-            "name": "flow_spawn_keyword"
+            "name": "_binding_operation_word"
           },
           {
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "text_line"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          },
-          {
-            "type": "SYMBOL",
-            "name": "line_end"
-          }
-        ]
-      }
-    },
-    "_invalid_async_await_operation": {
-      "type": "PREC_DYNAMIC",
-      "value": -2,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_async_await_binding_word"
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "text_line"
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_diagnostic_text"
+                },
+                "named": true,
+                "value": "text_line"
               },
               {
                 "type": "BLANK"
@@ -2178,8 +2097,13 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "text_line"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_diagnostic_text"
+              },
+              "named": true,
+              "value": "text_line"
             },
             {
               "type": "BLANK"
@@ -2236,8 +2160,13 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "text_line"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_diagnostic_text"
+              },
+              "named": true,
+              "value": "text_line"
             },
             {
               "type": "BLANK"
@@ -2274,15 +2203,8 @@
               {
                 "type": "ALIAS",
                 "content": {
-                  "type": "TOKEN",
-                  "content": {
-                    "type": "PREC",
-                    "value": -1,
-                    "content": {
-                      "type": "PATTERN",
-                      "value": "[^ \\t#\\r\\n][^#\\r\\n]*"
-                    }
-                  }
+                  "type": "SYMBOL",
+                  "name": "_diagnostic_text"
                 },
                 "named": true,
                 "value": "text_line"
@@ -2484,8 +2406,13 @@
                       "type": "CHOICE",
                       "members": [
                         {
-                          "type": "SYMBOL",
-                          "name": "text_line"
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_diagnostic_text"
+                          },
+                          "named": true,
+                          "value": "text_line"
                         },
                         {
                           "type": "BLANK"
@@ -2569,8 +2496,13 @@
                   "type": "CHOICE",
                   "members": [
                     {
-                      "type": "SYMBOL",
-                      "name": "text_line"
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_diagnostic_text"
+                      },
+                      "named": true,
+                      "value": "text_line"
                     },
                     {
                       "type": "BLANK"
@@ -3937,8 +3869,13 @@
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "text_line"
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_diagnostic_text"
+                },
+                "named": true,
+                "value": "text_line"
               },
               {
                 "type": "BLANK"
@@ -4095,13 +4032,8 @@
                   "type": "FIELD",
                   "name": "key",
                   "content": {
-                    "type": "ALIAS",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_query_directive_key"
-                    },
-                    "named": true,
-                    "value": "directive_key"
+                    "type": "SYMBOL",
+                    "name": "_query_directive_key"
                   }
                 },
                 {
@@ -4129,13 +4061,8 @@
                   "type": "FIELD",
                   "name": "key",
                   "content": {
-                    "type": "ALIAS",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_route_directive_key"
-                    },
-                    "named": true,
-                    "value": "directive_key"
+                    "type": "SYMBOL",
+                    "name": "_route_directive_key"
                   }
                 },
                 {
@@ -4194,8 +4121,8 @@
                   "content": {
                     "type": "ALIAS",
                     "content": {
-                      "type": "STRING",
-                      "value": "lanes"
+                      "type": "SYMBOL",
+                      "name": "flow_lanes_keyword"
                     },
                     "named": true,
                     "value": "directive_key"
@@ -4275,108 +4202,199 @@
       ]
     },
     "_query_directive_key": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "models"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "tools"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "skills"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "services"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "psyches"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "prompts"
-          }
-        ]
-      }
+          },
+          "named": true,
+          "value": "directive_key"
+        }
+      ]
     },
     "_route_directive_key": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "hands"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "handoffs"
-          }
-        ]
-      }
+          },
+          "named": true,
+          "value": "directive_key"
+        }
+      ]
     },
-    "directive_key": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+    "_directive_word": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "models"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "tools"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "skills"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "services"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "psyches"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "prompts"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "hands"
           },
-          {
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "handoffs"
           },
-          {
-            "type": "STRING",
-            "value": "lanes"
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "flow_lanes_keyword"
           },
-          {
-            "type": "STRING",
-            "value": "recall"
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "recall_keyword"
           },
-          {
-            "type": "STRING",
-            "value": "instruct"
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "instruct_keyword"
           },
-          {
-            "type": "STRING",
-            "value": "context"
-          }
-        ]
-      }
+          "named": true,
+          "value": "directive_key"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "context_keyword"
+          },
+          "named": true,
+          "value": "directive_key"
+        }
+      ]
     },
     "directive_operator": {
       "type": "TOKEN",
@@ -4474,7 +4492,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "recall_source"
+              "name": "_recall_source"
             },
             {
               "type": "REPEAT",
@@ -4487,7 +4505,7 @@
                   },
                   {
                     "type": "SYMBOL",
-                    "name": "recall_source"
+                    "name": "_recall_source"
                   }
                 ]
               }
@@ -4496,21 +4514,28 @@
         }
       ]
     },
-    "recall_source": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+    "_recall_source": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "far"
           },
-          {
+          "named": true,
+          "value": "recall_source"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "near"
-          }
-        ]
-      }
+          },
+          "named": true,
+          "value": "recall_source"
+        }
+      ]
     },
     "_directives": {
       "type": "PREC_RIGHT",
@@ -4614,7 +4639,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "role"
+                  "name": "_role"
                 },
                 {
                   "type": "SYMBOL",
@@ -4739,8 +4764,13 @@
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "text_line"
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_diagnostic_text"
+                },
+                "named": true,
+                "value": "text_line"
               },
               {
                 "type": "BLANK"
@@ -4754,25 +4784,37 @@
         ]
       }
     },
-    "role": {
-      "type": "TOKEN",
-      "content": {
-        "type": "CHOICE",
-        "members": [
-          {
+    "_role": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "user"
           },
-          {
+          "named": true,
+          "value": "role"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "assistant"
           },
-          {
+          "named": true,
+          "value": "role"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "STRING",
             "value": "tool"
-          }
-        ]
-      }
+          },
+          "named": true,
+          "value": "role"
+        }
+      ]
     },
     "_pass_statement": {
       "type": "PREC",
@@ -5295,7 +5337,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "role"
+          "name": "_role"
         },
         {
           "type": "SYMBOL",
@@ -5303,7 +5345,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "directive_key"
+          "name": "_directive_word"
         }
       ]
     },
@@ -5335,28 +5377,52 @@
       "type": "STRING",
       "value": ","
     },
-    "cap_kind": {
+    "_cap_kind": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "psyche_keyword"
+          },
+          "named": true,
+          "value": "cap_kind"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "skill_keyword"
+          },
+          "named": true,
+          "value": "cap_kind"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "service_keyword"
+          },
+          "named": true,
+          "value": "cap_kind"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "prompt_keyword"
+          },
+          "named": true,
+          "value": "cap_kind"
+        }
+      ]
+    },
+    "_word": {
       "type": "TOKEN",
       "content": {
-        "type": "CHOICE",
-        "members": [
-          {
-            "type": "STRING",
-            "value": "psyche"
-          },
-          {
-            "type": "STRING",
-            "value": "skill"
-          },
-          {
-            "type": "STRING",
-            "value": "service"
-          },
-          {
-            "type": "STRING",
-            "value": "prompt"
-          }
-        ]
+        "type": "PATTERN",
+        "value": "[A-Za-z_][A-Za-z0-9_]*"
       }
     },
     "type_name": {
@@ -5403,6 +5469,17 @@
         "content": {
           "type": "PATTERN",
           "value": "[^#\\r\\n]+"
+        }
+      }
+    },
+    "_diagnostic_text": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": -1,
+        "content": {
+          "type": "PATTERN",
+          "value": "[^ \\t#\\r\\n][^#\\r\\n]*"
         }
       }
     }
@@ -5514,11 +5591,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_collection_binding_start"
-    },
-    {
-      "type": "SYMBOL",
-      "name": "_spawn_binding_start"
+      "name": "_operation_binding_start"
     },
     {
       "type": "SYMBOL",
@@ -5527,10 +5600,6 @@
     {
       "type": "SYMBOL",
       "name": "_variable_name"
-    },
-    {
-      "type": "SYMBOL",
-      "name": "_async_await_binding_start"
     }
   ],
   "inline": [],

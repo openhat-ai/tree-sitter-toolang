@@ -4,6 +4,8 @@ const ROUTE_DIRECTIVE_KEYS = ["hands", "handoffs"];
 module.exports = grammar({
   name: "toolang",
 
+  word: ($) => $._word,
+
   extras: () => [/[ \t]/],
   externals: ($) => [
     $.newline, $.blank_line,
@@ -12,9 +14,8 @@ module.exports = grammar({
     $._indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
-    $._exec_binding_start, $._collection_binding_start, $._spawn_binding_start,
+    $._exec_binding_start, $._operation_binding_start,
     $._reserved_binding_start, $._variable_name,
-    $._async_await_binding_start,
   ],
   rules: {
     source_file: ($) =>
@@ -61,7 +62,7 @@ module.exports = grammar({
     with: ($) =>
       seq(
         field("keyword", $.with_keyword),
-        field("kind", $.cap_kind),
+        field("kind", $._cap_kind),
         field("reference", $.text_line),
         $.line_end,
       ),
@@ -72,8 +73,8 @@ module.exports = grammar({
         repeat(field("suffix", $.array_suffix)),
       ),
 
-    _base_type: ($) => choice($.builtin_type, $.type_name),
-    builtin_type: () => token(choice("Text", "Number", "Boolean", "Json", "Part")),
+    _base_type: ($) => choice($._builtin_type, $.type_name),
+    _builtin_type: ($) => keywordLeaves(["Text", "Number", "Boolean", "Json", "Part"], $.builtin_type),
     array_suffix: () => "[]",
 
     struct: ($) =>
@@ -292,31 +293,18 @@ module.exports = grammar({
     _collection_operation: ($) => choice(
       $.generate_statement, $.map_statement, $.reduce_statement,
     ),
-    _bound_operation: ($) => choice(
-      // Modified runs must pass the binding guard so async prefixes stay text.
-      alias($._run, $.run_statement), $.seek_statement, $.ask_statement,
-      $.keep_statement, $.drop_statement, $.sort_statement, $.repeat_statement,
-      seq($._collection_binding_start, choice(
-        $._collection_operation,
-        alias($._invalid_collection_operation, $.invalid_flow_reserved_statement),
-      )),
-      seq($._spawn_binding_start, choice(
-        $.spawn_statement,
-        alias($._invalid_spawn_operation, $.invalid_flow_reserved_statement),
-      )),
-      seq($._async_await_binding_start, choice(
-        $.run_statement, $.await_statement,
-        alias($._invalid_async_await_operation, $.invalid_flow_reserved_statement),
-      )),
+    _bound_operation: ($) => seq(
+      // Select operations before the free-form text alternative can consume them.
+      $._operation_binding_start,
+      choice($._flow_operation, alias($._invalid_bound_operation, $.invalid_flow_reserved_statement)),
     ),
-    _invalid_collection_operation: ($) => prec.dynamic(-2, seq(
-      $._collection_binding_word, optional($.text_line), $.line_end,
-    )),
-    _invalid_spawn_operation: ($) => prec.dynamic(-2, seq(
-      $.flow_spawn_keyword, optional($.text_line), $.line_end,
-    )),
-    _invalid_async_await_operation: ($) => prec.dynamic(-2, seq(
-      $._async_await_binding_word, optional($.text_line), $.line_end,
+    _binding_operation_word: ($) => choice(
+      $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
+      $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
+      $._collection_binding_word, $.flow_spawn_keyword, $._async_await_binding_word,
+    ),
+    _invalid_bound_operation: ($) => prec.dynamic(-2, seq(
+      $._binding_operation_word, optional(alias($._diagnostic_text, $.text_line)), $.line_end,
     )),
     let_statement: ($) =>
       choice(
@@ -366,7 +354,7 @@ module.exports = grammar({
       optional(seq(field("name", $.local_name), $.assign_operator)),
       $._exec_binding_start,
       $.flow_exec_keyword,
-      optional($.text_line),
+      optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     ),
     _invalid_reserved_binding: ($) => seq(
@@ -374,14 +362,14 @@ module.exports = grammar({
       optional(seq(field("name", $.local_name), $.assign_operator)),
       $._reserved_binding_start,
       $._reserved_binding_word,
-      optional($.text_line),
+      optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     ),
     // Keep a missing assignment delimiter diagnostic local and deterministic
     // instead of choosing between a dropped name and an inserted '='.
     _invalid_named_binding: ($) => prec.dynamic(-2, seq(
       $.flow_let_keyword, field("name", $.local_name),
-      optional(alias(token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)), $.text_line)),
+      optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     )),
     run_statement: ($) => choice(
@@ -408,10 +396,10 @@ module.exports = grammar({
     _invalid_modified_run_tail: ($) => prec.dynamic(-2, prec(-1, seq(
       optional($._required_space),
       choice(
-        seq($.runnable_name, optional($.text_line)),
+        seq($.runnable_name, optional(alias($._diagnostic_text, $.text_line))),
         seq($.arrow, optional(seq($.type, optional($.colon), optional($.text_line)))),
         seq($.colon, optional($.text_line)),
-        optional($.text_line),
+        optional(alias($._diagnostic_text, $.text_line)),
       ),
       $.line_end,
     ))),
@@ -628,7 +616,7 @@ module.exports = grammar({
     invalid_flow_reserved_statement: ($) =>
       prec.dynamic(-2, seq(
         $._flow_reserved_word,
-        optional($.text_line),
+        optional(alias($._diagnostic_text, $.text_line)),
         $.line_end,
       )),
     inline_agic: ($) =>
@@ -655,30 +643,30 @@ module.exports = grammar({
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
 
     directive: ($) => seq($._directive_start, choice(
-      seq(field("key", alias($._query_directive_key, $.directive_key)),
+      seq(field("key", $._query_directive_key),
         field("operator", $.directive_operator), field("value", $.directive_value)),
-      seq(field("key", alias($._route_directive_key, $.directive_key)),
+      seq(field("key", $._route_directive_key),
         field("operator", $.assign_operator), field("value", $.route_value)),
       seq(field("key", $.recall_keyword), field("operator", $.assign_operator),
         field("value", $.recall_value)),
-      seq(field("key", alias("lanes", $.directive_key)),
+      seq(field("key", alias($.flow_lanes_keyword, $.directive_key)),
         field("operator", $.assign_operator),
         field("value", choice($.integer_literal, $.default_keyword))),
       seq(field("key", choice($.instruct_keyword, $.context_keyword)),
         field("operator", $.assign_operator), field("value", $.text_ref)),
     ), $.line_end),
-    _query_directive_key: () => token(choice(...QUERY_DIRECTIVE_KEYS)),
-    _route_directive_key: () => token(choice(...ROUTE_DIRECTIVE_KEYS)),
-    directive_key: () => token(choice(...QUERY_DIRECTIVE_KEYS, ...ROUTE_DIRECTIVE_KEYS,
-      "lanes", "recall", "instruct", "context")),
+    _query_directive_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
+    _route_directive_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
+    _directive_word: ($) => keywordLeaves([...QUERY_DIRECTIVE_KEYS, ...ROUTE_DIRECTIVE_KEYS,
+      $.flow_lanes_keyword, $.recall_keyword, $.instruct_keyword, $.context_keyword], $.directive_key),
     directive_operator: () => token(choice("=", "+=", "-=")),
     directive_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
     route_value: ($) => choice($.none_keyword, $.all_keyword,
       seq($.runnable_ref, repeat(seq($.comma, $.runnable_ref)))),
     runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
     recall_value: ($) => choice($.none_keyword, $.all_keyword, $.default_keyword,
-      seq($.recall_source, repeat(seq($.comma, $.recall_source)))),
-    recall_source: () => token(choice("far", "near")),
+      seq($._recall_source, repeat(seq($.comma, $._recall_source)))),
+    _recall_source: ($) => keywordLeaves(["far", "near"], $.recall_source),
     _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
     text_ref: ($) => choice($.default_keyword, $.none_keyword, $.identifier),
     default_keyword: () => "default",
@@ -687,7 +675,7 @@ module.exports = grammar({
     messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),
     message: ($) =>
       seq($._line_start, choice(
-        seq($.role, $.colon, $.text_inline),
+        seq($._role, $.colon, $.text_inline),
         $.invalid_agic_reserved_message,
         $.unroled_message,
       )),
@@ -698,10 +686,10 @@ module.exports = grammar({
     invalid_agic_reserved_message: ($) =>
       prec.dynamic(-2, seq(
         $._agic_reserved_word,
-        optional($.text_line),
+        optional(alias($._diagnostic_text, $.text_line)),
         $.line_end,
       )),
-    role: () => token(choice("user", "assistant", "tool")),
+    _role: ($) => keywordLeaves(["user", "assistant", "tool"], $.role),
     _pass_statement: ($) =>
       prec(1, seq($._line_start, $.pass_keyword, $.line_end, repeat($._trivia))),
     with_keyword: () => "with",
@@ -801,9 +789,9 @@ module.exports = grammar({
     _reserved_binding_word: ($) => choice($.flow_until_keyword, "_"),
     _agic_reserved_word: ($) =>
       choice(
-        $.role,
+        $._role,
         $.pass_keyword,
-        $.directive_key,
+        $._directive_word,
       ),
 
     optional_marker: () => "?",
@@ -814,8 +802,11 @@ module.exports = grammar({
     rparen: () => ")",
     comma: () => ",",
 
-    cap_kind: () => token(choice("psyche", "skill", "service", "prompt")),
+    _cap_kind: ($) => keywordLeaves([$.psyche_keyword, $.skill_keyword, $.service_keyword, $.prompt_keyword], $.cap_kind),
 
+    // Keyword boundaries are broader than valid authored identifier names. Keep
+    // this rule before the narrower name tokens to win equal-length matches.
+    _word: () => token(/[A-Za-z_][A-Za-z0-9_]*/),
     type_name: () => token(/[A-Z][A-Za-z0-9]*/),
     identifier: ($) => $._identifier,
     _identifier: () => token(/[a-z][a-z0-9_]*(_[a-z0-9]+)*/),
@@ -824,6 +815,8 @@ module.exports = grammar({
     // Preserve missing-value recovery while exposing only one public text leaf.
     text_line: ($) => $._text_line,
     _text_line: () => token(prec(-1, /[^#\r\n]+/)),
+    // Recovery text must not absorb extras shared with structural tokens.
+    _diagnostic_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
   },
 });
 
@@ -838,4 +831,9 @@ function paragraph($, line) {
     repeat(choice(bodyLine, seq($.blank_line, bodyLine))),
     optional($.blank_line),
   ));
+}
+
+// Keep each word eligible for keyword extraction without adding CST wrappers.
+function keywordLeaves(words, node) {
+  return choice(...words.map(word => alias(word, node)));
 }

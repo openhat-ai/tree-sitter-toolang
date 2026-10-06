@@ -675,11 +675,6 @@
     }
   },
   {
-    "type": "flow_lanes_keyword",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "generate_statement",
     "named": true,
     "fields": {
@@ -3388,6 +3383,10 @@
     "named": true
   },
   {
+    "type": "flow_lanes_keyword",
+    "named": true
+  },
+  {
     "type": "flow_last_keyword",
     "named": true
   },
@@ -3494,10 +3493,6 @@
   {
     "type": "integer_literal",
     "named": true
-  },
-  {
-    "type": "lanes",
-    "named": false
   },
   {
     "type": "lparen",

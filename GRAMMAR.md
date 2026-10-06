@@ -9,6 +9,17 @@ feature definitions rather than the current syntax reference.
 
 ## Unreleased
 
+- Match complete keywords throughout declarations and flow clauses. Text such
+  as `let note = runworker` remains Content instead of invoking `worker`;
+  concatenations such as `flowwork:`, `keep ifworker`, and `with skillfoo`
+  report errors. Separate keywords from following word characters with spaces
+  or tabs. Complete malformed operation heads remain diagnostics, not text.
+- `flow_lanes_keyword` is now a leaf, matching other keyword nodes. Consumers
+  should read that node directly instead of its former anonymous `lanes` child;
+  its name, fields on parents, and source range are unchanged.
+- Structural token, statement, and inline-comment ranges no longer include
+  leading spaces or tabs absorbed by competing recovery text. Read names and
+  keywords directly; field names and normal Content parsing are unchanged.
 - Simplify the public CST without changing accepted source syntax: expose
   declarations directly, use leaf names and tokens, and remove forwarding body
   and type nodes. This is a breaking change for CST consumers; see
@@ -188,8 +199,9 @@ CST migration from earlier versions:
 | `cap_body → text_body` | Direct `body: text_body`. |
 | `context_body / instruct_body → text_inline` | Direct `body: text_inline`. |
 
-Field names and surviving nodes' source ranges are preserved. Update queries to
-capture the new leaf or direct child. Consumers should enumerate declarations
+Field names are preserved. Source ranges change only for the leading-whitespace
+fix described under Unreleased. Update queries to capture the new leaf or direct
+child. Consumers should enumerate declarations
 without unwrapping `item`, and read cap text directly from its `body` node rather
 than searching for a second `text_body`. No runtime behavior or binding rule is
 changed. Consumers must reject missing tokens, `ERROR` nodes, and `invalid_*`
@@ -227,6 +239,33 @@ of truth; `src/keywords.h` is generated from them. `local_name` and `param_name`
 are leaves using this rule; `param_name` additionally accepts `_`. `_` is the
 special primary-input parameter name and a reserved flow word; it is not a
 `local_name`. Other identifier categories retain their rules.
+
+Keyword matching uses Tree-sitter's
+[word extraction](https://tree-sitter.github.io/tree-sitter/creating-parsers/3-writing-the-grammar.html#keyword-extraction)
+with `/[A-Za-z_][A-Za-z0-9_]*/`. This boundary pattern is broader than valid
+authored names: `runWorker` is one word even though it is not a runnable name.
+The word rule precedes narrower name tokens so exact built-in type words are
+recognized before equal-length authored type names. Fixed-word alternatives
+use aliases of individual keyword tokens to retain leaf CST nodes; wrapping
+the entire choice in `token(...)` would bypass keyword extraction.
+
+Spaces and tabs are optional `extras` between tokens; they do not themselves
+require separation. Punctuation can delimit keywords, as in `run:` and
+`run->Text:`. The current grammar also accepts a number immediately followed
+by a keyword, as in `repeat 2times:`; keyword extraction is not a general
+mandatory-whitespace rule. Newlines, indentation, and raw text remain owned by
+the external scanner. Its ASCII word-character test uses the same continuation
+characters as the word token.
+
+At flow statement and named-let value boundaries, complete reserved operation
+words select syntax before the free-form text alternative. Thus `runworker`
+remains text, while incomplete `run` or malformed `run worker extra` is an
+error. The scanner's binding classifier is shared across bindable operations;
+`exec` and reserved-only words retain separate diagnostics because they cannot
+be bound. Explicit text bodies do not apply operation-head classification.
+Recovery text excludes leading horizontal whitespace so it cannot change the
+start of a competing structural token. Once a colon introduces an inline body,
+recovery shares the normal body token to preserve the text alternative.
 
 ### Comments and Documentation
 
@@ -696,10 +735,11 @@ Rules:
   compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form. `_`, `until`, malformed spawn, async, await, or
-  collection heads, including removed collection keywords, cannot fall back to
-  same-line Content. For literal text beginning with these words, use an
-  indented Content block.
+  precedence over the BODY form only when its whole keyword matches; for
+  example, `runworker` remains Content. Complete operation heads, including
+  malformed operations and removed collection keywords, cannot fall back to
+  same-line Content. `_` and `until` also cannot become same-line Content. For
+  literal text beginning with these words, use an indented Content block.
   A named binding missing `=` produces `invalid_flow_reserved_statement`,
   keeping its diagnostic local during both fresh and incremental parsing.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
@@ -901,13 +941,13 @@ flow seeded(_):
 For named reduce reducers, a header colon requires an indented `from:` clause.
 For multiline inline reducers, `from:` follows the reducer text at the same
 baseline. An inline reducer written entirely on the header line cannot have a
-following initializer. Reduce's `runnable` field is a `runnable` or `inline_agic`;
+following initializer. Reduce's `runnable` field is a `runnable_name` or `inline_agic`;
 its optional `from` field is `text_inline`. An inline reducer's `body` field is
 `text_inline` for same-line text and `text_body` for multiline text.
 
 Repeat exposes required `body: repeat_body` and optional `count: integer_literal`
 and `window: integer_literal`. The body's ordinary nodes have repeated `statement`
-fields; its optional `until: until_clause` has required `target: runnable | inline_agic_body`
+fields; its optional `until: until_clause` has required `target: runnable_name | inline_agic_body`
 and a named `flow_until_keyword` child. Statements, condition, and trivia are direct
 children in source order, without a `statements` wrapper. Count preceding statement
 fields to obtain the condition index; a nested repeat counts as one and trivia as

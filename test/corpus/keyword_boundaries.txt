@@ -1,0 +1,36 @@
+==================
+Keyword prefixes remain literal after let
+==================
+flow work:
+  let note = runworker
+  let mixed = runWorker
+  let result = run worker
+
+---
+
+(source_file
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end (newline))
+    (flow_body
+      (statements
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (text_inline (text_line) (line_end (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (text_inline (text_line) (line_end (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (run_statement
+            (flow_run_keyword)
+            (runnable_name)
+            (line_end (newline))))))))
