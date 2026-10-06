@@ -1,7 +1,7 @@
 # Flexible repeat grammar
 
 Proposed definition; approval is required before implementation. This plan fixes
-the syntax/CST contract for Toolang's [approved runtime design](https://github.com/openhat-ai/toolang/blob/fe0e533e978431b38577980e9e4b8c2ff67e2d8c/docs/plans/repeat-until-position.md).
+the syntax/CST contract for Toolang's [approved runtime design](https://github.com/openhat-ai/toolang/blob/bf90f04691ba2bd0aad67eb0df99fd268ce42928/docs/plans/repeat-until-position.md).
 No parser implementation or package release is included.
 
 ## Syntax and boundaries
@@ -31,10 +31,11 @@ contain nested repeats, whose conditions belong only to that nested body.
 - Reject empty/condition-only bodies, duplicate direct conditions, conditions
   outside repeats, missing targets/text, and malformed forms such as
   `until using check`, `until check()`, and `until check: text`.
-- Language keywords, including reserved legacy words, cannot be variable names
-  (`local_name` or `param_name`). Reject `let until = value` and keyword-named
-  parameters; remove the existing `spawn` local-name exception. Preserve `_`
-  where currently allowed and keyword prefixes such as `until_done`.
+- A regular variable name is valid iff it fully matches `[a-z][a-z0-9_]*`
+  and is not in `KEYWORDS`, using exact, case-sensitive comparison. The keyword
+  definitions in [grammar.js](../../grammar.js), including reserved legacy words,
+  are the single source of truth for `KEYWORDS`. Apply to `local_name` and named
+  `param_name`; `_` remains the special primary-input parameter.
 - Reject `let until ...` and `let x = until ...`; guard both binding prefixes
   against fallback to text. Literal `until` remains valid inside explicit
   multiline text, messages, and comments.
@@ -85,9 +86,9 @@ preserve keyword/text highlighting. Version bumps and publication remain separat
    node types, source ranges/order, and Toolang's derived condition index.
 2. Invalid forms above must yield ERROR/MISSING or existing invalid-statement
    diagnostics, never a valid implicit run or let text fallback. Undefined
-   runnable names still parse; Toolang owns their rejection. Cover keyword
-   locals/parameters, including the former `spawn` exception, valid keyword
-   prefixes, and both kinds of qualified reference.
+   runnable names still parse; Toolang owns their rejection. Validate
+   local/parameter names against regex boundaries and the complete keyword set;
+   preserve the special `_` parameter. Reject both kinds of qualified reference.
 3. Exercise comments, docs, implicit prose, literal keywords, sibling dedents,
    indentation variants, LF/CRLF, and EOF. Incremental moves, insertions,
    deletions, and target-form changes must match fresh-parse fingerprints.
