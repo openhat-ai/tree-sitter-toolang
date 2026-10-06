@@ -48,16 +48,7 @@ def _descendants(node, node_type: str):
 
 
 def _statements(flow):
-    body = flow.child_by_field_name("body")
-    statement_list = next(
-        (child for child in body.named_children if child.type == "statements"),
-        None,
-    )
-    if statement_list is None:
-        return []
-    return [
-        child for child in statement_list.named_children if child.type in STATEMENT_TYPES
-    ]
+    return flow.child_by_field_name("body").children_by_field_name("statement")
 
 
 def _assert_invalid_flow_statement(parser: Parser, statement: str) -> None:
@@ -111,7 +102,7 @@ def test_flow_fixture_covers_complete_statement_set():
     assert inline_run is not None and inline_run.type == "inline_agic"
     assert _text(source, inline_run.child_by_field_name("return")) == "Note"
     assert "Extract one note." in _text(
-        source, inline_run.child_by_field_name("body")
+        source, inline_run.child_by_field_name("content")
     )
 
     inline_sort = research[19].child_by_field_name("runnable")
@@ -394,40 +385,11 @@ def test_literal_units_agree_with_their_numeric_values():
         _assert_invalid_flow_statement(parser, statement)
 
 
-def test_legacy_and_reserved_words_do_not_fall_back_to_bare_runs():
+def test_malformed_active_words_do_not_fall_back_to_bare_runs():
     parser = _parser()
-    statements = [
-        "call work",
-        "do work",
-        "unfold work",
-        "each work",
-        "fold work",
-        "sort work",
-        "rank score",
-        "par 2",
-        "top 2",
-        "bottom 2",
-        "head 2",
-        "tail 2",
-        "think: Work.",
-        "use shell",
-        "thunk future",
-        "until: Done.",
-    ]
-
-    for statement in statements:
-        _assert_invalid_flow_statement(parser, statement)
-
     for statement in (
-        "scatter 4 generate",
-        "storm 4 generate par 2",
-        "gather combine",
-        "settle merge",
-        "map convert par 2",
-        "keep useful par 2",
-        "drop duplicate par 2",
-        "rank score top 2 par 2",
-        "repeat 3:\n    run improve",
+        "sort work", "until: Done.", "map convert par 2",
+        "keep useful par 2", "drop duplicate par 2", "repeat 3:\n    run improve",
     ):
         _assert_invalid_flow_statement(parser, statement)
 

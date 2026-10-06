@@ -1,5 +1,7 @@
-const QUERY_DIRECTIVE_KEYS = ["models", "tools", "skills", "services", "psyches", "prompts"];
-const ROUTE_DIRECTIVE_KEYS = ["hands", "handoffs"];
+const {
+  wordNodes, queryKeys: QUERY_DIRECTIVE_KEYS, routeKeys: ROUTE_DIRECTIVE_KEYS,
+  roles, builtinTypes, recallSources, capKinds, tables,
+} = require("./keywords.js");
 
 module.exports = grammar({
   name: "toolang",
@@ -13,10 +15,10 @@ module.exports = grammar({
     $._module_doc_start, $._item_doc_start, $._param_item_doc_start, $._comment_end,
     $._indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
-    $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
+    $._raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
-    $._reserved_binding_start, $._variable_name,
-    $.invalid_empty_body,
+    $._restricted_binding_start, $._variable_name,
+    $._missing_required,
     $.integer_literal, $._one_integer_literal, $._other_integer_literal,
   ],
   rules: {
@@ -77,7 +79,7 @@ module.exports = grammar({
       ),
 
     _base_type: ($) => choice($._builtin_type, $.type_name),
-    _builtin_type: ($) => keywordLeaves(["Text", "Number", "Boolean", "Json", "Part"], $.builtin_type),
+    _builtin_type: ($) => keywordLeaves(builtinTypes, $.builtin_type),
     array_suffix: () => "[]",
 
     struct: ($) =>
@@ -90,7 +92,7 @@ module.exports = grammar({
       ),
 
     struct_body: ($) =>
-      structuralBody($, seq($.field, repeat(choice($.field, $._trivia)))),
+      structuralBody($, seq(field("field", $.field), repeat(choice(field("field", $.field), $._trivia)))),
     field: ($) =>
       seq(
         $._line_start,
@@ -106,7 +108,7 @@ module.exports = grammar({
         field("kind", $.psyche_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        $._cap_definition,
+        field("body", $.cap_body),
       ),
 
     skill: ($) =>
@@ -114,7 +116,7 @@ module.exports = grammar({
         field("kind", $.skill_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        $._cap_definition,
+        field("body", $.cap_body),
       ),
 
     service: ($) =>
@@ -122,7 +124,7 @@ module.exports = grammar({
         field("kind", $.service_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        $._cap_definition,
+        field("body", $.cap_body),
       ),
 
     prompt: ($) =>
@@ -130,19 +132,13 @@ module.exports = grammar({
         field("kind", $.prompt_keyword),
         field("name", $.cap_name),
         field("colon", $.colon),
-        $._cap_definition,
+        field("body", $.cap_body),
       ),
 
-    _cap_definition: ($) =>
-      prec.right(seq($.line_end, repeat($._trivia), optional(seq(
-        $._indent,
-        repeat(choice(field("property", $.property), $._trivia)),
-        optional(field("body", alias($._cap_text_body, $.text_body))),
-        $._dedent,
-      )))),
-    _cap_text_body: ($) => seq(
+    cap_body: ($) => definitionBody($),
+    _cap_content: ($) => seq(
       $._cap_text_start,
-      repeat1(choice($.text_body_line, $.blank_line)),
+      repeat1(choice($._content_row, $.blank_line)),
       $._dedent,
     ),
 
@@ -165,13 +161,7 @@ module.exports = grammar({
     cap_name: ($) => $._snake_kebab_name,
     job_name: ($) => $._snake_kebab_name,
 
-    job_body: ($) =>
-      prec.right(seq($.line_end, repeat($._trivia), optional(seq(
-        $._indent,
-        repeat(choice($.property, $._trivia)),
-        optional(alias($._cap_text_body, $.text_body)),
-        $._dedent,
-      )))),
+    job_body: ($) => definitionBody($),
 
     property: ($) =>
       seq(
@@ -187,7 +177,7 @@ module.exports = grammar({
         field("keyword", $.instruct_keyword),
         optional(field("name", $.identifier)),
         field("colon", $.colon),
-        field("body", $.text_inline),
+        content($, "content"),
       ),
 
     context: ($) =>
@@ -195,27 +185,18 @@ module.exports = grammar({
         field("keyword", $.context_keyword),
         optional(field("name", $.identifier)),
         field("colon", $.colon),
-        field("body", $.text_inline),
+        content($, "content"),
       ),
 
-    text_inline: ($) =>
-      choice(
-        seq($.text_line, $.line_end),
-        $.text_block,
-      ),
-    text_block: ($) =>
-      prec.right(seq(
-        $.line_end,
-        $.text_body,
-      )),
-    text_body: ($) => seq(
+    _inline_content: ($) => $.text_line,
+    _block_content: ($) => seq(
       repeat($.blank_line),
       choice(
-        seq($._text_indent, repeat1(choice($.text_body_line, $.blank_line)), $._dedent),
-        $.invalid_empty_body,
+        seq($._text_indent, repeat1(choice($._content_row, $.blank_line)), $._dedent),
+        missing($, "content"),
       ),
     ),
-    text_body_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
+    _content_row: ($) => seq(alias($._raw_text, $.text_line), $.newline),
 
     agic: ($) =>
       prec.right(seq(
@@ -230,8 +211,8 @@ module.exports = grammar({
     agic_body: ($) =>
       structuralBody($,
         choice(
-          seq($._directives, optional($.messages)),
-          $.messages,
+          seq($._directives, optional($._messages)),
+          $._messages,
           $._pass_statement,
         ),
       ),
@@ -263,19 +244,21 @@ module.exports = grammar({
     flow_body: ($) =>
       structuralBody($,
         choice(
-          seq($._directives, choice($.statements, $.invalid_empty_body)),
-          $.statements,
+          seq($._directives, choice($._statements, missing($, "statement"))),
+          $._statements,
           $._pass_statement,
         ),
       ),
-    statements: ($) =>
-      prec.right(seq($._flow_statement, repeat(choice($._flow_statement, $._trivia)))),
+    _statements: ($) => prec.right(seq(
+      field("statement", $._flow_statement),
+      repeat(choice(field("statement", $._flow_statement), $._trivia)),
+    )),
     _flow_statement: ($) =>
       seq($._line_start, choice(
         $.let_statement,
         $.exec_statement,
         alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
-        alias($._invalid_reserved_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_restricted_binding, $.invalid_flow_reserved_statement),
         alias($._invalid_named_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
@@ -302,11 +285,7 @@ module.exports = grammar({
       $._operation_binding_start,
       choice($._flow_operation, alias($._invalid_bound_operation, $.invalid_flow_reserved_statement)),
     ),
-    _binding_operation_word: ($) => choice(
-      $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
-      $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
-      $._collection_binding_word, $.flow_spawn_keyword, $._async_await_binding_word,
-    ),
+    _binding_operation_word: ($) => keywordChoice($, tables.operation_binding),
     _invalid_bound_operation: ($) => prec.dynamic(-2, seq(
       $._binding_operation_word, optional(alias($._diagnostic_text, $.text_line)), $.line_end,
     )),
@@ -326,7 +305,7 @@ module.exports = grammar({
           $.flow_let_keyword,
           field("local", $.local_name),
           $.assign_operator,
-          field("value", $.text_inline),
+          content($, "value"),
         )),
       ),
     exec_statement: ($) =>
@@ -361,11 +340,11 @@ module.exports = grammar({
       optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     ),
-    _invalid_reserved_binding: ($) => seq(
+    _invalid_restricted_binding: ($) => seq(
       $.flow_let_keyword,
       optional(seq(field("local", $.local_name), $.assign_operator)),
-      $._reserved_binding_start,
-      $._reserved_binding_word,
+      $._restricted_binding_start,
+      $._restricted_binding_word,
       optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     ),
@@ -401,8 +380,9 @@ module.exports = grammar({
       optional($._required_space),
       choice(
         seq($.runnable_name, optional(alias($._diagnostic_text, $.text_line))),
-        seq($.arrow, optional(seq($.type, optional($.colon), optional($.text_line)))),
-        seq($.colon, optional($.text_line)),
+        // A recognized colon commits to an inline agic, including its missing
+        // content recovery. Do not reinterpret that header as a malformed tail.
+        seq($.arrow, optional(seq($.type, optional(alias($._diagnostic_text, $.text_line))))),
         optional(alias($._diagnostic_text, $.text_line)),
       ),
       $.line_end,
@@ -412,9 +392,10 @@ module.exports = grammar({
       field("handle", $.handle_name),
       $.line_end,
     ),
-    implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
+    implicit_run_statement: ($) => field("content", alias($._implicit_content, $.content)),
+    _implicit_content: ($) => paragraph($, $._implicit_run_line),
     _implicit_run_line: ($) => seq(
-      field("content", alias($._flow_raw_text, $.indented_raw_text)), $.newline,
+      alias($._flow_raw_text, $.text_line), $.newline,
     ),
 
     seek_statement: ($) =>
@@ -435,7 +416,7 @@ module.exports = grammar({
       prec.right(seq(
         $.flow_ask_keyword,
         $.colon,
-        field("body", $.text_inline),
+        content($, "content"),
       )),
     generate_statement: ($) =>
       seq(
@@ -459,26 +440,26 @@ module.exports = grammar({
       ),
     _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, field("body", alias($._reduce_line, $.text_inline)),
+      $.colon, field("content", alias($._inline_content, $.content)), $.line_end,
     ),
-    _reduce_line: ($) => seq($.text_line, $.line_end),
     _reduce_block_header: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
       $.colon, $.line_end, repeat($._trivia),
     ),
     _reduce_inline_block: ($) => seq(
       $._reduce_block_header, $._reduce_indent,
-      field("body", alias($._reduce_text_body, $.text_body)),
+      field("content", alias($._reduce_content, $.content)),
     ),
     _reduce_empty_block: ($) => seq(
-      $._reduce_block_header, field("body", $.invalid_empty_body),
+      $._reduce_block_header, field("content", alias($._empty_content, $.content)),
     ),
-    _reduce_text_body: ($) => choice(
-      seq($._reduce_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent),
-      $.invalid_empty_body,
+    _empty_content: ($) => missing($, "content"),
+    _reduce_content: ($) => choice(
+      seq($._reduce_text_start, repeat1(choice($._content_row, $.blank_line)), $._dedent),
+      missing($, "content"),
     ),
     _from_complement: ($) => seq(
-      $._from_start, $.flow_from_keyword, $.colon, field("from", $.text_inline),
+      $._from_start, $.flow_from_keyword, $.colon, content($, "from"),
     ),
     map_statement: ($) =>
       seq(
@@ -600,7 +581,7 @@ module.exports = grammar({
         optional(seq(field("until", $.until_clause), repeat($._trivia), optional($._repeat_statements))),
       ),
       seq(field("until", $.until_clause), repeat($._trivia),
-        choice($._repeat_statements, $.invalid_empty_body)),
+        choice($._repeat_statements, missing($, "statement"))),
     )),
     _repeat_statements: ($) => prec.right(seq(
       field("statement", $._flow_statement),
@@ -632,7 +613,7 @@ module.exports = grammar({
       )),
     invalid_flow_reserved_statement: ($) =>
       prec.dynamic(-2, seq(
-        $._flow_reserved_word,
+        $._flow_keyword,
         optional(alias($._diagnostic_text, $.text_line)),
         $.line_end,
       )),
@@ -640,12 +621,12 @@ module.exports = grammar({
       seq(
         optional(seq(field("arrow", $.arrow), field("return", $.type))),
         $.colon,
-        field("body", $.text_inline),
+        content($, "content"),
       ),
     inline_agic_body: ($) =>
       seq(
         $.colon,
-        field("body", $.text_inline),
+        content($, "content"),
       ),
     position: ($) =>
       seq(
@@ -673,8 +654,6 @@ module.exports = grammar({
     ), $.line_end),
     _query_directive_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
     _route_directive_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
-    _directive_word: ($) => keywordLeaves([...QUERY_DIRECTIVE_KEYS, ...ROUTE_DIRECTIVE_KEYS,
-      $.flow_lanes_keyword, $.recall_keyword, $.instruct_keyword, $.context_keyword], $.directive_key),
     directive_operator: () => token(choice("=", "+=", "-=")),
     directive_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
     route_value: ($) => choice($.none_keyword, $.all_keyword,
@@ -682,133 +661,38 @@ module.exports = grammar({
     runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
     recall_value: ($) => choice($.none_keyword, $.all_keyword, $.default_keyword,
       seq($._recall_source, repeat(seq($.comma, $._recall_source)))),
-    _recall_source: ($) => keywordLeaves(["far", "near"], $.recall_source),
-    _directives: ($) => prec.right(seq($.directive, repeat(choice($.directive, $._trivia)))),
+    _recall_source: ($) => keywordLeaves(recallSources, $.recall_source),
+    _directives: ($) => prec.right(seq(
+      field("directive", $.directive), repeat(choice(field("directive", $.directive), $._trivia)),
+    )),
     text_ref: ($) => choice($.default_keyword, $.none_keyword, $.identifier),
-    default_keyword: () => "default",
-    none_keyword: () => "none",
     all_keyword: () => "*",
-    messages: ($) => prec.right(seq($.message, repeat(choice($.message, $._trivia)))),
+    _messages: ($) => prec.right(seq(
+      field("message", $.message), repeat(choice(field("message", $.message), $._trivia)),
+    )),
     message: ($) =>
       seq($._line_start, choice(
-        seq($._role, $.colon, $.text_inline),
+        seq(field("role", $._role), $.colon, content($, "content")),
         $.invalid_agic_reserved_message,
-        $.unroled_message,
+        field("content", alias($._message_content, $.content)),
       )),
-    unroled_message: ($) => paragraph($, $._unroled_message_line),
+    _message_content: ($) => paragraph($, $._unroled_message_line),
     _unroled_message_line: ($) => seq(
-      field("content", alias($._agic_raw_text, $.indented_raw_text)), $.newline,
+      alias($._agic_raw_text, $.text_line), $.newline,
     ),
     invalid_agic_reserved_message: ($) =>
       prec.dynamic(-2, seq(
-        $._agic_reserved_word,
+        $._agic_keyword,
         optional(alias($._diagnostic_text, $.text_line)),
         $.line_end,
       )),
-    _role: ($) => keywordLeaves(["user", "assistant", "tool"], $.role),
+    _role: ($) => keywordLeaves(roles, $.role),
     _pass_statement: ($) =>
       prec(1, seq($._line_start, $.pass_keyword, $.line_end, repeat($._trivia))),
-    with_keyword: () => "with",
-    struct_keyword: () => "struct",
-    psyche_keyword: () => "psyche",
-    skill_keyword: () => "skill",
-    service_keyword: () => "service",
-    prompt_keyword: () => "prompt",
-    context_keyword: () => "context",
-    instruct_keyword: () => "instruct",
-    agic_keyword: () => "agic",
-    task_keyword: () => "task",
-    chore_keyword: () => "chore",
-    flow_keyword: () => "flow",
-    pass_keyword: () => "pass",
-    flow_run_keyword: () => "run",
-    flow_async_keyword: () => "async",
-    flow_await_keyword: () => "await",
-    flow_exec_keyword: () => "exec",
-    flow_spawn_keyword: () => "spawn",
-    flow_let_keyword: () => "let",
-    flow_seek_keyword: () => "seek",
-    flow_ask_keyword: () => "ask",
-    flow_scatter_keyword: () => "scatter",
-    flow_storm_keyword: () => "storm",
-    flow_generate_keyword: () => "generate",
-    flow_gather_keyword: () => "gather",
-    flow_settle_keyword: () => "settle",
-    flow_reduce_keyword: () => "reduce",
-    flow_map_keyword: () => "map",
-    flow_keep_keyword: () => "keep",
-    flow_drop_keyword: () => "drop",
-    flow_sort_keyword: () => "sort",
-    flow_rank_keyword: () => "rank",
-    flow_repeat_keyword: () => "repeat",
-    flow_until_keyword: () => "until",
-    flow_from_keyword: () => "from",
-    flow_windowing_keyword: () => "windowing",
-    flow_using_keyword: () => "using",
-    flow_if_keyword: () => "if",
-    flow_by_keyword: () => "by",
-    flow_in_keyword: () => "in",
-    flow_lane_keyword: () => "lane",
-    flow_lanes_keyword: () => "lanes",
-    flow_ascending_keyword: () => "ascending",
-    flow_descending_keyword: () => "descending",
-    flow_time_keyword: () => "time",
-    flow_times_keyword: () => "times",
-    flow_par_keyword: () => "par",
-    flow_first_keyword: () => "first",
-    flow_last_keyword: () => "last",
-    flow_top_keyword: () => "top",
-    flow_bottom_keyword: () => "bottom",
-    flow_think_keyword: () => "think",
-    flow_use_keyword: () => "use",
-    thunk_keyword: () => "thunk",
-    recall_keyword: () => "recall",
-    _flow_reserved_word: ($) =>
-      choice(
-        $.flow_exec_keyword,
-        $.flow_spawn_keyword,
-        $.flow_let_keyword,
-        $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
-        $._async_await_binding_word,
-        $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
-        $._collection_binding_word,
-        $._reserved_binding_word, $.flow_from_keyword, $.flow_windowing_keyword,
-        $.flow_rank_keyword,
-        $.flow_par_keyword,
-        $.flow_top_keyword,
-        $.flow_bottom_keyword,
-        $.flow_think_keyword,
-        $.flow_use_keyword,
-        $.thunk_keyword,
-        "call",
-        "do",
-        "unfold",
-        "each",
-        "fold",
-        "head",
-        "tail",
-        $.flow_using_keyword, $.flow_if_keyword, $.flow_by_keyword,
-        $.flow_in_keyword, $.flow_lane_keyword,
-        $.flow_ascending_keyword, $.flow_descending_keyword,
-        $.flow_time_keyword, $.flow_times_keyword,
-        $.flow_first_keyword, $.flow_last_keyword,
-        $.with_keyword, $.struct_keyword, $.psyche_keyword, $.skill_keyword,
-        $.service_keyword, $.prompt_keyword, $.task_keyword, $.chore_keyword,
-        $.agic_keyword, $.flow_keyword, $._agic_reserved_word,
-      ),
-    _collection_binding_word: ($) => choice(
-      $.flow_scatter_keyword, $.flow_gather_keyword,
-      $.flow_storm_keyword, $.flow_settle_keyword,
-      $.flow_generate_keyword, $.flow_map_keyword, $.flow_reduce_keyword,
-    ),
-    _async_await_binding_word: ($) => choice($.flow_async_keyword, $.flow_await_keyword),
-    _reserved_binding_word: ($) => choice($.flow_until_keyword, "_"),
-    _agic_reserved_word: ($) =>
-      choice(
-        $._role,
-        $.pass_keyword,
-        $._directive_word,
-      ),
+    ...Object.fromEntries(Object.entries(wordNodes).map(([word, node]) => [node, () => word])),
+    _flow_keyword: ($) => keywordChoice($, tables.flow),
+    _agic_keyword: ($) => keywordChoice($, tables.agic),
+    _restricted_binding_word: ($) => keywordChoice($, tables.restricted_binding),
 
     optional_marker: () => "?",
     assign_operator: () => "=",
@@ -818,7 +702,7 @@ module.exports = grammar({
     rparen: () => ")",
     comma: () => ",",
 
-    _cap_kind: ($) => keywordLeaves([$.psyche_keyword, $.skill_keyword, $.service_keyword, $.prompt_keyword], $.cap_kind),
+    _cap_kind: ($) => keywordLeaves(capKinds.map(word => $[wordNodes[word]]), $.cap_kind),
 
     // Keyword boundaries are broader than valid authored identifier names. Keep
     // this rule before the narrower name tokens to win equal-length matches.
@@ -836,18 +720,39 @@ module.exports = grammar({
   },
 });
 
+// Content is a semantic value; spelling and line endings do not add wrappers.
+function content($, name) {
+  return choice(
+    seq(field(name, alias($._inline_content, $.content)), $.line_end),
+    prec.right(seq($.line_end, field(name, alias($._block_content, $.content)))),
+  );
+}
+
+function definitionBody($) {
+  return prec.right(seq($.line_end, repeat($._trivia), optional(seq(
+    $._indent,
+    repeat(choice(field("property", $.property), $._trivia)),
+    optional(field("content", alias($._cap_content, $.content))),
+    $._dedent,
+  ))));
+}
+
+// One scanner boundary signal, with diagnostics owned by the grammar context.
+function missing($, kind) {
+  return alias($._missing_required, $[`invalid_missing_${kind}`]);
+}
+
 function structuralBody($, content) {
   return prec.right(seq(repeat($._trivia), choice(
     seq($._indent, content, $._dedent),
-    $.invalid_empty_body,
+    missing($, "body"),
   )));
 }
 
 function paragraph($, line) {
-  const bodyLine = alias(line, $.text_body_line);
   return prec.right(seq(
-    bodyLine,
-    repeat(choice(bodyLine, seq($.blank_line, bodyLine))),
+    line,
+    repeat(choice(line, seq($.blank_line, line))),
     optional($.blank_line),
   ));
 }
@@ -855,4 +760,16 @@ function paragraph($, line) {
 // Keep each word eligible for keyword extraction without adding CST wrappers.
 function keywordLeaves(words, node) {
   return choice(...words.map(word => alias(word, node)));
+}
+
+// Recognition context comes from the vocabulary; public leaves retain their roles.
+function keywordChoice($, words) {
+  return choice(...[...new Set(words)].map(word => {
+    if (wordNodes[word]) return $[wordNodes[word]];
+    if (roles.includes(word)) return alias(word, $.role);
+    if (QUERY_DIRECTIVE_KEYS.includes(word) || ROUTE_DIRECTIVE_KEYS.includes(word)) {
+      return alias(word, $.directive_key);
+    }
+    return word;
+  }));
 }

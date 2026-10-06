@@ -19,19 +19,19 @@ flow next:
     (prompt_keyword)
     (cap_name)
     (colon)
-    (line_end
-      (newline))
-    (property
-      (identifier)
-      (assign_operator)
-      (text_line
-        (MISSING _text_line))
+    (cap_body
       (line_end
-        (newline)))
-    (blank_line)
-    (text_body
-      (text_body_line
-        (indented_raw_text)
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line
+          (MISSING _text_line))
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
         (newline))))
   (task
     (task_keyword)
@@ -45,10 +45,9 @@ flow next:
         (assign_operator))
       (blank_line)
       (blank_line)
-      (text_body
-        (text_body_line
-          (indented_raw_text)
-          (newline)))))
+      (content
+        (text_line)
+        (newline))))
   (flow
     (flow_keyword)
     (runnable_name)

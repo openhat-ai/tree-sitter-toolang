@@ -1,0 +1,41 @@
+context inline: Same-line text. # Header comment.
+instruct multiline:
+  # Literal heading.
+  First line.
+    Nested detail.
+
+skill sample:
+  source = example/sample
+  Describe the capability.
+  source = literal content after the first text line
+
+task work:
+  title = Work
+  Describe the task.
+
+struct Result:
+  summary: Text
+
+agic chat:
+  models = default
+  user: First message.
+  assistant:
+    Multiline reply.
+    More detail.
+  Bare message.
+  Its continuation.
+
+flow example:
+  tools = none
+  let note =
+    Literal content.
+  let job = async run:
+    Research.
+  await job
+  ask: Continue?
+  reduce:
+    Combine.
+    from: Seed.
+  repeat:
+    until: Ready?
+    run worker

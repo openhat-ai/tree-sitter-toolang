@@ -68,7 +68,7 @@ def program_shape(statements):
                 assert condition.type == "until_clause"
                 target = condition.child_by_field_name("target")
                 assert target.type == "inline_agic_body"
-                assert target.child_by_field_name("body").text.strip() == b"Ready."
+                assert target.child_by_field_name("content").text.strip() == b"Ready."
             body = statement.child_by_field_name("body")
             assert body.type == "repeat_body"
             result.append(
@@ -106,7 +106,7 @@ def test_generated_layout_preserves_the_independent_statement_tree(seed):
         b"work",
         b"next",
     ]
-    statements = descendants(flows[0].child_by_field_name("body"), "statements")[0]
+    statements = flows[0].child_by_field_name("body")
     assert program_shape(statements) == expected, source
     assert not descendants(flows[1], "run_statement")
 

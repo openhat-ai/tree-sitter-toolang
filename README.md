@@ -67,8 +67,13 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 
 [GRAMMAR.md](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
 documents the public Toolang syntax and CST contract.
-`grammar.js` is the parser source of truth; generated artifacts live under
-`src/`.
+`grammar.js`, `keywords.js`, and `src/scanner.c` define the grammar; generated
+artifacts live under `src/`.
+
+Unreleased changes unify content/body fields, remove obsolete keyword
+restrictions, and tighten token boundaries and missing-body recovery. CST
+consumers should follow the [migration contract](GRAMMAR.md#cst-node-contract)
+when upgrading from alpha.4.
 
 Version 0.4.0-alpha.4 adds `async run` and single-handle `await` for handles
 from async runs or spawn, including named and nameless let bindings.

@@ -32,9 +32,9 @@ enum Token {
   ERROR_LINE,
   EXEC_BINDING_START,
   OPERATION_BINDING_START,
-  RESERVED_BINDING_START,
+  RESTRICTED_BINDING_START,
   VARIABLE_NAME,
-  INVALID_EMPTY_BODY,
+  MISSING_REQUIRED,
   INTEGER_LITERAL,
   ONE_INTEGER_LITERAL,
   OTHER_INTEGER_LITERAL,
@@ -238,10 +238,10 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
   if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
     return emit(scanner, lexer, EXEC_BINDING_START);
   }
-  if (valid[RESERVED_BINDING_START] &&
-      keyword(word, reserved_binding_keywords,
-              sizeof(reserved_binding_keywords) / sizeof(*reserved_binding_keywords))) {
-    return emit(scanner, lexer, RESERVED_BINDING_START);
+  if (valid[RESTRICTED_BINDING_START] &&
+      keyword(word, restricted_binding_keywords,
+              sizeof(restricted_binding_keywords) / sizeof(*restricted_binding_keywords))) {
+    return emit(scanner, lexer, RESTRICTED_BINDING_START);
   }
   if (valid[OPERATION_BINDING_START] &&
       keyword(word, operation_binding_keywords,
@@ -388,7 +388,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     }
   }
   if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
-                    valid[RESERVED_BINDING_START] || valid[VARIABLE_NAME])) {
+                    valid[RESTRICTED_BINDING_START] || valid[VARIABLE_NAME])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);
@@ -404,11 +404,11 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   // Diagnose an absent body before the internal lexer consumes the next
   // sibling's first word. No layout frame is opened for a missing body.
   bool opening_body = valid[INDENT] || valid[TEXT_INDENT] || valid[REDUCE_INDENT];
-  if (valid[INVALID_EMPTY_BODY] && !scanner->line_started &&
+  if (valid[MISSING_REQUIRED] && !scanner->line_started &&
       (lexer->eof(lexer) || (at_start &&
        (indent.column < frame.column || (opening_body && indent.column == frame.column)) &&
        lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
-    return emit(scanner, lexer, INVALID_EMPTY_BODY);
+    return emit(scanner, lexer, MISSING_REQUIRED);
   }
 
   if (lexer->eof(lexer)) {
@@ -508,9 +508,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
-  if (valid[INVALID_EMPTY_BODY] && valid[REDUCE_TEXT_START] &&
+  if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
       !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
-    return emit(scanner, lexer, INVALID_EMPTY_BODY);
+    return emit(scanner, lexer, MISSING_REQUIRED);
   }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
       strcmp(word, "from") != 0) {

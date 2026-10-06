@@ -55,7 +55,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Research {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Research {{_}}."
     assert_binding(root, statement, binding)
     synchronous = parse(source.replace("async run", "run", 1))
     assert valid(synchronous), synchronous
@@ -120,7 +120,7 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
         assert statement.child_by_field_name("handle").type == "handle_name"
         assert statement.child_by_field_name("handle").text.strip() == name.encode()
         if index == 0:
-            assert statement.parent.type == ("repeat_body" if nested else "statements")
+            assert statement.parent.type == ("repeat_body" if nested else "flow_body")
         else:
             wrapper = statement.parent
             assert wrapper.type == "let_statement"
@@ -295,7 +295,7 @@ def test_async_run_target_separators(binding, spacing, target):
     if target == "worker":
         assert run.child_by_field_name("runnable").text.strip() == b"worker"
     else:
-        assert run.child_by_field_name("agic").child_by_field_name("body").text.strip() == b"Research."
+        assert run.child_by_field_name("agic").child_by_field_name("content").text.strip() == b"Research."
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -322,7 +322,7 @@ def test_async_inline_body_preserves_literal_text_and_repeat_boundaries(binding,
 def test_async_and_await_end_implicit_text_paragraphs():
     root = parse("flow launch:\n  Before.\n  async run research\n  await h\n  After.\n")
     assert valid(root), root
-    statements, = descendants(root, "statements")
+    statements, = descendants(root, "flow_body")
     assert [node.type for node in statements.named_children] == [
         "implicit_run_statement", "run_statement", "await_statement", "implicit_run_statement",
     ]

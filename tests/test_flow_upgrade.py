@@ -46,7 +46,7 @@ def test_list_and_value_directives_are_shared(kind, selection):
 def test_malformed_directives_cannot_become_prose(kind, selection):
     root = parse(f"{kind} work:\n  {selection}\n")
     assert not valid(root)
-    for node in descendants(root, "unroled_message") + descendants(root, "implicit_run_statement"):
+    for node in [m for m in descendants(root, "message") if m.child_by_field_name("role") is None] + descendants(root, "implicit_run_statement"):
         assert node.start_point.row > 1  # Recovery may retain the rejected block's text.
 
 
@@ -63,7 +63,7 @@ def test_reduce_fields_separate_reducer_and_initializer(head, newline, indent):
     reduce = descendants(root, "reduce_statement")[0]
     reducer = reduce.child_by_field_name("runnable")
     assert reducer.type == "inline_agic"
-    body = reducer.child_by_field_name("body").text
+    body = reducer.child_by_field_name("content").text
     assert b"from: literal nested text" in body
     assert b"Seed." not in body
     assert b"Seed." in reduce.child_by_field_name("from").text
@@ -84,7 +84,7 @@ def test_flow_upgrade_forms(statement):
 
 
 @pytest.mark.parametrize("statement", [
-    "scatter 3 using generate", "reduce using merge:\n    from:",
+    "reduce using merge:\n    from:",
     "reduce:\n    from: Missing reducer.", "reduce:\n    Merge.\n    from Seed.",
     "reduce using merge:\n    from: Seed.\n    from: Duplicate.",
     "reduce windowing 3:\n    Merge.",
@@ -138,7 +138,7 @@ def test_reduce_leading_comment_markers_are_literal_reducer_text(prefix, initial
     root = parse(source)
     assert valid(root)
     reduce = descendants(root, "reduce_statement")[0]
-    reducer = reduce.child_by_field_name("runnable").child_by_field_name("body")
+    reducer = reduce.child_by_field_name("runnable").child_by_field_name("content")
     assert reducer.text.decode().lstrip().startswith(prefix)
     assert not descendants(reducer, "plain_comment")
     assert not descendants(reducer, "item_doc_comment")

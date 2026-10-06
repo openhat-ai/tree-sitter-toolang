@@ -135,7 +135,7 @@ def test_script_agics_fixture_covers_signature_variations():
     assert param_counts == [None, 1, 1, 2, 1, 2, 3]
     assert "pass_keyword" in str(agics[0].child_by_field_name("body"))
     assert "array_suffix" in str(agics[3].child_by_field_name("params"))
-    assert "text_block" in str(agics[-1].child_by_field_name("body"))
+    assert "content" in str(agics[-1].child_by_field_name("body"))
     echo_body = agics[1].child_by_field_name("body")
     assert echo_body is not None
     echo_messages = _messages(echo_body)
@@ -193,13 +193,13 @@ def test_caps_fixture_covers_placeholder_based_prompts():
         for item in _items(tree.root_node)
         if item.type == "prompt"
     ]
-    bodies = [prompt.child_by_field_name("body") for prompt in prompts]
+    bodies = [prompt.child_by_field_name("body").child_by_field_name("content") for prompt in prompts]
 
     assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "text_body" for body in bodies)
+    assert all(body.type == "content" for body in bodies)
     assert not any(
-        prompt.children_by_field_name("property") for prompt in prompts
+        prompt.child_by_field_name("body").children_by_field_name("property") for prompt in prompts
     )
     assert "Review {{_}} directly." in _text(source, bodies[0])
     assert "Review {{path}} carefully." in _text(source, bodies[1])
@@ -212,12 +212,12 @@ def test_prompt_property_like_prefix_uses_common_cap_property_shape():
 
     tree = parser.parse(source)
     prompt = _items(tree.root_node)[0]
-    body = prompt.child_by_field_name("body")
+    body = prompt.child_by_field_name("body").child_by_field_name("content")
 
     assert tree.root_node.has_error is False
-    properties = prompt.children_by_field_name("property")
+    properties = prompt.child_by_field_name("body").children_by_field_name("property")
 
-    assert body is not None and body.type == "text_body"
+    assert body is not None and body.type == "content"
     assert [_text(source, property_node).strip() for property_node in properties] == [
         "mode = exact"
     ]
@@ -232,7 +232,7 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
     tree = parser.parse(source)
     caps = _items(tree.root_node)
     kinds = [cap.type for cap in caps]
-    bodies = [cap.child_by_field_name("body") for cap in caps]
+    bodies = [cap.child_by_field_name("body").child_by_field_name("content") for cap in caps]
 
     assert kinds == [
         "service",
@@ -243,8 +243,8 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "text_body" for body in bodies)
-    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert all(body.type == "content" for body in bodies)
+    properties = [cap.child_by_field_name("body").children_by_field_name("property") for cap in caps]
     assert "protocol = http" in _text(source, properties[0][0])
     assert "target = https://mcp.github.com/mcp" in _text(
         source, properties[0][1]
@@ -262,7 +262,7 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
     tree = parser.parse(source)
     caps = _items(tree.root_node)
     kinds = [cap.type for cap in caps]
-    bodies = [cap.child_by_field_name("body") for cap in caps]
+    bodies = [cap.child_by_field_name("body").child_by_field_name("content") for cap in caps]
 
     assert kinds == [
         "service",
@@ -271,8 +271,8 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "text_body" for body in bodies)
-    properties = [cap.children_by_field_name("property") for cap in caps]
+    assert all(body.type == "content" for body in bodies)
+    properties = [cap.child_by_field_name("body").children_by_field_name("property") for cap in caps]
     assert "target = http://localhost:3000/mcp" in _text(
         source, properties[0][1]
     )
@@ -331,9 +331,9 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     ]
 
     for cap in items[:4]:
-        body = cap.child_by_field_name("body")
+        body = cap.child_by_field_name("body").child_by_field_name("content")
         assert body is not None
-        assert body.type == "text_body"
+        assert body.type == "content"
 
     struct = items[4]
     fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
@@ -351,11 +351,11 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
 
     instruct = items[5]
     assert instruct.child_by_field_name("name") is not None
-    assert "text_block" in str(instruct.child_by_field_name("body"))
+    assert "content" in str(instruct.child_by_field_name("content"))
 
     context = items[6]
     assert context.child_by_field_name("name") is not None
-    assert "text_block" in str(context.child_by_field_name("body"))
+    assert "content" in str(context.child_by_field_name("content"))
 
     agic = items[7]
     body = agic.child_by_field_name("body")
@@ -372,7 +372,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
         _text(source, node.child_by_field_name("key")).strip()
         for node in _nodes(body, "directive")
     ][-2:] == ["instruct", "context"]
-    assert "text_block" in str(messages[0])
+    assert "content" in str(messages[0])
 
 
 def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
@@ -385,7 +385,7 @@ def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
         for item in _items(tree.root_node)
         if item.type in {"service", "prompt"}
     ]
-    bodies = [cap.child_by_field_name("body") for cap in caps]
+    bodies = [cap.child_by_field_name("body").child_by_field_name("content") for cap in caps]
 
     assert tree.root_node.has_error is False
     assert all(body is not None for body in bodies)
@@ -849,11 +849,11 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
     tree = parser.parse(source)
     root = tree.root_node
     prompt = _items(root)[0]
-    body = prompt.child_by_field_name("body")
+    body = prompt.child_by_field_name("body").child_by_field_name("content")
 
     assert root.has_error is False
     assert body is not None
-    assert body.type == "text_body"
+    assert body.type == "content"
     assert "Review {{path}} carefully." in _normalize_newlines(_text(source, body))
 
 

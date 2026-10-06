@@ -93,21 +93,38 @@
   {
     "type": "agic_body",
     "named": true,
-    "fields": {},
+    "fields": {
+      "directive": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "directive",
+            "named": true
+          }
+        ]
+      },
+      "message": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "message",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "blank_line",
           "named": true
         },
         {
-          "type": "directive",
-          "named": true
-        },
-        {
-          "type": "invalid_empty_body",
+          "type": "invalid_missing_body",
           "named": true
         },
         {
@@ -116,10 +133,6 @@
         },
         {
           "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "messages",
           "named": true
         },
         {
@@ -145,12 +158,12 @@
     "type": "ask_statement",
     "named": true,
     "fields": {
-      "body": {
+      "content": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "text_inline",
+            "type": "content",
             "named": true
           }
         ]
@@ -166,6 +179,10 @@
         },
         {
           "type": "flow_ask_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -196,6 +213,62 @@
         },
         {
           "type": "line_end",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cap_body",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "content",
+            "named": true
+          }
+        ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -253,25 +326,52 @@
     }
   },
   {
+    "type": "content",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "invalid_missing_content",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "text_line",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "context",
     "named": true,
     "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "text_inline",
-            "named": true
-          }
-        ]
-      },
       "colon": {
         "multiple": false,
         "required": true,
         "types": [
           {
             "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "content",
             "named": true
           }
         ]
@@ -296,6 +396,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -634,21 +744,102 @@
   {
     "type": "flow_body",
     "named": true,
-    "fields": {},
+    "fields": {
+      "directive": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "directive",
+            "named": true
+          }
+        ]
+      },
+      "statement": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "ask_statement",
+            "named": true
+          },
+          {
+            "type": "await_statement",
+            "named": true
+          },
+          {
+            "type": "drop_statement",
+            "named": true
+          },
+          {
+            "type": "exec_statement",
+            "named": true
+          },
+          {
+            "type": "generate_statement",
+            "named": true
+          },
+          {
+            "type": "implicit_run_statement",
+            "named": true
+          },
+          {
+            "type": "invalid_flow_reserved_statement",
+            "named": true
+          },
+          {
+            "type": "keep_statement",
+            "named": true
+          },
+          {
+            "type": "let_statement",
+            "named": true
+          },
+          {
+            "type": "map_statement",
+            "named": true
+          },
+          {
+            "type": "reduce_statement",
+            "named": true
+          },
+          {
+            "type": "repeat_statement",
+            "named": true
+          },
+          {
+            "type": "run_statement",
+            "named": true
+          },
+          {
+            "type": "seek_statement",
+            "named": true
+          },
+          {
+            "type": "sort_statement",
+            "named": true
+          },
+          {
+            "type": "spawn_statement",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "blank_line",
           "named": true
         },
         {
-          "type": "directive",
+          "type": "invalid_missing_body",
           "named": true
         },
         {
-          "type": "invalid_empty_body",
+          "type": "invalid_missing_statement",
           "named": true
         },
         {
@@ -673,10 +864,6 @@
         },
         {
           "type": "shebang_comment",
-          "named": true
-        },
-        {
-          "type": "statements",
           "named": true
         }
       ]
@@ -765,20 +952,17 @@
   {
     "type": "implicit_run_statement",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "text_body_line",
-          "named": true
-        }
-      ]
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "content",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -795,20 +979,12 @@
           }
         ]
       },
-      "body": {
+      "content": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "invalid_empty_body",
-            "named": true
-          },
-          {
-            "type": "text_body",
-            "named": true
-          },
-          {
-            "type": "text_inline",
+            "type": "content",
             "named": true
           }
         ]
@@ -863,23 +1039,27 @@
     "type": "inline_agic_body",
     "named": true,
     "fields": {
-      "body": {
+      "content": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "text_inline",
+            "type": "content",
             "named": true
           }
         ]
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
           "type": "colon",
+          "named": true
+        },
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -889,22 +1069,22 @@
     "type": "instruct",
     "named": true,
     "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "text_inline",
-            "named": true
-          }
-        ]
-      },
       "colon": {
         "multiple": false,
         "required": true,
         "types": [
           {
             "type": "colon",
+            "named": true
+          }
+        ]
+      },
+      "content": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "content",
             "named": true
           }
         ]
@@ -929,6 +1109,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_end",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -940,7 +1130,19 @@
       "required": true,
       "types": [
         {
+          "type": "context_keyword",
+          "named": true
+        },
+        {
           "type": "directive_key",
+          "named": true
+        },
+        {
+          "type": "flow_lanes_keyword",
+          "named": true
+        },
+        {
+          "type": "instruct_keyword",
           "named": true
         },
         {
@@ -949,6 +1151,10 @@
         },
         {
           "type": "pass_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_keyword",
           "named": true
         },
         {
@@ -998,7 +1204,7 @@
           "named": true
         },
         {
-          "type": "colon",
+          "type": "context_keyword",
           "named": true
         },
         {
@@ -1019,10 +1225,6 @@
         },
         {
           "type": "flow_await_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_bottom_keyword",
           "named": true
         },
         {
@@ -1050,10 +1252,6 @@
           "named": true
         },
         {
-          "type": "flow_gather_keyword",
-          "named": true
-        },
-        {
           "type": "flow_generate_keyword",
           "named": true
         },
@@ -1078,6 +1276,10 @@
           "named": true
         },
         {
+          "type": "flow_lanes_keyword",
+          "named": true
+        },
+        {
           "type": "flow_last_keyword",
           "named": true
         },
@@ -1087,14 +1289,6 @@
         },
         {
           "type": "flow_map_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_par_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_rank_keyword",
           "named": true
         },
         {
@@ -1110,15 +1304,7 @@
           "named": true
         },
         {
-          "type": "flow_scatter_keyword",
-          "named": true
-        },
-        {
           "type": "flow_seek_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_settle_keyword",
           "named": true
         },
         {
@@ -1130,14 +1316,6 @@
           "named": true
         },
         {
-          "type": "flow_storm_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_think_keyword",
-          "named": true
-        },
-        {
           "type": "flow_time_keyword",
           "named": true
         },
@@ -1146,15 +1324,7 @@
           "named": true
         },
         {
-          "type": "flow_top_keyword",
-          "named": true
-        },
-        {
           "type": "flow_until_keyword",
-          "named": true
-        },
-        {
-          "type": "flow_use_keyword",
           "named": true
         },
         {
@@ -1163,6 +1333,10 @@
         },
         {
           "type": "flow_windowing_keyword",
+          "named": true
+        },
+        {
+          "type": "instruct_keyword",
           "named": true
         },
         {
@@ -1179,6 +1353,10 @@
         },
         {
           "type": "psyche_keyword",
+          "named": true
+        },
+        {
+          "type": "recall_keyword",
           "named": true
         },
         {
@@ -1207,10 +1385,6 @@
         },
         {
           "type": "text_line",
-          "named": true
-        },
-        {
-          "type": "thunk_keyword",
           "named": true
         },
         {
@@ -1253,7 +1427,28 @@
   {
     "type": "job_body",
     "named": true,
-    "fields": {},
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "content",
+            "named": true
+          }
+        ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
@@ -1279,15 +1474,7 @@
           "named": true
         },
         {
-          "type": "property",
-          "named": true
-        },
-        {
           "type": "shebang_comment",
-          "named": true
-        },
-        {
-          "type": "text_body",
           "named": true
         }
       ]
@@ -1445,7 +1632,7 @@
         "required": false,
         "types": [
           {
-            "type": "text_inline",
+            "type": "content",
             "named": true
           }
         ]
@@ -1461,6 +1648,10 @@
         },
         {
           "type": "flow_let_keyword",
+          "named": true
+        },
+        {
+          "type": "line_end",
           "named": true
         }
       ]
@@ -1553,10 +1744,31 @@
   {
     "type": "message",
     "named": true,
-    "fields": {},
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "content",
+            "named": true
+          }
+        ]
+      },
+      "role": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "role",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "colon",
@@ -1567,50 +1779,7 @@
           "named": true
         },
         {
-          "type": "role",
-          "named": true
-        },
-        {
-          "type": "text_inline",
-          "named": true
-        },
-        {
-          "type": "unroled_message",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "messages",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "message",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
+          "type": "line_end",
           "named": true
         }
       ]
@@ -1774,10 +1943,10 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
-            "type": "text_body",
+            "type": "cap_body",
             "named": true
           }
         ]
@@ -1811,47 +1980,7 @@
             "named": true
           }
         ]
-      },
-      "property": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "property",
-            "named": true
-          }
-        ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -1906,10 +2035,10 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
-            "type": "text_body",
+            "type": "cap_body",
             "named": true
           }
         ]
@@ -1943,47 +2072,7 @@
             "named": true
           }
         ]
-      },
-      "property": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "property",
-            "named": true
-          }
-        ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -2026,7 +2115,7 @@
         "required": false,
         "types": [
           {
-            "type": "text_inline",
+            "type": "content",
             "named": true
           }
         ]
@@ -2071,7 +2160,7 @@
           "named": true
         },
         {
-          "type": "invalid_empty_body",
+          "type": "invalid_missing_body",
           "named": true
         },
         {
@@ -2191,7 +2280,11 @@
           "named": true
         },
         {
-          "type": "invalid_empty_body",
+          "type": "invalid_missing_body",
+          "named": true
+        },
+        {
+          "type": "invalid_missing_statement",
           "named": true
         },
         {
@@ -2421,10 +2514,10 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
-            "type": "text_body",
+            "type": "cap_body",
             "named": true
           }
         ]
@@ -2458,47 +2551,7 @@
             "named": true
           }
         ]
-      },
-      "property": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "property",
-            "named": true
-          }
-        ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -2507,10 +2560,10 @@
     "fields": {
       "body": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
-            "type": "text_body",
+            "type": "cap_body",
             "named": true
           }
         ]
@@ -2544,47 +2597,7 @@
             "named": true
           }
         ]
-      },
-      "property": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "property",
-            "named": true
-          }
-        ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -2776,101 +2789,6 @@
     }
   },
   {
-    "type": "statements",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "ask_statement",
-          "named": true
-        },
-        {
-          "type": "await_statement",
-          "named": true
-        },
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "drop_statement",
-          "named": true
-        },
-        {
-          "type": "exec_statement",
-          "named": true
-        },
-        {
-          "type": "generate_statement",
-          "named": true
-        },
-        {
-          "type": "implicit_run_statement",
-          "named": true
-        },
-        {
-          "type": "invalid_flow_reserved_statement",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "keep_statement",
-          "named": true
-        },
-        {
-          "type": "let_statement",
-          "named": true
-        },
-        {
-          "type": "map_statement",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "reduce_statement",
-          "named": true
-        },
-        {
-          "type": "repeat_statement",
-          "named": true
-        },
-        {
-          "type": "run_statement",
-          "named": true
-        },
-        {
-          "type": "seek_statement",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        },
-        {
-          "type": "sort_statement",
-          "named": true
-        },
-        {
-          "type": "spawn_statement",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "struct",
     "named": true,
     "fields": {
@@ -2929,21 +2847,28 @@
   {
     "type": "struct_body",
     "named": true,
-    "fields": {},
+    "fields": {
+      "field": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "field",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "blank_line",
           "named": true
         },
         {
-          "type": "field",
-          "named": true
-        },
-        {
-          "type": "invalid_empty_body",
+          "type": "invalid_missing_body",
           "named": true
         },
         {
@@ -3012,97 +2937,6 @@
     }
   },
   {
-    "type": "text_block",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "text_body",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "text_body",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "invalid_empty_body",
-          "named": true
-        },
-        {
-          "type": "text_body_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "text_body_line",
-    "named": true,
-    "fields": {
-      "content": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "indented_raw_text",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "newline",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "text_inline",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "text_block",
-          "named": true
-        },
-        {
-          "type": "text_line",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "text_line",
     "named": true,
     "fields": {}
@@ -3158,25 +2992,6 @@
           }
         ]
       }
-    }
-  },
-  {
-    "type": "unroled_message",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "text_body_line",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -3296,10 +3111,6 @@
     "named": true
   },
   {
-    "type": "call",
-    "named": false
-  },
-  {
     "type": "cap_kind",
     "named": true
   },
@@ -3336,14 +3147,6 @@
     "named": true
   },
   {
-    "type": "do",
-    "named": false
-  },
-  {
-    "type": "each",
-    "named": false
-  },
-  {
     "type": "flow_ascending_keyword",
     "named": true
   },
@@ -3357,10 +3160,6 @@
   },
   {
     "type": "flow_await_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_bottom_keyword",
     "named": true
   },
   {
@@ -3385,10 +3184,6 @@
   },
   {
     "type": "flow_from_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_gather_keyword",
     "named": true
   },
   {
@@ -3432,14 +3227,6 @@
     "named": true
   },
   {
-    "type": "flow_par_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_rank_keyword",
-    "named": true
-  },
-  {
     "type": "flow_reduce_keyword",
     "named": true
   },
@@ -3452,15 +3239,7 @@
     "named": true
   },
   {
-    "type": "flow_scatter_keyword",
-    "named": true
-  },
-  {
     "type": "flow_seek_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_settle_keyword",
     "named": true
   },
   {
@@ -3472,14 +3251,6 @@
     "named": true
   },
   {
-    "type": "flow_storm_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_think_keyword",
-    "named": true
-  },
-  {
     "type": "flow_time_keyword",
     "named": true
   },
@@ -3488,15 +3259,7 @@
     "named": true
   },
   {
-    "type": "flow_top_keyword",
-    "named": true
-  },
-  {
     "type": "flow_until_keyword",
-    "named": true
-  },
-  {
-    "type": "flow_use_keyword",
     "named": true
   },
   {
@@ -3508,18 +3271,6 @@
     "named": true
   },
   {
-    "type": "fold",
-    "named": false
-  },
-  {
-    "type": "head",
-    "named": false
-  },
-  {
-    "type": "indented_raw_text",
-    "named": true
-  },
-  {
     "type": "instruct_keyword",
     "named": true
   },
@@ -3528,7 +3279,15 @@
     "named": true
   },
   {
-    "type": "invalid_empty_body",
+    "type": "invalid_missing_body",
+    "named": true
+  },
+  {
+    "type": "invalid_missing_content",
+    "named": true
+  },
+  {
+    "type": "invalid_missing_statement",
     "named": true
   },
   {
@@ -3604,24 +3363,12 @@
     "named": true
   },
   {
-    "type": "tail",
-    "named": false
-  },
-  {
     "type": "task_keyword",
-    "named": true
-  },
-  {
-    "type": "thunk_keyword",
     "named": true
   },
   {
     "type": "type_name",
     "named": true
-  },
-  {
-    "type": "unfold",
-    "named": false
   },
   {
     "type": "with_keyword",

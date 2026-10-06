@@ -171,8 +171,8 @@ def test_explicit_text_preserves_markers_at_first_line_and_deeper(indent, marker
         f"{indent * 3}{marker} Résumé.\nflow next:\n{indent}pass\n"
     )
     assert valid(root)
-    block = descendants(root, "text_body")[0]
-    assert len(descendants(block, "text_body_line")) == 2
+    block = descendants(root, "content")[0]
+    assert len(descendants(block, "text_line")) == 2
     assert not any(
         descendants(block, kind)
         for kind in (

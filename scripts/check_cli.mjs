@@ -84,7 +84,7 @@ deepStrictEqual(repeatFields.body, {
 });
 const repeatBodyFields = nodeTypes.find(node => node.type === "repeat_body").fields;
 deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["statement", "until"]);
-// Empty-body recovery retains repeat_body with an invalid_empty_body child.
+// Missing requirements keep the owning body and expose an invalid_* diagnostic.
 deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, false]);
 deepStrictEqual(repeatBodyFields.until, {
   multiple: false, required: false, types: [{ type: "until_clause", named: true }],
@@ -96,6 +96,28 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
     types: [{ type: "inline_agic_body", named: true }, { type: "runnable_name", named: true }],
   },
 });
+
+const textField = { multiple: false, required: true, types: [{ type: "content", named: true }] };
+for (const kind of ["context", "instruct", "inline_agic", "inline_agic_body", "ask_statement", "implicit_run_statement"]) {
+  deepStrictEqual(nodeTypes.find(node => node.type === kind).fields.content, textField, kind);
+}
+const messageFields = nodeTypes.find(node => node.type === "message").fields;
+deepStrictEqual(messageFields.role, {
+  multiple: false, required: false, types: [{ type: "role", named: true }],
+});
+// Keyword-led invalid messages can omit content during recovery only.
+deepStrictEqual(messageFields.content, { ...textField, required: false });
+for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
+  ["struct_body", "field"], ["cap_body", "property"], ["job_body", "property"]]) {
+  deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
+}
+for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
+  "unroled_message", "statements", "messages", "invalid_empty_body"]) {
+  deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
+}
+for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement"]) {
+  deepStrictEqual(nodeTypes.find(node => node.type === kind), { type: kind, named: true });
+}
 
 function runCli(...args) {
   const result = spawnSync("npx", ["tree-sitter", ...args], {

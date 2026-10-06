@@ -57,28 +57,22 @@ flow seeded(_):
   (instruct
     (instruct_keyword)
     (colon)
-    (text_inline
-      (text_block
-        (line_end
-          (newline))
-        (text_body
-          (text_body_line
-            (indented_raw_text)
-            (newline))
-          (blank_line)))))
+    (line_end
+      (newline))
+    (content
+      (text_line)
+      (newline)
+      (blank_line)))
   (context
     (context_keyword)
     (identifier)
     (colon)
-    (text_inline
-      (text_block
-        (line_end
-          (newline))
-        (text_body
-          (text_body_line
-            (indented_raw_text)
-            (newline))
-          (blank_line)))))
+    (line_end
+      (newline))
+    (content
+      (text_line)
+      (newline)
+      (blank_line)))
   (agic
     (agic_keyword)
     (runnable_name)
@@ -144,15 +138,14 @@ flow seeded(_):
         (directive_value)
         (line_end
           (newline)))
-      (messages
-        (message
-          (role)
-          (colon)
-          (text_inline
-            (text_line)
-            (line_end
-              (newline))))
-        (blank_line))))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (blank_line)))
   (agic
     (agic_keyword)
     (runnable_name)
@@ -165,15 +158,14 @@ flow seeded(_):
     (line_end
       (newline))
     (agic_body
-      (messages
-        (message
-          (role)
-          (colon)
-          (text_inline
-            (text_line)
-            (line_end
-              (newline))))
-        (blank_line))))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (blank_line)))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -267,56 +259,52 @@ flow seeded(_):
           (none_keyword))
         (line_end
           (newline)))
-      (statements
-        (run_statement
-          (flow_run_keyword)
-          (runnable_name)
-          (line_end
-            (newline)))
-        (reduce_statement
-          (flow_reduce_keyword)
-          (flow_using_keyword)
-          (runnable_name)
-          (colon)
-          (line_end
-            (newline))
-          (flow_from_keyword)
-          (colon)
-          (text_inline
-            (text_block
+      (run_statement
+        (flow_run_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))
+      (reduce_statement
+        (flow_reduce_keyword)
+        (flow_using_keyword)
+        (runnable_name)
+        (colon)
+        (line_end
+          (newline))
+        (flow_from_keyword)
+        (colon)
+        (line_end
+          (newline))
+        (content
+          (text_line)
+          (newline)))
+      (repeat_statement
+        (flow_repeat_keyword)
+        (integer_literal)
+        (flow_times_keyword)
+        (flow_windowing_keyword)
+        (integer_literal)
+        (colon)
+        (line_end
+          (newline))
+        (repeat_body
+          (run_statement
+            (flow_run_keyword)
+            (inline_agic
+              (colon)
+              (content
+                (text_line))
               (line_end
-                (newline))
-              (text_body
-                (text_body_line
-                  (indented_raw_text)
-                  (newline))))))
-        (repeat_statement
-          (flow_repeat_keyword)
-          (integer_literal)
-          (flow_times_keyword)
-          (flow_windowing_keyword)
-          (integer_literal)
-          (colon)
-          (line_end
-            (newline))
-          (repeat_body
-            (run_statement
-              (flow_run_keyword)
-              (inline_agic
-                (colon)
-                (text_inline
-                  (text_line)
-                  (line_end
-                    (newline)))))
-            (until_clause
-              (flow_until_keyword)
-              (inline_agic_body
-                (colon)
-                (text_inline
-                  (text_line)
-                  (line_end
-                    (newline)))))
-            (blank_line))))))
+                (newline))))
+          (until_clause
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (content
+                (text_line))
+              (line_end
+                (newline))))
+          (blank_line)))))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -329,40 +317,32 @@ flow seeded(_):
     (line_end
       (newline))
     (flow_body
-      (statements
-        (run_statement
-          (flow_run_keyword)
-          (inline_agic
-            (arrow)
-            (type
-              (builtin_type)
-              (array_suffix))
-            (colon)
-            (text_inline
-              (text_block
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline)))))))
-        (reduce_statement
-          (flow_reduce_keyword)
-          (inline_agic
-            (colon)
-            (line_end
-              (newline))
-            (text_body
-              (text_body_line
-                (indented_raw_text)
-                (newline))))
-          (flow_from_keyword)
+      (run_statement
+        (flow_run_keyword)
+        (inline_agic
+          (arrow)
+          (type
+            (builtin_type)
+            (array_suffix))
           (colon)
-          (text_inline
-            (text_block
-              (line_end
-                (newline))
-              (text_body
-                (text_body_line
-                  (indented_raw_text)
-                  (newline))))))))))
+          (line_end
+            (newline))
+          (content
+            (text_line)
+            (newline))))
+      (reduce_statement
+        (flow_reduce_keyword)
+        (inline_agic
+          (colon)
+          (line_end
+            (newline))
+          (content
+            (text_line)
+            (newline)))
+        (flow_from_keyword)
+        (colon)
+        (line_end
+          (newline))
+        (content
+          (text_line)
+          (newline))))))

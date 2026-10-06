@@ -45,7 +45,7 @@ def test_collection_targets_and_bindings(head, kind, count, lanes, binding, targ
         assert runnable.type == "inline_agic"
         result = runnable.child_by_field_name("return")
         assert (result.text.decode() if result else None) == output
-        assert runnable.child_by_field_name("body").text.strip() == b"Complete {{_}}."
+        assert runnable.child_by_field_name("content").text.strip() == b"Complete {{_}}."
         assert not descendants(operation, "flow_using_keyword")
     for name, expected in [("count", count), ("lanes", lanes)]:
         value = operation.child_by_field_name(name)
@@ -72,21 +72,13 @@ def test_invalid_collection_targets_never_become_binding_text(head, kind, count,
 
 
 @pytest.mark.parametrize("statement", [
-    "scatter using expand", "scatter: Expand.", "scatter using: Expand.",
-    "scatter -> Text[]: Expand.", "scatter using -> Text[]: Expand.",
-    "scatter 3 using expand", "gather using merge", "gather using: Merge.",
-    "gather using -> Text: Merge.", "storm 3 using sample",
-    "storm 3 in 2 lanes using -> Text: Sample.",
-    "settle using merge", "settle: Merge.", "settle using -> Text: Merge.",
-    "settle using merge:\n    from: Seed.",
-    "settle:\n    Merge.\n    from: Seed.",
     "generate 3 using sample in 2 lanes", "map using worker in 2 lanes",
     "generate in 2 lanes 3 using sample", "reduce in 2 lanes using merge",
     "reduce using -> Text:\n    Merge.\n    from: Seed.",
 ])
 @pytest.mark.parametrize("binding", BINDINGS)
 @pytest.mark.parametrize("nested", [False, True])
-def test_removed_and_malformed_forms_are_rejected(statement, binding, nested):
+def test_malformed_active_forms_are_rejected(statement, binding, nested):
     body = binding + statement
     if nested:
         body = "repeat 2 times:\n    " + body.replace("\n", "\n  ")

@@ -33,7 +33,7 @@ def test_exec_target_fields_match_run(target, output, nested, ending):
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Complete {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Complete {{_}}."
     run_root = parse(source.replace("exec", "run", 1))
     assert valid(run_root), run_root
     run, = descendants(run_root, "run_statement")
@@ -71,7 +71,7 @@ def test_nested_exec_dedents_and_explicit_text(newline):
     assert len(descendants(root, "implicit_run_statement")) == 1
     assert b"executor and execution" in descendants(root, "implicit_run_statement")[0].text
     assert any(b"exec remains literal inside explicit text." in node.text
-               for node in descendants(root, "text_body"))
+               for node in descendants(root, "content"))
 
 
 @pytest.mark.parametrize("prefix", ["executor", "execution", "exec_v2", "exec2"])

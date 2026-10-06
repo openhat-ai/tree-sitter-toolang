@@ -27,17 +27,12 @@
 (flow_let_keyword) @keyword
 (flow_seek_keyword) @keyword
 (flow_ask_keyword) @keyword
-(flow_scatter_keyword) @keyword
-(flow_storm_keyword) @keyword
 (flow_generate_keyword) @keyword
-(flow_gather_keyword) @keyword
-(flow_settle_keyword) @keyword
 (flow_reduce_keyword) @keyword
 (flow_map_keyword) @keyword
 (flow_keep_keyword) @keyword
 (flow_drop_keyword) @keyword
 (flow_sort_keyword) @keyword
-(flow_rank_keyword) @keyword
 (flow_repeat_keyword) @keyword
 (flow_until_keyword) @keyword
 (flow_from_keyword) @keyword
@@ -52,14 +47,8 @@
 (flow_descending_keyword) @keyword
 (flow_time_keyword) @keyword
 (flow_times_keyword) @keyword
-(flow_par_keyword) @keyword
 (flow_first_keyword) @keyword
 (flow_last_keyword) @keyword
-(flow_top_keyword) @keyword
-(flow_bottom_keyword) @keyword
-(flow_think_keyword) @keyword
-(flow_use_keyword) @keyword
-(thunk_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
@@ -88,7 +77,6 @@
 (all_keyword) @constant.builtin
 
 (text_line) @string
-(indented_raw_text) @string
 
 (struct
   name: (type_name) @type)

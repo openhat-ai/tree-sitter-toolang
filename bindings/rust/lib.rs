@@ -63,8 +63,6 @@ mod tests {
             .named_child(0)
             .unwrap()
             .child_by_field_name("body")
-            .unwrap()
-            .named_child(0)
             .unwrap();
         let bare = statements.named_child(0).unwrap();
         assert_eq!(bare.kind(), "spawn_statement");
@@ -105,8 +103,6 @@ mod tests {
             .child_by_field_name("body")
             .unwrap()
             .named_child(0)
-            .unwrap()
-            .named_child(0)
             .unwrap();
         assert!(statement.child_by_field_name("until").is_none());
         let body = statement.child_by_field_name("body").unwrap();
@@ -143,8 +139,6 @@ mod tests {
                 .named_child(0)
                 .unwrap()
                 .child_by_field_name("body")
-                .unwrap()
-                .named_child(0)
                 .unwrap();
             let launch = statements.named_child(0).unwrap();
             let statement = launch.child_by_field_name("statement").unwrap();
@@ -198,8 +192,6 @@ mod tests {
             .named_child(0)
             .unwrap()
             .child_by_field_name("body")
-            .unwrap()
-            .named_child(0)
             .unwrap();
         assert_eq!(statements.named_child_count(), 2);
         let body = statements

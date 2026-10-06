@@ -58,7 +58,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Research {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Research {{_}}."
     if binding:
         wrapper, = descendants(root, "let_statement")
         assert wrapper.child_by_field_name("statement") == statement
@@ -171,7 +171,7 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert b"spawn remains literal inside inline text." in targets[2].text
     assert not descendants(descendants(root, "agic")[0], "flow_spawn_keyword")
     assert len(descendants(root, "flow_spawn_keyword")) == 5
-    assert any(b"{{description}}" in node.text for node in descendants(root, "text_body"))
+    assert any(b"{{description}}" in node.text for node in descendants(root, "content"))
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

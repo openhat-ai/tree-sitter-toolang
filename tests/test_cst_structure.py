@@ -19,7 +19,8 @@ LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name
 REMOVED = {"item", "base_type", "user_type", "struct_name", "type_suffix",
            "snake_name", "pascal_name", "agic_name", "flow_name", "field_name",
            "property_key", "context_name", "instruct_name", "runnable",
-           "agent", "directive_op", "cap_ref", "property_value", "cap_body", "context_body", "instruct_body"}
+           "agent", "directive_op", "cap_ref", "property_value", "context_body", "instruct_body", "text_inline", "text_block",
+           "text_body", "text_body_line", "indented_raw_text", "unroled_message", "statements", "messages"}
 
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda path: path.stem)
@@ -122,7 +123,7 @@ def test_missing_property_values_stay_local_during_incremental_edits(kind, newli
         root = tree.root_node
         assert fingerprint(root) == fingerprint(parser.parse(source).root_node)
         owner = declarations(root)[0]
-        assert [node.text.strip() for node in descendants(owner, "text_body_line")] == [b"Body."]
+        assert [node.text.strip() for node in descendants(owner.child_by_field_name("body").child_by_field_name("content"), "text_line")] == [b"Body."]
         assert declarations(root)[1].child_by_field_name("name").text == b"next"
         assert valid(root) == expected_valid
         assert owner.has_error == (not expected_valid)

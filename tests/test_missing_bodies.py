@@ -7,14 +7,16 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, valid, walk
 
 
 def test_missing_body_fixture_uses_local_leaf_diagnostics():
     root = parse((Path(__file__).parent / "fixtures/invalid/missing_bodies.too").read_text())
     assert not valid(root)
-    diagnostics = descendants(root, "invalid_empty_body")
-    assert len(diagnostics) == 3
+    diagnostics = [node for node in walk(root) if node.type.startswith("invalid_missing_")]
+    assert [node.type for node in diagnostics] == [
+        "invalid_missing_body", "invalid_missing_content", "invalid_missing_content",
+    ]
     assert all(node.child_count == 0 and node.start_byte == node.end_byte
                for node in diagnostics)
     assert [node.child_by_field_name("name").text
@@ -30,6 +32,9 @@ def test_missing_body_fixture_uses_local_leaf_diagnostics():
     "flow first:\n  repeat:", "flow first:\n  run:", "flow first:\n  spawn:",
     "flow first:\n  let note =", "flow first:\n  map:", "flow first:\n  reduce:",
     "flow first:\n  ask:", "flow first:\n  async run:",
+    "flow first:\n  async run->Text:", "flow first:\n  let h = async run:",
+    "flow first:\n  let async run:", "flow first:\n  let h = async run->Text:",
+    "flow first:\n  let async run->Text:",
     "flow first:\n  run->Text:", "flow first:\n  exec:",
     "flow first:\n  seek reviewer:", "flow first:\n  generate 2:",
     "flow first:\n  keep if:", "flow first:\n  drop if:",
@@ -40,7 +45,7 @@ def test_missing_body_fixture_uses_local_leaf_diagnostics():
 @pytest.mark.parametrize("trivia", ["", "\n", "# Empty body.\n"])
 def test_missing_body_recovers_at_the_next_statement_or_declaration(header, newline, trivia):
     nested = "\n" in header
-    # In text bodies an indented comment is real Content, so leave it at the
+    # In text bodies an indented comment is real content, so leave it at the
     # enclosing baseline. Structural bodies also exercise indented trivia.
     prefix = "  " if nested else ""
     tail = ("  run after\n" if nested else "") + "flow next:\n  pass\n"
@@ -55,6 +60,15 @@ def test_missing_body_recovers_at_the_next_statement_or_declaration(header, newl
         root = tree.root_node
         assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
         assert valid(root) == (source != malformed)
+        if source == malformed:
+            structural_headers = {
+                "flow first:", "agic first:", "struct First:",
+                "flow first:\n  repeat:", "flow first:\n  reduce using worker:",
+            }
+            expected = "invalid_missing_body" if header in structural_headers else "invalid_missing_content"
+            diagnostics = [node for node in walk(root) if node.type.startswith("invalid_missing_")]
+            assert [node.type for node in diagnostics] == [expected]
+            assert diagnostics[0].start_byte == diagnostics[0].end_byte
         assert b"next" in [node.child_by_field_name("name").text
                             for node in descendants(root, "flow")]
         if nested:
@@ -75,7 +89,7 @@ def test_empty_repeat_diagnostic_does_not_open_a_layout_frame(indent, newline, t
     assert not valid(root)
     loop, = descendants(root, "repeat_statement")
     body = loop.child_by_field_name("body")
-    diagnostic, = descendants(body, "invalid_empty_body")
+    diagnostic, = descendants(body, "invalid_missing_body")
     assert diagnostic.child_count == 0
     assert diagnostic.start_byte == diagnostic.end_byte
     assert diagnostic.start_point.row == (3 if trivia else 2)
@@ -94,15 +108,15 @@ def test_empty_message_body_preserves_the_next_message(role):
     assert descendants(root, "flow")[0].child_by_field_name("name").text == b"next"
 
 
-@pytest.mark.parametrize("body", [
-    "  models=fast\n",
-    "  repeat:\n    until: Ready.\n  run after\n",
-    "  reduce:\n    from: Seed.\n  run after\n",
-    "  repeat:\n    run one\n    until:\n  run after\n",
-    "  reduce using worker:\n    from:\n  run after\n",
+@pytest.mark.parametrize("body,kind", [
+    ("  models=fast\n", "invalid_missing_statement"),
+    ("  repeat:\n    until: Ready.\n  run after\n", "invalid_missing_statement"),
+    ("  reduce:\n    from: Seed.\n  run after\n", "invalid_missing_content"),
+    ("  repeat:\n    run one\n    until:\n  run after\n", "invalid_missing_content"),
+    ("  reduce using worker:\n    from:\n  run after\n", "invalid_missing_content"),
 ])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_required_content_after_directives_or_clauses_recovers(body, newline):
+def test_required_content_after_directives_or_clauses_recovers(body, kind, newline):
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = b""
     tree = parser.parse(previous)
@@ -118,7 +132,7 @@ def test_required_content_after_directives_or_clauses_recovers(body, newline):
         assert [node.child_by_field_name("name").text
                 for node in descendants(root, "flow")] == [b"first", b"next"]
         if source == broken:
-            assert descendants(root, "invalid_empty_body")
+            assert len(descendants(root, kind)) == 1
             if "run after" in body:
                 assert descendants(root, "run_statement")[-1].text.strip() == b"run after"
         previous = current
