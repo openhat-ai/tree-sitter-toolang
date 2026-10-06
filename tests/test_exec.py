@@ -129,5 +129,5 @@ def test_inline_exec_owns_text_but_not_following_statements(header, indent):
     assert not descendants(target, "run_statement")
     assert [node.child_by_field_name("runnable").text.strip()
             for node in descendants(loop, "run_statement")] == [b"after_inline"]
-    assert loop.child_by_field_name("until").text.strip() == b": Ready."
+    assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"grow"

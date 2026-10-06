@@ -9,27 +9,29 @@ from test_layout_support import descendants, parse, point, valid
 @pytest.mark.parametrize("body", ["run improve", "# No executable body.", "pass"])
 @pytest.mark.parametrize("condition", ["", "until: Ready.", "until:\n      Ready."])
 @pytest.mark.parametrize("ending", ["", "\n  run publish\n", "\nflow next:\n  pass"])
-def test_repeat_requires_executable_body_and_at_least_one_bound(
+def test_repeat_requires_executable_body_with_optional_bounds(
     count, body, condition, ending
 ):
     source = f"flow work:\n  repeat{count}:\n    {body}"
     if condition:
         source += f"\n    {condition}"
     root = parse(source + ending)
-    expected_valid = body == "run improve" and bool(count or condition)
+    expected_valid = body == "run improve"
     assert valid(root) == expected_valid, source
     if expected_valid:
         loop = descendants(root, "repeat_statement")[0]
-        assert loop.child_by_field_name("body").type == "statements"
+        assert loop.child_by_field_name("body").type == "repeat_body"
         assert [n.text.strip() for n in descendants(loop, "run_statement")] == [
             b"run improve"
         ]
         assert (loop.child_by_field_name("count") is not None) == bool(count)
-        until = loop.child_by_field_name("until")
+        until = loop.child_by_field_name("body").child_by_field_name("until")
         assert (until is not None) == bool(condition)
         if until is not None:
-            assert until.type == "inline_agic_body"
-            assert until.child_by_field_name("body").text.strip() == b"Ready."
+            assert until.type == "until_clause"
+            target = until.child_by_field_name("target")
+            assert target.type == "inline_agic_body"
+            assert target.child_by_field_name("body").text.strip() == b"Ready."
 
 
 @pytest.mark.parametrize(

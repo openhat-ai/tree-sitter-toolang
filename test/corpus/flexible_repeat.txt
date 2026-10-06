@@ -1,0 +1,211 @@
+==================
+Positional and optional repeat conditions
+==================
+agic is_done(_) -> Boolean:
+  user: Return true when {{_}} is complete.
+
+flow improve(_):
+  repeat:
+    ## Check before any work.
+    until is_done
+    run inspect
+  repeat 2 times windowing 3:
+    Describe the evidence.
+    until: Compare {{_}} with {{_1._}}.
+    run revise
+  repeat 1 time:
+    repeat:
+      until:
+        until remains literal inside condition text.
+        ## Literal documentation.
+      run revise
+    until is_done
+  repeat 0 times:
+    run inspect
+  repeat windowing 2:
+    let note =
+      until remains literal inside explicit Content.
+    run inspect
+  run publish
+
+---
+
+(source_file
+  (item
+    (agic
+      (agic_keyword)
+      (agic_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (arrow)
+      (type
+        (base_type
+          (builtin_type)))
+      (colon)
+      (line_end
+        (newline))
+      (agic_body
+        (messages
+          (message
+            (role)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline))))
+          (blank_line)))))
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (params
+        (lparen)
+        (param
+          (param_name))
+        (rparen))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (repeat_statement
+            (flow_repeat_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (item_doc_comment
+                (comment_text))
+              (until_clause
+                (flow_until_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))))
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (flow_windowing_keyword)
+            (integer_literal)
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (implicit_run_statement
+                (text_body_line
+                  (indented_raw_text)
+                  (newline)))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline)))))
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))))
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_time_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (repeat_statement
+                (flow_repeat_keyword)
+                (colon)
+                (line_end
+                  (newline))
+                (repeat_body
+                  (until_clause
+                    (flow_until_keyword)
+                    (inline_agic_body
+                      (colon)
+                      (text_inline
+                        (text_block
+                          (line_end
+                            (newline))
+                          (text_body
+                            (text_body_line
+                              (indented_raw_text)
+                              (newline))
+                            (text_body_line
+                              (indented_raw_text)
+                              (newline)))))))
+                  (run_statement
+                    (flow_run_keyword)
+                    (runnable
+                      (snake_name))
+                    (line_end
+                      (newline)))))
+              (until_clause
+                (flow_until_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))))
+          (repeat_statement
+            (flow_repeat_keyword)
+            (integer_literal)
+            (flow_times_keyword)
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))))
+          (repeat_statement
+            (flow_repeat_keyword)
+            (flow_windowing_keyword)
+            (integer_literal)
+            (colon)
+            (line_end
+              (newline))
+            (repeat_body
+              (let_statement
+                (flow_let_keyword)
+                (local_name
+                  (snake_name))
+                (assign_operator)
+                (text_inline
+                  (text_block
+                    (line_end
+                      (newline))
+                    (text_body
+                      (text_body_line
+                        (indented_raw_text)
+                        (newline))))))
+              (run_statement
+                (flow_run_keyword)
+                (runnable
+                  (snake_name))
+                (line_end
+                  (newline)))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline))))))))

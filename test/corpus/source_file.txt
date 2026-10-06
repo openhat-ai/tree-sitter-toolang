@@ -259,7 +259,7 @@ context:
 ==================
 Agic With Directives And Blocks
 ==================
-agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
+agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
   models = gpt-5
   tools += shell, filesystem
   hands = summarize
@@ -382,7 +382,7 @@ agic review(in: Part[], path: Text, focus?: Text) -> ReviewResult:
 ==================
 Flow Statements
 ==================
-flow research(in: Part[]) -> Answer:
+flow research(input: Part[]) -> Answer:
   models = gpt-5
 
   ## Prepare the request.
@@ -588,20 +588,21 @@ flow research(in: Part[]) -> Answer:
             (colon)
             (line_end
               (newline))
-            (statements
+            (repeat_body
               (run_statement
                 (flow_run_keyword)
                 (runnable
                   (snake_name))
                 (line_end
-                  (newline))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline))))))))))
+                  (newline)))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline))))))))))))
 
 ==================
 Comments

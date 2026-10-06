@@ -94,6 +94,43 @@ mod tests {
     }
 
     #[test]
+    fn repeat_body_exposes_condition_in_source_order() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "flow work:\n  repeat:\n    run first\n    until done\n    run last\n";
+        let tree = parser.parse(source, None).unwrap();
+        assert!(!tree.root_node().has_error());
+        let statement = tree
+            .root_node()
+            .named_child(0)
+            .unwrap()
+            .named_child(0)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap()
+            .named_child(0)
+            .unwrap()
+            .named_child(0)
+            .unwrap();
+        assert!(statement.child_by_field_name("until").is_none());
+        let body = statement.child_by_field_name("body").unwrap();
+        assert_eq!(body.kind(), "repeat_body");
+        let condition = body.child_by_field_name("until").unwrap();
+        assert_eq!(condition.kind(), "until_clause");
+        assert_eq!(body.named_child(1).unwrap(), condition);
+        let target = condition.child_by_field_name("target").unwrap();
+        assert_eq!(target.kind(), "runnable");
+        assert_eq!(target.utf8_text(source.as_bytes()).unwrap().trim(), "done");
+        let mut cursor = body.walk();
+        let statements: Vec<_> = body
+            .children_by_field_name("statement", &mut cursor)
+            .collect();
+        assert_eq!(statements.len(), 2);
+        assert!(statements[0].end_byte() <= condition.start_byte());
+        assert!(condition.end_byte() <= statements[1].start_byte());
+    }
+
+    #[test]
     fn can_load_language() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
@@ -116,6 +153,7 @@ mod tests {
             .unwrap()
             .child_by_field_name("body")
             .unwrap();
+        assert_eq!(body.kind(), "repeat_body");
         assert_eq!(body.named_child_count(), 1);
     }
 }

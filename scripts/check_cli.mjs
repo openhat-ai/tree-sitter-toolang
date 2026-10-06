@@ -9,6 +9,7 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
 const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too");
 const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");
+const REPEAT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flexible_repeat.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
@@ -22,6 +23,25 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
       { type: "inline_agic", named: true },
       { type: "runnable", named: true },
     ],
+  },
+});
+
+const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
+deepStrictEqual(Object.keys(repeatFields).sort(), ["body", "count", "window"]);
+deepStrictEqual(repeatFields.body, {
+  multiple: false, required: true, types: [{ type: "repeat_body", named: true }],
+});
+const repeatBodyFields = nodeTypes.find(node => node.type === "repeat_body").fields;
+deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["statement", "until"]);
+deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, true]);
+deepStrictEqual(repeatBodyFields.until, {
+  multiple: false, required: false, types: [{ type: "until_clause", named: true }],
+});
+deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
+  target: {
+    multiple: false,
+    required: true,
+    types: [{ type: "inline_agic_body", named: true }, { type: "runnable", named: true }],
   },
 });
 
@@ -67,7 +87,8 @@ try {
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
-    join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE);
+    join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE,
+    REPEAT_FIXTURE);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -127,6 +148,17 @@ try {
     const expected = `<span style='color: #334455'>${keyword}</span>`;
     if (!collectionHtml.includes(expected)) {
       throw new Error(`Collection highlighting was missing: ${expected}\n${collectionHtml}`);
+    }
+  }
+
+  const repeatHtml = runCli("highlight", "--config-path", configPath, "--html", REPEAT_FIXTURE);
+  for (const expected of [
+    "<span style='color: #334455'>until</span>",
+    "<span style='color: #556677'>        until remains literal inside condition text.</span>",
+    "<span style='color: #556677'>      until remains literal inside explicit Content.</span>",
+  ]) {
+    if (!repeatHtml.includes(expected)) {
+      throw new Error(`Repeat highlighting was missing: ${expected}\n${repeatHtml}`);
     }
   }
 

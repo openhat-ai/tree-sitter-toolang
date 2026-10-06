@@ -26,7 +26,7 @@ def test_nested_text_does_not_capture_siblings():
     assert valid(root)
     loop = descendants(root, "repeat_statement")[0]
     assert len(descendants(loop, "run_statement")) == 2
-    assert loop.child_by_field_name("until") is not None
+    assert loop.child_by_field_name("body").child_by_field_name("until") is not None
     assert (
         descendants(loop, "text_body_line")[0].text == b"      Improve the evidence.\n"
     )
@@ -46,8 +46,8 @@ def test_outer_until_belongs_to_its_indentation():
     )
     assert valid(root)
     outer, inner = descendants(root, "repeat_statement")
-    assert outer.child_by_field_name("until") is not None
-    assert inner.child_by_field_name("until") is None
+    assert outer.child_by_field_name("body").child_by_field_name("until") is not None
+    assert inner.child_by_field_name("body").child_by_field_name("until") is None
 
 
 @pytest.mark.parametrize(
@@ -59,10 +59,7 @@ def test_outer_until_belongs_to_its_indentation():
         "flow work:\n  repeat 2 times:\n    run improve\n   run publish\n",
         "flow work:\n  repeat 2 times:\n    run improve\n      until: Ready.\n",
         "flow work:\n  repeat 2 times:\n    run improve\n  until: Ready.\n",
-        "flow work:\n  repeat 2 times:\n    until: Ready.\n    run improve\n",
-        "flow work:\n  repeat 2 times:\n    run improve\n    until: Ready.\n    run publish\n",
         "flow work:\n  repeat 2 times:\n    run improve\n    until: Ready.\n    until: Done.\n",
-        "flow work:\n  repeat:\n    run improve\n",
         "flow work:\n  repeat:\n    until: Ready.\n",
         "flow work:\n \trun improve\n",
         "flow work:\n\trun improve\n        run publish\n",
@@ -108,7 +105,7 @@ def test_all_inline_bodies_share_relative_layout(indent, header):
     outer = descendants(root, "repeat_statement")[0]
     text = descendants(outer, "text_body")[0]
     assert text.text.decode() == body
-    assert outer.child_by_field_name("until") is not None
+    assert outer.child_by_field_name("body").child_by_field_name("until") is not None
     assert descendants(root, "run_statement")[-1].text.strip() == b"run publish"
 
 
