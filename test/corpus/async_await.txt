@@ -91,8 +91,8 @@ flow second:
 Async run targets and binding wrappers
 ==================
 flow launch:
-  let async = A launch description.
-  let await = A waiting description.
+  let async_note = A launch description.
+  let await_note = A waiting description.
   run worker
   async run worker
   let job = async run worker
@@ -219,7 +219,7 @@ flow launch:
   let await h
   let h = await h
   await _
-  let await = await async
+  let await_note = await async_job
 
 ---
 
@@ -319,7 +319,7 @@ flow launch:
             (colon)
             (line_end
               (newline))
-            (statements
+            (repeat_body
               (let_statement
                 (flow_let_keyword)
                 (local_name
@@ -355,14 +355,15 @@ flow launch:
                   (snake_name))
                 (line_end
                   (plain_comment)
-                  (newline))))
-            (flow_until_keyword)
-            (inline_agic_body
-              (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline)))))
+                  (newline)))
+              (until_clause
+                (flow_until_keyword)
+                (inline_agic_body
+                  (colon)
+                  (text_inline
+                    (text_line)
+                    (line_end
+                      (newline)))))))
           (run_statement
             (flow_run_keyword)
             (runnable

@@ -1708,6 +1708,15 @@
               "value": "invalid_flow_reserved_statement"
             },
             {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_invalid_named_binding"
+              },
+              "named": true,
+              "value": "invalid_flow_reserved_statement"
+            },
+            {
               "type": "SYMBOL",
               "name": "_flow_operation"
             },
@@ -2288,6 +2297,55 @@
           "name": "line_end"
         }
       ]
+    },
+    "_invalid_named_binding": {
+      "type": "PREC_DYNAMIC",
+      "value": -2,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "flow_let_keyword"
+          },
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "SYMBOL",
+              "name": "local_name"
+            }
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "TOKEN",
+                  "content": {
+                    "type": "PREC",
+                    "value": -1,
+                    "content": {
+                      "type": "PATTERN",
+                      "value": "[^ \\t#\\r\\n][^#\\r\\n]*"
+                    }
+                  }
+                },
+                "named": true,
+                "value": "text_line"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "SYMBOL",
+            "name": "line_end"
+          }
+        ]
+      }
     },
     "run_statement": {
       "type": "CHOICE",

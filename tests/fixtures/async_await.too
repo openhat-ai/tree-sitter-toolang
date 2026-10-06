@@ -2,8 +2,8 @@ struct Run:
   value: Text
 
 flow launch:
-  let async = An ordinary local.
-  let await = Another ordinary local.
+  let async_note = An ordinary local.
+  let await_note = Another ordinary local.
   let h = async run research # Retain the handle.
   async run record_audit
   let async run: Record the launch.
@@ -19,7 +19,7 @@ flow launch:
   let h = await h
   run:
     async and await remain literal inside explicit text.
-    {{await}}
+    {{await_note}}
 
 agic research:
   async run remains literal in an unroled message.

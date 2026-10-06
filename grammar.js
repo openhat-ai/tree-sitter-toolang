@@ -282,6 +282,7 @@ module.exports = grammar({
         $.exec_statement,
         alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
         alias($._invalid_until_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_named_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
         $.implicit_run_statement,
@@ -387,6 +388,13 @@ module.exports = grammar({
       optional($.text_line),
       $.line_end,
     ),
+    // Keep a missing assignment delimiter diagnostic local and deterministic
+    // instead of choosing between a dropped name and an inserted '='.
+    _invalid_named_binding: ($) => prec.dynamic(-2, seq(
+      $.flow_let_keyword, field("name", $.local_name),
+      optional(alias(token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)), $.text_line)),
+      $.line_end,
+    )),
     run_statement: ($) => choice(
       $._run,
       seq($._async_modifier, $._run_after_modifier),

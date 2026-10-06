@@ -17,7 +17,7 @@ feature definitions rather than the current syntax reference.
   Await blocks are excluded.
 - `run_statement` gains an optional `async: flow_async_keyword` field; existing
   `runnable` and `agic` fields are unchanged. `await_statement.handle` reuses
-  `local_name` for a snake_name or the await-only `_` alias.
+  `local_name` for a non-keyword variable name or the await-only `_` alias.
 - Complete lowercase `async` and `await` now select syntax at flow statement
   and same-line let-value boundaries. Malformed uses cannot become prose.
   Move affected literal text into an explicit text body or capitalize its first
@@ -645,6 +645,8 @@ Rules:
   collection heads, including removed collection keywords, cannot fall back to
   same-line Content. For literal text beginning with these words, use an
   indented Content block.
+  A named binding missing `=` produces `invalid_flow_reserved_statement`,
+  keeping its diagnostic local during both fresh and incremental parsing.
 - `exec` replaces the current runnable with a named agic/flow or an inline agic;
   the outgoing runnable does not resume. Its `target` field is a `runnable` or
   `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
@@ -671,8 +673,9 @@ Rules:
   `run_statement`, keeping following statements and declarations intact.
   Consumers must reject these diagnostic descendants before executing the run.
 - `await h` exposes `await_statement` with a required `handle: local_name`
-  and `flow_await_keyword`. The handle name is exactly one snake_name or `_`; local
-  lookup and handle validation belong to runtime. It accepts no expressions,
+  and `flow_await_keyword`. The handle name follows the same non-keyword variable
+  naming rule as a let binding, with `_` additionally allowed. Local lookup and
+  handle validation belong to runtime. It accepts no expressions,
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
   The existing `let_statement` fields distinguish the binding destination
   (`name`) from the awaited handle (`handle`) inside `statement`; no new wrapper

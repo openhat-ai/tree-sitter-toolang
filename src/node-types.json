@@ -519,6 +519,11 @@
     "fields": {}
   },
   {
+    "type": "directive_value",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "drop_statement",
     "named": true,
     "fields": {
@@ -3658,10 +3663,6 @@
   },
   {
     "type": "default_keyword",
-    "named": true
-  },
-  {
-    "type": "directive_value",
     "named": true
   },
   {

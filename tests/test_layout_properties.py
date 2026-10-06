@@ -117,7 +117,7 @@ EDIT_SOURCES = [
         id="async-await-bindings",
     ),
     pytest.param(
-        b"flow launch:\n  let await = Text.\n  repeat 2 times:\n    let async = async run:\n      await is literal.\n    await async\n    until: Ready.\n",
+        b"flow launch:\n  let await_note = Text.\n  repeat 2 times:\n    let async_job = async run:\n      await is literal.\n    await async_job\n    until: Ready.\n",
         id="async-await-layout",
     ),
     pytest.param(
@@ -189,6 +189,30 @@ def test_repeated_byte_edits_match_fresh_trees_and_recover(original, seed):
         ), (seed, step, previous, current)
         if restore:
             assert valid(tree.root_node)
+        previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+@pytest.mark.parametrize("operation", [b"run:ext.", b"async run worker", b"await job", b"spawn worker"])
+def test_missing_binding_assignment_recovers_identically_during_edits(newline, operation):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    prefix = b"flow launch:\n  let await_note "
+    suffix = b"\n  repeat:\n    run worker\n"
+    original = (prefix + b"= Text." + suffix).replace(b"\n", newline)
+    malformed = (prefix + operation + suffix).replace(b"\n", newline)
+    repaired = (prefix + b"= " + operation + suffix).replace(b"\n", newline)
+    previous = original
+    tree = parser.parse(previous)
+    for current, expected_valid in [(malformed, False), (repaired, True),
+                                    (malformed, False), (original, True)]:
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        root = tree.root_node
+        assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
+        assert valid(root) == expected_valid
+        assert len(descendants(root, "repeat_statement")) == 1
+        if not expected_valid:
+            assert len(descendants(root, "invalid_flow_reserved_statement")) == 1
         previous = current
 
 

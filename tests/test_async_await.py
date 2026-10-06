@@ -63,7 +63,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
 
 
 @pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
-@pytest.mark.parametrize("handle", ["h", "_", "missing_handle", "async", "await", "spawn", "run"])
+@pytest.mark.parametrize("handle", ["h", "_", "missing_handle", "async_job", "await_job", "spawn_job", "run_job"])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 @pytest.mark.parametrize("nested", [False, True])
 def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, nested):
@@ -80,11 +80,18 @@ def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, n
     assert_binding(root, statement, binding)
 
 
+@pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
+@pytest.mark.parametrize("name", ["async", "await", "spawn", "run", "until", "map", "default"])
+def test_await_handle_uses_the_same_keyword_exclusion_as_local_bindings(binding, name):
+    root = parse(f"flow launch:\n  {binding}await {name}\n")
+    assert not valid(root), root
+
+
 @pytest.mark.parametrize("target", [
     " research", ": Research {{_}}.", ":\n  Research {{_}}.",
     " -> Text[]: Research {{_}}.", " -> Text[]:\n  Research {{_}}.",
 ])
-@pytest.mark.parametrize("name", ["job", "spawn"])
+@pytest.mark.parametrize("name", ["job", "spawn_job"])
 @pytest.mark.parametrize("nested", [False, True])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested, ending):
@@ -109,7 +116,7 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
         assert statement.child_by_field_name("handle").type == "local_name"
         assert statement.child_by_field_name("handle").text.strip() == name.encode()
         if index == 0:
-            assert statement.parent.type == "statements"
+            assert statement.parent.type == ("repeat_body" if nested else "statements")
         else:
             wrapper = statement.parent
             assert wrapper.type == "let_statement"
@@ -243,15 +250,9 @@ def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
     "Hello.", "\n    async run and await are literal text.",
     "run research", "async run research", "await h", "spawn research",
 ])
-def test_new_keywords_remain_local_names_before_assignment(name, value):
+def test_new_keywords_cannot_be_local_names_before_assignment(name, value):
     root = parse(f"flow launch:\n  let {name} = {value}\n")
-    assert valid(root), root
-    wrapper, = descendants(root, "let_statement")
-    local = wrapper.child_by_field_name("name")
-    assert local.text.strip() == name.encode()
-    assert local.named_children[0].type == "snake_name"
-    assert not descendants(local, "flow_async_keyword")
-    assert not descendants(local, "flow_await_keyword")
+    assert not valid(root), root
 
 
 @pytest.mark.parametrize("name", ["async", "await"])
@@ -309,7 +310,8 @@ def test_async_inline_body_preserves_literal_text_and_repeat_boundaries(binding,
     assert not descendants(run, "await_statement")
     assert not descendants(run, "item_doc_comment")
     assert len(descendants(loop, "await_statement")) == 1
-    assert loop.child_by_field_name("until").text.strip() == b": Ready."
+    condition = loop.child_by_field_name("body").child_by_field_name("until")
+    assert condition.child_by_field_name("target").text.strip() == b": Ready."
     assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text.strip() == b"finish"
 
 
@@ -345,13 +347,14 @@ def test_incremental_async_await_edits_match_fresh_fields_ranges_and_errors(newl
         b"run research", b"async run research", b"async runresearch", b"let job = async run research",
         b"let job = spawn research\n  await job",
         b"let job = spawn -> Text[]:\n    Research.\n  let result = await job",
-        b"let spawn = spawn research\n  let await spawn\n  let spawn = await spawn",
+        b"let spawn_job = spawn research\n  let await spawn_job\n  let spawn_job = await spawn_job",
         b"let job = await spawn research",
         b"let async run research", b"async run: Research.",
         b"let job = async run -> Text:\n    Research {{_}}.",
         b"let job = async run -> Text:", b"let job = async spawn research",
         b"let job = asynchronous prose.", b"let async = async run research",
         b"let async = Text.", b"let await = await async", b"let await async",
+        b"let async_job = async run research", b"let await_job = await async_job",
         b"await h", b"let x = await h", b"let await h", b"let h = await h",
         b"await _", b"await h.id", b"await", b"let x = await", b"let x = awaited prose.",
         b"await:\n    run research", b"let x = await:\n    run research",
