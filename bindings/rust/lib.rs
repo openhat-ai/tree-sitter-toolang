@@ -131,6 +131,68 @@ mod tests {
     }
 
     #[test]
+    fn launch_handles_share_await_fields() {
+        let language = super::LANGUAGE.into();
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&language).unwrap();
+        for (operation, kind, target) in [
+            ("async run", "run_statement", "runnable"),
+            ("spawn", "spawn_statement", "target"),
+        ] {
+            let source = format!("flow launch:\n  let h = {operation} worker\n  await h\n  let x = await h\n  let await h\n  let h = await h\n");
+            let tree = parser.parse(&source, None).unwrap();
+            assert!(!tree.root_node().has_error());
+            let statements = tree
+                .root_node()
+                .named_child(0)
+                .unwrap()
+                .named_child(0)
+                .unwrap()
+                .child_by_field_name("body")
+                .unwrap()
+                .named_child(0)
+                .unwrap();
+            let launch = statements.named_child(0).unwrap();
+            let statement = launch.child_by_field_name("statement").unwrap();
+            assert_eq!(statement.kind(), kind);
+            assert_eq!(
+                statement
+                    .child_by_field_name("async")
+                    .map(|node| node.kind()),
+                if operation == "async run" {
+                    Some("flow_async_keyword")
+                } else {
+                    None
+                }
+            );
+            assert_eq!(
+                statement.child_by_field_name(target).unwrap().kind(),
+                "runnable"
+            );
+            for (index, name) in [(1, None), (2, Some("x")), (3, None), (4, Some("h"))] {
+                let node = statements.named_child(index).unwrap();
+                let await_node = if index == 1 {
+                    node
+                } else {
+                    assert_eq!(node.kind(), "let_statement");
+                    assert!(node.child_by_field_name("value").is_none());
+                    assert_eq!(
+                        node.child_by_field_name("name")
+                            .map(|node| node.utf8_text(source.as_bytes()).unwrap().trim()),
+                        name
+                    );
+                    node.child_by_field_name("statement").unwrap()
+                };
+                assert_eq!(await_node.kind(), "await_statement");
+                let handle = await_node.child_by_field_name("handle").unwrap();
+                assert_eq!(handle.kind(), "local_name");
+                assert_eq!(handle.child_count(), 0);
+                assert_eq!(handle.utf8_text(source.as_bytes()).unwrap().trim(), "h");
+            }
+        }
+    }
+
+    #[test]
     fn can_load_language() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

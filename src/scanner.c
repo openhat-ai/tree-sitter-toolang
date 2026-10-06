@@ -33,8 +33,9 @@ enum Token {
   EXEC_BINDING_START,
   COLLECTION_BINDING_START,
   SPAWN_BINDING_START,
-  UNTIL_BINDING_START,
+  RESERVED_BINDING_START,
   VARIABLE_NAME,
+  ASYNC_AWAIT_BINDING_START,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -210,8 +211,15 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
   if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
     return emit(scanner, lexer, SPAWN_BINDING_START);
   }
-  if (valid[UNTIL_BINDING_START] && strcmp(word, "until") == 0) {
-    return emit(scanner, lexer, UNTIL_BINDING_START);
+  if (valid[ASYNC_AWAIT_BINDING_START] &&
+      keyword(word, async_await_binding_keywords,
+              sizeof(async_await_binding_keywords) / sizeof(*async_await_binding_keywords))) {
+    return emit(scanner, lexer, ASYNC_AWAIT_BINDING_START);
+  }
+  if (valid[RESERVED_BINDING_START] &&
+      keyword(word, reserved_binding_keywords,
+              sizeof(reserved_binding_keywords) / sizeof(*reserved_binding_keywords))) {
+    return emit(scanner, lexer, RESERVED_BINDING_START);
   }
   if (valid[COLLECTION_BINDING_START] &&
       keyword(word, collection_binding_keywords,
@@ -351,8 +359,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return scan_comment(scanner, lexer, valid);
   }
   if (!at_start && (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
-                    valid[SPAWN_BINDING_START] || valid[UNTIL_BINDING_START] ||
-                    valid[VARIABLE_NAME])) {
+                    valid[SPAWN_BINDING_START] || valid[RESERVED_BINDING_START] ||
+                    valid[VARIABLE_NAME] || valid[ASYNC_AWAIT_BINDING_START])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);

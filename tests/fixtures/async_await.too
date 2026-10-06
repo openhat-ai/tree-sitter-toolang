@@ -1,0 +1,32 @@
+struct Run:
+  value: Text
+
+flow launch(_: Text):
+  let async_note = An ordinary local.
+  let await_note = Another ordinary local.
+  let h = async run research # Retain the handle.
+  async run record_audit
+  let async run: Record the launch.
+  repeat 2 times:
+    let job = async run -> Text:
+      Research {{_}}.
+      async run remains literal inside inline text.
+      await h remains literal inside inline text.
+    await job
+    let x = await h
+    until: Ready.
+  let await h
+  let h = await h
+  run:
+    async and await remain literal inside explicit text.
+    _
+    {{await_note}}
+
+agic research:
+  async run remains literal in an unroled message.
+  await h is also literal.
+  user: async and await are literal in a roled message.
+  # await and async remain literal in comments.
+
+agic inspect(value: Run):
+  user: Inspect the authored struct {{value}}.

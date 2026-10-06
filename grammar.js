@@ -10,7 +10,8 @@ module.exports = grammar({
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._collection_binding_start, $._spawn_binding_start,
-    $._until_binding_start, $._variable_name,
+    $._reserved_binding_start, $._variable_name,
+    $._async_await_binding_start,
   ],
   rules: {
     source_file: ($) =>
@@ -280,7 +281,8 @@ module.exports = grammar({
         $.let_statement,
         $.exec_statement,
         alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
-        alias($._invalid_until_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_reserved_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_named_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
         $.implicit_run_statement,
@@ -288,6 +290,7 @@ module.exports = grammar({
     _flow_operation: ($) =>
       choice(
         $.run_statement,
+        $.await_statement,
         $.spawn_statement,
         $.seek_statement,
         $.ask_statement,
@@ -301,7 +304,8 @@ module.exports = grammar({
       $.generate_statement, $.map_statement, $.reduce_statement,
     ),
     _bound_operation: ($) => choice(
-      $.run_statement, $.seek_statement, $.ask_statement,
+      // Modified runs must pass the binding guard so async prefixes stay text.
+      alias($._run, $.run_statement), $.seek_statement, $.ask_statement,
       $.keep_statement, $.drop_statement, $.sort_statement, $.repeat_statement,
       seq($._collection_binding_start, choice(
         $._collection_operation,
@@ -311,12 +315,19 @@ module.exports = grammar({
         $.spawn_statement,
         alias($._invalid_spawn_operation, $.invalid_flow_reserved_statement),
       )),
+      seq($._async_await_binding_start, choice(
+        $.run_statement, $.await_statement,
+        alias($._invalid_async_await_operation, $.invalid_flow_reserved_statement),
+      )),
     ),
     _invalid_collection_operation: ($) => prec.dynamic(-2, seq(
       $._collection_binding_word, optional($.text_line), $.line_end,
     )),
     _invalid_spawn_operation: ($) => prec.dynamic(-2, seq(
       $.flow_spawn_keyword, optional($.text_line), $.line_end,
+    )),
+    _invalid_async_await_operation: ($) => prec.dynamic(-2, seq(
+      $._async_await_binding_word, optional($.text_line), $.line_end,
     )),
     let_statement: ($) =>
       choice(
@@ -369,26 +380,57 @@ module.exports = grammar({
       optional($.text_line),
       $.line_end,
     ),
-    _invalid_until_binding: ($) => seq(
+    _invalid_reserved_binding: ($) => seq(
       $.flow_let_keyword,
       optional(seq(field("name", $.local_name), $.assign_operator)),
-      $._until_binding_start,
-      $.flow_until_keyword,
+      $._reserved_binding_start,
+      $._reserved_binding_word,
       optional($.text_line),
       $.line_end,
     ),
-    run_statement: ($) =>
+    // Keep a missing assignment delimiter diagnostic local and deterministic
+    // instead of choosing between a dropped name and an inserted '='.
+    _invalid_named_binding: ($) => prec.dynamic(-2, seq(
+      $.flow_let_keyword, field("name", $.local_name),
+      optional(alias(token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)), $.text_line)),
+      $.line_end,
+    )),
+    run_statement: ($) => choice(
+      $._run,
+      seq($._async_modifier, $._run_after_modifier),
+    ),
+    _async_modifier: ($) => field("async", $.flow_async_keyword),
+    _run: ($) => choice(
+      seq($.flow_run_keyword, field("runnable", $.runnable), $.line_end),
+      prec.right(seq($.flow_run_keyword, field("agic", $.inline_agic))),
+    ),
+    // A modifier consumes the statement-head boundary; keep runworker indivisible.
+    // Preserve the unmodified run's existing target ranges above.
+    _run_after_modifier: ($) => seq(
+      $.flow_run_keyword,
       choice(
-        seq(
-          $.flow_run_keyword,
-          field("runnable", $.runnable),
-          $.line_end,
-        ),
-        prec.right(seq(
-          $.flow_run_keyword,
-          field("agic", $.inline_agic),
-        )),
+        seq($._required_space, field("runnable", $.runnable), $.line_end),
+        prec.right(seq(optional($._required_space), field("agic", $.inline_agic))),
+        alias($._invalid_modified_run_tail, $.invalid_flow_reserved_statement),
       ),
+    ),
+    // Keep a malformed modified run on its own line even after its target
+    // tokens have committed the lexer to structural parsing.
+    _invalid_modified_run_tail: ($) => prec.dynamic(-2, prec(-1, seq(
+      optional($._required_space),
+      choice(
+        seq($.runnable, optional($.text_line)),
+        seq($.arrow, optional(seq($.type, optional($.colon), optional($.text_line)))),
+        seq($.colon, optional($.text_line)),
+        optional($.text_line),
+      ),
+      $.line_end,
+    ))),
+    await_statement: ($) => seq(
+      $.flow_await_keyword,
+      field("handle", $.local_name),
+      $.line_end,
+    ),
     implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
     _implicit_run_line: ($) => seq(
       field("content", alias($._flow_raw_text, $.indented_raw_text)), $.newline,
@@ -485,10 +527,10 @@ module.exports = grammar({
     _named_using_complement: ($) =>
       seq(
         $.flow_using_keyword,
-        $._using_space,
+        $._required_space,
         field("runnable", $.runnable),
       ),
-    _using_space: () => token.immediate(/[ \t]+/),
+    _required_space: () => token.immediate(/[ \t]+/),
     _named_if_complement: ($) =>
       seq(
         $.flow_if_keyword,
@@ -618,7 +660,7 @@ module.exports = grammar({
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
-    local_name: ($) => alias($._variable_name, $.snake_name),
+    local_name: ($) => $._variable_name,
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
@@ -687,6 +729,8 @@ module.exports = grammar({
     flow_keyword: () => "flow",
     pass_keyword: () => "pass",
     flow_run_keyword: () => "run",
+    flow_async_keyword: () => "async",
+    flow_await_keyword: () => "await",
     flow_exec_keyword: () => "exec",
     flow_spawn_keyword: () => "spawn",
     flow_let_keyword: () => "let",
@@ -732,9 +776,10 @@ module.exports = grammar({
         $.flow_spawn_keyword,
         $.flow_let_keyword,
         $.flow_run_keyword, $.flow_seek_keyword, $.flow_ask_keyword,
+        $._async_await_binding_word,
         $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
         $._collection_binding_word,
-        $.flow_until_keyword, $.flow_from_keyword, $.flow_windowing_keyword,
+        $._reserved_binding_word, $.flow_from_keyword, $.flow_windowing_keyword,
         $.flow_rank_keyword,
         $.flow_par_keyword,
         $.flow_top_keyword,
@@ -763,6 +808,8 @@ module.exports = grammar({
       $.flow_storm_keyword, $.flow_settle_keyword,
       $.flow_generate_keyword, $.flow_map_keyword, $.flow_reduce_keyword,
     ),
+    _async_await_binding_word: ($) => choice($.flow_async_keyword, $.flow_await_keyword),
+    _reserved_binding_word: ($) => choice($.flow_until_keyword, "_"),
     _agic_reserved_word: ($) =>
       choice(
         $.role,

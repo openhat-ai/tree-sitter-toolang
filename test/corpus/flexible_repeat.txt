@@ -186,8 +186,7 @@ flow improve(_):
             (repeat_body
               (let_statement
                 (flow_let_keyword)
-                (local_name
-                  (snake_name))
+                (local_name)
                 (assign_operator)
                 (text_inline
                   (text_block

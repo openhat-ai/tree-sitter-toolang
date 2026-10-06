@@ -572,8 +572,7 @@ flow research(input: Part[]) -> Answer:
                       (newline)))))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (run_statement
               (flow_run_keyword)

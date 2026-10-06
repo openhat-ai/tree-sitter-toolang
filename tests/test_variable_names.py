@@ -48,7 +48,7 @@ def test_keyword_membership_uses_the_whole_identifier(keyword):
         assert valid(root), root
         local, = descendants(root, "local_name")
         assert local.text.decode() == name
-        assert local.named_children[0].type == "snake_name"
+        assert local.child_count == 0
 
 
 @pytest.mark.parametrize("source", CONTEXTS)
@@ -62,6 +62,8 @@ def test_variable_name_regex_boundaries(source, name):
         container = "local_name" if "let " in source else "param_name"
         node, = descendants(root, container)
         assert node.text.decode() == name
+        if container == "local_name":
+            assert node.child_count == 0
 
 
 @pytest.mark.parametrize("source", CONTEXTS)

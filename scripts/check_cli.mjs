@@ -10,6 +10,7 @@ const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
 const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too");
 const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");
 const REPEAT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flexible_repeat.too");
+const ASYNC_AWAIT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "async_await.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
@@ -24,6 +25,26 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
       { type: "runnable", named: true },
     ],
   },
+});
+deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
+  agic: {
+    multiple: false, required: false, types: [{ type: "inline_agic", named: true }],
+  },
+  async: {
+    multiple: false, required: false, types: [{ type: "flow_async_keyword", named: true }],
+  },
+  runnable: {
+    multiple: false, required: false, types: [{ type: "runnable", named: true }],
+  },
+});
+deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
+  handle: {
+    multiple: false, required: true, types: [{ type: "local_name", named: true }],
+  },
+});
+deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
+deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
+  type: "local_name", named: true, fields: {},
 });
 
 const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
@@ -88,7 +109,7 @@ try {
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE,
-    REPEAT_FIXTURE);
+    REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"));
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -159,6 +180,23 @@ try {
   ]) {
     if (!repeatHtml.includes(expected)) {
       throw new Error(`Repeat highlighting was missing: ${expected}\n${repeatHtml}`);
+    }
+  }
+
+  const asyncAwaitHtml = runCli(
+    "highlight", "--config-path", configPath, "--html", ASYNC_AWAIT_FIXTURE,
+  );
+  for (const expected of [
+    "<span style='color: #334455'>async</span>",
+    "<span style='color: #334455'>await</span>",
+    "<span style='color: #556677'>      async run remains literal inside inline text.</span>",
+    "<span style='color: #556677'>      await h remains literal inside inline text.</span>",
+    "<span style='color: #556677'>  async run remains literal in an unroled message.</span>",
+    "<span style='color: #556677'>  await h is also literal.</span>",
+    "<span style='color: #112233'># await and async remain literal in comments.</span>",
+  ]) {
+    if (!asyncAwaitHtml.includes(expected)) {
+      throw new Error(`Async/await highlighting was missing: ${expected}\n${asyncAwaitHtml}`);
     }
   }
 

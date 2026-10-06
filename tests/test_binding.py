@@ -16,6 +16,8 @@ FIXTURE_NAMES = (
     "flow_arrays.too",
     "exec.too",
     "spawn.too",
+    "async_await.too",
+    "spawn_await.too",
     "jobs.too",
     "kitchen_sink.too",
     "flow_upgrade.too",
@@ -864,6 +866,8 @@ def test_queries_are_packaged():
     for keyword in (
         "flow_exec_keyword",
         "flow_spawn_keyword",
+        "flow_async_keyword",
+        "flow_await_keyword",
         "flow_generate_keyword",
         "flow_reduce_keyword",
         "flow_sort_keyword",

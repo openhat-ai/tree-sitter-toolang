@@ -192,11 +192,13 @@ def test_every_keyword_is_structural_on_every_implicit_line(word, prefix):
 
 @pytest.mark.parametrize("word", reserved_words())
 def test_keywords_have_case_sensitive_complete_token_boundaries(word):
-    for prose in (
-        f"{word.capitalize()} is prose.",
+    prose_forms = [
         f"{word}_suffix is prose.",
         f"{word}x is prose.",
-    ):
+    ]
+    if word.capitalize() != word:
+        prose_forms.append(f"{word.capitalize()} is prose.")
+    for prose in prose_forms:
         root = parse(f"flow work:\n  {prose}\n")
         assert valid(root)
         assert len(descendants(root, "implicit_run_statement")) == 1

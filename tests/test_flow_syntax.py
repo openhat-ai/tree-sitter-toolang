@@ -327,8 +327,7 @@ def test_let_uses_equals_for_operation_results_and_content_locals():
         source, statements[3].child_by_field_name("value")
     )
 
-    legacy = parser.parse(b"flow legacy:\n  let note: Old syntax.\n")
-    assert legacy.root_node.has_error is True
+    _assert_invalid_flow_statement(parser, "let note: Old syntax.")
 
 
 def test_lane_clauses_precede_collection_targets_and_other_complements_keep_their_order():
