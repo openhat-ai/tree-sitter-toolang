@@ -22,7 +22,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
     required: true,
     types: [
       { type: "inline_agic", named: true },
-      { type: "runnable", named: true },
+      { type: "runnable_name", named: true },
     ],
   },
 });
@@ -34,17 +34,47 @@ deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
     multiple: false, required: false, types: [{ type: "flow_async_keyword", named: true }],
   },
   runnable: {
-    multiple: false, required: false, types: [{ type: "runnable", named: true }],
+    multiple: false, required: false, types: [{ type: "runnable_name", named: true }],
   },
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
   handle: {
-    multiple: false, required: true, types: [{ type: "local_name", named: true }],
+    multiple: false, required: true, types: [{ type: "handle_name", named: true }],
   },
+});
+const letFields = nodeTypes.find(node => node.type === "let_statement").fields;
+deepStrictEqual(Object.keys(letFields).sort(), ["local", "statement", "value"]);
+deepStrictEqual(letFields.local, {
+  multiple: false, required: false, types: [{ type: "local_name", named: true }],
+});
+const paramDocFields = nodeTypes.find(node => node.type === "param_doc_tag").fields;
+deepStrictEqual(Object.keys(paramDocFields).sort(), ["description", "param"]);
+deepStrictEqual(paramDocFields.param, {
+  multiple: false, required: true, types: [{ type: "param_name", named: true }],
 });
 deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
   type: "local_name", named: true, fields: {},
+});
+
+for (const name of [
+  "identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
+  "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
+  "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
+]) {
+  const node = nodeTypes.find(node => node.type === name);
+  deepStrictEqual(node.named, true, name);
+  deepStrictEqual(node.fields ?? {}, {}, name);
+  deepStrictEqual(node.children, undefined, name);
+}
+deepStrictEqual(nodeTypes.find(node => node.type === "type").fields, {
+  base: {
+    multiple: false, required: true,
+    types: [{ type: "builtin_type", named: true }, { type: "type_name", named: true }],
+  },
+  suffix: {
+    multiple: true, required: false, types: [{ type: "array_suffix", named: true }],
+  },
 });
 
 const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
@@ -54,7 +84,8 @@ deepStrictEqual(repeatFields.body, {
 });
 const repeatBodyFields = nodeTypes.find(node => node.type === "repeat_body").fields;
 deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["statement", "until"]);
-deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, true]);
+// Empty-body recovery retains repeat_body with an invalid_empty_body child.
+deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, false]);
 deepStrictEqual(repeatBodyFields.until, {
   multiple: false, required: false, types: [{ type: "until_clause", named: true }],
 });
@@ -62,7 +93,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
   target: {
     multiple: false,
     required: true,
-    types: [{ type: "inline_agic_body", named: true }, { type: "runnable", named: true }],
+    types: [{ type: "inline_agic_body", named: true }, { type: "runnable_name", named: true }],
   },
 });
 
@@ -109,7 +140,8 @@ try {
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE,
-    REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"));
+    REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"),
+    join(REPO_ROOT, "tests", "fixtures", "whitespace.too"));
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {

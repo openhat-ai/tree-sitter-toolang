@@ -107,18 +107,24 @@ static const char *const directive_keywords[] = {
   "skills",
   "tools",
 };
-static const char *const collection_binding_keywords[] = {
-  "gather",
-  "generate",
-  "map",
-  "reduce",
-  "scatter",
-  "settle",
-  "storm",
-};
-static const char *const async_await_binding_keywords[] = {
+static const char *const operation_binding_keywords[] = {
+  "ask",
   "async",
   "await",
+  "drop",
+  "gather",
+  "generate",
+  "keep",
+  "map",
+  "reduce",
+  "repeat",
+  "run",
+  "scatter",
+  "seek",
+  "settle",
+  "sort",
+  "spawn",
+  "storm",
 };
 static const char *const reserved_binding_keywords[] = {
   "_",

@@ -12,88 +12,80 @@ flow work:
 ---
 
 (source_file
-  (item
-    (flow
-      (flow_keyword)
-      (flow_name
-        (snake_name))
-      (colon)
-      (line_end
-        (newline))
-      (flow_body
-        (statements
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (statements
+        (generate_statement
+          (flow_generate_keyword)
+          (integer_literal)
+          (flow_using_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
           (generate_statement
             (flow_generate_keyword)
             (integer_literal)
-            (flow_using_keyword)
-            (runnable
-              (snake_name))
-            (line_end
-              (newline)))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (generate_statement
-              (flow_generate_keyword)
-              (integer_literal)
-              (flow_in_keyword)
-              (integer_literal)
-              (flow_lane_keyword)
-              (inline_agic
-                (arrow)
-                (type
-                  (base_type
-                    (builtin_type))
-                  (type_suffix
-                    (array_suffix)))
-                (colon)
-                (text_inline
-                  (text_line)
-                  (line_end
-                    (newline))))))
-          (map_statement
-            (flow_map_keyword)
             (flow_in_keyword)
             (integer_literal)
-            (flow_lanes_keyword)
-            (flow_using_keyword)
-            (runnable
-              (snake_name))
-            (line_end
-              (newline)))
-          (let_statement
-            (flow_let_keyword)
-            (map_statement
-              (flow_map_keyword)
-              (inline_agic
-                (arrow)
-                (type
-                  (base_type
-                    (builtin_type)))
-                (colon)
-                (text_inline
-                  (text_line)
-                  (line_end
-                    (newline))))))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (reduce_statement
-              (flow_reduce_keyword)
-              (flow_using_keyword)
-              (runnable
-                (snake_name))
-              (colon)
-              (line_end
-                (newline))
-              (flow_from_keyword)
+            (flow_lane_keyword)
+            (inline_agic
+              (arrow)
+              (type
+                (builtin_type)
+                (array_suffix))
               (colon)
               (text_inline
                 (text_line)
                 (line_end
-                  (newline))))))))))
+                  (newline))))))
+        (map_statement
+          (flow_map_keyword)
+          (flow_in_keyword)
+          (integer_literal)
+          (flow_lanes_keyword)
+          (flow_using_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))
+        (let_statement
+          (flow_let_keyword)
+          (map_statement
+            (flow_map_keyword)
+            (inline_agic
+              (arrow)
+              (type
+                (builtin_type))
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (reduce_statement
+            (flow_reduce_keyword)
+            (flow_using_keyword)
+            (runnable_name)
+            (colon)
+            (line_end
+              (newline))
+            (flow_from_keyword)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline)))))))))
 
 ==================
 Inline reducer and initializer in a binding
@@ -107,46 +99,42 @@ flow work:
 ---
 
 (source_file
-  (item
-    (flow
-      (flow_keyword)
-      (flow_name
-        (snake_name))
-      (colon)
-      (line_end
-        (newline))
-      (flow_body
-        (statements
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (reduce_statement
-              (flow_reduce_keyword)
-              (inline_agic
-                (arrow)
-                (type
-                  (base_type
-                    (builtin_type)))
-                (colon)
-                (line_end
-                  (newline))
-                (text_body
-                  (text_body_line
-                    (indented_raw_text)
-                    (newline))))
-              (flow_from_keyword)
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (statements
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (reduce_statement
+            (flow_reduce_keyword)
+            (inline_agic
+              (arrow)
+              (type
+                (builtin_type))
               (colon)
-              (text_inline
-                (text_line)
-                (line_end
-                  (newline)))))
-          (run_statement
-            (flow_run_keyword)
-            (runnable
-              (snake_name))
-            (line_end
-              (newline))))))))
+              (line_end
+                (newline))
+              (text_body
+                (text_body_line
+                  (indented_raw_text)
+                  (newline))))
+            (flow_from_keyword)
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline)))))
+        (run_statement
+          (flow_run_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))))))
 
 ==================
 Removed collection heads remain diagnostic nodes
@@ -164,72 +152,70 @@ flow work:
 ---
 
 (source_file
-  (item
-    (flow
-      (flow_keyword)
-      (flow_name
-        (snake_name))
-      (colon)
-      (line_end
-        (newline))
-      (flow_body
-        (statements
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (statements
+        (invalid_flow_reserved_statement
+          (flow_scatter_keyword)
+          (text_line)
+          (line_end
+            (newline)))
+        (invalid_flow_reserved_statement
+          (flow_gather_keyword)
+          (text_line)
+          (line_end
+            (newline)))
+        (invalid_flow_reserved_statement
+          (flow_storm_keyword)
+          (text_line)
+          (line_end
+            (newline)))
+        (invalid_flow_reserved_statement
+          (flow_settle_keyword)
+          (text_line)
+          (line_end
+            (newline)))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
           (invalid_flow_reserved_statement
             (flow_scatter_keyword)
             (text_line)
             (line_end
-              (newline)))
+              (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
           (invalid_flow_reserved_statement
             (flow_gather_keyword)
             (text_line)
             (line_end
-              (newline)))
+              (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
           (invalid_flow_reserved_statement
             (flow_storm_keyword)
             (text_line)
             (line_end
-              (newline)))
+              (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
           (invalid_flow_reserved_statement
             (flow_settle_keyword)
             (text_line)
             (line_end
-              (newline)))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (invalid_flow_reserved_statement
-              (flow_scatter_keyword)
-              (text_line)
-              (line_end
-                (newline))))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (invalid_flow_reserved_statement
-              (flow_gather_keyword)
-              (text_line)
-              (line_end
-                (newline))))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (invalid_flow_reserved_statement
-              (flow_storm_keyword)
-              (text_line)
-              (line_end
-                (newline))))
-          (let_statement
-            (flow_let_keyword)
-            (local_name)
-            (assign_operator)
-            (invalid_flow_reserved_statement
-              (flow_settle_keyword)
-              (text_line)
-              (line_end
-                (newline)))))))))
+              (newline))))))))
 
 ==================
 Inline using in a binding exposes an error
@@ -240,16 +226,25 @@ flow work:
 ---
 
 (source_file
-  (ERROR
+  (flow
     (flow_keyword)
-    (flow_name
-      (snake_name))
+    (runnable_name)
     (colon)
     (line_end
       (newline))
-    (flow_let_keyword)
-    (local_name)
-    (assign_operator)
-    (flow_map_keyword)
-    (flow_using_keyword)
-    (blank_line)))
+    (flow_body
+      (statements
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (map_statement
+            (flow_map_keyword)
+            (ERROR
+              (flow_using_keyword))
+            (inline_agic
+              (colon)
+              (text_inline
+                (text_line)
+                (line_end
+                  (newline))))))))))

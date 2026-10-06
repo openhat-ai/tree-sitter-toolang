@@ -18,7 +18,7 @@ def assert_binding(root, statement, binding):
     wrapper, = descendants(root, "let_statement")
     assert wrapper.child_by_field_name("statement") == statement
     assert wrapper.child_by_field_name("value") is None
-    name = wrapper.child_by_field_name("name")
+    name = wrapper.child_by_field_name("local")
     expected = binding.split()[1].encode() if "=" in binding else None
     assert (name.text.strip() if name else None) == expected
     if name is not None:
@@ -77,7 +77,7 @@ def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, n
     assert valid(root), root
     statement, = descendants(root, "await_statement")
     name = statement.child_by_field_name("handle")
-    assert name.type == "local_name"
+    assert name.type == "handle_name"
     assert name.child_count == 0
     assert name.text.strip() == handle.encode()
     assert not descendants(root, "implicit_run_statement")
@@ -109,15 +109,15 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
     root = parse(source)
     assert valid(root), root
     launch, = descendants(root, "spawn_statement")
-    assert launch.parent.child_by_field_name("name").text.strip() == name.encode()
+    assert launch.parent.child_by_field_name("local").text.strip() == name.encode()
     assert launch.parent.child_by_field_name("statement") == launch
     assert launch.child_by_field_name("target").type == (
-        "runnable" if target == " research" else "inline_agic"
+        "runnable_name" if target == " research" else "inline_agic"
     )
     awaits = descendants(root, "await_statement")
     assert len(awaits) == 4
     for index, (statement, destination) in enumerate(zip(awaits, [None, "result", None, name])):
-        assert statement.child_by_field_name("handle").type == "local_name"
+        assert statement.child_by_field_name("handle").type == "handle_name"
         assert statement.child_by_field_name("handle").text.strip() == name.encode()
         if index == 0:
             assert statement.parent.type == ("repeat_body" if nested else "statements")
@@ -126,7 +126,7 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
             assert wrapper.type == "let_statement"
             assert wrapper.child_by_field_name("statement") == statement
             assert wrapper.child_by_field_name("value") is None
-            local = wrapper.child_by_field_name("name")
+            local = wrapper.child_by_field_name("local")
             assert (local.text.strip().decode() if local else None) == destination
     child_root = parse(source.replace("= spawn", "= async run", 1))
     assert valid(child_root), child_root
@@ -194,7 +194,7 @@ def test_invalid_async_run_preserves_following_statements_and_declarations(bindi
         "flow second:\n  run finish\n"
     ).replace("\n", newline))
     assert not valid(root), root
-    assert [node.text.strip() for node in descendants(root, "flow_name")] == [b"first", b"second"]
+    assert [node.child_by_field_name("name").text.strip() for node in descendants(root, "flow")] == [b"first", b"second"]
     targets = [node.child_by_field_name("runnable").text.strip()
                for node in descendants(root, "run_statement")
                if node.child_by_field_name("runnable")]
@@ -228,7 +228,7 @@ def test_incremental_async_header_repair_preserves_following_code(binding, newli
             root = tree.root_node
             assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
             assert valid(root) == expected_valid
-            assert [node.text.strip() for node in descendants(root, "flow_name")] == [b"first", b"second"]
+            assert [node.child_by_field_name("name").text.strip() for node in descendants(root, "flow")] == [b"first", b"second"]
             previous = current
 
 
@@ -338,7 +338,7 @@ def test_async_await_fixture_keeps_text_literal_and_run_as_an_authored_type(newl
     for agic in descendants(root, "agic"):
         assert not descendants(agic, "flow_async_keyword")
         assert not descendants(agic, "flow_await_keyword")
-    assert any(node.text == b"Run" for node in descendants(root, "user_type"))
+    assert any(node.text == b"Run" for node in descendants(root, "type_name"))
     assert not any(node.text == b"Run" for node in descendants(root, "builtin_type"))
 
 

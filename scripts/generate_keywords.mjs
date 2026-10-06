@@ -12,9 +12,8 @@ function words(rule) {
 let header = "// Generated from grammar.js; do not edit.\n";
 for (const [context, rule] of [
   ["flow", "_flow_reserved_word"], ["agic", "_agic_reserved_word"],
-  ["directive", "directive_key"],
-  ["collection_binding", "_collection_binding_word"],
-  ["async_await_binding", "_async_await_binding_word"],
+  ["directive", "_directive_word"],
+  ["operation_binding", "_binding_operation_word"],
   ["reserved_binding", "_reserved_binding_word"],
 ]) {
   const values = [...new Set(words(rules[rule]))].sort();

@@ -39,7 +39,7 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
         keyword, = descendants(clause, "flow_until_keyword")
         assert keyword.text == b"until"
         target, = clause.children_by_field_name("target")
-        assert target.type == ("runnable" if condition == "until is_done" else "inline_agic_body")
+        assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic_body")
         assert target.parent == clause
         assert clause.start_byte <= keyword.start_byte < target.start_byte < target.end_byte <= clause.end_byte
         assert source.encode()[clause.start_byte:clause.end_byte].strip().startswith(b"until")

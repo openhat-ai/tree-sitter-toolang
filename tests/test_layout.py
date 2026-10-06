@@ -6,7 +6,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import declarations, descendants, edit_tree, fingerprint, parse, valid
 
 
 def test_repeat_does_not_capture_outer_statement():
@@ -148,9 +148,9 @@ def test_declaration_bodies_end_before_following_declaration(
     source = f"{header}\n{body}\nflow publish:\n{indent}pass"
     root = parse(source.replace("\n", newline))
     assert valid(root)
-    items = [child for child in root.named_children if child.type == "item"]
+    items = declarations(root)
     assert len(items) == 2
-    assert items[-1].named_children[0].child_by_field_name("name").text == b"publish"
+    assert items[-1].child_by_field_name("name").text == b"publish"
 
 
 @pytest.mark.parametrize("header", ["flow work:", "agic work:", "struct Item:"])

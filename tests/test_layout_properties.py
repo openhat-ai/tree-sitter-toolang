@@ -259,6 +259,28 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_layout_serialization_capacity_rejects_overflow_and_recovers(newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    # The 1024-byte serialization buffer holds 168 frames: root, flow, and
+    # at most 166 repeat bodies. Text modes may use additional frames.
+    for depth in [165, 166, 167, 168, 166]:
+        current = (b"flow work:\n" + b"".join(
+            b" " * level + b"repeat:\n" for level in range(1, depth + 1)
+        ) + b" " * (depth + 1) + b"run worker\n"
+            + b"# Pending dedents.\nflow next:\n  pass").replace(b"\n", newline)
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node)
+        assert valid(tree.root_node) == (depth <= 166)
+        if depth <= 166:
+            assert len(descendants(tree.root_node, "repeat_statement")) == depth
+            assert len(descendants(tree.root_node, "flow")) == 2
+        previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
 @pytest.mark.parametrize(
     "prefix, indent, suffix",
     [

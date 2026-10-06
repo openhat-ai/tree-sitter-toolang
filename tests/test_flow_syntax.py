@@ -6,6 +6,8 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
+from test_layout_support import declarations, valid as is_valid
+
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
 STATEMENT_TYPES = {
@@ -33,11 +35,7 @@ def _text(source: bytes, node) -> str:
 
 
 def _items(root):
-    return [
-        child.named_children[0]
-        for child in root.named_children
-        if child.type == "item"
-    ]
+    return declarations(root)
 
 
 def _descendants(node, node_type: str):
@@ -66,9 +64,7 @@ def _assert_invalid_flow_statement(parser: Parser, statement: str) -> None:
     source = f"flow bad:\n  {statement}\n".encode()
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error or _descendants(
-        tree.root_node, "invalid_flow_reserved_statement"
-    ), statement
+    assert not is_valid(tree.root_node), statement
     assert not _descendants(tree.root_node, "implicit_run_statement"), statement
 
 
@@ -153,9 +149,9 @@ def test_flow_fixture_covers_complete_statement_set():
         "let_statement",
         "repeat_statement",
     ]
-    assert _text(source, bindings[0].child_by_field_name("name")).strip() == "jobs"
+    assert _text(source, bindings[0].child_by_field_name("local")).strip() == "jobs"
     assert bindings[0].child_by_field_name("statement").type == "run_statement"
-    assert bindings[1].child_by_field_name("name") is None
+    assert bindings[1].child_by_field_name("local") is None
     assert bindings[1].child_by_field_name("statement").type == "run_statement"
     assert "Prefer primary sources." in _text(
         source, bindings[2].child_by_field_name("value")
@@ -203,7 +199,7 @@ def test_readable_flow_complements_have_flat_public_fields():
 
     for statement in statements[:8]:
         runnable = statement.child_by_field_name("runnable")
-        assert runnable is not None and runnable.type == "runnable"
+        assert runnable is not None and runnable.type == "runnable_name"
         assert statement.child_by_field_name("agic") is None
 
     assert statements[0].child_by_field_name("count") is None
@@ -318,11 +314,11 @@ def test_let_uses_equals_for_operation_results_and_content_locals():
         True,
     ]
     assert (
-        _text(source, statements[0].child_by_field_name("name")).strip()
+        _text(source, statements[0].child_by_field_name("local")).strip()
         == "result"
     )
-    assert statements[1].child_by_field_name("name") is None
-    assert _text(source, statements[2].child_by_field_name("name")).strip() == "note"
+    assert statements[1].child_by_field_name("local") is None
+    assert _text(source, statements[2].child_by_field_name("local")).strip() == "note"
     assert "Keep this block too." in _text(
         source, statements[3].child_by_field_name("value")
     )
@@ -729,4 +725,4 @@ def test_repeat_comments_do_not_replace_required_statements(header):
     source = f"flow research:\n  {header}\n    ## No executable body.\n".encode()
     root = _parser().parse(source).root_node
 
-    assert root.has_error or _descendants(root, "invalid_flow_reserved_statement")
+    assert not is_valid(root)

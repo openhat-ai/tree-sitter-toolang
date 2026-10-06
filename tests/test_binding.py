@@ -4,6 +4,8 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
+from test_layout_support import declarations, valid
+
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
 FIXTURE_NAMES = (
@@ -24,6 +26,7 @@ FIXTURE_NAMES = (
     "script_agics.too",
     "syntax_variants.too",
     "with_caps.too",
+    "whitespace.too",
     "repeat_comments.too",
     "flexible_repeat.too",
     "unified_blocks.too",
@@ -48,12 +51,7 @@ def _normalize_newlines(text: str) -> str:
 
 
 def _items(root):
-    return [child for child in root.named_children if child.type == "item"]
-
-
-def _item_child(item):
-    assert item.named_child_count == 1
-    return item.named_children[0]
+    return declarations(root)
 
 
 def _nodes(node, *types):
@@ -103,7 +101,7 @@ def test_script_agics_fixture_covers_signature_variations():
 
     tree = parser.parse(source)
     shebang = tree.root_node.named_children[0]
-    agics = [_item_child(item) for item in _items(tree.root_node)]
+    agics = _items(tree.root_node)
     names = [
         _text(source, name)
         if (name := agic.child_by_field_name("name")) is not None
@@ -136,7 +134,7 @@ def test_script_agics_fixture_covers_signature_variations():
     ]
     assert param_counts == [None, 1, 1, 2, 1, 2, 3]
     assert "pass_keyword" in str(agics[0].child_by_field_name("body"))
-    assert "type_suffix" in str(agics[3].child_by_field_name("params"))
+    assert "array_suffix" in str(agics[3].child_by_field_name("params"))
     assert "text_block" in str(agics[-1].child_by_field_name("body"))
     echo_body = agics[1].child_by_field_name("body")
     assert echo_body is not None
@@ -153,9 +151,9 @@ def test_syntax_variants_fixture_parses_empty_params():
 
     tree = parser.parse(source)
     agic = next(
-        _item_child(item)
+        item
         for item in _items(tree.root_node)
-        if _item_child(item).type == "agic"
+        if item.type == "agic"
     )
     params = agic.child_by_field_name("params")
 
@@ -170,7 +168,7 @@ def test_fixtures_can_parse_without_any_agics():
     for fixture_name in ("caps.too", "caps_indented.too", "with_caps.too"):
         source = (FIXTURES_DIR / fixture_name).read_bytes()
         tree = parser.parse(source)
-        item_types = [_item_child(item).type for item in _items(tree.root_node)]
+        item_types = [item.type for item in _items(tree.root_node)]
 
         assert "agic" not in item_types, fixture_name
 
@@ -180,7 +178,7 @@ def test_with_fixture_contains_only_with_items():
     source = (FIXTURES_DIR / "with_caps.too").read_bytes()
 
     tree = parser.parse(source)
-    item_types = [_item_child(item).type for item in _items(tree.root_node)]
+    item_types = [item.type for item in _items(tree.root_node)]
 
     assert item_types == ["with", "with", "with", "with"]
 
@@ -191,15 +189,15 @@ def test_caps_fixture_covers_placeholder_based_prompts():
 
     tree = parser.parse(source)
     prompts = [
-        _item_child(item)
+        item
         for item in _items(tree.root_node)
-        if _item_child(item).type == "prompt"
+        if item.type == "prompt"
     ]
     bodies = [prompt.child_by_field_name("body") for prompt in prompts]
 
     assert [prompt.type for prompt in prompts] == ["prompt", "prompt"]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "cap_body" for body in bodies)
+    assert all(body.type == "text_body" for body in bodies)
     assert not any(
         prompt.children_by_field_name("property") for prompt in prompts
     )
@@ -213,13 +211,13 @@ def test_prompt_property_like_prefix_uses_common_cap_property_shape():
     source = b"prompt literal:\n  mode = exact\n  Render {{_}}.\n"
 
     tree = parser.parse(source)
-    prompt = _item_child(_items(tree.root_node)[0])
+    prompt = _items(tree.root_node)[0]
     body = prompt.child_by_field_name("body")
 
     assert tree.root_node.has_error is False
     properties = prompt.children_by_field_name("property")
 
-    assert body is not None and body.type == "cap_body"
+    assert body is not None and body.type == "text_body"
     assert [_text(source, property_node).strip() for property_node in properties] == [
         "mode = exact"
     ]
@@ -232,7 +230,7 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
     source = (FIXTURES_DIR / "caps.too").read_bytes()
 
     tree = parser.parse(source)
-    caps = [_item_child(item) for item in _items(tree.root_node)]
+    caps = _items(tree.root_node)
     kinds = [cap.type for cap in caps]
     bodies = [cap.child_by_field_name("body") for cap in caps]
 
@@ -245,7 +243,7 @@ def test_caps_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "cap_body" for body in bodies)
+    assert all(body.type == "text_body" for body in bodies)
     properties = [cap.children_by_field_name("property") for cap in caps]
     assert "protocol = http" in _text(source, properties[0][0])
     assert "target = https://mcp.github.com/mcp" in _text(
@@ -262,7 +260,7 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
     source = (FIXTURES_DIR / "caps_indented.too").read_bytes()
 
     tree = parser.parse(source)
-    caps = [_item_child(item) for item in _items(tree.root_node)]
+    caps = _items(tree.root_node)
     kinds = [cap.type for cap in caps]
     bodies = [cap.child_by_field_name("body") for cap in caps]
 
@@ -273,7 +271,7 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
         "prompt",
     ]
     assert all(body is not None for body in bodies)
-    assert all(body.type == "cap_body" for body in bodies)
+    assert all(body.type == "text_body" for body in bodies)
     properties = [cap.children_by_field_name("property") for cap in caps]
     assert "target = http://localhost:3000/mcp" in _text(
         source, properties[0][1]
@@ -290,7 +288,7 @@ def test_jobs_fixture_covers_task_and_chore_items():
     source = (FIXTURES_DIR / "jobs.too").read_bytes()
 
     tree = parser.parse(source)
-    jobs = [_item_child(item) for item in _items(tree.root_node)]
+    jobs = _items(tree.root_node)
     bodies = [job.child_by_field_name("body") for job in jobs]
 
     assert tree.root_node.has_error is False
@@ -311,7 +309,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
 
     tree = parser.parse(source)
     root = tree.root_node
-    items = [_item_child(item) for item in _items(root)]
+    items = _items(root)
 
     assert root.has_error is False
     assert [child.type for child in root.named_children[:5]] == [
@@ -335,7 +333,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     for cap in items[:4]:
         body = cap.child_by_field_name("body")
         assert body is not None
-        assert body.type == "cap_body"
+        assert body.type == "text_body"
 
     struct = items[4]
     fields = [child for child in struct.child_by_field_name("body").named_children if child.type == "field"]
@@ -348,8 +346,8 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
         "findings",
     ]
     assert fields[1].child_by_field_name("optional") is not None
-    assert "type_suffix" in str(fields[4].child_by_field_name("type"))
-    assert "user_type" in str(fields[5].child_by_field_name("type"))
+    assert "array_suffix" in str(fields[4].child_by_field_name("type"))
+    assert "type_name" in str(fields[5].child_by_field_name("type"))
 
     instruct = items[5]
     assert instruct.child_by_field_name("name") is not None
@@ -383,9 +381,9 @@ def test_comments_fixture_keeps_comments_separate_from_cap_bodies():
 
     tree = parser.parse(source)
     caps = [
-        _item_child(item)
+        item
         for item in _items(tree.root_node)
-        if _item_child(item).type in {"service", "prompt"}
+        if item.type in {"service", "prompt"}
     ]
     bodies = [cap.child_by_field_name("body") for cap in caps]
 
@@ -400,7 +398,7 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
     source = (FIXTURES_DIR / "agent_agics.too").read_bytes()
 
     tree = parser.parse(source)
-    agics = [_item_child(item) for item in _items(tree.root_node)]
+    agics = _items(tree.root_node)
     names = [_text(source, agic.child_by_field_name("name")) for agic in agics]
     params = [agic.child_by_field_name("params") for agic in agics]
     outputs = [agic.child_by_field_name("return") for agic in agics]
@@ -480,7 +478,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
     tree = parser.parse(source)
     root = tree.root_node
     child_types = [child.type for child in root.named_children]
-    item_types = [_item_child(item).type for item in _items(root)]
+    item_types = [item.type for item in _items(root)]
 
     assert child_types[0] == "plain_comment"
     assert item_types == [
@@ -513,7 +511,7 @@ def test_directive_value_is_trimmed_line_payload():
     )
 
     tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    body = _items(tree.root_node)[0].child_by_field_name("body")
     directive = next(child for child in body.named_children if child.type == "directive")
 
     assert tree.root_node.has_error is False
@@ -584,9 +582,9 @@ def test_flow_pass_is_required_for_empty_body_and_must_be_last():
     trailing = b"flow bad:\n  pass\n  run next\n"
     nested_empty = b"flow bad:\n  run -> Answer:\n"
 
-    assert parser.parse(empty).root_node.has_error is True
+    assert not valid(parser.parse(empty).root_node)
     assert parser.parse(trailing).root_node.has_error is True
-    assert parser.parse(nested_empty).root_node.has_error is True
+    assert not valid(parser.parse(nested_empty).root_node)
 
 
 def test_empty_text_blocks_are_rejected():
@@ -598,7 +596,7 @@ def test_empty_text_blocks_are_rejected():
         b"agic bad:\n  user:\n",
         b"flow bad:\n  run:\n",
     ):
-        assert parser.parse(source).root_node.has_error is True, source
+        assert not valid(parser.parse(source).root_node), source
 
 
 def test_kitchen_sink_agic_signature_directives_and_blocks():
@@ -607,9 +605,9 @@ def test_kitchen_sink_agic_signature_directives_and_blocks():
 
     tree = parser.parse(source)
     agics = [
-        _item_child(item)
+        item
         for item in _items(tree.root_node)
-        if _item_child(item).type == "agic"
+        if item.type == "agic"
     ]
     review = next(
         agic
@@ -644,7 +642,7 @@ def test_parameter_types_can_be_omitted():
     source = b"agic ok(_: Part[], focus):\n  instruct = none\n"
 
     tree = parser.parse(source)
-    params = _item_child(_items(tree.root_node)[0]).child_by_field_name("params")
+    params = _items(tree.root_node)[0].child_by_field_name("params")
     untyped = params.children_by_field_name("param")[1]
 
     assert tree.root_node.has_error is False
@@ -657,7 +655,7 @@ def test_agic_name_can_be_omitted():
     source = b"agic:\n  instruct = none\n"
 
     tree = parser.parse(source)
-    agic = _item_child(_items(tree.root_node)[0])
+    agic = _items(tree.root_node)[0]
 
     assert tree.root_node.has_error is False
     assert agic.child_by_field_name("name") is None
@@ -723,7 +721,7 @@ def test_agic_roled_messages_support_user_assistant_and_tool():
     source = b"agic simulate:\n  recall = none\n  user: hello\n  assistant: hi\n  tool: result\n"
 
     tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    body = _items(tree.root_node)[0].child_by_field_name("body")
     messages = _messages(body)
 
     assert tree.root_node.has_error is False
@@ -743,21 +741,21 @@ def test_lowercase_builtin_type_is_rejected():
     assert tree.root_node.has_error is True
 
 
-def test_none_is_parsed_as_user_type_not_builtin_type():
+def test_none_is_parsed_as_authored_type_not_builtin_type():
     parser = _parser()
     source = b"struct ReviewResult:\n  summary: None\n"
 
     tree = parser.parse(source)
-    field = _item_child(_items(tree.root_node)[0]).child_by_field_name("body").named_children[0]
+    field = _items(tree.root_node)[0].child_by_field_name("body").named_children[0]
     type_node = field.child_by_field_name("type")
 
     assert tree.root_node.has_error is False
     assert type_node is not None
-    assert "user_type" in str(type_node)
+    assert "type_name" in str(type_node)
     assert "builtin_type" not in str(type_node)
 
 
-def test_pack_is_parsed_as_user_type_not_builtin_type():
+def test_pack_is_parsed_as_authored_type_not_builtin_type():
     parser = _parser()
     source = b"struct ReviewResult:\n  parts: Pack\n"
     tree = parser.parse(source)
@@ -766,7 +764,7 @@ def test_pack_is_parsed_as_user_type_not_builtin_type():
     field = _nodes(tree.root_node, "field")[0]
     type_node = field.child_by_field_name("type")
     assert type_node is not None
-    assert "user_type" in str(type_node)
+    assert "type_name" in str(type_node)
     assert "builtin_type" not in str(type_node)
 
 
@@ -779,7 +777,7 @@ def test_bare_text_is_parsed_as_unroled_message():
     )
 
     tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    body = _items(tree.root_node)[0].child_by_field_name("body")
     messages = _messages(body)
 
     assert tree.root_node.has_error is False
@@ -806,7 +804,7 @@ def test_unroled_message_stops_before_explicit_roles():
     )
 
     tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    body = _items(tree.root_node)[0].child_by_field_name("body")
     messages = _messages(body)
 
     assert tree.root_node.has_error is False
@@ -829,7 +827,7 @@ def test_comments_split_unroled_messages():
     )
 
     tree = parser.parse(source)
-    body = _item_child(_items(tree.root_node)[0]).child_by_field_name("body")
+    body = _items(tree.root_node)[0].child_by_field_name("body")
     messages = _messages(body)
 
     assert tree.root_node.has_error is False
@@ -850,12 +848,12 @@ def test_indented_cap_body_parses_with_crlf_line_endings():
 
     tree = parser.parse(source)
     root = tree.root_node
-    prompt = _item_child(_items(root)[0])
+    prompt = _items(root)[0]
     body = prompt.child_by_field_name("body")
 
     assert root.has_error is False
     assert body is not None
-    assert body.type == "cap_body"
+    assert body.type == "text_body"
     assert "Review {{path}} carefully." in _normalize_newlines(_text(source, body))
 
 

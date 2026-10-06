@@ -2,7 +2,7 @@
 
 import pytest
 
-from test_layout_support import descendants, parse, point, valid
+from test_layout_support import declarations, descendants, parse, point, valid
 
 
 @pytest.mark.parametrize("count", ["", " 2 times"])
@@ -58,11 +58,7 @@ def test_declaration_body_optionality_at_eof_and_next_item(
     root = parse(header + "\n" + trivia + ending)
     assert valid(root) == (not required)
     if not required:
-        items = [
-            node.named_children[0]
-            for node in root.named_children
-            if node.type == "item"
-        ]
+        items = declarations(root)
         assert len(items) == (2 if ending else 1)
         # Jobs retain a job_body wrapper even when they contain only trivia.
         assert not descendants(items[0], "text_body_line")
