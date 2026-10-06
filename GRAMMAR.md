@@ -1,13 +1,12 @@
 # Toolang Grammar
 
-This document describes the current public Toolang grammar, including unreleased
-changes since version 0.4.0-alpha.3.
+This document describes the public Toolang grammar as of version 0.4.0-alpha.4.
 The source of truth is [grammar.js](grammar.js), together with the layout scanner in
 [src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
 separately from parsing rules. Documents under `docs/plans/` record historical
 feature definitions rather than the current syntax reference.
 
-## Unreleased
+## Changes in 0.4.0-alpha.4
 
 - Add `async run` with the existing named and inline run targets, and `await h`
   for a single local handle from either `async run` or `spawn`. Both support

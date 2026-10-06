@@ -56,7 +56,7 @@ explicitly.
 ```toml
 [dependencies]
 tree-sitter = "0.25"
-tree-sitter-toolang = "0.4.0-alpha.3"
+tree-sitter-toolang = "0.4.0-alpha.4"
 ```
 
 ```rust
@@ -69,6 +69,12 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 documents the public Toolang syntax and CST contract.
 `grammar.js` is the parser source of truth; generated artifacts live under
 `src/`.
+
+Version 0.4.0-alpha.4 adds `async run` and single-handle `await` for handles
+from async runs or spawn, including named and nameless let bindings.
+`local_name` is now a leaf, and `await _` is invalid. See the
+[migration notes](GRAMMAR.md#changes-in-040-alpha4); execution and binding effects
+require matching Toolang runtime support.
 
 Version 0.4.0-alpha.3 allows an optional `until` at any position in a repeat,
 including a named runnable condition. It changes the repeat CST and rejects
@@ -86,8 +92,8 @@ collection targets. See the [migration notes](GRAMMAR.md#changes-in-040-alpha1).
 These forms require a matching Toolang runtime release.
 
 Install this prerelease explicitly with
-`python -m pip install tree-sitter-toolang==0.4.0a3` or
-`npm install tree-sitter-toolang@0.4.0-alpha.3`.
+`python -m pip install tree-sitter-toolang==0.4.0a4` or
+`npm install tree-sitter-toolang@0.4.0-alpha.4`.
 
 Version 0.3.4 adds named and inline `exec` statements in flows and repeats.
 See the [Flow reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#flow)
