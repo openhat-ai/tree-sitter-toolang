@@ -67,6 +67,8 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 
 [GRAMMAR.md](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
 documents the public Toolang syntax and CST contract.
+[GRAMMAR.ebnf](GRAMMAR.ebnf) collects the complete valid-source productions,
+including layout and contextual lexical constraints.
 `grammar.js`, `keywords.js`, and `src/scanner.c` define the grammar; generated
 artifacts live under `src/`.
 
@@ -119,6 +121,7 @@ for syntax, CST fields, and the 0.3.2 node-name migration.
 Edit:
 
 - `GRAMMAR.md`
+- `GRAMMAR.ebnf`
 - `grammar.js`
 - `queries/*.scm`
 - `test/corpus/*.txt`

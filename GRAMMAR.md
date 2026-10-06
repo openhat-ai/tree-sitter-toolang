@@ -149,18 +149,12 @@ this section supersedes its collection statement syntax.
   `value`), the separate `settle_statement.from` field, and
   `repeat_statement.window`. Prompt selectors have no `settings` subtree.
 
-## Notation
+## EBNF
 
-```ebnf
-x ::= y    grammar production
-x | y      alternative
-(x)        grouping
-x?        optional
-x*        zero or more
-x+        one or more
-"text"    literal token
-/.../     lexical token
-```
+The complete valid-source grammar is maintained in [GRAMMAR.ebnf](GRAMMAR.ebnf).
+It includes explicit layout boundaries, contextual text tokens, and vocabulary
+constraints. Its helper productions do not imply public CST nodes. Recovery
+nodes are documented separately below and are not valid source alternatives.
 
 ## CST Node Contract
 
@@ -246,29 +240,6 @@ before lowering, formatting, or execution. No runtime binding effect changes.
 
 ## Lexical Structure
 
-```ebnf
-newline ::= "\n" | "\r\n"
-blank_line ::= newline
-line_end ::= plain_comment? newline
-
-plain_comment ::= "#" /[^\r\n]*/ newline?
-shebang_comment ::= "#!" /[^\r\n]*/ comment_end
-module_doc_comment ::= ("#@" | "##!") horizontal_space? comment_text? comment_end
-item_doc_comment ::= "##" horizontal_space? (param_doc_tag | comment_text)? comment_end
-comment_end ::= newline | EOF
-param_doc_tag ::= "@param" horizontal_space param_name horizontal_space comment_text
-comment_text ::= /[^ \t\r\n][^\r\n]*/
-horizontal_space ::= /[ \t]+/
-trivia ::= plain_comment | shebang_comment | module_doc_comment | item_doc_comment | blank_line
-
-identifier ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
-kebab_name ::= /[a-z][a-z0-9]*(-[a-z0-9]+)*/
-snake_kebab_name ::= /[a-z][a-z0-9_-]*/
-text_line ::= a physical text fragment, with the comment policy of its context
-integer_literal ::= /\d+/
-variable_name ::= a full match of /[a-z][a-z0-9_]*/ that is not a keyword
-```
-
 [keywords.js](keywords.js) defines active vocabulary, recognition contexts,
 and name exclusions explicitly; the scanner header is generated from it, not
 from CST rule names. Active words are recognized only in their grammar context.
@@ -292,7 +263,7 @@ recognized before equal-length authored type names. Fixed-word alternatives
 use aliases of individual keyword tokens to retain leaf CST nodes; wrapping
 the entire choice in `token(...)` would bypass keyword extraction.
 
-The EBNF below omits inter-token horizontal space except at raw-text boundaries.
+The EBNF omits inter-token horizontal space except at raw-text boundaries.
 Apply these rules to every structural production:
 
 - A token is indivisible. Adjacent keywords, names, or numbers require one or
@@ -367,8 +338,9 @@ ranges exclude the newline. A final comment may end at EOF without a newline.
 line; Unicode, punctuation, `#`, and further `@` characters remain text. There
 is no continuation syntax. Types and optionality come from the signature.
 
-Only the exact leading word `@param` is reserved: `@parameter`, `@parametric`,
-`@return`, or `@param` later in prose remain ordinary item-doc text. A malformed
+Only leading `@param` followed by a space, tab, line ending, or EOF selects the
+tag: `@parameter`, `@parametric`, `@param:`, `@return`, or `@param` later in prose
+remain ordinary item-doc text. A malformed
 reserved tag is a syntax error, never plain documentation, and recovery stays
 on that physical line. Module docs never interpret tags. Unknown or duplicate
 parameter names are syntactically valid; consumers validate binding and combine
@@ -442,8 +414,9 @@ valid; do not replace marker-like strings inside literal prompts or history.
   168 frames fit, including the root and any structural or text-mode frames;
   this is not a uniform source-nesting limit.
 
-The productions below omit the hidden layout tokens. These rules apply to
-all declaration bodies, nested repeat bodies, and multiline text consumers.
+The EBNF uses logical `INDENT`/`DEDENT` boundaries. These rules apply to all
+declaration bodies, nested repeat bodies, and multiline text consumers; the
+logical boundaries do not expose scanner state or CST wrapper nodes.
 Invalid recovery nodes are not alternatives in the source-language EBNF. For
 example, an empty repeat retains `repeat_statement.body: repeat_body` containing
 `invalid_missing_body`; the following sibling remains outside that body. The
@@ -451,13 +424,6 @@ generated `repeat_body.statement` field is optional only to represent this
 diagnostic state. Every valid repeat still requires an ordinary statement.
 
 ## Types
-
-```ebnf
-type ::= (builtin_type | type_name) array_suffix*
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
-type_name ::= /[A-Z][A-Za-z0-9]*/
-array_suffix ::= "[]"
-```
 
 Rules:
 
@@ -469,39 +435,7 @@ Rules:
 - Runtime `Message` values are Records, but Toolang source does not use
   `Message` as a normal agic or flow type.
 
-## Program
-
-```ebnf
-program ::= (item | trivia)*
-item ::= with | struct | psyche | skill | service | prompt | task | chore
-       | context | instruct | agic | flow
-```
-
-## With
-
-```ebnf
-with ::= "with" cap_kind horizontal_space text_line line_end
-cap_kind ::= "psyche" | "skill" | "service" | "prompt"
-```
-
-## Struct
-
-```ebnf
-struct ::= "struct" type_name ":" line_end struct_body
-struct_body ::= trivia* field (field | trivia)*
-field ::= identifier optional_marker? ":" type line_end
-optional_marker ::= "?"
-```
-
 ## Caps
-
-```ebnf
-cap ::= cap_kind cap_name ":" cap_body
-cap_body ::= line_end (property | trivia)* indented_text? trivia*
-cap_name ::= snake_kebab_name
-
-property ::= identifier "=" text_line line_end
-```
 
 Rules:
 
@@ -528,14 +462,6 @@ Rules:
 
 ## Jobs
 
-```ebnf
-task ::= "task" job_name ":" job_body
-chore ::= "chore" job_name ":" job_body
-job_name ::= snake_kebab_name
-
-job_body ::= line_end (property | trivia)* indented_text? trivia*
-```
-
 Rules:
 
 - `task` and `chore` use the same property and text body shape as caps.
@@ -543,78 +469,25 @@ Rules:
 
 ## Text
 
-```ebnf
-content ::= text_line line_end | line_end indented_text
-indented_text ::= blank_line* text_row (text_row | blank_line)*
-text_row ::= text_line newline
-paragraph ::= text_row (text_row | blank_line text_row)* blank_line?
-```
-
-These source productions do not imply CST wrapper nodes. Both `content`
-alternatives expose the same semantic `content` node. Bare messages and implicit
-runs use `paragraph`, also exposed as `content`, with their own keyword boundary
-rules. Cap/job text uses `indented_text` after its property prefix. Source forms
-are selected by their owning production; they are not interchangeable everywhere.
+Both EBNF `content` alternatives expose the same semantic `content` node.
+`flow_paragraph` and `message_paragraph` also expose `content`, with different
+keyword boundaries. Cap/job text follows its property prefix. Source forms are
+selected by their owner; they are not interchangeable everywhere.
 
 Same-line text stops before a comment marker and ends on that physical line.
 Indented explicit text treats all markers as literal and ends on dedent; Markdown
 fences are ordinary text. The scanner preserves text and paragraph boundaries.
-`text_row`, `paragraph`, and `indented_text` are descriptive hidden helpers,
-not additional public nodes.
+The EBNF distinguishes inline, binding, literal, flow, and message text tokens
+so their different keyword/comment policies are explicit. They all produce
+`text_line` leaves; the token contexts and paragraph helpers are not public nodes.
 
 ## Context And Instruct
-
-```ebnf
-context ::= "context" identifier? ":" content
-
-instruct ::= "instruct" identifier? ":" content
-```
 
 Defaults:
 
 - An omitted name defaults semantically to `default`.
 
 ## Agic
-
-```ebnf
-agic ::= "agic" runnable_name? params? return_type? ":" line_end agic_body
-return_type ::= "->" type
-
-params ::= "(" (param ("," param)*)? ")"
-param ::= param_name optional_marker? (":" type)?
-param_name ::= "_" | variable_name
-
-agic_body ::= trivia*
-               (directives messages?
-               | messages
-               | pass_statement)
-               trivia*
-
-directives ::= directive (directive | trivia)*
-directive ::= query_key directive_operator directive_value line_end
-            | ("hands" | "handoffs") "=" route_value line_end
-            | "recall" "=" recall_value line_end
-            | "lanes" "=" (integer_literal | "default") line_end
-            | ("instruct" | "context") "=" text_ref line_end
-query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
-directive_key ::= query_key | "hands" | "handoffs" | "recall" | "lanes"
-                | "instruct" | "context"
-directive_operator ::= "=" | "+=" | "-="
-directive_value ::= /[^ \t#\r\n][^#\r\n]*/
-route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
-runnable_ref ::= (public_name "::")* ("agic:" | "flow:")? public_name
-public_name ::= /[A-Za-z_][A-Za-z0-9_-]*/
-recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
-recall_source ::= "far" | "near"
-text_ref ::= "default" | "none" | identifier
-
-messages ::= message (message | trivia)*
-message ::= role ":" content | paragraph
-role ::= "user" | "assistant" | "tool"
-agic_keyword ::= "context" | "instruct" | "user" | "assistant" | "tool"
-                      | "pass" | "recall" | directive_key
-pass_statement ::= "pass" line_end
-```
 
 Rules:
 
@@ -663,139 +536,6 @@ Rules:
   operators and values are fixed by the grammar.
 
 ## Flow
-
-```ebnf
-flow ::= "flow" runnable_name? params? return_type? ":" line_end flow_body
-
-flow_body ::= trivia*
-              (directives statements
-              | statements
-              | pass_statement)
-              trivia*
-
-statements ::= flow_statement (flow_statement | trivia)*
-flow_statement ::= exec_statement
-                 | let_statement
-                 | flow_operation
-                 | implicit_run_statement
-
-flow_operation ::= run_statement
-                 | spawn_statement
-                 | await_statement
-                 | seek_statement
-                 | ask_statement
-                 | generate_statement
-                 | reduce_statement
-                 | map_statement
-                 | keep_statement
-                 | drop_statement
-                 | sort_statement
-                 | repeat_statement
-
-let_statement ::= "let" local_name "=" flow_operation
-                | "let" flow_operation
-                | "let" local_name "=" content
-local_name ::= variable_name
-handle_name ::= variable_name
-
-exec_statement ::= "exec" runnable_name line_end
-                 | "exec" inline_agic
-
-run_statement ::= "async"? "run" runnable_name line_end
-                | "async"? "run" inline_agic
-
-spawn_statement ::= "spawn" runnable_name line_end
-                  | "spawn" inline_agic
-
-await_statement ::= "await" handle_name line_end
-
-seek_statement ::= "seek" agent_name runnable_name line_end
-                 | "seek" agent_name inline_agic
-
-ask_statement ::= "ask" ":" content
-
-_one_integer_literal   ::= an integer literal whose numeric value is 1
-_other_integer_literal ::= an integer literal whose numeric value is not 1
-
-_lanes_complement ::= "in" _one_integer_literal "lane"
-                    | "in" _other_integer_literal "lanes"
-
-_repeat_count_complement ::= _one_integer_literal "time"
-                           | _other_integer_literal "times"
-
-_named_using_complement  ::= "using" horizontal_space runnable_name
-_named_if_complement     ::= "if" runnable_name
-_inline_if_complement    ::= "if" inline_agic
-_named_by_complement     ::= "by" runnable_name
-_inline_by_complement    ::= "by" inline_agic
-
-_runnable_complements ::= _lanes_complement?
-                          (_named_using_complement line_end | inline_agic)
-
-_if_complements ::= _named_if_complement line_end
-                  | _lanes_complement _named_if_complement line_end
-                  | _named_if_complement _lanes_complement line_end
-                  | _inline_if_complement
-                  | _lanes_complement _inline_if_complement
-
-_by_complements ::= _named_by_complement line_end
-                  | _lanes_complement _named_by_complement line_end
-                  | _named_by_complement _lanes_complement line_end
-                  | _inline_by_complement
-                  | _lanes_complement _inline_by_complement
-
-generate_statement ::= "generate" integer_literal _runnable_complements
-
-reduce_statement ::= "reduce" (_named_using_complement line_end
-                     | _named_using_complement ":" line_end from_block
-                     | inline_agic_with_optional_from)
-inline_agic_with_optional_from ::= return_type? ":" text_line line_end
-                                | return_type? ":" line_end indented_text from_block?
-from_block ::= "from" ":" content
-
-map_statement ::= "map" _runnable_complements
-
-position ::= ("first" | "last") integer_literal
-keep_statement ::= "keep" position line_end
-                 | "keep" _if_complements
-drop_statement ::= "drop" position line_end
-                 | "drop" _if_complements
-
-sort_statement ::= "sort" ("ascending" | "descending") _by_complements
-
-repeat_statement ::= "repeat" _repeat_count_complement? window_complement? ":" line_end repeat_body
-repeat_body ::= trivia* (statements (until_clause trivia* statements?)?
-                       | until_clause trivia* statements)
-window_complement ::= "windowing" integer_literal
-until_clause ::= "until" (runnable_name line_end | inline_agic_body)
-
-inline_agic ::= return_type? ":" content
-inline_agic_body ::= ":" content
-
-runnable_name ::= identifier
-agent_name ::= identifier
-
-_active_statement_keyword ::= "let" | "exec" | "run" | "spawn" | "seek" | "ask"
-                            | "async" | "await"
-                            | "generate" | "reduce" | "map" | "keep"
-                            | "drop" | "sort" | "repeat"
-
-_non_statement_keyword ::= "until" | "from" | "windowing" | "_"
-                         | _connector_keyword | _declaration_keyword
-                         | agic_keyword | "recall"
-_connector_keyword ::= "using" | "if" | "by" | "in" | "lane" | "lanes"
-                     | "ascending" | "descending" | "first" | "last"
-                     | "time" | "times"
-_declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
-                       | "prompt" | "task" | "chore" | "agic" | "flow"
-
-implicit_run_statement ::= _implicit_text_line
-                           (_implicit_text_line | blank_line _implicit_text_line)*
-                           blank_line?
-_implicit_text_line ::= a nonblank, non-comment flow text line whose first
-                       complete token is not a Flow structural keyword
-
-```
 
 Rules:
 
@@ -893,7 +633,9 @@ Rules:
   after nonempty reducer text. Deeper `from:` text stays literal. The `runnable`
   field excludes the initializer; the sibling `from` field contains `content`.
   Without `from`, runtime seeds from the first source element. Reduce retains one
-  previous frame and has no window clause.
+  previous frame and has no window clause. Unlike generic explicit text bodies,
+  reducer headers currently allow structural comments before the first body row;
+  the EBNF retains this existing distinction.
 - `windowing N` precedes the repeat header colon and exposes the `window` integer
   field. Count and condition are independently optional, including `repeat:`.
   Runtime owns count/window values, Boolean output, name resolution, condition
