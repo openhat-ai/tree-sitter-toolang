@@ -97,7 +97,7 @@ flow empty( )->Text []:
           (assign_operator)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))
         (generate_statement

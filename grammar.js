@@ -49,7 +49,7 @@ module.exports = grammar({
       seq($._param_item_doc_start, field("parameter", $.param_doc_tag), $._comment_end),
     ),
     param_doc_tag: ($) => seq(
-      "@param", $._doc_space, field("name", $._param_name),
+      "@param", $._doc_space, field("param", $._param_name),
       $._doc_space, field("description", $.comment_text),
     ),
     _doc_space: () => token.immediate(/[ \t]+/),
@@ -314,7 +314,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_let_keyword,
-          field("name", $.local_name),
+          field("local", $.local_name),
           $.assign_operator,
           field("statement", $._bound_operation),
         ),
@@ -324,7 +324,7 @@ module.exports = grammar({
         ),
         prec.right(seq(
           $.flow_let_keyword,
-          field("name", $.local_name),
+          field("local", $.local_name),
           $.assign_operator,
           field("value", $.text_inline),
         )),
@@ -355,7 +355,7 @@ module.exports = grammar({
       ),
     _invalid_exec_binding: ($) => seq(
       $.flow_let_keyword,
-      optional(seq(field("name", $.local_name), $.assign_operator)),
+      optional(seq(field("local", $.local_name), $.assign_operator)),
       $._exec_binding_start,
       $.flow_exec_keyword,
       optional(alias($._diagnostic_text, $.text_line)),
@@ -363,7 +363,7 @@ module.exports = grammar({
     ),
     _invalid_reserved_binding: ($) => seq(
       $.flow_let_keyword,
-      optional(seq(field("name", $.local_name), $.assign_operator)),
+      optional(seq(field("local", $.local_name), $.assign_operator)),
       $._reserved_binding_start,
       $._reserved_binding_word,
       optional(alias($._diagnostic_text, $.text_line)),
@@ -372,7 +372,7 @@ module.exports = grammar({
     // Keep a missing assignment delimiter diagnostic local and deterministic
     // instead of choosing between a dropped name and an inserted '='.
     _invalid_named_binding: ($) => prec.dynamic(-2, seq(
-      $.flow_let_keyword, field("name", $.local_name),
+      $.flow_let_keyword, field("local", $.local_name),
       optional(alias($._diagnostic_text, $.text_line)),
       $.line_end,
     )),
@@ -409,7 +409,7 @@ module.exports = grammar({
     ))),
     await_statement: ($) => seq(
       $.flow_await_keyword,
-      field("handle", $.local_name),
+      field("handle", $.handle_name),
       $.line_end,
     ),
     implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
@@ -656,6 +656,7 @@ module.exports = grammar({
     runnable_name: ($) => $._identifier,
     agent_name: ($) => $._identifier,
     local_name: ($) => $._variable_name,
+    handle_name: ($) => $._variable_name,
 
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_directive_key),

@@ -39,8 +39,18 @@ deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
   handle: {
-    multiple: false, required: true, types: [{ type: "local_name", named: true }],
+    multiple: false, required: true, types: [{ type: "handle_name", named: true }],
   },
+});
+const letFields = nodeTypes.find(node => node.type === "let_statement").fields;
+deepStrictEqual(Object.keys(letFields).sort(), ["local", "statement", "value"]);
+deepStrictEqual(letFields.local, {
+  multiple: false, required: false, types: [{ type: "local_name", named: true }],
+});
+const paramDocFields = nodeTypes.find(node => node.type === "param_doc_tag").fields;
+deepStrictEqual(Object.keys(paramDocFields).sort(), ["description", "param"]);
+deepStrictEqual(paramDocFields.param, {
+  multiple: false, required: true, types: [{ type: "param_name", named: true }],
 });
 deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
@@ -48,7 +58,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
 });
 
 for (const name of [
-  "identifier", "runnable_name", "type_name", "local_name", "param_name",
+  "identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
   "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
   "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
 ]) {

@@ -53,7 +53,7 @@ def test_collection_targets_and_bindings(head, kind, count, lanes, binding, targ
     if binding:
         bound, = descendants(root, "let_statement")
         assert bound.child_by_field_name("statement") == operation
-        name = bound.child_by_field_name("name")
+        name = bound.child_by_field_name("local")
         assert (name.text.decode().strip() if name else None) == ("result" if "=" in binding else None)
         assert bound.child_by_field_name("value") is None
     assert len(descendants(root, "run_statement")) == 1

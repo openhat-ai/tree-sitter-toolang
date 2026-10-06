@@ -30,7 +30,7 @@ mod tests {
         assert_eq!(comment.kind(), "item_doc_comment");
         let tag = comment.child_by_field_name("parameter").unwrap();
         assert_eq!(tag.kind(), "param_doc_tag");
-        for (field, value) in [("name", "_"), ("description", "Input.")] {
+        for (field, value) in [("param", "_"), ("description", "Input.")] {
             assert_eq!(
                 tag.child_by_field_name(field)
                     .unwrap()
@@ -76,7 +76,7 @@ mod tests {
         assert_eq!(bound.kind(), "let_statement");
         assert_eq!(
             bound
-                .child_by_field_name("name")
+                .child_by_field_name("local")
                 .unwrap()
                 .utf8_text(source.as_bytes())
                 .unwrap()
@@ -171,7 +171,7 @@ mod tests {
                     assert_eq!(node.kind(), "let_statement");
                     assert!(node.child_by_field_name("value").is_none());
                     assert_eq!(
-                        node.child_by_field_name("name")
+                        node.child_by_field_name("local")
                             .map(|node| node.utf8_text(source.as_bytes()).unwrap().trim()),
                         name
                     );
@@ -179,7 +179,7 @@ mod tests {
                 };
                 assert_eq!(await_node.kind(), "await_statement");
                 let handle = await_node.child_by_field_name("handle").unwrap();
-                assert_eq!(handle.kind(), "local_name");
+                assert_eq!(handle.kind(), "handle_name");
                 assert_eq!(handle.child_count(), 0);
                 assert_eq!(handle.utf8_text(source.as_bytes()).unwrap().trim(), "h");
             }

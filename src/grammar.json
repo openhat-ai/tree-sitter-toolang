@@ -220,7 +220,7 @@
         },
         {
           "type": "FIELD",
-          "name": "name",
+          "name": "param",
           "content": {
             "type": "SYMBOL",
             "name": "_param_name"
@@ -1956,7 +1956,7 @@
             },
             {
               "type": "FIELD",
-              "name": "name",
+              "name": "local",
               "content": {
                 "type": "SYMBOL",
                 "name": "local_name"
@@ -2005,7 +2005,7 @@
               },
               {
                 "type": "FIELD",
-                "name": "name",
+                "name": "local",
                 "content": {
                   "type": "SYMBOL",
                   "name": "local_name"
@@ -2137,7 +2137,7 @@
               "members": [
                 {
                   "type": "FIELD",
-                  "name": "name",
+                  "name": "local",
                   "content": {
                     "type": "SYMBOL",
                     "name": "local_name"
@@ -2200,7 +2200,7 @@
               "members": [
                 {
                   "type": "FIELD",
-                  "name": "name",
+                  "name": "local",
                   "content": {
                     "type": "SYMBOL",
                     "name": "local_name"
@@ -2260,7 +2260,7 @@
           },
           {
             "type": "FIELD",
-            "name": "name",
+            "name": "local",
             "content": {
               "type": "SYMBOL",
               "name": "local_name"
@@ -2600,7 +2600,7 @@
           "name": "handle",
           "content": {
             "type": "SYMBOL",
-            "name": "local_name"
+            "name": "handle_name"
           }
         },
         {
@@ -4170,6 +4170,10 @@
       "name": "_identifier"
     },
     "local_name": {
+      "type": "SYMBOL",
+      "name": "_variable_name"
+    },
+    "handle_name": {
       "type": "SYMBOL",
       "name": "_variable_name"
     },

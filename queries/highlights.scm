@@ -5,7 +5,7 @@
 (shebang_comment) @comment
 (module_doc_comment) @comment.documentation
 (item_doc_comment) @comment.documentation
-(param_doc_tag "@param" @keyword name: (param_name) @variable.parameter)
+(param_doc_tag "@param" @keyword param: (param_name) @variable.parameter)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword

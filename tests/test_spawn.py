@@ -63,7 +63,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
         wrapper, = descendants(root, "let_statement")
         assert wrapper.child_by_field_name("statement") == statement
         assert wrapper.child_by_field_name("value") is None
-        name = wrapper.child_by_field_name("name")
+        name = wrapper.child_by_field_name("local")
         assert (name.text.strip() if name else None) == (b"job" if "=" in binding else None)
     else:
         assert not descendants(root, "let_statement")

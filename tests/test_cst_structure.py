@@ -13,7 +13,7 @@ from test_layout_support import declarations, descendants, edit_tree, fingerprin
 
 ROOT = Path(__file__).parents[1]
 FIXTURES = sorted((ROOT / "tests/fixtures").glob("*.too"))
-LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "param_name",
+LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
           "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
           "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source"}
 REMOVED = {"item", "base_type", "user_type", "struct_name", "type_suffix",
@@ -51,6 +51,32 @@ def test_parameter_signature_and_documentation_share_leaf_names(name):
     names = descendants(root, "param_name")
     assert len(names) == 2
     assert all(node.child_count == 0 and node.text == name.encode() for node in names)
+
+
+def test_name_fields_distinguish_declarations_bindings_and_references():
+    root = parse("agic worker:\n  pass\n"
+                 "## @param topic Input topic.\nflow launch(topic: Text):\n"
+                 "  let job = spawn worker\n  let result = await job\n"
+                 "  let job = await job\n")
+    assert valid(root), root
+    for kind in ["agic", "flow"]:
+        declaration, = descendants(root, kind)
+        assert declaration.child_by_field_name("name").type == "runnable_name"
+        assert declaration.child_by_field_name("runnable") is None
+    parameter, = descendants(root, "param")
+    assert parameter.child_by_field_name("name").type == "param_name"
+    assert parameter.child_by_field_name("param") is None
+    doc, = descendants(root, "param_doc_tag")
+    assert doc.child_by_field_name("name") is None
+    assert doc.child_by_field_name("param").type == "param_name"
+    for binding in descendants(root, "let_statement"):
+        assert binding.child_by_field_name("name") is None
+        local = binding.child_by_field_name("local")
+        assert local.type == "local_name" and local.child_count == 0
+    for statement in descendants(root, "await_statement"):
+        handle = statement.child_by_field_name("handle")
+        assert handle.type == "handle_name" and handle.child_count == 0
+        assert handle.text == b"job"
 
 
 @pytest.mark.parametrize("type_name,kind", [("Text", "builtin_type"), ("Result", "type_name")])

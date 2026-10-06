@@ -86,7 +86,7 @@ def test_parameter_fields_use_signature_names_and_preserve_description(
     assert tag.children[0].type == "@param"
     assert tag.start_byte == source.index(b"@param")
     assert tag.end_byte == len(line.encode())
-    param = tag.child_by_field_name("name")
+    param = tag.child_by_field_name("param")
     assert param.type == "param_name" and param.text == name.encode()
     assert param.child_count == 0
     body = tag.child_by_field_name("description")

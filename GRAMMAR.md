@@ -9,6 +9,12 @@ feature definitions rather than the current syntax reference.
 
 ## Unreleased
 
+- Name fields by their role in the parent: `let_statement.local: local_name`
+  replaces `let_statement.name`; `await_statement.handle: handle_name` replaces
+  its former `local_name` leaf; `param_doc_tag.param: param_name` replaces
+  `param_doc_tag.name`. Let-binding diagnostics also use `local`. Update field
+  access and queries together. These are CST-only changes: accepted source,
+  name restrictions, source ranges, and binding behavior are unchanged.
 - Require horizontal separation between adjacent words and numbers, and before
   raw `with` references. Write `2 times`, `2 using worker`, and `with skill ./foo`
   instead of their concatenated forms. Grammar symbols still permit compact
@@ -175,7 +181,8 @@ same syntax across contexts; specialized names retain distinct constraints.
 | `identifier` | Ordinary lowercase name used for fields, property keys, context/instruct declarations, and named text references. |
 | `runnable_name` | Named agic/flow declaration or call target; distinct from an inline agic. |
 | `type_name` | Authored type name in a declaration or type reference; distinct from `builtin_type`. |
-| `local_name` | Non-keyword local binding or await handle name; excludes `_`. |
+| `local_name` | Non-keyword local binding destination; excludes `_`. |
+| `handle_name` | Non-keyword handle referenced by await; excludes `_`. |
 | `param_name` | Parameter name in a signature or documentation, including primary input `_`. |
 | `cap_name`, `job_name`, `agent_name` | Capability, job, and agent names with their existing lexical rules. |
 | `text_line`, `text_inline`, `text_body` | Reusable text forms; fields distinguish values, references, and bodies. |
@@ -192,6 +199,13 @@ allow qualified references with namespaces and optional runnable kinds.
 `identifier` child to distinguish its alternatives; route and recall values
 retain their selections and list elements.
 
+Fields describe a child's role in its parent; node types describe its syntax.
+Declarations keep `agic.name` / `flow.name: runnable_name` and
+`param.name: param_name`. Binding and reference positions use
+`let_statement.local: local_name`, `await_statement.handle: handle_name`, and
+`param_doc_tag.param: param_name`. Named calls keep `runnable: runnable_name`;
+existing `agic` and `target` fields distinguish inline or alternative targets.
+
 CST migration from earlier versions:
 
 | Previous shape | Current shape |
@@ -201,6 +215,9 @@ CST migration from earlier versions:
 | `field_name / property_key / context_name / instruct_name → snake_name` | `identifier` leaf. |
 | `struct_name / user_type → type_name → pascal_name` | `type_name` leaf. |
 | `local_name / param_name → snake_name` | The same semantic node as a leaf; `_` parameters have the same leaf shape. |
+| `let_statement.name` | `let_statement.local: local_name`; likewise for let-binding diagnostics. |
+| `await_statement.handle: local_name` | `await_statement.handle: handle_name`, still a leaf. |
+| `param_doc_tag.name` | `param_doc_tag.param: param_name`; parameter declarations retain `param.name`. |
 | `agent → snake_name` | `agent_name` leaf. |
 | `directive_op` | `directive_operator` leaf. |
 | `builtin_type / role / directive_key / recall_source / assign_operator → anonymous token` | The named token directly owns its text. |
@@ -210,7 +227,7 @@ CST migration from earlier versions:
 | `cap_body → text_body` | Direct `body: text_body`. |
 | `context_body / instruct_body → text_inline` | Direct `body: text_inline`. |
 
-Field names are preserved. Source ranges change only for the leading-whitespace
+Other field names are preserved. Source ranges change only for the leading-whitespace
 fix described under Unreleased. Update queries to capture the new leaf or direct
 child. Consumers should enumerate declarations
 without unwrapping `item`, and read cap text directly from its `body` node rather
@@ -246,10 +263,10 @@ variable_name ::= a full match of /[a-z][a-z0-9_]*/ that is not a keyword
 
 Variable names use exact, case-sensitive keyword membership. The keyword rules
 and reserved-word groups in `grammar.js`, including legacy words, are the source
-of truth; `src/keywords.h` is generated from them. `local_name` and `param_name`
-are leaves using this rule; `param_name` additionally accepts `_`. `_` is the
-special primary-input parameter name and a reserved flow word; it is not a
-`local_name`. Other identifier categories retain their rules.
+of truth; `src/keywords.h` is generated from them. `local_name`, `handle_name`,
+and `param_name` are leaves using this rule; `param_name` additionally accepts `_`.
+`_` is the special primary-input parameter name and a reserved flow word; it is not a
+`local_name` or `handle_name`. Other identifier categories retain their rules.
 
 Keyword matching uses Tree-sitter's
 [word extraction](https://tree-sitter.github.io/tree-sitter/creating-parsers/3-writing-the-grammar.html#keyword-extraction)
@@ -346,7 +363,7 @@ runnable/parameter descriptions for help and calling hints.
 | `plain_comment`, `shebang_comment` | Leaves with full source text. |
 | `module_doc_comment` | Optional `text: comment_text`. |
 | `item_doc_comment` | Optional `text: comment_text` or `parameter: param_doc_tag`, never both. |
-| `param_doc_tag` | Required `name: param_name` and `description: comment_text`; queryable `"@param"` token. |
+| `param_doc_tag` | Required `param: param_name` and `description: comment_text`; queryable `"@param"` token. |
 
 Empty doc comments omit `text`. Field ranges exclude markers and leading
 separating whitespace, preserve trailing whitespace, and use exact UTF-8 byte
@@ -664,6 +681,7 @@ let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
                 | "let" local_name "=" text_inline
 local_name ::= variable_name
+handle_name ::= variable_name
 
 exec_statement ::= "exec" runnable_name line_end
                  | "exec" inline_agic
@@ -674,7 +692,7 @@ run_statement ::= "async"? "run" runnable_name line_end
 spawn_statement ::= "spawn" runnable_name line_end
                   | "spawn" inline_agic
 
-await_statement ::= "await" local_name line_end
+await_statement ::= "await" handle_name line_end
 
 seek_statement ::= "seek" agent_name runnable_name line_end
                  | "seek" agent_name inline_agic
@@ -820,15 +838,14 @@ Rules:
   Malformed target tails can appear as `invalid_flow_reserved_statement` inside
   `run_statement`, keeping following statements and declarations intact.
   Consumers must reject these diagnostic descendants before executing the run.
-- `await h` exposes `await_statement` with a required `handle: local_name`
+- `await h` exposes `await_statement` with a required `handle: handle_name`
   and `flow_await_keyword`. The handle name follows the same non-keyword variable
   naming rule as a let binding; `_` is invalid. Local lookup and
   handle validation belong to runtime. It accepts no expressions,
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
-  The existing `let_statement` fields distinguish the binding destination
-  (`name`) from the awaited handle (`handle`) inside `statement`; no new wrapper
-  or reference node is added. `local_name` directly contains the identifier
-  text and has no children.
+  `let_statement.local: local_name` identifies the binding destination;
+  `await_statement.handle: handle_name` identifies the handle inside `statement`.
+  Both name nodes directly contain the identifier text without child nodes.
   The same node represents async and spawn handles
   because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single

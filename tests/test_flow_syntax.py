@@ -149,9 +149,9 @@ def test_flow_fixture_covers_complete_statement_set():
         "let_statement",
         "repeat_statement",
     ]
-    assert _text(source, bindings[0].child_by_field_name("name")).strip() == "jobs"
+    assert _text(source, bindings[0].child_by_field_name("local")).strip() == "jobs"
     assert bindings[0].child_by_field_name("statement").type == "run_statement"
-    assert bindings[1].child_by_field_name("name") is None
+    assert bindings[1].child_by_field_name("local") is None
     assert bindings[1].child_by_field_name("statement").type == "run_statement"
     assert "Prefer primary sources." in _text(
         source, bindings[2].child_by_field_name("value")
@@ -314,11 +314,11 @@ def test_let_uses_equals_for_operation_results_and_content_locals():
         True,
     ]
     assert (
-        _text(source, statements[0].child_by_field_name("name")).strip()
+        _text(source, statements[0].child_by_field_name("local")).strip()
         == "result"
     )
-    assert statements[1].child_by_field_name("name") is None
-    assert _text(source, statements[2].child_by_field_name("name")).strip() == "note"
+    assert statements[1].child_by_field_name("local") is None
+    assert _text(source, statements[2].child_by_field_name("local")).strip() == "note"
     assert "Keep this block too." in _text(
         source, statements[3].child_by_field_name("value")
     )

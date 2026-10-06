@@ -216,7 +216,7 @@ flow launch:
       (statements
         (await_statement
           (flow_await_keyword)
-          (local_name)
+          (handle_name)
           (line_end
             (newline)))
         (let_statement
@@ -225,23 +225,14 @@ flow launch:
           (assign_operator)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))
         (let_statement
           (flow_let_keyword)
           (await_statement
             (flow_await_keyword)
-            (local_name)
-            (line_end
-              (newline))))
-        (let_statement
-          (flow_let_keyword)
-          (local_name)
-          (assign_operator)
-          (await_statement
-            (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))
         (let_statement
@@ -250,7 +241,16 @@ flow launch:
           (assign_operator)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
+            (line_end
+              (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (await_statement
+            (flow_await_keyword)
+            (handle_name)
             (line_end
               (newline))))))))
 
@@ -311,7 +311,7 @@ flow launch:
                           (newline))))))))
             (await_statement
               (flow_await_keyword)
-              (local_name)
+              (handle_name)
               (line_end
                 (plain_comment)
                 (newline)))
@@ -361,7 +361,7 @@ flow launch:
               (newline))))
         (await_statement
           (flow_await_keyword)
-          (local_name)
+          (handle_name)
           (line_end
             (newline)))
         (let_statement
@@ -370,14 +370,14 @@ flow launch:
           (assign_operator)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))
         (let_statement
           (flow_let_keyword)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))
         (let_statement
@@ -386,7 +386,7 @@ flow launch:
           (assign_operator)
           (await_statement
             (flow_await_keyword)
-            (local_name)
+            (handle_name)
             (line_end
               (newline))))))))
 

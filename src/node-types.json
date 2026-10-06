@@ -180,7 +180,7 @@
         "required": true,
         "types": [
           {
-            "type": "local_name",
+            "type": "handle_name",
             "named": true
           }
         ]
@@ -753,6 +753,11 @@
     }
   },
   {
+    "type": "handle_name",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "identifier",
     "named": true,
     "fields": {}
@@ -961,7 +966,7 @@
     "type": "invalid_flow_reserved_statement",
     "named": true,
     "fields": {
-      "name": {
+      "local": {
         "multiple": false,
         "required": false,
         "types": [
@@ -1367,7 +1372,7 @@
     "type": "let_statement",
     "named": true,
     "fields": {
-      "name": {
+      "local": {
         "multiple": false,
         "required": false,
         "types": [
@@ -1687,7 +1692,7 @@
           }
         ]
       },
-      "name": {
+      "param": {
         "multiple": false,
         "required": true,
         "types": [
