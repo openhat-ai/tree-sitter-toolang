@@ -1,0 +1,60 @@
+==================
+Missing property values preserve their bodies and following declarations
+==================
+prompt broken:
+  description =
+
+  Body.
+task broken:
+  title =# A value is required.
+
+  Body.
+flow next:
+  pass
+
+---
+
+(source_file
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line
+          (MISSING _text_line))
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline))))
+  (task
+    (task_keyword)
+    (job_name)
+    (colon)
+    (job_body
+      (line_end
+        (newline))
+      (ERROR
+        (identifier)
+        (assign_operator))
+      (blank_line)
+      (blank_line)
+      (content
+        (text_line)
+        (newline))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))

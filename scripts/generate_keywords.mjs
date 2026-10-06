@@ -1,37 +1,11 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
+import { tables } from "../keywords.js";
 
-const { rules } = JSON.parse(readFileSync("src/grammar.json", "utf8"));
-
-function words(rule) {
-  if (rule.type === "STRING") return [rule.value];
-  if (rule.type === "SYMBOL") return words(rules[rule.name]);
-  if (rule.content) return words(rule.content);
-  return (rule.members ?? []).flatMap(words);
-}
-
-let header = "// Generated from grammar.js; do not edit.\n";
-for (const [context, rule] of [
-  ["flow", "_flow_reserved_word"], ["agic", "_agic_reserved_word"],
-  ["directive", "directive_key"],
-  ["collection_binding", "_collection_binding_word"],
-  ["async_await_binding", "_async_await_binding_word"],
-  ["reserved_binding", "_reserved_binding_word"],
-]) {
-  const values = [...new Set(words(rules[rule]))].sort();
+let header = "// Generated from keywords.js; do not edit.\n";
+for (const [context, words] of Object.entries(tables)) {
+  const values = [...new Set(words)].sort();
   header += `static const char *const ${context}_keywords[] = {\n`;
   header += values.map(word => `  ${JSON.stringify(word)},\n`).join("");
   header += "};\n";
 }
-// Variable names exclude language keywords in every context, including legacy
-// reserved words. Ordinary identifier and text patterns are not keyword lists.
-const variableKeywords = new Set([
-  ...words(rules._flow_reserved_word),
-  ...Object.entries(rules)
-    .filter(([name]) => name.endsWith("_keyword"))
-    .flatMap(([, rule]) => words(rule)),
-]);
-header += "static const char *const variable_keywords[] = {\n";
-header += [...variableKeywords].filter(word => /^[a-z][a-z0-9_]*$/.test(word))
-  .sort().map(word => `  ${JSON.stringify(word)},\n`).join("");
-header += "};\n";
 writeFileSync("src/keywords.h", header);

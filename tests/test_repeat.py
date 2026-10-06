@@ -39,13 +39,13 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
         keyword, = descendants(clause, "flow_until_keyword")
         assert keyword.text == b"until"
         target, = clause.children_by_field_name("target")
-        assert target.type == ("runnable" if condition == "until is_done" else "inline_agic_body")
+        assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic_body")
         assert target.parent == clause
         assert clause.start_byte <= keyword.start_byte < target.start_byte < target.end_byte <= clause.end_byte
         assert source.encode()[clause.start_byte:clause.end_byte].strip().startswith(b"until")
         assert b"run first" not in clause.text and b"run last" not in clause.text
         if target.type == "inline_agic_body":
-            assert b"Ready {{_}}." in target.child_by_field_name("body").text
+            assert b"Ready {{_}}." in target.child_by_field_name("content").text
         else:
             assert target.text == b"is_done"
         preceding = sum(statement.end_byte <= clause.start_byte for statement in statements)
@@ -100,7 +100,7 @@ def test_explicit_content_binding_keeps_literal_until_after_header_whitespace(sp
     root = parse(source)
     assert valid(root), root
     binding, = descendants(root, "let_statement")
-    assert binding.child_by_field_name("value").child_count == 1
+    assert [child.type for child in binding.child_by_field_name("value").named_children] == ["text_line", "newline"]
     assert b"until dawn." in binding.child_by_field_name("value").text
     assert not descendants(root, "until_clause")
     assert not descendants(root, "implicit_run_statement")
@@ -157,7 +157,7 @@ def test_nested_conditions_trivia_prose_and_dedented_siblings(newline):
     assert b"until remains literal here." in inner_clause.child_by_field_name("target").text
     assert len(descendants(root, "until_clause")) == 2
     assert len(descendants(inner_body, "item_doc_comment")) == 1
-    assert descendants(root, "run_statement")[-1].parent.type == "statements"
+    assert descendants(root, "run_statement")[-1].parent.type == "flow_body"
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

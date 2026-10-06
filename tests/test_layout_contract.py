@@ -2,7 +2,7 @@
 
 import pytest
 
-from test_layout_support import descendants, parse, point, valid
+from test_layout_support import declarations, descendants, parse, point, valid
 
 
 @pytest.mark.parametrize("count", ["", " 2 times"])
@@ -31,7 +31,7 @@ def test_repeat_requires_executable_body_with_optional_bounds(
             assert until.type == "until_clause"
             target = until.child_by_field_name("target")
             assert target.type == "inline_agic_body"
-            assert target.child_by_field_name("body").text.strip() == b"Ready."
+            assert target.child_by_field_name("content").text.strip() == b"Ready."
 
 
 @pytest.mark.parametrize(
@@ -58,14 +58,10 @@ def test_declaration_body_optionality_at_eof_and_next_item(
     root = parse(header + "\n" + trivia + ending)
     assert valid(root) == (not required)
     if not required:
-        items = [
-            node.named_children[0]
-            for node in root.named_children
-            if node.type == "item"
-        ]
+        items = declarations(root)
         assert len(items) == (2 if ending else 1)
         # Jobs retain a job_body wrapper even when they contain only trivia.
-        assert not descendants(items[0], "text_body_line")
+        assert not descendants(items[0], "text_line")
         assert not descendants(items[0], "property")
         assert not descendants(items[0], "flow")
         if ending:
@@ -99,14 +95,14 @@ def test_agic_explicit_bodies_preserve_literal_bytes_and_end_before_siblings(
     root = parse(source.decode())
     assert valid(root)
     owner = descendants(root, "agic")[0]
-    block = descendants(owner, "text_body")[0]
+    block = descendants(owner, "content")[0]
     assert block.text == content
     assert block.start_byte == source.index(content)
     assert block.end_byte == block.start_byte + len(content)
     assert tuple(block.start_point) == point(source, block.start_byte)
     assert tuple(block.end_point) == point(source, block.end_byte)
-    for line in descendants(block, "text_body_line"):
-        value = line.child_by_field_name("content")
+    for line in descendants(block, "text_line"):
+        value = line
         assert value.text == source[value.start_byte : value.end_byte]
         assert tuple(value.start_point) == point(source, value.start_byte)
         assert tuple(value.end_point) == point(source, value.end_byte)
@@ -134,13 +130,13 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
 ):
     root = parse(f"{kind} work:\n  Review the evidence.\n{separator}  Summarize it.\n")
     assert valid(root)
-    node_type = "implicit_run_statement" if kind == "flow" else "unroled_message"
+    node_type = "implicit_run_statement" if kind == "flow" else "message"
     prose = descendants(root, node_type)
     assert len(prose) == paragraphs
     assert [
-        line.child_by_field_name("content").text.strip()
+        line.text.strip()
         for node in prose
-        for line in descendants(node, "text_body_line")
+        for line in descendants(node, "text_line")
     ] == [b"Review the evidence.", b"Summarize it."]
     assert not any(
         descendants(node, "plain_comment")
@@ -156,7 +152,7 @@ def test_flow_keywords_do_not_leak_into_other_implicit_contexts(kind, word):
     text = f"{word}, literal prose in this context."
     root = parse(f"{kind} work:\n  {text}\n")
     assert valid(root)
-    assert descendants(root, "text_body_line")[0].text.strip() == text.encode()
+    assert descendants(root, "text_line")[0].text.strip() == text.encode()
     assert not descendants(root, "implicit_run_statement")
 
 

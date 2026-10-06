@@ -27,17 +27,17 @@ def test_exec_target_fields_match_run(target, output, nested, ending):
     statement, = descendants(root, "exec_statement")
     node = statement.child_by_field_name("target")
     if target == " grow":
-        assert node.type == "runnable"
+        assert node.type == "runnable_name"
         assert node.text.strip() == b"grow"
     else:
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Complete {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Complete {{_}}."
     run_root = parse(source.replace("exec", "run", 1))
     assert valid(run_root), run_root
     run, = descendants(run_root, "run_statement")
-    run_target = run.child_by_field_name("runnable" if node.type == "runnable" else "agic")
+    run_target = run.child_by_field_name("runnable" if node.type == "runnable_name" else "agic")
     assert str(node) == str(run_target)
     assert node.text == run_target.text
 
@@ -62,7 +62,7 @@ def test_nested_exec_dedents_and_explicit_text(newline):
     root = parse(source.replace("\n", newline))
     assert valid(root), root
     targets = [node.child_by_field_name("target") for node in descendants(root, "exec_statement")]
-    assert [node.type for node in targets] == ["inline_agic", "inline_agic", "runnable", "runnable"]
+    assert [node.type for node in targets] == ["inline_agic", "inline_agic", "runnable_name", "runnable_name"]
     assert [node.text.strip() for node in targets[2:]] == [b"evolve", b"grow"]
     assert b"exec remains literal inside inline text." in targets[0].text
     outer, inner = descendants(root, "repeat_statement")
@@ -71,7 +71,7 @@ def test_nested_exec_dedents_and_explicit_text(newline):
     assert len(descendants(root, "implicit_run_statement")) == 1
     assert b"executor and execution" in descendants(root, "implicit_run_statement")[0].text
     assert any(b"exec remains literal inside explicit text." in node.text
-               for node in descendants(root, "text_body"))
+               for node in descendants(root, "content"))
 
 
 @pytest.mark.parametrize("prefix", ["executor", "execution", "exec_v2", "exec2"])

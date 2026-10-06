@@ -2,16 +2,13 @@
 ; Maintain this file in this repository and consume it from tooling.
 
 (agic
-  name: (agic_name
-    (snake_name) @name)) @item
+  name: (runnable_name) @name) @item
 
 (flow
-  name: (flow_name
-    (snake_name) @name)) @item
+  name: (runnable_name) @name) @item
 
 (struct
-  name: (struct_name
-    (type_name) @name)) @item
+  name: (type_name) @name) @item
 
 [
   (psyche
@@ -27,9 +24,7 @@
   (chore
     name: (job_name) @name)
   (context
-    name: (context_name
-      (snake_name) @name))
+    name: (identifier) @name)
   (instruct
-    name: (instruct_name
-      (snake_name) @name))
+    name: (identifier) @name)
 ] @item

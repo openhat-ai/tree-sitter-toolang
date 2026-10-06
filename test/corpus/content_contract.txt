@@ -1,0 +1,241 @@
+==================
+Content values and structural body fields
+==================
+context inline: Same-line text. # Header comment.
+instruct multiline:
+  # Literal heading.
+  First line.
+    Nested detail.
+
+skill sample:
+  source = example/sample
+  Describe the capability.
+  source = literal content after the first text line
+
+task work:
+  title = Work
+  Describe the task.
+
+struct Result:
+  summary: Text
+
+agic chat:
+  models = default
+  user: First message.
+  assistant:
+    Multiline reply.
+    More detail.
+  Bare message.
+  Its continuation.
+
+flow example:
+  tools = none
+  let note =
+    Literal content.
+  let job = async run:
+    Research.
+  await job
+  ask: Continue?
+  reduce:
+    Combine.
+    from: Seed.
+  repeat:
+    until: Ready?
+    run worker
+
+---
+
+(source_file
+  (context
+    (context_keyword)
+    (identifier)
+    (colon)
+    (content
+      (text_line))
+    (line_end
+      (plain_comment)
+      (newline)))
+  (instruct
+    (instruct_keyword)
+    (identifier)
+    (colon)
+    (line_end
+      (newline))
+    (content
+      (text_line)
+      (newline)
+      (text_line)
+      (newline)
+      (text_line)
+      (newline)
+      (blank_line)))
+  (skill
+    (skill_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (task
+    (task_keyword)
+    (job_name)
+    (colon)
+    (job_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (content
+        (text_line)
+        (newline)
+        (blank_line))))
+  (struct
+    (struct_keyword)
+    (type_name)
+    (colon)
+    (line_end
+      (newline))
+    (struct_body
+      (field
+        (identifier)
+        (colon)
+        (type
+          (builtin_type))
+        (line_end
+          (newline)))
+      (blank_line)))
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (agic_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (message
+        (role)
+        (colon)
+        (line_end
+          (newline))
+        (content
+          (text_line)
+          (newline)
+          (text_line)
+          (newline)))
+      (message
+        (content
+          (text_line)
+          (newline)
+          (text_line)
+          (newline)
+          (blank_line)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (line_end
+          (newline))
+        (content
+          (text_line)
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (run_statement
+          (flow_async_keyword)
+          (flow_run_keyword)
+          (inline_agic
+            (colon)
+            (line_end
+              (newline))
+            (content
+              (text_line)
+              (newline)))))
+      (await_statement
+        (flow_await_keyword)
+        (handle_name)
+        (line_end
+          (newline)))
+      (ask_statement
+        (flow_ask_keyword)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (reduce_statement
+        (flow_reduce_keyword)
+        (inline_agic
+          (colon)
+          (line_end
+            (newline))
+          (content
+            (text_line)
+            (newline)))
+        (flow_from_keyword)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (repeat_statement
+        (flow_repeat_keyword)
+        (colon)
+        (line_end
+          (newline))
+        (repeat_body
+          (until_clause
+            (flow_until_keyword)
+            (inline_agic_body
+              (colon)
+              (content
+                (text_line))
+              (line_end
+                (newline))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable_name)
+            (line_end
+              (newline))))))))

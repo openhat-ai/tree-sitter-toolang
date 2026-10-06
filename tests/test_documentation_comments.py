@@ -86,8 +86,9 @@ def test_parameter_fields_use_signature_names_and_preserve_description(
     assert tag.children[0].type == "@param"
     assert tag.start_byte == source.index(b"@param")
     assert tag.end_byte == len(line.encode())
-    param = tag.child_by_field_name("name")
+    param = tag.child_by_field_name("param")
     assert param.type == "param_name" and param.text == name.encode()
+    assert param.child_count == 0
     body = tag.child_by_field_name("description")
     assert body.type == "comment_text" and body.text == description.encode()
     assert param.end_byte + len(space) == body.start_byte
@@ -170,8 +171,8 @@ def test_explicit_text_preserves_markers_at_first_line_and_deeper(indent, marker
         f"{indent * 3}{marker} Résumé.\nflow next:\n{indent}pass\n"
     )
     assert valid(root)
-    block = descendants(root, "text_body")[0]
-    assert len(descendants(block, "text_body_line")) == 2
+    block = descendants(root, "content")[0]
+    assert len(descendants(block, "text_line")) == 2
     assert not any(
         descendants(block, kind)
         for kind in (
@@ -231,7 +232,7 @@ def test_new_module_docs_cannot_interrupt_a_continuing_body():
 @pytest.mark.parametrize("kind", ["flow", "agic", "struct"])
 def test_documentation_does_not_fill_required_bodies(kind, comment):
     name = "Work" if kind == "struct" else "work"
-    assert parse(f"{kind} {name}:\n{comment}\n").has_error
+    assert not valid(parse(f"{kind} {name}:\n{comment}\n"))
 
 
 @pytest.mark.parametrize(

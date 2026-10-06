@@ -56,6 +56,9 @@ class EggInfo(egg_info):
         self.filelist.include("src/scanner.c")
         self.filelist.include("src/keywords.h")
         self.filelist.include("src/grammar.json")
+        self.filelist.include("src/node-types.json")
+        self.filelist.include("grammar.js")
+        self.filelist.include("keywords.js")
         self.filelist.recursive_include("tests/fixtures", "*.too")
 
 

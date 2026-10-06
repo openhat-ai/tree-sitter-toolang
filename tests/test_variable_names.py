@@ -1,8 +1,6 @@
 """Variable declarations use the identifier pattern minus grammar keywords."""
 
-import json
 import re
-from pathlib import Path
 
 import pytest
 from tree_sitter import Language, Parser
@@ -12,20 +10,10 @@ import tree_sitter_toolang
 from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
 
 
-def keyword_words(rule, rules):
-    if rule["type"] == "STRING":
-        return {rule["value"]}
-    if rule["type"] == "SYMBOL":
-        return keyword_words(rules[rule["name"]], rules)
-    if "content" in rule:
-        return keyword_words(rule["content"], rules)
-    return set().union(*(keyword_words(member, rules) for member in rule.get("members", [])))
+from test_vocabulary_support import VARIABLE_KEYWORDS
 
 
-RULES = json.loads(Path(__file__).parents[1].joinpath("src/grammar.json").read_text())["rules"]
-KEYWORDS = set().union(*(keyword_words(rule, RULES) for name, rule in RULES.items()
-                        if name.endswith("_keyword") or name == "_flow_reserved_word"))
-KEYWORDS = sorted(word for word in KEYWORDS if re.fullmatch(r"[a-z][a-z0-9_]*", word))
+KEYWORDS = sorted(VARIABLE_KEYWORDS)
 CONTEXTS = [
     "flow work:\n  let {name} = Evidence.\n",
     "flow work:\n  let {name} = run worker\n",
@@ -62,8 +50,7 @@ def test_variable_name_regex_boundaries(source, name):
         container = "local_name" if "let " in source else "param_name"
         node, = descendants(root, container)
         assert node.text.decode() == name
-        if container == "local_name":
-            assert node.child_count == 0
+        assert node.child_count == 0
 
 
 @pytest.mark.parametrize("source", CONTEXTS)

@@ -1,16 +1,13 @@
 ; Source of truth for Toolang Tree-sitter tags queries.
 
 (agic
-  name: (agic_name
-    (snake_name) @name)) @definition.function
+  name: (runnable_name) @name) @definition.function
 
 (flow
-  name: (flow_name
-    (snake_name) @name)) @definition.function
+  name: (runnable_name) @name) @definition.function
 
 (struct
-  name: (struct_name
-    (type_name) @name)) @definition.class
+  name: (type_name) @name) @definition.class
 
 [
   (psyche
@@ -26,9 +23,7 @@
   (chore
     name: (job_name) @name)
   (context
-    name: (context_name
-      (snake_name) @name))
+    name: (identifier) @name)
   (instruct
-    name: (instruct_name
-      (snake_name) @name))
+    name: (identifier) @name)
 ] @definition.class

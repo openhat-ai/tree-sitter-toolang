@@ -31,11 +31,13 @@ enum Token {
   AGIC_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
-  COLLECTION_BINDING_START,
-  SPAWN_BINDING_START,
-  RESERVED_BINDING_START,
+  OPERATION_BINDING_START,
+  RESTRICTED_BINDING_START,
   VARIABLE_NAME,
-  ASYNC_AWAIT_BINDING_START,
+  MISSING_REQUIRED,
+  INTEGER_LITERAL,
+  ONE_INTEGER_LITERAL,
+  OTHER_INTEGER_LITERAL,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -188,6 +190,34 @@ static void skip_indentation(TSLexer *lexer) {
   }
 }
 
+// Integers need the same complete-word boundary as keywords. Checking the
+// following character without consuming it preserves adjacent punctuation.
+static bool scan_integer(Scanner *scanner, TSLexer *lexer, const bool *valid) {
+  skip_indentation(lexer);
+  if (lexer->lookahead < '0' || lexer->lookahead > '9') {
+    return false;
+  }
+  unsigned value = 0; // Only zero, one, or greater-than-one matters; never overflow.
+  do {
+    if (value < 2) {
+      value = value * 10 + (unsigned)(lexer->lookahead - '0');
+    }
+    advance(lexer);
+  } while (lexer->lookahead >= '0' && lexer->lookahead <= '9');
+  if (word_character(lexer->lookahead)) {
+    return false;
+  }
+  enum Token token = value == 1 ? ONE_INTEGER_LITERAL : OTHER_INTEGER_LITERAL;
+  if (valid[INTEGER_LITERAL]) {
+    token = INTEGER_LITERAL;
+  }
+  if (!valid[token]) {
+    return false;
+  }
+  lexer->mark_end(lexer);
+  return emit(scanner, lexer, token);
+}
+
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   skip_indentation(lexer);
   lexer->mark_end(lexer);
@@ -208,23 +238,15 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
   if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
     return emit(scanner, lexer, EXEC_BINDING_START);
   }
-  if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
-    return emit(scanner, lexer, SPAWN_BINDING_START);
+  if (valid[RESTRICTED_BINDING_START] &&
+      keyword(word, restricted_binding_keywords,
+              sizeof(restricted_binding_keywords) / sizeof(*restricted_binding_keywords))) {
+    return emit(scanner, lexer, RESTRICTED_BINDING_START);
   }
-  if (valid[ASYNC_AWAIT_BINDING_START] &&
-      keyword(word, async_await_binding_keywords,
-              sizeof(async_await_binding_keywords) / sizeof(*async_await_binding_keywords))) {
-    return emit(scanner, lexer, ASYNC_AWAIT_BINDING_START);
-  }
-  if (valid[RESERVED_BINDING_START] &&
-      keyword(word, reserved_binding_keywords,
-              sizeof(reserved_binding_keywords) / sizeof(*reserved_binding_keywords))) {
-    return emit(scanner, lexer, RESERVED_BINDING_START);
-  }
-  if (valid[COLLECTION_BINDING_START] &&
-      keyword(word, collection_binding_keywords,
-              sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
-    return emit(scanner, lexer, COLLECTION_BINDING_START);
+  if (valid[OPERATION_BINDING_START] &&
+      keyword(word, operation_binding_keywords,
+              sizeof(operation_binding_keywords) / sizeof(*operation_binding_keywords))) {
+    return emit(scanner, lexer, OPERATION_BINDING_START);
   }
   if (valid[VARIABLE_NAME] && variable &&
       !keyword(word, variable_keywords, sizeof(variable_keywords) / sizeof(*variable_keywords))) {
@@ -358,9 +380,15 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
-  if (!at_start && (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
-                    valid[SPAWN_BINDING_START] || valid[RESERVED_BINDING_START] ||
-                    valid[VARIABLE_NAME] || valid[ASYNC_AWAIT_BINDING_START])) {
+  if (!at_start && (valid[INTEGER_LITERAL] || valid[ONE_INTEGER_LITERAL] ||
+                    valid[OTHER_INTEGER_LITERAL])) {
+    skip_indentation(lexer);
+    if (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+      return scan_integer(scanner, lexer, valid);
+    }
+  }
+  if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
+                    valid[RESTRICTED_BINDING_START] || valid[VARIABLE_NAME])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);
@@ -372,6 +400,20 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   lexer->mark_end(lexer);
   Indentation indent = indentation(lexer);
   Frame frame = scanner->frames[scanner->depth - 1];
+
+  // Diagnose an absent body before the internal lexer consumes the next
+  // sibling's first word. No layout frame is opened for a missing body.
+  bool opening_body = valid[INDENT] || valid[TEXT_INDENT] || valid[REDUCE_INDENT];
+  // A text recovery branch can consume outer trivia before requesting the
+  // missing value. It no longer offers an indent token, but still cannot take
+  // a same-level entry. Existing flow/repeat/reducer bodies can take one.
+  bool awaiting_body = opening_body || (!valid[LINE_START] && !valid[REDUCE_TEXT_START]);
+  if (valid[MISSING_REQUIRED] && !scanner->line_started &&
+      (lexer->eof(lexer) || (at_start &&
+       (indent.column < frame.column || (awaiting_body && indent.column == frame.column)) &&
+       lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
+    return emit(scanner, lexer, MISSING_REQUIRED);
+  }
 
   if (lexer->eof(lexer)) {
     if (valid[NEWLINE] && scanner->line_started && !scanner->eof_newline) {
@@ -470,6 +512,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
+      !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
+    return emit(scanner, lexer, MISSING_REQUIRED);
+  }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
       strcmp(word, "from") != 0) {
     return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);

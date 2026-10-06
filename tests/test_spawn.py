@@ -52,18 +52,18 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
     if target.startswith(" missing_name"):
-        assert node.type == "runnable"
+        assert node.type == "runnable_name"
         assert node.text.strip() == b"missing_name"
     else:
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Research {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Research {{_}}."
     if binding:
         wrapper, = descendants(root, "let_statement")
         assert wrapper.child_by_field_name("statement") == statement
         assert wrapper.child_by_field_name("value") is None
-        name = wrapper.child_by_field_name("name")
+        name = wrapper.child_by_field_name("local")
         assert (name.text.strip() if name else None) == (b"job" if "=" in binding else None)
     else:
         assert not descendants(root, "let_statement")
@@ -163,7 +163,7 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert valid(root), root
     targets = [node.child_by_field_name("target") for node in descendants(root, "spawn_statement")]
     assert [node.type for node in targets] == [
-        "runnable", "runnable", "inline_agic", "inline_agic", "runnable",
+        "runnable_name", "runnable_name", "inline_agic", "inline_agic", "runnable_name",
     ]
     outer, inner = descendants(root, "repeat_statement")
     assert len(descendants(outer, "spawn_statement")) == 3
@@ -171,7 +171,7 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert b"spawn remains literal inside inline text." in targets[2].text
     assert not descendants(descendants(root, "agic")[0], "flow_spawn_keyword")
     assert len(descendants(root, "flow_spawn_keyword")) == 5
-    assert any(b"{{description}}" in node.text for node in descendants(root, "text_body"))
+    assert any(b"{{description}}" in node.text for node in descendants(root, "content"))
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

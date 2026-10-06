@@ -1,0 +1,268 @@
+(* Toolang: complete valid-source grammar.
+   Matches grammar.js, keywords.js, and src/scanner.c. Keep them in sync.
+   CST fields and runtime semantics are documented in GRAMMAR.md.
+
+   Notation: ::= definition; | choice; () grouping; ? optional;
+   * zero or more; + one or more; /.../ atomic regex;
+   ? ... ? a lexical/layout constraint that is not an ordinary production.
+
+   Horizontal spaces/tabs are optional between structural tokens, except that
+   adjacent words/numbers require at least one. Tokens cannot be split.
+   Word boundaries use ASCII letters, digits, and underscores: keyword or
+   integer prefixes of longer words (runWorker, 2times) are never split off.
+   Compound symbols (->, +=, -=, [], :: and comment markers) stay contiguous.
+   Raw references require explicit horizontal_space after their cap kind.
+
+   INDENT/DEDENT are logical source-layout boundaries, not source characters or
+   public CST nodes. Their text/structural mode follows the owning production.
+   Declarations start at column zero. First substantive body entries establish
+   a deeper baseline; structural siblings use it, and dedents must reach an
+   existing ancestor baseline. Tabs advance to eight-column stops; structural
+   prefixes cannot mix spaces and tabs or change spelling at the same baseline.
+   Blank lines and structural comments never establish a body baseline.
+   Implicit paragraphs may contain more deeply indented non-keyword text.
+   The scanner's bounded serialization capacity also applies (see GRAMMAR.md).
+
+   Text terminals below distinguish recognition contexts, not public CST kinds:
+   all physical fragments are text_line leaves under the owner's content value,
+   except property values and raw references, which are direct text_line leaves.
+   Text bytes, relative indentation, and line endings are preserved.
+
+   Recovery is NOT a valid-source alternative. Reject native ERROR/MISSING and
+   every invalid_* node. Missing structure/content/statements respectively use
+   invalid_missing_body, invalid_missing_content, invalid_missing_statement.
+   Recovery consumes no following substantive source and opens no fake frame.
+*)
+
+(* Declarations *)
+source_file ::= (declaration | trivia)* EOF
+declaration ::= with | struct | cap | task | chore | context | instruct | agic | flow
+
+with ::= "with" cap_kind horizontal_space raw_reference line_end
+cap_kind ::= "psyche" | "skill" | "service" | "prompt"
+
+struct ::= "struct" type_name ":" line_end struct_body
+struct_body ::= trivia* INDENT field (field | trivia)* DEDENT
+field ::= identifier "?"? ":" type line_end
+
+type ::= (builtin_type | type_name) "[]"*
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part"
+return_type ::= "->" type
+
+cap ::= cap_kind cap_name ":" definition_body
+task ::= "task" job_name ":" definition_body
+chore ::= "chore" job_name ":" definition_body
+definition_body ::= line_end trivia*
+                    (INDENT (properties cap_content? | cap_content) DEDENT)?
+properties ::= property (property | trivia)*
+property ::= identifier "=" property_value line_end
+cap_content ::= literal_rows
+(* The first cap/job text row is neither a structural comment nor a property.
+   Properties form a prefix; after content starts, property-like rows are text.
+   Empty bodies and property-only bodies are valid. Prompt property validation
+   is downstream. definition_body maps to cap_body or job_body, not a new CST. *)
+
+context ::= "context" identifier? ":" content
+instruct ::= "instruct" identifier? ":" content
+
+agic ::= "agic" signature ":" line_end agic_body
+flow ::= "flow" signature ":" line_end flow_body
+signature ::= runnable_name? params? return_type?
+params ::= "(" (param ("," param)*)? ")"
+param ::= param_name "?"? (":" type)?
+
+agic_body ::= trivia* INDENT
+              (directives messages? | messages | pass_body) DEDENT
+flow_body ::= trivia* INDENT (directives? statements | pass_body) DEDENT
+pass_body ::= "pass" line_end trivia*
+(* Pass is a complete body alternative: it cannot follow directives or mix with
+   statements/messages. Agics may have only directives; flows may not. *)
+
+(* Directives *)
+directives ::= directive (directive | trivia)*
+directive ::= query_key directive_operator directive_value line_end
+            | route_key "=" route_value line_end
+            | "recall" "=" recall_value line_end
+            | "lanes" "=" (integer_literal | "default") line_end
+            | ("instruct" | "context") "=" text_ref line_end
+query_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts"
+route_key ::= "hands" | "handoffs"
+directive_operator ::= "=" | "+=" | "-="
+route_value ::= "none" | "*" | runnable_ref ("," runnable_ref)*
+recall_value ::= "none" | "default" | "*" | recall_source ("," recall_source)*
+recall_source ::= "far" | "near"
+text_ref ::= "default" | "none" | identifier
+
+(* Flow statements and bindings *)
+statements ::= flow_statement (flow_statement | trivia)*
+flow_statement ::= exec_statement | let_statement | flow_operation | flow_paragraph
+flow_operation ::= run_statement | spawn_statement | await_statement
+                 | seek_statement | ask_statement | generate_statement
+                 | map_statement | reduce_statement | keep_statement
+                 | drop_statement | sort_statement | repeat_statement
+
+let_statement ::= "let" local_name "=" (flow_operation | binding_content)
+                | "let" flow_operation
+binding_content ::= binding_text line_end | line_end text_block
+(* A complete bindable head after '=' selects an operation, including malformed
+   uses. exec, until, and _ are also forbidden as same-line binding-text heads.
+   Indented binding text is literal. exec and implicit prose are not bindable
+   statements; the third let source form is a named text value. *)
+
+run_statement ::= "async"? "run" call_target
+spawn_statement ::= "spawn" call_target
+exec_statement ::= "exec" call_target
+seek_statement ::= "seek" agent_name call_target
+call_target ::= runnable_name line_end | inline_agic
+await_statement ::= "await" handle_name line_end
+ask_statement ::= "ask" ":" content
+(* async modifies run only. call_target is a source helper, not a CST wrapper.
+   await has a named handle only: no _, expressions, or block alternative. *)
+
+(* Collection operations *)
+generate_statement ::= "generate" integer_literal lanes? collection_target
+map_statement ::= "map" lanes? collection_target
+collection_target ::= "using" runnable_name line_end | inline_agic
+
+keep_statement ::= "keep" (position line_end | predicate_target)
+drop_statement ::= "drop" (position line_end | predicate_target)
+position ::= ("first" | "last") integer_literal
+predicate_target ::= lanes? "if" runnable_name line_end
+                   | "if" runnable_name lanes line_end
+                   | lanes? "if" inline_agic
+
+sort_statement ::= "sort" ("ascending" | "descending") score_target
+score_target ::= lanes? "by" runnable_name line_end
+               | "by" runnable_name lanes line_end
+               | lanes? "by" inline_agic
+lanes ::= "in" (one_integer "lane" | other_integer "lanes")
+(* generate/map put lanes before their target. keep/drop/sort also accept lanes
+   after a named target. Inline targets are always final. Numeric value 1,
+   including leading zeros, requires lane/time; all other integers use plurals. *)
+
+reduce_statement ::= "reduce" "using" runnable_name line_end
+                   | "reduce" "using" runnable_name ":" line_end
+                     trivia* INDENT from_clause trivia* DEDENT
+                   | "reduce" return_type? ":" inline_text line_end
+                   | "reduce" return_type? ":" line_end
+                     trivia* INDENT reducer_content from_clause? trivia* DEDENT
+reducer_content ::= literal_rows
+from_clause ::= "from" ":" content
+(* The reducer's outer block owns reducer text and its optional initializer.
+   A complete 'from' at the reducer-text baseline ends that text. Deeper 'from'
+   remains literal. A named reducer with ':' requires from_clause. An inline
+   reducer requires text; only its multiline form accepts an initializer.
+   Current reduce headers allow structural trivia before the block. Generic
+   explicit text below permits leading blank lines, but not outer comments. *)
+
+(* Repeat: one or more statements, with at most one until clause *)
+repeat_statement ::= "repeat" repeat_count? window? ":" line_end repeat_body
+repeat_count ::= one_integer "time" | other_integer "times"
+window ::= "windowing" integer_literal
+repeat_body ::= trivia* INDENT
+                (statements (until_clause trivia* statements?)?
+                | until_clause trivia* statements) DEDENT
+until_clause ::= "until" (runnable_name line_end | inline_agic_body)
+(* An until clause may be first, middle, or last. It is not a statement and
+   cannot satisfy the required executable body. Nested repeats own their until. *)
+
+(* Messages and authored text *)
+messages ::= message (message | trivia)*
+message ::= role ":" content | message_paragraph
+role ::= "user" | "assistant" | "tool"
+inline_agic ::= return_type? ":" content
+inline_agic_body ::= ":" content
+content ::= inline_text line_end | line_end text_block
+text_block ::= blank_line* INDENT literal_rows DEDENT
+literal_rows ::= literal_row (literal_row | blank_line)*
+literal_row ::= literal_text newline
+flow_paragraph ::= flow_row (flow_row | blank_line flow_row)* blank_line?
+flow_row ::= flow_text newline
+message_paragraph ::= message_row (message_row | blank_line message_row)* blank_line?
+message_row ::= message_text newline
+(* Explicit indented text treats # markers and keywords as literal, including
+   its first row. Each implicit row applies its own head-keyword policy. One
+   blank line can remain inside a paragraph; two or comments separate paragraphs.
+   This source content production includes delimiters. The public content node
+   excludes its header comment/newline and has text_line/newline/blank_line only.
+   message has optional role and required content in valid source. *)
+
+(* Names and atomic values *)
+identifier ::= /[a-z][a-z0-9_]*(_[a-z0-9]+)*/
+snake_kebab_name ::= /[a-z][a-z0-9_-]*/
+type_name ::= /[A-Z][A-Za-z0-9]*/
+runnable_name ::= identifier
+agent_name ::= identifier
+cap_name ::= snake_kebab_name
+job_name ::= snake_kebab_name
+local_name ::= variable_name
+handle_name ::= variable_name
+param_name ::= "_" | variable_name
+variable_name ::= ? a complete /[a-z][a-z0-9_]*/ word outside variable_keyword ?
+runnable_ref ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/
+integer_literal ::= /[0-9]+/
+one_integer ::= ? an integer_literal whose numeric value is 1 ?
+other_integer ::= ? an integer_literal whose numeric value is not 1 ?
+directive_value ::= /[^ \t#\r\n][^#\r\n]*/
+property_value ::= /[^#\r\n]+/
+raw_reference ::= /[^ \t#\r\n][^#\r\n]*/
+inline_text ::= ? same-line text before #, containing a non-space/tab character;
+                 preserve its leading/trailing spaces and tabs ?
+binding_text ::= ? inline_text whose first complete word is not binding_head ?
+literal_text ::= ? a nonblank physical text row; preserve indentation and # ?
+flow_text ::= ? a nonblank, non-comment physical row whose first complete word
+               is not flow_keyword; preserve indentation and embedded # ?
+message_text ::= ? a nonblank, non-comment physical row whose first complete word
+                  is not agic_keyword; preserve indentation and embedded # ?
+(* Variable exclusions do not restrict runnable/field/property names globally.
+   far and near remain valid variables. _ is a parameter/input marker only.
+   A raw property value may consist only of spaces/tabs in the current parser;
+   it is not the same token context as a required content value. *)
+
+(* Contextual vocabulary; sets, not globally reserved lexer tokens *)
+operation_head ::= "run" | "async" | "spawn" | "await" | "seek" | "ask"
+                 | "generate" | "map" | "reduce" | "keep" | "drop" | "sort" | "repeat"
+binding_head ::= operation_head | "exec" | "until" | "_"
+declaration_keyword ::= "with" | "struct" | cap_kind | "task" | "chore"
+                      | "context" | "instruct" | "agic" | "flow"
+clause_keyword ::= "until" | "from" | "windowing" | "using" | "if" | "by"
+                 | "in" | "lane" | "lanes" | "ascending" | "descending"
+                 | "time" | "times" | "first" | "last"
+directive_keyword ::= query_key | route_key | "recall" | "lanes" | "context" | "instruct"
+agic_keyword ::= role | "pass" | directive_keyword
+flow_keyword ::= declaration_keyword | operation_head | clause_keyword
+               | agic_keyword | "let" | "exec" | "_"
+variable_keyword ::= flow_keyword | "default" | "none"
+(* There are no inactive reserved words. Removed words scatter, gather, storm,
+   settle, rank, par, top, bottom, think, use, thunk, call, do, unfold, each, fold,
+   head, tail are ordinary names/text where the surrounding production allows. *)
+
+(* Line endings, comments, and layout *)
+horizontal_space ::= /[ \t]+/
+physical_newline ::= "\n" | "\r\n"
+newline ::= physical_newline | VIRTUAL_NEWLINE
+blank_line ::= horizontal_space? physical_newline
+line_end ::= inline_comment? newline
+inline_comment ::= "#" /[^\r\n]*/
+trivia ::= blank_line | plain_comment | shebang_comment | module_doc_comment | item_doc_comment
+plain_comment ::= "#" /[^\r\n]*/ comment_end
+shebang_comment ::= "#!" /[^\r\n]*/ comment_end
+module_doc_comment ::= ("#@" | "##!") horizontal_space? comment_text? comment_end
+item_doc_comment ::= "##" horizontal_space? (param_doc_tag | comment_text)? comment_end
+param_doc_tag ::= "@param" horizontal_space param_name horizontal_space comment_text
+comment_text ::= /[^ \t\r\n][^\r\n]*/
+comment_end ::= physical_newline | EOF
+INDENT ::= ? enter a deeper structural/text baseline in the current context ?
+DEDENT ::= ? leave that baseline, retaining the following source for its owner ?
+VIRTUAL_NEWLINE ::= ? one zero-width final line ending at EOF for a real line ?
+EOF ::= ? end of input ?
+(* Whole-line comment prefixes take precedence over plain_comment:
+   #! is a shebang only at byte zero; otherwise it is plain_comment.
+   #@ is module documentation only at column zero in the top-level scope.
+   ##! is module documentation, including legacy indented structural positions.
+   ## is item documentation. A leading @param followed by a space, tab, line
+   ending, or EOF selects param_doc_tag; malformed uses cannot fall back to
+   comment_text. @parameter and @param: stay prose.
+   After same-line code every # prefix is an inline plain_comment. These rules
+   do not apply inside explicit text, where every comment marker is literal.
+   Full-line comments include their physical newline; inline comments do not. *)

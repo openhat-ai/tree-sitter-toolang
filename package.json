@@ -22,6 +22,7 @@
   "main": "grammar.js",
   "files": [
     "grammar.js",
+    "keywords.js",
     "queries/*.scm",
     "src/**",
     "tree-sitter.json",

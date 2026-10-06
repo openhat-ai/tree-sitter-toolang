@@ -1,0 +1,14 @@
+with skill example
+
+agic worker -> Text:
+  user: Read the complete word.
+
+flow work:
+  let text = runworker
+  let camel = runWorker
+  let job = spawn worker
+  let result = await job
+  run runworker
+  map in 2 lanes using worker
+  keep if ifworker
+  run->Text: Text after a punctuation boundary.
