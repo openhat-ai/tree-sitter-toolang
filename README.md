@@ -67,8 +67,9 @@ let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
 
 [GRAMMAR.md](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
 documents the public Toolang syntax and CST contract.
-[GRAMMAR.ebnf](GRAMMAR.ebnf) collects the complete valid-source productions,
-including layout and contextual lexical constraints.
+[GRAMMAR.ebnf](GRAMMAR.ebnf) is an annotated implementation reference generated
+from `src/grammar.json`, including helper and recovery rules. Scanner behavior
+and valid-source requirements are explained in `GRAMMAR.md`.
 `grammar.js`, `keywords.js`, and `src/scanner.c` define the grammar; generated
 artifacts live under `src/`.
 
@@ -121,7 +122,6 @@ for syntax, CST fields, and the 0.3.2 node-name migration.
 Edit:
 
 - `GRAMMAR.md`
-- `GRAMMAR.ebnf`
 - `grammar.js`
 - `queries/*.scm`
 - `test/corpus/*.txt`
@@ -140,6 +140,12 @@ npm run check
 .venv/bin/python -m unittest discover -s scripts -p 'test_*.py'
 cargo test
 ```
+
+`npm run generate` also refreshes `GRAMMAR.ebnf`; do not edit that file manually.
+To regenerate only this reference from the existing `src/grammar.json`, use
+`npm run generate:ebnf`. `npm run check:ebnf` checks for stale or missing output
+without writing, and `npm run test:ebnf` runs the converter's offline tests.
+These checks also run through `npm run check` and CI.
 
 ## Publishing
 

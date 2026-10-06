@@ -42,7 +42,10 @@
     }
   ],
   "scripts": {
-    "generate": "tree-sitter generate && node scripts/generate_keywords.mjs",
+    "generate": "tree-sitter generate && node scripts/generate_keywords.mjs && npm run generate:ebnf",
+    "generate:ebnf": "node scripts/generate_ebnf.mjs",
+    "check:ebnf": "node scripts/generate_ebnf.mjs --check",
+    "test:ebnf": "node --test scripts/test_generate_ebnf.mjs",
     "test": "tree-sitter test",
     "build:wasm": "tree-sitter build --wasm",
     "parse": "tree-sitter parse",
@@ -50,7 +53,7 @@
     "tags": "tree-sitter tags",
     "test:cli": "node scripts/check_cli.mjs",
     "pack:dry-run": "npm pack --dry-run",
-    "check": "npm run generate && npm run test && npm run test:cli"
+    "check": "npm run generate && npm run test:ebnf && npm run check:ebnf && npm run test && npm run test:cli"
   },
   "devDependencies": {
     "tree-sitter-cli": "^0.24.7"
