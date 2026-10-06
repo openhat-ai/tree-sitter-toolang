@@ -151,10 +151,19 @@ this section supersedes its collection statement syntax.
 
 ## EBNF
 
-The complete valid-source grammar is maintained in [GRAMMAR.ebnf](GRAMMAR.ebnf).
-It includes explicit layout boundaries, contextual text tokens, and vocabulary
-constraints. Its helper productions do not imply public CST nodes. Recovery
-nodes are documented separately below and are not valid source alternatives.
+[GRAMMAR.ebnf](GRAMMAR.ebnf) is generated from `src/grammar.json` by
+`npm run generate:ebnf`. It preserves authored rule names and order, including
+hidden and recovery rules. Annotations retain fields, aliases, precedence,
+token boundaries, and grammar-level metadata; external token productions name
+opaque scanner contracts. Regex payloads retain their original JSON-encoded
+patterns and flags. The file's header defines its notation.
+
+This is an implementation reference, not a standalone valid-source grammar:
+ordinary EBNF tools do not enforce its annotations or scanner contracts.
+The lexical, layout, validity, CST, and runtime requirements below still apply.
+Helper productions do not imply public CST nodes. Do not edit the generated
+file; `npm run check:ebnf` verifies it without writing, and CI checks for stale
+committed output after regenerating the grammar.
 
 ## CST Node Contract
 
@@ -263,14 +272,15 @@ recognized before equal-length authored type names. Fixed-word alternatives
 use aliases of individual keyword tokens to retain leaf CST nodes; wrapping
 the entire choice in `token(...)` would bypass keyword extraction.
 
-The EBNF omits inter-token horizontal space except at raw-text boundaries.
-Apply these rules to every structural production:
+The generated EBNF records horizontal `extras` and required-separator rules;
+it does not insert optional spaces between every pair of tokens. Apply these
+rules to every structural production:
 
 - A token is indivisible. Adjacent keywords, names, or numbers require one or
   more spaces or tabs; a newline cannot substitute for that separator.
   A continuous ASCII word-character sequence (`[A-Za-z0-9_]+`) cannot be split
   to satisfy a production: `runworker`, `job2`, and `2times` remain whole.
-  This does not broaden the valid name or integer patterns above.
+  This does not broaden valid names or integers.
 - Independent grammar symbols delimit tokens and allow optional spaces or tabs
   on either side. Examples: `flow work(input?:Text)->Text[]:`,
   `let h=async run worker`, `generate 2->Text:Text.`, and `run worker# Note.`.
@@ -291,7 +301,8 @@ Tree-sitter's horizontal `extras` handle optional spacing. Required separators
 use hidden rules. The external scanner checks the complete right boundary of
 integer tokens without consuming punctuation; all counts, windows, lanes, and
 numeric directives share that check. Integer nodes remain leaves, including
-leading-zero and singular/plural forms. Newlines, indentation, and raw text
+leading zeros. Numeric value one requires `lane`/`time`, including `01`; all
+other integers use `lanes`/`times`. Newlines, indentation, and raw text
 remain owned by the external scanner. No whitespace helper appears in the CST.
 
 At flow statement and named-let value boundaries, complete active operation
@@ -414,11 +425,11 @@ valid; do not replace marker-like strings inside literal prompts or history.
   168 frames fit, including the root and any structural or text-mode frames;
   this is not a uniform source-nesting limit.
 
-The EBNF uses logical `INDENT`/`DEDENT` boundaries. These rules apply to all
-declaration bodies, nested repeat bodies, and multiline text consumers; the
-logical boundaries do not expose scanner state or CST wrapper nodes.
-Invalid recovery nodes are not alternatives in the source-language EBNF. For
-example, an empty repeat retains `repeat_statement.body: repeat_body` containing
+The generated EBNF retains external layout signals such as `_indent` and
+`_dedent`; their behavior is specified above, not inferred from their names.
+They do not expose CST wrapper nodes. Recovery branches also remain in the
+implementation reference and must not be mistaken for valid source alternatives.
+For example, an empty repeat retains `repeat_statement.body: repeat_body` containing
 `invalid_missing_body`; the following sibling remains outside that body. The
 generated `repeat_body.statement` field is optional only to represent this
 diagnostic state. Every valid repeat still requires an ordinary statement.
@@ -444,6 +455,8 @@ Rules:
   The body has repeated `property` fields and optional `content: content`.
 - Properties form a leading prefix before the text body. Once the text body
   starts, later property-looking lines remain text.
+- Empty and property-only bodies are valid. A raw property value can consist
+  only of spaces/tabs at the parser level; required prompt content cannot.
 - Runtime validates property keys and cap-specific constraints after parsing.
   A prompt permits no properties; the other cap kinds each define their own
   property schema.
@@ -469,17 +482,21 @@ Rules:
 
 ## Text
 
-Both EBNF `content` alternatives expose the same semantic `content` node.
-`flow_paragraph` and `message_paragraph` also expose `content`, with different
-keyword boundaries. Cap/job text follows its property prefix. Source forms are
-selected by their owner; they are not interchangeable everywhere.
+Same-line text, indented text, and implicit paragraphs expose the same semantic
+`content` node. Flow and message paragraphs have different keyword boundaries.
+Cap/job text follows its property prefix. Source forms are selected by their
+owner; they are not interchangeable everywhere.
 
-Same-line text stops before a comment marker and ends on that physical line.
+Same-line content requires a non-space/tab character before any comment marker
+and ends on that physical line. A raw `with` reference also requires nonblank
+text after its separator; it is a direct `text_line`, not a `content` value.
 Indented explicit text treats all markers as literal and ends on dedent; Markdown
-fences are ordinary text. The scanner preserves text and paragraph boundaries.
-The EBNF distinguishes inline, binding, literal, flow, and message text tokens
-so their different keyword/comment policies are explicit. They all produce
-`text_line` leaves; the token contexts and paragraph helpers are not public nodes.
+fences are ordinary text. Leading blank lines may precede explicit text, but
+outer structural comments cannot be followed by a resumed text body. Reducer
+headers retain the exception described under Flow. In implicit paragraphs,
+line-initial comment markers are structural while embedded `#` remains text.
+The scanner preserves text and paragraph boundaries. The hidden recognition
+rules produce `text_line` leaves, without additional public wrapper nodes.
 
 ## Context And Instruct
 
