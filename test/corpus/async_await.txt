@@ -211,7 +211,7 @@ flow launch:
                         (newline)))))))))))))
 
 ==================
-Await operands and result binding wrappers
+Await handles and result binding wrappers
 ==================
 flow launch:
   await h
@@ -236,7 +236,7 @@ flow launch:
         (statements
           (await_statement
             (flow_await_keyword)
-            (local_reference
+            (local_name
               (snake_name))
             (line_end
               (newline)))
@@ -247,7 +247,7 @@ flow launch:
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline))))
@@ -255,7 +255,7 @@ flow launch:
             (flow_let_keyword)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline))))
@@ -266,13 +266,13 @@ flow launch:
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline))))
           (await_statement
             (flow_await_keyword)
-            (local_reference)
+            (local_name)
             (line_end
               (newline)))
           (let_statement
@@ -282,7 +282,7 @@ flow launch:
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline)))))))))
@@ -351,7 +351,7 @@ flow launch:
                             (newline))))))))
               (await_statement
                 (flow_await_keyword)
-                (local_reference
+                (local_name
                   (snake_name))
                 (line_end
                   (plain_comment)
@@ -406,7 +406,7 @@ flow launch:
                 (newline))))
           (await_statement
             (flow_await_keyword)
-            (local_reference
+            (local_name
               (snake_name))
             (line_end
               (newline)))
@@ -417,7 +417,7 @@ flow launch:
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline))))
@@ -425,7 +425,7 @@ flow launch:
             (flow_let_keyword)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline))))
@@ -436,7 +436,7 @@ flow launch:
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_reference
+              (local_name
                 (snake_name))
               (line_end
                 (newline)))))))))

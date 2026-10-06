@@ -16,8 +16,8 @@ feature definitions rather than the current syntax reference.
   [async run and handle await definition](https://github.com/openhat-ai/toolang/pull/685).
   Await blocks are excluded.
 - `run_statement` gains an optional `async: flow_async_keyword` field; existing
-  `runnable` and `agic` fields are unchanged. `await_statement.operand` is a
-  required `local_reference` containing a snake_name or `_`.
+  `runnable` and `agic` fields are unchanged. `await_statement.handle` reuses
+  `local_name` for a snake_name or the await-only `_` alias.
 - Complete lowercase `async` and `await` now select syntax at flow statement
   and same-line let-value boundaries. Malformed uses cannot become prose.
   Move affected literal text into an explicit text body or capitalize its first
@@ -517,7 +517,6 @@ let_statement ::= "let" local_name "=" flow_operation
                 | "let" flow_operation
                 | "let" local_name "=" text_inline
 local_name ::= variable_name
-local_reference ::= snake_name | "_"
 
 exec_statement ::= "exec" runnable line_end
                  | "exec" inline_agic
@@ -528,7 +527,7 @@ run_statement ::= "async"? "run" runnable line_end
 spawn_statement ::= "spawn" runnable line_end
                   | "spawn" inline_agic
 
-await_statement ::= "await" local_reference line_end
+await_statement ::= "await" (local_name | "_") line_end
 
 seek_statement ::= "seek" agent runnable line_end
                  | "seek" agent inline_agic
@@ -671,14 +670,15 @@ Rules:
   Malformed target tails can appear as `invalid_flow_reserved_statement` inside
   `run_statement`, keeping following statements and declarations intact.
   Consumers must reject these diagnostic descendants before executing the run.
-- `await h` exposes `await_statement` with a required `operand: local_reference`
-  and `flow_await_keyword`. The operand is exactly one snake_name or `_`; local
+- `await h` exposes `await_statement` with a required `handle: local_name`
+  and `flow_await_keyword`. The handle name is exactly one snake_name or `_`; local
   lookup and handle validation belong to runtime. It accepts no expressions,
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
   The existing `let_statement` fields distinguish the binding destination
-  (`name`) from the awaited operand inside `statement`; no new wrapper is added.
-  `local_reference` denotes a read, unlike the binding's `local_name`; only the
-  reference permits `_`. The same node represents async and spawn handles
+  (`name`) from the awaited handle (`handle`) inside `statement`; no new wrapper
+  or reference node is added. Await reuses `local_name`; `_` is aliased to that
+  node only in the handle position and remains invalid as a let binding name.
+  The same node represents async and spawn handles
   because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single
   required `target` field (`runnable` or `inline_agic`). Named targets are bare

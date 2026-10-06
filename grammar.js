@@ -420,7 +420,8 @@ module.exports = grammar({
     ))),
     await_statement: ($) => seq(
       $.flow_await_keyword,
-      field("operand", $.local_reference),
+      // Await may read `_`; keep it unavailable as a let binding name.
+      field("handle", choice($.local_name, alias("_", $.local_name))),
       $.line_end,
     ),
     implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
@@ -653,7 +654,6 @@ module.exports = grammar({
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
     local_name: ($) => alias($._variable_name, $.snake_name),
-    local_reference: ($) => choice($.snake_name, "_"),
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),

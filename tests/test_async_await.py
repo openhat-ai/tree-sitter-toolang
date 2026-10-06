@@ -63,19 +63,19 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
 
 
 @pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
-@pytest.mark.parametrize("operand", ["h", "_", "missing_handle", "async", "await"])
+@pytest.mark.parametrize("handle", ["h", "_", "missing_handle", "async", "await", "spawn", "run"])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 @pytest.mark.parametrize("nested", [False, True])
-def test_await_operand_is_distinct_from_result_binding(binding, operand, ending, nested):
+def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, nested):
     indent = "    " if nested else "  "
     prefix = "flow launch:\n" + ("  repeat 2 times:\n" if nested else "")
-    source = prefix + indent + binding + "await " + operand + " # Wait for completion."
+    source = prefix + indent + binding + "await " + handle + " # Wait for completion."
     root = parse(source.replace("\n", ending or "\n") + ending)
     assert valid(root), root
     statement, = descendants(root, "await_statement")
-    reference = statement.child_by_field_name("operand")
-    assert reference.type == "local_reference"
-    assert reference.text.strip() == operand.encode()
+    name = statement.child_by_field_name("handle")
+    assert name.type == "local_name"
+    assert name.text.strip() == handle.encode()
     assert not descendants(root, "implicit_run_statement")
     assert_binding(root, statement, binding)
 
@@ -106,8 +106,8 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
     awaits = descendants(root, "await_statement")
     assert len(awaits) == 4
     for index, (statement, destination) in enumerate(zip(awaits, [None, "result", None, name])):
-        assert statement.child_by_field_name("operand").type == "local_reference"
-        assert statement.child_by_field_name("operand").text.strip() == name.encode()
+        assert statement.child_by_field_name("handle").type == "local_name"
+        assert statement.child_by_field_name("handle").text.strip() == name.encode()
         if index == 0:
             assert statement.parent.type == "statements"
         else:
@@ -143,7 +143,7 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
     "async run async research", "async run research async",
     "async runworker", "async runner", "async run_worker", "async run2",
     "run async research", "run research async",
-    "await", "await # Missing operand.", "await h other", "await h, other",
+    "await", "await # Missing handle.", "await h other", "await h, other",
     "await h.id", "await h()", "await (h)", "await [h]", "await {{h}}",
     "await 42", 'await "h"', "await H", "await _h", "await _1",
     "await h -> Text", "await h: Result.", "await h\n    Result.",

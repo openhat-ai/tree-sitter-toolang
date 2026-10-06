@@ -2586,10 +2586,24 @@
         },
         {
           "type": "FIELD",
-          "name": "operand",
+          "name": "handle",
           "content": {
-            "type": "SYMBOL",
-            "name": "local_reference"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "local_name"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "STRING",
+                  "value": "_"
+                },
+                "named": true,
+                "value": "local_name"
+              }
+            ]
           }
         },
         {
@@ -4051,19 +4065,6 @@
       },
       "named": true,
       "value": "snake_name"
-    },
-    "local_reference": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "snake_name"
-        },
-        {
-          "type": "STRING",
-          "value": "_"
-        }
-      ]
     },
     "integer_literal": {
       "type": "TOKEN",

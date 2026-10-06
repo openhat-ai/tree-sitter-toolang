@@ -184,9 +184,9 @@ mod tests {
                     node.child_by_field_name("statement").unwrap()
                 };
                 assert_eq!(await_node.kind(), "await_statement");
-                let operand = await_node.child_by_field_name("operand").unwrap();
-                assert_eq!(operand.kind(), "local_reference");
-                assert_eq!(operand.utf8_text(source.as_bytes()).unwrap().trim(), "h");
+                let handle = await_node.child_by_field_name("handle").unwrap();
+                assert_eq!(handle.kind(), "local_name");
+                assert_eq!(handle.utf8_text(source.as_bytes()).unwrap().trim(), "h");
             }
         }
     }

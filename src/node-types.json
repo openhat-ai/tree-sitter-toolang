@@ -201,12 +201,12 @@
     "type": "await_statement",
     "named": true,
     "fields": {
-      "operand": {
+      "handle": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "local_reference",
+            "type": "local_name",
             "named": true
           }
         ]
@@ -1726,21 +1726,6 @@
   },
   {
     "type": "local_name",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "snake_name",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "local_reference",
     "named": true,
     "fields": {},
     "children": {
