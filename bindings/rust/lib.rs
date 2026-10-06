@@ -186,6 +186,7 @@ mod tests {
                 assert_eq!(await_node.kind(), "await_statement");
                 let handle = await_node.child_by_field_name("handle").unwrap();
                 assert_eq!(handle.kind(), "local_name");
+                assert_eq!(handle.child_count(), 0);
                 assert_eq!(handle.utf8_text(source.as_bytes()).unwrap().trim(), "h");
             }
         }

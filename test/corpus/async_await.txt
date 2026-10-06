@@ -38,8 +38,7 @@ flow second:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (run_statement
               (flow_async_keyword)
@@ -117,8 +116,7 @@ flow launch:
         (statements
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (text_inline
               (text_line)
@@ -126,8 +124,7 @@ flow launch:
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (text_inline
               (text_line)
@@ -148,8 +145,7 @@ flow launch:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (run_statement
               (flow_async_keyword)
@@ -178,8 +174,7 @@ flow launch:
                   (newline)))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (run_statement
               (flow_async_keyword)
@@ -235,49 +230,41 @@ flow launch:
         (statements
           (await_statement
             (flow_await_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (line_end
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline))))
           (let_statement
             (flow_let_keyword)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline)))))))))
 
@@ -316,8 +303,7 @@ flow launch:
             (repeat_body
               (let_statement
                 (flow_let_keyword)
-                (local_name
-                  (snake_name))
+                (local_name)
                 (assign_operator)
                 (run_statement
                   (flow_async_keyword)
@@ -345,8 +331,7 @@ flow launch:
                             (newline))))))))
               (await_statement
                 (flow_await_keyword)
-                (local_name
-                  (snake_name))
+                (local_name)
                 (line_end
                   (plain_comment)
                   (newline)))
@@ -390,8 +375,7 @@ flow launch:
         (statements
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (spawn_statement
               (flow_spawn_keyword)
@@ -401,38 +385,32 @@ flow launch:
                 (newline))))
           (await_statement
             (flow_await_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (line_end
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline))))
           (let_statement
             (flow_let_keyword)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (await_statement
               (flow_await_keyword)
-              (local_name
-                (snake_name))
+              (local_name)
               (line_end
                 (newline)))))))))
 
@@ -464,8 +442,7 @@ flow launch:
               (newline)))
           (invalid_flow_reserved_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (line_end
               (newline)))
@@ -476,8 +453,7 @@ flow launch:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (invalid_flow_reserved_statement
               (flow_await_keyword)

@@ -660,7 +660,7 @@ module.exports = grammar({
       ),
     runnable: ($) => $.snake_name,
     agent: ($) => $.snake_name,
-    local_name: ($) => alias($._variable_name, $.snake_name),
+    local_name: ($) => $._variable_name,
     integer_literal: () => token(/\d+/),
     _one_integer_literal: () => token(/0*1/),
     _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),

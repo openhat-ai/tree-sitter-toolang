@@ -21,6 +21,9 @@ def assert_binding(root, statement, binding):
     name = wrapper.child_by_field_name("name")
     expected = binding.split()[1].encode() if "=" in binding else None
     assert (name.text.strip() if name else None) == expected
+    if name is not None:
+        assert name.type == "local_name"
+        assert name.child_count == 0
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -75,6 +78,7 @@ def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, n
     statement, = descendants(root, "await_statement")
     name = statement.child_by_field_name("handle")
     assert name.type == "local_name"
+    assert name.child_count == 0
     assert name.text.strip() == handle.encode()
     assert not descendants(root, "implicit_run_statement")
     assert_binding(root, statement, binding)

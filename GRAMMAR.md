@@ -19,6 +19,9 @@ feature definitions rather than the current syntax reference.
   `runnable` and `agic` fields are unchanged. `await_statement.handle` reuses
   `local_name` for a non-keyword variable name. Await requires an explicitly
   retained named handle; `await _` is invalid in every binding form.
+- `local_name` is a leaf containing the identifier text. Queries that previously
+  captured its nested `snake_name` must capture `local_name` directly; existing
+  `name` and `handle` fields and their source ranges are unchanged.
 - Complete lowercase `async` and `await` now select syntax at flow statement
   and same-line let-value boundaries. Malformed uses cannot become prose.
   Move affected literal text into an explicit text body or capitalize its first
@@ -160,8 +163,8 @@ variable_name ::= a full match of /[a-z][a-z0-9_]*/ that is not a keyword
 
 Variable names use exact, case-sensitive keyword membership. The keyword rules
 and reserved-word groups in `grammar.js`, including legacy words, are the source
-of truth; `src/keywords.h` is generated from them. `local_name` and named
-`param_name` use this rule and retain their `snake_name` CST child. `_` is the
+of truth; `src/keywords.h` is generated from them. `local_name` is a leaf using
+this rule; named `param_name` retains its `snake_name` CST child. `_` is the
 special primary-input parameter name and a reserved flow word; it is not a
 `local_name`. Other identifier categories retain their rules.
 
@@ -685,8 +688,8 @@ Rules:
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
   The existing `let_statement` fields distinguish the binding destination
   (`name`) from the awaited handle (`handle`) inside `statement`; no new wrapper
-  or reference node is added. Every `local_name` retains its required
-  `snake_name` child.
+  or reference node is added. `local_name` directly contains the identifier
+  text and has no children.
   The same node represents async and spawn handles
   because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single

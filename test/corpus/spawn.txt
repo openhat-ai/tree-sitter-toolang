@@ -25,8 +25,7 @@ flow launch:
         (statements
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (text_inline
               (text_line)
@@ -40,8 +39,7 @@ flow launch:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (spawn_statement
               (flow_spawn_keyword)
@@ -67,8 +65,7 @@ flow launch:
                   (newline)))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (spawn_statement
               (flow_spawn_keyword)
@@ -128,8 +125,7 @@ flow launch:
             (repeat_body
               (let_statement
                 (flow_let_keyword)
-                (local_name
-                  (snake_name))
+                (local_name)
                 (assign_operator)
                 (spawn_statement
                   (flow_spawn_keyword)

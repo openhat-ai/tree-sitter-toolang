@@ -4102,13 +4102,8 @@
       "name": "snake_name"
     },
     "local_name": {
-      "type": "ALIAS",
-      "content": {
-        "type": "SYMBOL",
-        "name": "_variable_name"
-      },
-      "named": true,
-      "value": "snake_name"
+      "type": "SYMBOL",
+      "name": "_variable_name"
     },
     "integer_literal": {
       "type": "TOKEN",

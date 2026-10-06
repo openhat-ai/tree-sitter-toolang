@@ -32,8 +32,7 @@ flow work:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (generate_statement
               (flow_generate_keyword)
@@ -79,8 +78,7 @@ flow work:
                     (newline))))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (reduce_statement
               (flow_reduce_keyword)
@@ -121,8 +119,7 @@ flow work:
         (statements
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (reduce_statement
               (flow_reduce_keyword)
@@ -199,8 +196,7 @@ flow work:
               (newline)))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (invalid_flow_reserved_statement
               (flow_scatter_keyword)
@@ -209,8 +205,7 @@ flow work:
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (invalid_flow_reserved_statement
               (flow_gather_keyword)
@@ -219,8 +214,7 @@ flow work:
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (invalid_flow_reserved_statement
               (flow_storm_keyword)
@@ -229,8 +223,7 @@ flow work:
                 (newline))))
           (let_statement
             (flow_let_keyword)
-            (local_name
-              (snake_name))
+            (local_name)
             (assign_operator)
             (invalid_flow_reserved_statement
               (flow_settle_keyword)
@@ -255,8 +248,7 @@ flow work:
     (line_end
       (newline))
     (flow_let_keyword)
-    (local_name
-      (snake_name))
+    (local_name)
     (assign_operator)
     (flow_map_keyword)
     (flow_using_keyword)
