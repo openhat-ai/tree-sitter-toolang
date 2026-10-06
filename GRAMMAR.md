@@ -9,6 +9,17 @@ feature definitions rather than the current syntax reference.
 
 ## Unreleased
 
+- Require horizontal separation between adjacent words and numbers, and before
+  raw `with` references. Write `2 times`, `2 using worker`, and `with skill ./foo`
+  instead of their concatenated forms. Grammar symbols still permit compact
+  syntax such as `let h=async run worker` and `generate 2->Text:Text.`.
+  `with.reference` now starts after its required separator; its `text_line`
+  leaf no longer includes those leading spaces or tabs.
+- Missing required bodies now expose `invalid_empty_body` without consuming
+  following siblings or declarations. This is a zero-width diagnostic leaf;
+  reject it alongside other `invalid_*` nodes, even when `has_error` is false.
+  Valid-source CST nodes and fields are unchanged. Generated node metadata now
+  allows absent repeat statements and diagnostic inline bodies during recovery.
 - Match complete keywords throughout declarations and flow clauses. Text such
   as `let note = runworker` remains Content instead of invoking `worker`;
   concatenations such as `flowwork:`, `keep ifworker`, and `with skillfoo`
@@ -249,13 +260,36 @@ recognized before equal-length authored type names. Fixed-word alternatives
 use aliases of individual keyword tokens to retain leaf CST nodes; wrapping
 the entire choice in `token(...)` would bypass keyword extraction.
 
-Spaces and tabs are optional `extras` between tokens; they do not themselves
-require separation. Punctuation can delimit keywords, as in `run:` and
-`run->Text:`. The current grammar also accepts a number immediately followed
-by a keyword, as in `repeat 2times:`; keyword extraction is not a general
-mandatory-whitespace rule. Newlines, indentation, and raw text remain owned by
-the external scanner. Its ASCII word-character test uses the same continuation
-characters as the word token.
+The EBNF below omits inter-token horizontal space except at raw-text boundaries.
+Apply these rules to every structural production:
+
+- A token is indivisible. Adjacent keywords, names, or numbers require one or
+  more spaces or tabs; a newline cannot substitute for that separator.
+  A continuous ASCII word-character sequence (`[A-Za-z0-9_]+`) cannot be split
+  to satisfy a production: `runworker`, `job2`, and `2times` remain whole.
+  This does not broaden the valid name or integer patterns above.
+- Independent grammar symbols delimit tokens and allow optional spaces or tabs
+  on either side. Examples: `flow work(input?:Text)->Text[]:`,
+  `let h=async run worker`, `generate 2->Text:Text.`, and `run worker# Note.`.
+  Delimiting tokens does not make an otherwise invalid production legal.
+- Compound symbols stay contiguous: `->`, `+=`, `-=`, and `[]` cannot become
+  `- >`, `+ =`, `- =`, or `[ ]`. `Text []` is valid. Parentheses are separate
+  tokens, so `( )` is valid. Comment markers `#@`, `##`, `##!`, and `#!` also
+  keep their spelling; separating them may introduce a different comment kind.
+- Punctuation inside a name or reference is part of that token: `my-skill` and
+  `ns::flow:work` do not allow internal whitespace. A raw `with` reference needs
+  an explicit separator after its kind: `with skill ./foo` is valid;
+  `with skill./foo` is invalid because `.` is reference text, not a delimiter.
+- Once a production selects Content, its interior remains literal. For example,
+  `let text = 2times runworker` is text. Reserved operation heads still select
+  syntax at the boundaries described below.
+
+Tree-sitter's horizontal `extras` handle optional spacing. Required separators
+use hidden rules. The external scanner checks the complete right boundary of
+integer tokens without consuming punctuation; all counts, windows, lanes, and
+numeric directives share that check. Integer nodes remain leaves, including
+leading-zero and singular/plural forms. Newlines, indentation, and raw text
+remain owned by the external scanner. No whitespace helper appears in the CST.
 
 At flow statement and named-let value boundaries, complete reserved operation
 words select syntax before the free-form text alternative. Thus `runworker`
@@ -347,8 +381,10 @@ valid; do not replace marker-like strings inside literal prompts or history.
   a required body. They cannot make an empty block borrow an outer statement.
   Cap/job bodies remain optional; `pass` is allowed only in agic/flow bodies.
 - Any positive indentation width is supported. Tabs advance to eight-column
-  stops. Do not mix spaces and tabs in structural indentation or interchange
-  their spellings at the same structural level. Form feed is not indentation.
+  stops. A structural prefix cannot mix spaces and tabs, and siblings cannot
+  interchange their spellings at the same baseline. Different nested levels
+  may use different styles; there is no whole-file style restriction.
+  Form feed is not indentation.
 - Explicit multiline text establishes its own baseline. Deeper Markdown
   indentation, keywords, and `#`/`##` lines are literal content. Dedenting below
   the text baseline ends the text block. Relative indentation and source bytes
@@ -357,9 +393,26 @@ valid; do not replace marker-like strings inside literal prompts or history.
   at the same indentation; blank lines and ordinary comments detach it.
 - Malformed entries remain invalid during recovery. Unexpected content is
   contained to its physical line so it cannot borrow tokens from a later header.
+- A missing required body emits `invalid_empty_body` at the next substantive
+  line or EOF. It opens no indentation frame and consumes no following source.
+  Structural and text bodies share this recovery rule. Empty optional cap/job
+  bodies stay valid; indented Markdown remains Content in explicit text bodies.
+  Directives alone do not satisfy a flow's statements, `until` alone does not
+  satisfy a repeat's statements, and `from` alone does not supply reducer text;
+  these incomplete bodies use the same diagnostic.
+- EOF can finish a real line and close open bodies; it cannot supply body
+  content. Scanner state is serialized completely. Input exceeding its capacity
+  is rejected, never silently truncated. With Tree-sitter's 1024-byte buffer,
+  168 frames fit, including the root and any structural or text-mode frames;
+  this is not a uniform source-nesting limit.
 
 The productions below omit the hidden layout tokens. These rules apply to
 all declaration bodies, nested repeat bodies, and multiline text consumers.
+Invalid recovery nodes are not alternatives in the source-language EBNF. For
+example, an empty repeat retains `repeat_statement.body: repeat_body` containing
+`invalid_empty_body`; the following sibling remains outside that body. The
+generated `repeat_body.statement` field is optional only to represent this
+diagnostic state. Every valid repeat still requires an ordinary statement.
 
 ## Types
 
@@ -391,7 +444,7 @@ item ::= with | struct | psyche | skill | service | prompt | task | chore
 ## With
 
 ```ebnf
-with ::= "with" cap_kind text_line line_end
+with ::= "with" cap_kind horizontal_space text_line line_end
 cap_kind ::= "psyche" | "skill" | "service" | "prompt"
 ```
 

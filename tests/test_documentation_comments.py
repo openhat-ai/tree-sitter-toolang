@@ -232,7 +232,7 @@ def test_new_module_docs_cannot_interrupt_a_continuing_body():
 @pytest.mark.parametrize("kind", ["flow", "agic", "struct"])
 def test_documentation_does_not_fill_required_bodies(kind, comment):
     name = "Work" if kind == "struct" else "work"
-    assert parse(f"{kind} {name}:\n{comment}\n").has_error
+    assert not valid(parse(f"{kind} {name}:\n{comment}\n"))
 
 
 @pytest.mark.parametrize(

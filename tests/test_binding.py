@@ -4,7 +4,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations
+from test_layout_support import declarations, valid
 
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
@@ -26,6 +26,7 @@ FIXTURE_NAMES = (
     "script_agics.too",
     "syntax_variants.too",
     "with_caps.too",
+    "whitespace.too",
     "repeat_comments.too",
     "flexible_repeat.too",
     "unified_blocks.too",
@@ -581,9 +582,9 @@ def test_flow_pass_is_required_for_empty_body_and_must_be_last():
     trailing = b"flow bad:\n  pass\n  run next\n"
     nested_empty = b"flow bad:\n  run -> Answer:\n"
 
-    assert parser.parse(empty).root_node.has_error is True
+    assert not valid(parser.parse(empty).root_node)
     assert parser.parse(trailing).root_node.has_error is True
-    assert parser.parse(nested_empty).root_node.has_error is True
+    assert not valid(parser.parse(nested_empty).root_node)
 
 
 def test_empty_text_blocks_are_rejected():
@@ -595,7 +596,7 @@ def test_empty_text_blocks_are_rejected():
         b"agic bad:\n  user:\n",
         b"flow bad:\n  run:\n",
     ):
-        assert parser.parse(source).root_node.has_error is True, source
+        assert not valid(parser.parse(source).root_node), source
 
 
 def test_kitchen_sink_agic_signature_directives_and_blocks():

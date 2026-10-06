@@ -34,6 +34,10 @@ enum Token {
   OPERATION_BINDING_START,
   RESERVED_BINDING_START,
   VARIABLE_NAME,
+  INVALID_EMPTY_BODY,
+  INTEGER_LITERAL,
+  ONE_INTEGER_LITERAL,
+  OTHER_INTEGER_LITERAL,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -184,6 +188,34 @@ static void skip_indentation(TSLexer *lexer) {
   while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
     lexer->advance(lexer, true);
   }
+}
+
+// Integers need the same complete-word boundary as keywords. Checking the
+// following character without consuming it preserves adjacent punctuation.
+static bool scan_integer(Scanner *scanner, TSLexer *lexer, const bool *valid) {
+  skip_indentation(lexer);
+  if (lexer->lookahead < '0' || lexer->lookahead > '9') {
+    return false;
+  }
+  unsigned value = 0; // Only zero, one, or greater-than-one matters; never overflow.
+  do {
+    if (value < 2) {
+      value = value * 10 + (unsigned)(lexer->lookahead - '0');
+    }
+    advance(lexer);
+  } while (lexer->lookahead >= '0' && lexer->lookahead <= '9');
+  if (word_character(lexer->lookahead)) {
+    return false;
+  }
+  enum Token token = value == 1 ? ONE_INTEGER_LITERAL : OTHER_INTEGER_LITERAL;
+  if (valid[INTEGER_LITERAL]) {
+    token = INTEGER_LITERAL;
+  }
+  if (!valid[token]) {
+    return false;
+  }
+  lexer->mark_end(lexer);
+  return emit(scanner, lexer, token);
 }
 
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
@@ -348,6 +380,13 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
+  if (!at_start && (valid[INTEGER_LITERAL] || valid[ONE_INTEGER_LITERAL] ||
+                    valid[OTHER_INTEGER_LITERAL])) {
+    skip_indentation(lexer);
+    if (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+      return scan_integer(scanner, lexer, valid);
+    }
+  }
   if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
                     valid[RESERVED_BINDING_START] || valid[VARIABLE_NAME])) {
     // A let value may start on the next line. Leave newline/EOF handling below
@@ -361,6 +400,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   lexer->mark_end(lexer);
   Indentation indent = indentation(lexer);
   Frame frame = scanner->frames[scanner->depth - 1];
+
+  // Diagnose an absent body before the internal lexer consumes the next
+  // sibling's first word. No layout frame is opened for a missing body.
+  bool opening_body = valid[INDENT] || valid[TEXT_INDENT] || valid[REDUCE_INDENT];
+  if (valid[INVALID_EMPTY_BODY] && !scanner->line_started &&
+      (lexer->eof(lexer) || (at_start &&
+       (indent.column < frame.column || (opening_body && indent.column == frame.column)) &&
+       lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
+    return emit(scanner, lexer, INVALID_EMPTY_BODY);
+  }
 
   if (lexer->eof(lexer)) {
     if (valid[NEWLINE] && scanner->line_started && !scanner->eof_newline) {
@@ -459,6 +508,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[INVALID_EMPTY_BODY] && valid[REDUCE_TEXT_START] &&
+      !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
+    return emit(scanner, lexer, INVALID_EMPTY_BODY);
+  }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
       strcmp(word, "from") != 0) {
     return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);

@@ -16,6 +16,8 @@ module.exports = grammar({
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
     $._reserved_binding_start, $._variable_name,
+    $.invalid_empty_body,
+    $.integer_literal, $._one_integer_literal, $._other_integer_literal,
   ],
   rules: {
     source_file: ($) =>
@@ -63,6 +65,7 @@ module.exports = grammar({
       seq(
         field("keyword", $.with_keyword),
         field("kind", $._cap_kind),
+        $._required_space,
         field("reference", $.text_line),
         $.line_end,
       ),
@@ -207,9 +210,10 @@ module.exports = grammar({
       )),
     text_body: ($) => seq(
       repeat($.blank_line),
-      $._text_indent,
-      repeat1(choice($.text_body_line, $.blank_line)),
-      $._dedent,
+      choice(
+        seq($._text_indent, repeat1(choice($.text_body_line, $.blank_line)), $._dedent),
+        $.invalid_empty_body,
+      ),
     ),
     text_body_line: ($) => seq(field("content", $.indented_raw_text), $.newline),
 
@@ -259,7 +263,7 @@ module.exports = grammar({
     flow_body: ($) =>
       structuralBody($,
         choice(
-          seq($._directives, $.statements),
+          seq($._directives, choice($.statements, $.invalid_empty_body)),
           $.statements,
           $._pass_statement,
         ),
@@ -436,6 +440,7 @@ module.exports = grammar({
     generate_statement: ($) =>
       seq(
         $.flow_generate_keyword,
+        $._required_space,
         field("count", $.integer_literal),
         $._runnable_complements,
       ),
@@ -449,19 +454,28 @@ module.exports = grammar({
         prec.right(seq($.flow_reduce_keyword,
           field("runnable", alias($._reduce_inline_block, $.inline_agic)),
           optional($._from_complement), repeat($._trivia), $._dedent)),
+        seq($.flow_reduce_keyword,
+          field("runnable", alias($._reduce_empty_block, $.inline_agic))),
       ),
     _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
       $.colon, field("body", alias($._reduce_line, $.text_inline)),
     ),
     _reduce_line: ($) => seq($.text_line, $.line_end),
-    _reduce_inline_block: ($) => seq(
+    _reduce_block_header: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, $.line_end, repeat($._trivia), $._reduce_indent,
+      $.colon, $.line_end, repeat($._trivia),
+    ),
+    _reduce_inline_block: ($) => seq(
+      $._reduce_block_header, $._reduce_indent,
       field("body", alias($._reduce_text_body, $.text_body)),
     ),
-    _reduce_text_body: ($) => seq(
-      $._reduce_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent,
+    _reduce_empty_block: ($) => seq(
+      $._reduce_block_header, field("body", $.invalid_empty_body),
+    ),
+    _reduce_text_body: ($) => choice(
+      seq($._reduce_text_start, repeat1(choice($.text_body_line, $.blank_line)), $._dedent),
+      $.invalid_empty_body,
     ),
     _from_complement: ($) => seq(
       $._from_start, $.flow_from_keyword, $.colon, field("from", $.text_inline),
@@ -555,6 +569,7 @@ module.exports = grammar({
     _lanes_complement: ($) =>
       seq(
         $.flow_in_keyword,
+        $._required_space,
         choice(
           seq(
             field("lanes", alias($._one_integer_literal, $.integer_literal)),
@@ -584,14 +599,16 @@ module.exports = grammar({
         $._repeat_statements,
         optional(seq(field("until", $.until_clause), repeat($._trivia), optional($._repeat_statements))),
       ),
-      seq(field("until", $.until_clause), repeat($._trivia), $._repeat_statements),
+      seq(field("until", $.until_clause), repeat($._trivia),
+        choice($._repeat_statements, $.invalid_empty_body)),
     )),
     _repeat_statements: ($) => prec.right(seq(
       field("statement", $._flow_statement),
       repeat(choice(field("statement", $._flow_statement), $._trivia)),
     )),
     _window_complement: ($) => seq(
-      $.flow_windowing_keyword, field("window", $.integer_literal),
+      $.flow_windowing_keyword,
+      $._required_space, field("window", $.integer_literal),
     ),
     _repeat_count_complement: ($) =>
       choice(
@@ -633,14 +650,12 @@ module.exports = grammar({
     position: ($) =>
       seq(
         field("side", choice($.flow_first_keyword, $.flow_last_keyword)),
+        $._required_space,
         field("count", $.integer_literal),
       ),
     runnable_name: ($) => $._identifier,
     agent_name: ($) => $._identifier,
     local_name: ($) => $._variable_name,
-    integer_literal: () => token(/\d+/),
-    _one_integer_literal: () => token(/0*1/),
-    _other_integer_literal: () => token(/0*(0|[2-9]|[1-9][0-9]+)/),
 
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_directive_key),
@@ -821,7 +836,10 @@ module.exports = grammar({
 });
 
 function structuralBody($, content) {
-  return prec.right(seq(repeat($._trivia), $._indent, content, $._dedent));
+  return prec.right(seq(repeat($._trivia), choice(
+    seq($._indent, content, $._dedent),
+    $.invalid_empty_body,
+  )));
 }
 
 function paragraph($, line) {

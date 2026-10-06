@@ -6,7 +6,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations
+from test_layout_support import declarations, valid as is_valid
 
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
@@ -64,9 +64,7 @@ def _assert_invalid_flow_statement(parser: Parser, statement: str) -> None:
     source = f"flow bad:\n  {statement}\n".encode()
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error or _descendants(
-        tree.root_node, "invalid_flow_reserved_statement"
-    ), statement
+    assert not is_valid(tree.root_node), statement
     assert not _descendants(tree.root_node, "implicit_run_statement"), statement
 
 
@@ -727,4 +725,4 @@ def test_repeat_comments_do_not_replace_required_statements(header):
     source = f"flow research:\n  {header}\n    ## No executable body.\n".encode()
     root = _parser().parse(source).root_node
 
-    assert root.has_error or _descendants(root, "invalid_flow_reserved_statement")
+    assert not is_valid(root)

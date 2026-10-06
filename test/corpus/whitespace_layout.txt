@@ -1,0 +1,242 @@
+============================================================
+Horizontal whitespace and compact symbol boundaries
+============================================================
+with skill ./skills/review
+
+flow work(input?:Text,count:Number)->Text[]:
+  models+=fast
+  tools-=slow
+  hands=ns::flow:worker
+  lanes=2
+  let job=async run worker
+  let result=await job
+  generate 2->Text:Generate text.
+  map in 2 lanes using worker
+  repeat 2 times windowing 1:
+    run worker# Comment.
+  let text=2times runworker skill./foo
+
+flow empty( )->Text []:
+  pass
+
+---
+
+(source_file
+  (with
+    (with_keyword)
+    (cap_kind)
+    (text_line)
+    (line_end
+      (newline)))
+  (blank_line)
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (params
+      (lparen)
+      (param
+        (param_name)
+        (optional_marker)
+        (colon)
+        (type
+          (builtin_type)))
+      (comma)
+      (param
+        (param_name)
+        (colon)
+        (type
+          (builtin_type)))
+      (rparen))
+    (arrow)
+    (type
+      (builtin_type)
+      (array_suffix))
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (directive
+        (directive_key)
+        (assign_operator)
+        (route_value
+          (runnable_ref))
+        (line_end
+          (newline)))
+      (directive
+        (directive_key)
+        (assign_operator)
+        (integer_literal)
+        (line_end
+          (newline)))
+      (statements
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (run_statement
+            (flow_async_keyword)
+            (flow_run_keyword)
+            (runnable_name)
+            (line_end
+              (newline))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (await_statement
+            (flow_await_keyword)
+            (local_name)
+            (line_end
+              (newline))))
+        (generate_statement
+          (flow_generate_keyword)
+          (integer_literal)
+          (inline_agic
+            (arrow)
+            (type
+              (builtin_type))
+            (colon)
+            (text_inline
+              (text_line)
+              (line_end
+                (newline)))))
+        (map_statement
+          (flow_map_keyword)
+          (flow_in_keyword)
+          (integer_literal)
+          (flow_lanes_keyword)
+          (flow_using_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))
+        (repeat_statement
+          (flow_repeat_keyword)
+          (integer_literal)
+          (flow_times_keyword)
+          (flow_windowing_keyword)
+          (integer_literal)
+          (colon)
+          (line_end
+            (newline))
+          (repeat_body
+            (run_statement
+              (flow_run_keyword)
+              (runnable_name)
+              (line_end
+                (plain_comment)
+                (newline)))))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (text_inline
+            (text_line)
+            (line_end
+              (newline))))
+        (blank_line))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (params
+      (lparen)
+      (rparen))
+    (arrow)
+    (type
+      (builtin_type)
+      (array_suffix))
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))
+
+============================================================
+Missing bodies preserve following siblings and declarations
+============================================================
+flow first:
+  repeat:
+    ## No executable body.
+  run after_repeat
+  let value =
+  run after_text
+  reduce:
+  run after_reduce
+flow next:
+  pass
+
+---
+
+(source_file
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (statements
+        (repeat_statement
+          (flow_repeat_keyword)
+          (colon)
+          (line_end
+            (newline))
+          (repeat_body
+            (item_doc_comment
+              (comment_text))
+            (invalid_empty_body)))
+        (run_statement
+          (flow_run_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))
+        (let_statement
+          (flow_let_keyword)
+          (local_name)
+          (assign_operator)
+          (text_inline
+            (text_block
+              (line_end
+                (newline))
+              (text_body
+                (invalid_empty_body)))))
+        (run_statement
+          (flow_run_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))
+        (reduce_statement
+          (flow_reduce_keyword)
+          (inline_agic
+            (colon)
+            (line_end
+              (newline))
+            (invalid_empty_body)))
+        (run_statement
+          (flow_run_keyword)
+          (runnable_name)
+          (line_end
+            (newline))))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))

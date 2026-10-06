@@ -107,6 +107,10 @@
           "named": true
         },
         {
+          "type": "invalid_empty_body",
+          "named": true
+        },
+        {
           "type": "item_doc_comment",
           "named": true
         },
@@ -644,6 +648,10 @@
           "named": true
         },
         {
+          "type": "invalid_empty_body",
+          "named": true
+        },
+        {
           "type": "item_doc_comment",
           "named": true
         },
@@ -786,6 +794,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "invalid_empty_body",
+            "named": true
+          },
           {
             "type": "text_body",
             "named": true
@@ -2054,6 +2066,10 @@
           "named": true
         },
         {
+          "type": "invalid_empty_body",
+          "named": true
+        },
+        {
           "type": "item_doc_comment",
           "named": true
         },
@@ -2082,7 +2098,7 @@
     "fields": {
       "statement": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "ask_statement",
@@ -2167,6 +2183,10 @@
       "types": [
         {
           "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "invalid_empty_body",
           "named": true
         },
         {
@@ -2918,6 +2938,10 @@
           "named": true
         },
         {
+          "type": "invalid_empty_body",
+          "named": true
+        },
+        {
           "type": "item_doc_comment",
           "named": true
         },
@@ -3011,6 +3035,10 @@
       "types": [
         {
           "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "invalid_empty_body",
           "named": true
         },
         {
@@ -3492,6 +3520,10 @@
   },
   {
     "type": "integer_literal",
+    "named": true
+  },
+  {
+    "type": "invalid_empty_body",
     "named": true
   },
   {
