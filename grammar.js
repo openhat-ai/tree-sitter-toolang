@@ -10,7 +10,7 @@ module.exports = grammar({
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $.indented_raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._collection_binding_start, $._spawn_binding_start,
-    $._until_binding_start, $._variable_name,
+    $._reserved_binding_start, $._variable_name,
     $._async_await_binding_start,
   ],
   rules: {
@@ -281,7 +281,7 @@ module.exports = grammar({
         $.let_statement,
         $.exec_statement,
         alias($._invalid_exec_binding, $.invalid_flow_reserved_statement),
-        alias($._invalid_until_binding, $.invalid_flow_reserved_statement),
+        alias($._invalid_reserved_binding, $.invalid_flow_reserved_statement),
         alias($._invalid_named_binding, $.invalid_flow_reserved_statement),
         $._flow_operation,
         $.invalid_flow_reserved_statement,
@@ -380,11 +380,11 @@ module.exports = grammar({
       optional($.text_line),
       $.line_end,
     ),
-    _invalid_until_binding: ($) => seq(
+    _invalid_reserved_binding: ($) => seq(
       $.flow_let_keyword,
       optional(seq(field("name", $.local_name), $.assign_operator)),
-      $._until_binding_start,
-      $.flow_until_keyword,
+      $._reserved_binding_start,
+      $._reserved_binding_word,
       optional($.text_line),
       $.line_end,
     ),
@@ -428,8 +428,7 @@ module.exports = grammar({
     ))),
     await_statement: ($) => seq(
       $.flow_await_keyword,
-      // Await may read `_`; keep it unavailable as a let binding name.
-      field("handle", choice($.local_name, alias("_", $.local_name))),
+      field("handle", $.local_name),
       $.line_end,
     ),
     implicit_run_statement: ($) => paragraph($, $._implicit_run_line),
@@ -780,7 +779,7 @@ module.exports = grammar({
         $._async_await_binding_word,
         $.flow_keep_keyword, $.flow_drop_keyword, $.flow_sort_keyword, $.flow_repeat_keyword,
         $._collection_binding_word,
-        $.flow_until_keyword, $.flow_from_keyword, $.flow_windowing_keyword,
+        $._reserved_binding_word, $.flow_from_keyword, $.flow_windowing_keyword,
         $.flow_rank_keyword,
         $.flow_par_keyword,
         $.flow_top_keyword,
@@ -810,6 +809,7 @@ module.exports = grammar({
       $.flow_generate_keyword, $.flow_map_keyword, $.flow_reduce_keyword,
     ),
     _async_await_binding_word: ($) => choice($.flow_async_keyword, $.flow_await_keyword),
+    _reserved_binding_word: ($) => choice($.flow_until_keyword, "_"),
     _agic_reserved_word: ($) =>
       choice(
         $.role,

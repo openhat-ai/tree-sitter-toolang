@@ -1,7 +1,7 @@
 struct Run:
   value: Text
 
-flow launch:
+flow launch(_: Text):
   let async_note = An ordinary local.
   let await_note = Another ordinary local.
   let h = async run research # Retain the handle.
@@ -19,6 +19,7 @@ flow launch:
   let h = await h
   run:
     async and await remain literal inside explicit text.
+    _
     {{await_note}}
 
 agic research:

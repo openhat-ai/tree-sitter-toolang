@@ -218,7 +218,6 @@ flow launch:
   let x = await h
   let await h
   let h = await h
-  await _
   let await_note = await async_job
 
 ---
@@ -270,11 +269,6 @@ flow launch:
                 (snake_name))
               (line_end
                 (newline))))
-          (await_statement
-            (flow_await_keyword)
-            (local_name)
-            (line_end
-              (newline)))
           (let_statement
             (flow_let_keyword)
             (local_name
@@ -441,3 +435,58 @@ flow launch:
                 (snake_name))
               (line_end
                 (newline)))))))))
+
+==================
+Primary input cannot be an operation or await handle
+==================
+flow launch:
+  _
+  let value = _
+  await _
+  let result = await _
+  run after
+
+---
+
+(source_file
+  (item
+    (flow
+      (flow_keyword)
+      (flow_name
+        (snake_name))
+      (colon)
+      (line_end
+        (newline))
+      (flow_body
+        (statements
+          (invalid_flow_reserved_statement
+            (line_end
+              (newline)))
+          (invalid_flow_reserved_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (line_end
+              (newline)))
+          (invalid_flow_reserved_statement
+            (flow_await_keyword)
+            (text_line)
+            (line_end
+              (newline)))
+          (let_statement
+            (flow_let_keyword)
+            (local_name
+              (snake_name))
+            (assign_operator)
+            (invalid_flow_reserved_statement
+              (flow_await_keyword)
+              (text_line)
+              (line_end
+                (newline))))
+          (run_statement
+            (flow_run_keyword)
+            (runnable
+              (snake_name))
+            (line_end
+              (newline))))))))

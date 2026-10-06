@@ -1702,7 +1702,7 @@
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
-                "name": "_invalid_until_binding"
+                "name": "_invalid_reserved_binding"
               },
               "named": true,
               "value": "invalid_flow_reserved_statement"
@@ -2240,7 +2240,7 @@
         }
       ]
     },
-    "_invalid_until_binding": {
+    "_invalid_reserved_binding": {
       "type": "SEQ",
       "members": [
         {
@@ -2274,11 +2274,11 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_until_binding_start"
+          "name": "_reserved_binding_start"
         },
         {
           "type": "SYMBOL",
-          "name": "flow_until_keyword"
+          "name": "_reserved_binding_word"
         },
         {
           "type": "CHOICE",
@@ -2646,22 +2646,8 @@
           "type": "FIELD",
           "name": "handle",
           "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "local_name"
-              },
-              {
-                "type": "ALIAS",
-                "content": {
-                  "type": "STRING",
-                  "value": "_"
-                },
-                "named": true,
-                "value": "local_name"
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "local_name"
           }
         },
         {
@@ -5100,7 +5086,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "flow_until_keyword"
+          "name": "_reserved_binding_word"
         },
         {
           "type": "SYMBOL",
@@ -5299,6 +5285,19 @@
         {
           "type": "SYMBOL",
           "name": "flow_await_keyword"
+        }
+      ]
+    },
+    "_reserved_binding_word": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "flow_until_keyword"
+        },
+        {
+          "type": "STRING",
+          "value": "_"
         }
       ]
     },
@@ -5530,7 +5529,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_until_binding_start"
+      "name": "_reserved_binding_start"
     },
     {
       "type": "SYMBOL",

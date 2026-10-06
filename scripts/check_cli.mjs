@@ -43,6 +43,9 @@ deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, 
   },
 });
 deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
+deepStrictEqual(nodeTypes.find(node => node.type === "local_name").children, {
+  multiple: false, required: true, types: [{ type: "snake_name", named: true }],
+});
 
 const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
 deepStrictEqual(Object.keys(repeatFields).sort(), ["body", "count", "window"]);

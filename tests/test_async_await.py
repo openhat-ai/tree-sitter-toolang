@@ -63,7 +63,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
 
 
 @pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
-@pytest.mark.parametrize("handle", ["h", "_", "missing_handle", "async_job", "await_job", "spawn_job", "run_job"])
+@pytest.mark.parametrize("handle", ["h", "missing_handle", "async_job", "await_job", "spawn_job", "run_job"])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
 @pytest.mark.parametrize("nested", [False, True])
 def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, nested):
@@ -152,7 +152,7 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
     "run async research", "run research async",
     "await", "await # Missing handle.", "await h other", "await h, other",
     "await h.id", "await h()", "await (h)", "await [h]", "await {{h}}",
-    "await 42", 'await "h"', "await H", "await _h", "await _1",
+    "await 42", 'await "h"', "await H", "await _", "await _h", "await _1",
     "await h -> Text", "await h: Result.", "await h\n    Result.",
     "await h in 2 lanes", "await h timeout 2", "await async run research",
     "await spawn research", "await spawn: Research.", "await spawn -> Text: Research.",

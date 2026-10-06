@@ -17,12 +17,17 @@ feature definitions rather than the current syntax reference.
   Await blocks are excluded.
 - `run_statement` gains an optional `async: flow_async_keyword` field; existing
   `runnable` and `agic` fields are unchanged. `await_statement.handle` reuses
-  `local_name` for a non-keyword variable name or the await-only `_` alias.
+  `local_name` for a non-keyword variable name. Await requires an explicitly
+  retained named handle; `await _` is invalid in every binding form.
 - Complete lowercase `async` and `await` now select syntax at flow statement
   and same-line let-value boundaries. Malformed uses cannot become prose.
   Move affected literal text into an explicit text body or capitalize its first
   word. Keyword prefixes, agic messages, and explicit text remain literal.
   These new keywords are also excluded from variable names.
+- Reserve `_` at flow statement and same-line let-value boundaries. Bare `_`
+  and `let x = _` are invalid; move literal `_` into an explicit text body.
+  Primary-input parameters, parameter documentation, and `{{_}}` templates
+  remain supported. `_` is not an explicit let binding destination.
 - Execution, handle validation, binding effects, and formatting require matching
   Toolang support. No built-in handle type or generic type syntax is added.
 
@@ -157,7 +162,8 @@ Variable names use exact, case-sensitive keyword membership. The keyword rules
 and reserved-word groups in `grammar.js`, including legacy words, are the source
 of truth; `src/keywords.h` is generated from them. `local_name` and named
 `param_name` use this rule and retain their `snake_name` CST child. `_` is the
-special primary-input parameter. Other identifier categories retain their rules.
+special primary-input parameter name and a reserved flow word; it is not a
+`local_name`. Other identifier categories retain their rules.
 
 ### Comments and Documentation
 
@@ -527,7 +533,7 @@ run_statement ::= "async"? "run" runnable line_end
 spawn_statement ::= "spawn" runnable line_end
                   | "spawn" inline_agic
 
-await_statement ::= "await" (local_name | "_") line_end
+await_statement ::= "await" local_name line_end
 
 seek_statement ::= "seek" agent runnable line_end
                  | "seek" agent inline_agic
@@ -601,7 +607,7 @@ _active_statement_keyword ::= "let" | "exec" | "run" | "spawn" | "seek" | "ask"
                             | "drop" | "sort" | "repeat"
 
 _reserved_statement_keyword ::= "scatter" | "storm" | "gather" | "settle"
-                              | "until" | "from" | "windowing"
+                              | "until" | "from" | "windowing" | "_"
                               | "rank" | "par" | "top" | "bottom"
                               | "think" | "use" | "thunk" | "call" | "do"
                               | "unfold" | "each" | "fold" | "head" | "tail"
@@ -641,7 +647,7 @@ Rules:
   compatible shorthand. A statement binding instead infers its value type
   from the operation result. The `text_inline` CST rule permits BODY on the
   same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form. `until`, malformed spawn, async, await, or
+  precedence over the BODY form. `_`, `until`, malformed spawn, async, await, or
   collection heads, including removed collection keywords, cannot fall back to
   same-line Content. For literal text beginning with these words, use an
   indented Content block.
@@ -674,13 +680,13 @@ Rules:
   Consumers must reject these diagnostic descendants before executing the run.
 - `await h` exposes `await_statement` with a required `handle: local_name`
   and `flow_await_keyword`. The handle name follows the same non-keyword variable
-  naming rule as a let binding, with `_` additionally allowed. Local lookup and
+  naming rule as a let binding; `_` is invalid. Local lookup and
   handle validation belong to runtime. It accepts no expressions,
   field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
   The existing `let_statement` fields distinguish the binding destination
   (`name`) from the awaited handle (`handle`) inside `statement`; no new wrapper
-  or reference node is added. Await reuses `local_name`; `_` is aliased to that
-  node only in the handle position and remains invalid as a let binding name.
+  or reference node is added. Every `local_name` retains its required
+  `snake_name` child.
   The same node represents async and spawn handles
   because their launch origin is resolved by runtime, not by await syntax.
 - `spawn` uses the same named and inline target forms as `run`, exposing a single
@@ -734,8 +740,8 @@ Rules:
   modifiers, named colon bodies, output annotations, and result bindings are
   invalid. Deeper explicit text remains literal; a baseline sibling ends it.
 - Bare flow text is shorthand for inline `run`. Every substantive physical
-  line, including a continuation, checks its first complete token. A lowercase
-  active or reserved keyword selects structural parsing; malformed syntax
+  line, including a continuation, checks its first complete token. An active
+  or reserved keyword selects structural parsing; malformed syntax
   cannot fall back to prose. Capitalize the word, avoid it, or use explicit
   `run:` text when it is intended as prose.
 - Adjacent non-keyword lines and one intervening blank line stay in the same
@@ -751,7 +757,8 @@ Rules:
   positional statement headers end at `line_end` and do not accept trailing
   prose punctuation.
 - Matching uses a complete lexical token: `run`, `run:`, and `run,` select
-  keyword parsing, while `runner` and `run_suffix` remain prose. Connector-only
+  keyword parsing, while `runner` and `run_suffix` remain prose. `_` is also
+  reserved, while `_suffix` remains prose. Connector-only
   words and declaration/directive heads are invalid at a Flow statement position.
 - `rank`, `par`, `top`, and `bottom` are reserved legacy words. `think`, `use`,
   and `thunk` remain reserved without statement syntax. A malformed line that
@@ -770,13 +777,15 @@ bindings. For async run and spawn, success means admission.
 | `let h = async run R` | Store the handle in `h`; preserve `_`. |
 | `spawn R` or `let spawn R` | Launch an independent root without retaining a handle; preserve every local. |
 | `let h = spawn R` | Store the root's handle in `h`; preserve `_`. |
-| `await h` | Write the complete result to `_`; preserve `h` when `h` is not `_`. |
-| `let x = await h` | Write the result to `x`; preserve other bindings, including `h` and `_` when distinct. |
+| `await h` | Write the complete result to `_`; preserve `h`. |
+| `let x = await h` | Write the result to `x`; preserve `_`, and also `h` if `x` differs from `h`. |
 | `let await h` | Wait and discard the result; preserve every binding. |
 | `let h = await h` | Replace `h` with its result explicitly; preserve `_`. |
 
-`await _` reads the current handle and replaces `_` on success. Named or nameless
-let can await `_` without replacing it. Explicit `let _ = ...` remains invalid.
+Await requires a named handle explicitly retained with `let`. A launch without
+a named binding cannot subsequently be awaited. `await _`, `let x = await _`,
+`let await _`, and explicit `let _ = ...` are invalid. `_` remains the implicit
+input/result slot; it is neither a handle name nor a discard placeholder.
 The same await forms and binding effects apply to async-child and spawned-root
 handles. Await reads the complete result, including arrays, and retained handles
 can be awaited repeatedly. Awaiting a spawned root does not make it a child or
