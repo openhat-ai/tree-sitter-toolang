@@ -32,6 +32,8 @@ It changes the public CST and requires a coordinated consumer migration from
   `invalid_missing_content`, or `invalid_missing_statement` without consuming
   following source or opening a synthetic indentation frame. Reject all
   `invalid_*` diagnostics even when native `has_error` is false.
+  Outer comments before a missing text value stay outside `content`; recovery
+  retains the text owner even when those comments end at EOF.
 
 ## Changes in 0.4.0-alpha.4
 
@@ -432,6 +434,8 @@ valid; do not replace marker-like strings inside literal prompts or history.
   cannot satisfy flow statements; `until` alone cannot satisfy repeat statements;
   `from` alone cannot supply inline reducer content. Indented Markdown in explicit
   text is real content, while structural comments cannot fill a required body.
+  In malformed text bodies, outer comments before the diagnostic remain trivia
+  on the owner, outside `content`. They cannot resume a text body after a dedent.
 - EOF can finish a real line and close open bodies; it cannot supply body
   content. Scanner state is serialized completely. Input exceeding its capacity
   is rejected, never silently truncated. With Tree-sitter's 1024-byte buffer,

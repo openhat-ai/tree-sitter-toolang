@@ -56,12 +56,10 @@ module.exports = grammar({
     ),
     _doc_space: () => token.immediate(/[ \t]+/),
     comment_text: () => token(/[^ \t\r\n][^\r\n]*/),
-    _trivia: ($) => choice(
-      seq($._comment_start, choice(
-        $.module_doc_comment, $.item_doc_comment, $.plain_comment, $.shebang_comment,
-      )),
-      $.blank_line,
-    ),
+    _comment: ($) => seq($._comment_start, choice(
+      $.module_doc_comment, $.item_doc_comment, $.plain_comment, $.shebang_comment,
+    )),
+    _trivia: ($) => choice($._comment, $.blank_line),
 
     with: ($) =>
       seq(
@@ -724,7 +722,13 @@ module.exports = grammar({
 function content($, name) {
   return choice(
     seq(field(name, alias($._inline_content, $.content)), $.line_end),
-    prec.right(seq($.line_end, field(name, alias($._block_content, $.content)))),
+    prec.right(seq($.line_end, choice(
+      field(name, alias($._block_content, $.content)),
+      // Outdented comments cannot fill a text value. Keep them outside content
+      // while retaining its owner and diagnostic at the next boundary or EOF.
+      seq(repeat($.blank_line), $._comment, repeat($._trivia),
+        field(name, alias($._empty_content, $.content))),
+    ))),
   );
 }
 

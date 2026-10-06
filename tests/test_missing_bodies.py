@@ -136,3 +136,58 @@ def test_required_content_after_directives_or_clauses_recovers(body, kind, newli
             if "run after" in body:
                 assert descendants(root, "run_statement")[-1].text.strip() == b"run after"
         previous = current
+
+
+@pytest.mark.parametrize("header", [
+    "context notes:", "instruct rules:",
+    "flow first:\n  run:", "flow first:\n  async run:",
+    "flow first:\n  let h = async run:", "flow first:\n  let note =",
+    "flow first:\n  spawn:", "flow first:\n  ask:", "flow first:\n  map:",
+    "agic first:\n  user:",
+    "flow first:\n  reduce using worker:\n    from:",
+    "flow first:\n  repeat:\n    run one\n    until:",
+])
+@pytest.mark.parametrize("marker", ["# Outside.", "## Documentation.", "# Outside.\n\n##! Module."])
+@pytest.mark.parametrize("ending", ["", "\n", "\nflow next:\n  pass\n"])
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_missing_content_before_outer_comments_retains_its_owner(header, marker, ending, newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    tree = parser.parse(b"")
+    previous = b""
+    malformed = header + "\n" + marker + ending
+    last_line = header.rsplit("\n", 1)[-1]
+    indent = " " * (len(last_line) - len(last_line.lstrip()) + 2)
+    repaired = header + "\n" + indent + "Literal content.\n" + marker + ending
+    for source in [malformed, repaired, malformed]:
+        current = source.encode().replace(b"\n", newline)
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        root = tree.root_node
+        assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
+        assert not root.has_error, root
+        assert valid(root) == (source == repaired)
+        assert not any(descendants(content, "plain_comment") or descendants(content, "item_doc_comment")
+                       for content in descendants(root, "content"))
+        if source == malformed:
+            diagnostic, = descendants(root, "invalid_missing_content")
+            assert diagnostic.parent.type == "content"
+            boundary = current.find(b"flow next") if "flow next" in source else len(current)
+            assert diagnostic.start_byte == diagnostic.end_byte == boundary
+        if "flow next" in source:
+            assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
+        previous = current
+
+
+@pytest.mark.parametrize("header", ["context notes:", "flow first:\n  run:", "agic first:\n  user:"])
+def test_missing_content_recovery_does_not_allow_text_to_resume_after_outer_comments(header):
+    root = parse(header + "\n# Outside.\n    Indented text.\nflow next:\n  pass\n")
+    assert not valid(root)
+    assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
+
+
+def test_missing_content_comment_fixture_retains_all_declarations():
+    root = parse((Path(__file__).parent / "fixtures/invalid/missing_content_comments.too").read_text())
+    assert not root.has_error
+    assert len(descendants(root, "invalid_missing_content")) == 3
+    assert [node.type for node in root.named_children] == ["context", "flow", "agic"]
+    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"

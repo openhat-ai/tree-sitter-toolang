@@ -254,38 +254,42 @@
         "value": "[^ \\t\\r\\n][^\\r\\n]*"
       }
     },
+    "_comment": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_comment_start"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "module_doc_comment"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "item_doc_comment"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "plain_comment"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "shebang_comment"
+            }
+          ]
+        }
+      ]
+    },
     "_trivia": {
       "type": "CHOICE",
       "members": [
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_comment_start"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "module_doc_comment"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "item_doc_comment"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "plain_comment"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "shebang_comment"
-                }
-              ]
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "_comment"
         },
         {
           "type": "SYMBOL",
@@ -1122,17 +1126,58 @@
                     "name": "line_end"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "content",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_block_content"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "content",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_block_content"
+                          },
+                          "named": true,
+                          "value": "content"
+                        }
                       },
-                      "named": true,
-                      "value": "content"
-                    }
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "blank_line"
+                            }
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "_comment"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "FIELD",
+                            "name": "content",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_empty_content"
+                              },
+                              "named": true,
+                              "value": "content"
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -1212,17 +1257,58 @@
                     "name": "line_end"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "content",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_block_content"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "content",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_block_content"
+                          },
+                          "named": true,
+                          "value": "content"
+                        }
                       },
-                      "named": true,
-                      "value": "content"
-                    }
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "blank_line"
+                            }
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "_comment"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "FIELD",
+                            "name": "content",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_empty_content"
+                              },
+                              "named": true,
+                              "value": "content"
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -2184,17 +2270,58 @@
                           "name": "line_end"
                         },
                         {
-                          "type": "FIELD",
-                          "name": "value",
-                          "content": {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_block_content"
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "value",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_block_content"
+                                },
+                                "named": true,
+                                "value": "content"
+                              }
                             },
-                            "named": true,
-                            "value": "content"
-                          }
+                            {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "REPEAT",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "blank_line"
+                                  }
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "_comment"
+                                },
+                                {
+                                  "type": "REPEAT",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_trivia"
+                                  }
+                                },
+                                {
+                                  "type": "FIELD",
+                                  "name": "value",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_empty_content"
+                                    },
+                                    "named": true,
+                                    "value": "content"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -2953,17 +3080,58 @@
                       "name": "line_end"
                     },
                     {
-                      "type": "FIELD",
-                      "name": "content",
-                      "content": {
-                        "type": "ALIAS",
-                        "content": {
-                          "type": "SYMBOL",
-                          "name": "_block_content"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "FIELD",
+                          "name": "content",
+                          "content": {
+                            "type": "ALIAS",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_block_content"
+                            },
+                            "named": true,
+                            "value": "content"
+                          }
                         },
-                        "named": true,
-                        "value": "content"
-                      }
+                        {
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "REPEAT",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "blank_line"
+                              }
+                            },
+                            {
+                              "type": "SYMBOL",
+                              "name": "_comment"
+                            },
+                            {
+                              "type": "REPEAT",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_trivia"
+                              }
+                            },
+                            {
+                              "type": "FIELD",
+                              "name": "content",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_empty_content"
+                                },
+                                "named": true,
+                                "value": "content"
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -3452,17 +3620,58 @@
                     "name": "line_end"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "from",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_block_content"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "from",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_block_content"
+                          },
+                          "named": true,
+                          "value": "content"
+                        }
                       },
-                      "named": true,
-                      "value": "content"
-                    }
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "blank_line"
+                            }
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "_comment"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "FIELD",
+                            "name": "from",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_empty_content"
+                              },
+                              "named": true,
+                              "value": "content"
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -4395,17 +4604,58 @@
                     "name": "line_end"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "content",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_block_content"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "content",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_block_content"
+                          },
+                          "named": true,
+                          "value": "content"
+                        }
                       },
-                      "named": true,
-                      "value": "content"
-                    }
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "blank_line"
+                            }
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "_comment"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "FIELD",
+                            "name": "content",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_empty_content"
+                              },
+                              "named": true,
+                              "value": "content"
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -4457,17 +4707,58 @@
                     "name": "line_end"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "content",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_block_content"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "content",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_block_content"
+                          },
+                          "named": true,
+                          "value": "content"
+                        }
                       },
-                      "named": true,
-                      "value": "content"
-                    }
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "blank_line"
+                            }
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "_comment"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "FIELD",
+                            "name": "content",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_empty_content"
+                              },
+                              "named": true,
+                              "value": "content"
+                            }
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -5091,17 +5382,58 @@
                             "name": "line_end"
                           },
                           {
-                            "type": "FIELD",
-                            "name": "content",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_block_content"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "FIELD",
+                                "name": "content",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_block_content"
+                                  },
+                                  "named": true,
+                                  "value": "content"
+                                }
                               },
-                              "named": true,
-                              "value": "content"
-                            }
+                              {
+                                "type": "SEQ",
+                                "members": [
+                                  {
+                                    "type": "REPEAT",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "blank_line"
+                                    }
+                                  },
+                                  {
+                                    "type": "SYMBOL",
+                                    "name": "_comment"
+                                  },
+                                  {
+                                    "type": "REPEAT",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_trivia"
+                                    }
+                                  },
+                                  {
+                                    "type": "FIELD",
+                                    "name": "content",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_empty_content"
+                                      },
+                                      "named": true,
+                                      "value": "content"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         ]
                       }

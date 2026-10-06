@@ -404,9 +404,13 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   // Diagnose an absent body before the internal lexer consumes the next
   // sibling's first word. No layout frame is opened for a missing body.
   bool opening_body = valid[INDENT] || valid[TEXT_INDENT] || valid[REDUCE_INDENT];
+  // A text recovery branch can consume outer trivia before requesting the
+  // missing value. It no longer offers an indent token, but still cannot take
+  // a same-level entry. Existing flow/repeat/reducer bodies can take one.
+  bool awaiting_body = opening_body || (!valid[LINE_START] && !valid[REDUCE_TEXT_START]);
   if (valid[MISSING_REQUIRED] && !scanner->line_started &&
       (lexer->eof(lexer) || (at_start &&
-       (indent.column < frame.column || (opening_body && indent.column == frame.column)) &&
+       (indent.column < frame.column || (awaiting_body && indent.column == frame.column)) &&
        lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
     return emit(scanner, lexer, MISSING_REQUIRED);
   }

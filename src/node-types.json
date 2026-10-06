@@ -174,6 +174,10 @@
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "colon",
           "named": true
         },
@@ -182,7 +186,23 @@
           "named": true
         },
         {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -398,11 +418,31 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -1055,11 +1095,31 @@
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "colon",
           "named": true
         },
         {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -1111,11 +1171,31 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -1647,11 +1727,31 @@
           "named": true
         },
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "flow_let_keyword",
           "named": true
         },
         {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -1771,6 +1871,10 @@
       "required": false,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "colon",
           "named": true
         },
@@ -1779,7 +1883,23 @@
           "named": true
         },
         {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
           "named": true
         }
       ]

@@ -1,0 +1,10 @@
+context notes:
+# No context value.
+
+flow first:
+  async run:
+  # No inline value.
+  run after
+agic chat:
+  user:
+# No message value at EOF.
