@@ -106,9 +106,9 @@ flow next:
     (colon)
     (plain_comment)
     (newline)
-    (item_doc
-      (comment_text))
     (flow_body
+      (item_doc
+        (comment_text))
       (run_statement
         (run_keyword)
         (inline_agic

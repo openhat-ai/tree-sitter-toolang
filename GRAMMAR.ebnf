@@ -97,7 +97,7 @@ _trivia ::=
   _comment | blank_line;
 
 _body_prefix ::=
-  _body_start _trivia+;
+  _body_start _trivia*;
 
 with ::=
   (* field "keyword" *) ( with_keyword ) (* field "kind" *) ( _cap_kind ) _required_space

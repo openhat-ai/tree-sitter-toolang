@@ -9,6 +9,39 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn leading_member_docs_use_the_body_baseline_and_preserve_empty_boundaries() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "flow first:\n  ## Before outer.\n# Outer.\n\n  ## First.\n    ## Deeper.\n  run one\n  ## Second.\n  run two\nprompt empty:\n## Next.\nflow next:\n  pass\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(!root.has_error());
+        let flow = root.named_child(0).unwrap();
+        let body = flow.child_by_field_name("body").unwrap();
+        assert_eq!(body.start_byte(), source.find("  ## First.").unwrap());
+        assert_eq!(body.end_byte(), source.find("prompt empty:").unwrap());
+        let mut cursor = flow.walk();
+        let outer: Vec<_> = flow
+            .named_children(&mut cursor)
+            .filter(|node| node.kind() == "item_doc")
+            .map(|node| node.utf8_text(source.as_bytes()).unwrap())
+            .collect();
+        assert_eq!(outer, ["## Before outer.\n"]);
+        let mut cursor = body.walk();
+        let docs: Vec<_> = body
+            .named_children(&mut cursor)
+            .filter(|node| node.kind() == "item_doc")
+            .map(|node| node.utf8_text(source.as_bytes()).unwrap())
+            .collect();
+        assert_eq!(docs, ["## First.\n", "## Deeper.\n", "## Second.\n"]);
+        let empty = root.named_child(1).unwrap();
+        assert!(empty.child_by_field_name("body").is_none());
+        assert_eq!(empty.end_byte(), source.find("## Next.").unwrap());
+        assert_eq!(root.named_child(2).unwrap().kind(), "item_doc");
+        assert_eq!(root.named_child(3).unwrap().kind(), "flow");
+    }
+
+    #[test]
     fn rejected_comments_pending_statements_and_until_errors_keep_their_owners() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

@@ -1,0 +1,166 @@
+==================
+Leading member documentation belongs to its body
+==================
+#@ Leading member documentation belongs to its structural body.
+struct Report:
+  ## Summary field.
+  summary: Text
+
+prompt review:
+  ## Output property.
+  output = Text
+  Review the evidence.
+
+chore review:
+  ## Schedule property.
+  schedule = daily
+  Review the latest changes.
+
+agic inspect:
+  ## Model directive.
+  models = fast
+  user: Inspect the evidence.
+
+flow work:
+  ## Before an outer comment.
+# Outer comment stays before the body.
+
+  ## First operation.
+    ## Additional operation documentation.
+  run inspect
+  repeat:
+    ## Loop operation.
+    run inspect
+    until: Ready.
+
+prompt empty:
+## Documentation remains outside an empty body.
+flow next:
+  pass
+
+---
+
+(program
+  (program_doc
+    (comment_text))
+  (struct
+    (struct_keyword)
+    (type_name)
+    (colon)
+    (newline)
+    (struct_body
+      (item_doc
+        (comment_text))
+      (field
+        (identifier)
+        (colon)
+        (type
+          (builtin_type))
+        (newline))
+      (blank_line)))
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (newline)
+    (cap_body
+      (item_doc
+        (comment_text))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (newline))
+      (content
+        (text_line)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_keyword)
+    (chore_name)
+    (colon)
+    (newline)
+    (chore_body
+      (item_doc
+        (comment_text))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (newline))
+      (content
+        (text_line)
+        (newline)
+        (blank_line))))
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (agic_body
+      (item_doc
+        (comment_text))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (newline))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (newline))
+      (blank_line)))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (item_doc
+      (comment_text))
+    (plain_comment)
+    (blank_line)
+    (flow_body
+      (item_doc
+        (comment_text))
+      (item_doc
+        (comment_text))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (item_doc
+            (comment_text))
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))
+          (until_clause
+            (until_keyword)
+            (inline_agic
+              (colon)
+              (content
+                (text_line))
+              (newline)))
+          (blank_line)))))
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (newline))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))

@@ -36,9 +36,9 @@ flow summarize:
         (repeat_keyword)
         (colon)
         (newline)
-        (item_doc
-          (comment_text))
         (repeat_body
+          (item_doc
+            (comment_text))
           (repeat_statement
             (repeat_keyword)
             (integer_literal)

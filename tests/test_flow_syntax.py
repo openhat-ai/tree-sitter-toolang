@@ -618,8 +618,12 @@ def test_repeat_leading_trivia_preserves_executable_body(
         _text(source, node.child_by_field_name("target")).strip()
         for node in statements
     ] == ["search", "summarize"]
-    assert [node.type for node in loop.named_children if node.type in trivia] == trivia
-    assert not any(node.type in trivia for node in body.named_children)
+    assert [node.type for node in loop.named_children if node.type in trivia] == [
+        kind for kind in trivia if kind == "blank_line"
+    ]
+    assert [node.type for node in body.named_children if node.type in trivia] == [
+        kind for kind in trivia if kind != "blank_line"
+    ]
     assert bool(loop.child_by_field_name("body").child_by_field_name("until")) == bool(ending)
     assert not _descendants(loop, "implicit_run_statement")
 
@@ -662,6 +666,7 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     outer = _statements(_items(root)[0])[0]
     outer_body = outer.child_by_field_name("body")
     assert [node.type for node in outer_body.named_children] == [
+        "item_doc",
         "run_statement",
         "item_doc",
         "repeat_statement",
@@ -670,6 +675,9 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     inner = outer_body.children_by_field_name("statement")[1]
     inner_body = inner.child_by_field_name("body")
     assert inner_body.type == "repeat_body"
+    assert [node.type for node in inner_body.named_children] == [
+        "plain_comment", "item_doc", "run_statement", "until_clause",
+    ]
     statements = inner_body.children_by_field_name("statement")
     assert [node.type for node in statements] == ["run_statement"]
     assert (

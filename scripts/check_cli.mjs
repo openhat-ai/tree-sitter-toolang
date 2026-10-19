@@ -183,7 +183,17 @@ try {
     METADATA_PREFIXES_FIXTURE, UNITS_AND_LANES_FIXTURE);
 
   runCli("parse", "--config-path", configPath, "--quiet",
-    join(REPO_ROOT, "tests", "fixtures", "cst_contract.too"));
+    join(REPO_ROOT, "tests", "fixtures", "cst_contract.too"),
+    join(REPO_ROOT, "tests", "fixtures", "body_documentation.too"));
+
+  const bodyDocsPath = join(configDir, "body-documentation.too");
+  writeFileSync(bodyDocsPath, "flow first:\n# Outer.\n\n  ## First.\n  run one\n  ## Second.\n  run two\nprompt empty:\n## Next.\nflow next:\n  pass\n");
+  const bodyDocs = runCli("parse", "--config-path", configPath, bodyDocsPath);
+  for (const node of ["body: (flow_body [3, 0] - [7, 0]",
+    "\n      (item_doc [3, 2] - [4, 0]", "\n      (item_doc [5, 2] - [6, 0]",
+    "\n  (prompt [7, 0] - [8, 0]", "\n  (item_doc [8, 0] - [9, 0]"]) {
+    deepStrictEqual(bodyDocs.includes(node), true, bodyDocs);
+  }
 
   const recoveryPath = join(configDir, "recovery-edges.too");
   writeFileSync(recoveryPath, "flow bad_comment:\n  run before\n  #@ Wrong scope.\n  run after\nflow missing:\n  models = fast\n## Next.\nflow bad_until:\n  repeat:\n    run worker\n    until 42\n  run after_repeat\nflow next:\n  pass\n");

@@ -68,8 +68,8 @@ flow last:
       (recall_keyword)
       (assign_operator))
     (newline)
-    (plain_comment)
     (agic_body
+      (plain_comment)
       (directive
         (directive_key)
         (directive_operator)

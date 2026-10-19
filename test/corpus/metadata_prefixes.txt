@@ -330,10 +330,10 @@ flow next:
     (colon)
     (newline)
     (blank_line)
-    (plain_comment)
-    (ERROR)
-    (blank_line)
     (flow_body
+      (plain_comment)
+      (ERROR)
+      (blank_line)
       (run_statement
         (run_keyword)
         (runnable_name)

@@ -59,7 +59,7 @@ module.exports = grammar({
       $.program_doc, $.item_doc, $.param_doc, $.plain_comment, $.shebang_comment,
     )),
     _trivia: ($) => choice($._comment, $.blank_line),
-    _body_prefix: ($) => seq($._body_start, repeat1($._trivia)),
+    _body_prefix: ($) => seq($._body_start, repeat($._trivia)),
 
     with: ($) =>
       seq(
@@ -734,9 +734,9 @@ function missing($, kind) {
 }
 
 function structuralBody($, content, indent = $._indent) {
-  // The prefix guard keeps authored leading trivia outside the body. Once a
-  // frame is open, trivia also provides a synchronization point after an error
-  // in the first entry; the real content remains required.
+  // The prefix guard leaves outer trivia outside the body. Leading member
+  // documentation enters with the body's frame, using the first real member's
+  // baseline. Trivia also synchronizes recovery before that required member.
   return prec.right(choice(
     seq(indent, repeat($._trivia), choice(content, missing($, "body")), $._dedent),
     missing($, "body"),

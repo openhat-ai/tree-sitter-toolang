@@ -87,8 +87,8 @@ flow work:
         (repeat_keyword)
         (colon)
         (newline)
-        (plain_comment)
         (repeat_body
+          (plain_comment)
           (run_statement
             (run_keyword)
             (runnable_name)

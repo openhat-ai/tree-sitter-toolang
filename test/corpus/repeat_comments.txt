@@ -28,9 +28,9 @@ flow research:
         (times_keyword)
         (colon)
         (newline)
-        (item_doc
-          (comment_text))
         (repeat_body
+          (item_doc
+            (comment_text))
           (run_statement
             (run_keyword)
             (runnable_name)
@@ -41,10 +41,10 @@ flow research:
             (repeat_keyword)
             (colon)
             (newline)
-            (plain_comment)
-            (item_doc
-              (comment_text))
             (repeat_body
+              (plain_comment)
+              (item_doc
+                (comment_text))
               (run_statement
                 (run_keyword)
                 (runnable_name)

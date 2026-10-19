@@ -1,0 +1,36 @@
+#@ Leading member documentation belongs to its structural body.
+struct Report:
+  ## Summary field.
+  summary: Text
+
+prompt review:
+  ## Output property.
+  output = Text
+  Review the evidence.
+
+chore review:
+  ## Schedule property.
+  schedule = daily
+  Review the latest changes.
+
+agic inspect:
+  ## Model directive.
+  models = fast
+  user: Inspect the evidence.
+
+flow work:
+  ## Before an outer comment.
+# Outer comment stays before the body.
+
+  ## First operation.
+    ## Additional operation documentation.
+  run inspect
+  repeat:
+    ## Loop operation.
+    run inspect
+    until: Ready.
+
+prompt empty:
+## Documentation remains outside an empty body.
+flow next:
+  pass

@@ -67,9 +67,9 @@ flow improve(_):
         (repeat_keyword)
         (colon)
         (newline)
-        (item_doc
-          (comment_text))
         (repeat_body
+          (item_doc
+            (comment_text))
           (until_clause
             (until_keyword)
             (runnable_name)

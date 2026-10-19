@@ -45,6 +45,7 @@ enum Token {
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
 enum Prefix { NONE, SPACES, TABS, MIXED };
+enum TriviaPhase { TRIVIA, BODY_BASELINE, BODY_OUTER_PREFIX };
 
 typedef struct {
   uint32_t column;
@@ -54,12 +55,14 @@ typedef struct {
 
 // The header includes the pending trivia lookahead. Refuse deeper input instead
 // of losing state during incremental parsing; each frame needs six bytes.
-#define HEADER_SIZE 15
+#define HEADER_SIZE 16
 #define MAX_FRAMES ((TREE_SITTER_SERIALIZATION_BUFFER_SIZE - HEADER_SIZE) / 6)
 
 typedef struct {
   uint32_t lines;
   uint32_t column;
+  uint8_t prefix;
+  uint8_t phase;
 } Trivia;
 
 typedef struct {
@@ -176,6 +179,9 @@ static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode
     return false;
   }
   scanner->frames[scanner->depth++] = (Frame){indent.column, indent.prefix, mode};
+  if (scanner->trivia.phase != TRIVIA) {
+    scanner->trivia = (Trivia){0};
+  }
   return emit(scanner, lexer, token);
 }
 
@@ -190,6 +196,7 @@ static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia,
     if (comment && text) {
       trivia->lines = lines;
       trivia->column = indent.column;
+      trivia->prefix = indent.prefix;
       return true;
     }
     if (comment) {
@@ -203,11 +210,45 @@ static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia,
       }
       trivia->lines = lines + comment;
       trivia->column = 0;
+      trivia->prefix = NONE;
       return true;
     }
     if (!line_end(lexer)) {
       trivia->lines = lines;
       trivia->column = indent.column;
+      trivia->prefix = indent.prefix;
+      return true;
+    }
+    if (lines == UINT32_MAX) {
+      return false;
+    }
+    lines++;
+    indent = indentation(lexer);
+  }
+}
+
+// A body is contiguous: everything through the last outer comment stays in
+// the declaration prefix. Once the member baseline is known, classify the run
+// in one more pass without storing a list of comment indentation levels.
+static bool lookahead_body_prefix(TSLexer *lexer, Indentation indent, Trivia *trivia) {
+  uint32_t lines = 0;
+  uint32_t outer_lines = 0;
+  for (;;) {
+    bool comment = lexer->lookahead == '#';
+    if (comment) {
+      if (lines == UINT32_MAX) {
+        return false;
+      }
+      if (indent.column < trivia->column) {
+        outer_lines = lines + 1;
+      }
+      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        advance(lexer);
+      }
+    }
+    if (lexer->eof(lexer) || !line_end(lexer)) {
+      trivia->lines = outer_lines;
+      trivia->phase = BODY_OUTER_PREFIX;
       return true;
     }
     if (lines == UINT32_MAX) {
@@ -222,8 +263,9 @@ static void finish_trivia_line(Scanner *scanner) {
   scanner->comment_started = false;
   scanner->doc_started = false;
   scanner->line_started = false;
-  if (scanner->trivia.lines && --scanner->trivia.lines == 0) {
-    scanner->trivia.column = 0;
+  if (scanner->trivia.lines && --scanner->trivia.lines == 0 &&
+      scanner->trivia.phase != BODY_OUTER_PREFIX) {
+    scanner->trivia = (Trivia){0};
   }
 }
 
@@ -476,12 +518,32 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
   bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
                              indent.prefix == frame.prefix;
+  bool opening_structural = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT];
+  if (at_start && !scanner->line_started && opening_structural &&
+      scanner->trivia.phase != TRIVIA && lexer->lookahead == '#') {
+    Trivia trivia = scanner->trivia;
+    if (trivia.phase == BODY_BASELINE && !lookahead_body_prefix(lexer, indent, &trivia)) {
+      return false;
+    }
+    scanner->trivia = trivia;
+    if (trivia.lines == 0) {
+      enum Token token = valid[RUNNABLE_INDENT] ? RUNNABLE_INDENT :
+                         valid[ITEM_INDENT] ? ITEM_INDENT : INDENT;
+      return push(scanner, lexer, (Indentation){trivia.column, trivia.prefix}, STRUCTURAL, token);
+    }
+    if (valid[COMMENT_START]) {
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
+    }
+    return false;
+  }
   // Resolve every pending requirement before outer comments, including an
   // already-open body that still needs a statement. Existing same-level entries
   // keep the prefix open; new bodies and values require deeper indentation.
   // Without a body-start signal, blank lines can be consumed normally before
   // inspecting the next comment, substantive line, or EOF.
   if (at_start && !scanner->line_started && !scanner->trivia.lines &&
+      scanner->trivia.phase == TRIVIA &&
       (valid[BODY_START] || valid[EMPTY_BODY] ||
        (valid[MISSING_REQUIRED] && (opening_body || lexer->lookahead == '#'))) &&
       !(lexer->lookahead == '#' && (literal || opening_text || opening_reduce || starting_reduce_text)) &&
@@ -498,6 +560,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     }
     if (trivia.column > frame.column) {
       if (valid[BODY_START] && trivia.lines) {
+        if (opening_structural) {
+          trivia.phase = BODY_BASELINE;
+        }
         scanner->trivia = trivia;
         return emit(scanner, lexer, BODY_START);
       }
@@ -726,6 +791,7 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)scanner->comment_started;
   buffer[size++] = (char)scanner->doc_started;
   buffer[size++] = (char)scanner->file_start;
+  buffer[size++] = (char)(scanner->trivia.prefix | (scanner->trivia.phase << 2));
   for (unsigned j = 0; j < 4; j++) {
     buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
   }
@@ -763,7 +829,9 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   scanner->comment_started = bytes[4];
   scanner->doc_started = bytes[5];
   scanner->file_start = bytes[6];
-  unsigned offset = 7;
+  scanner->trivia.prefix = bytes[7] & 3;
+  scanner->trivia.phase = bytes[7] >> 2;
+  unsigned offset = 8;
   for (unsigned j = 0; j < 4; j++) {
     scanner->trivia.lines |= (uint32_t)bytes[offset++] << (j * 8);
   }
