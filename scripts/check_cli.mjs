@@ -163,6 +163,8 @@ try {
         keyword: "#334455",
         "variable.parameter": "#445566",
         string: "#556677",
+        type: "#667788",
+        function: "#778899",
       },
     }),
   );
@@ -213,6 +215,19 @@ try {
     deepStrictEqual(unitsHtml.includes(`<span style='color: #334455'>${unit}</span>`), true, unitsHtml);
   }
   deepStrictEqual(unitsHtml.includes("<span style='color: #556677'>    Keep 1 lanes and 2 time in 3 lanes # literal.</span>"), true, unitsHtml);
+
+  const choresHtml = runCli("highlight", "--config-path", configPath, "--html",
+    join(REPO_ROOT, "tests", "fixtures", "chores.too"));
+  for (const expected of [
+    "<span style='color: #334455'>chore</span>",
+    "<span style='color: #778899'>review_api</span>",
+    "<span style='color: #778899'>stale-prs</span>",
+    "<span style='color: #556677'>  Review the API changes and summarize risks.</span>",
+    "<span style='color: #556677'>  Check stale PRs and report actionable items.</span>",
+  ]) {
+    deepStrictEqual(choresHtml.includes(expected), true, choresHtml);
+  }
+  deepStrictEqual(choresHtml.includes("<span style='color: #667788'>"), false, choresHtml);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {

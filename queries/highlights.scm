@@ -107,8 +107,6 @@
 (instruct
   name: (identifier) @function)
 
-(chore) @type
-
 (param
   name: (param_name) @property)
 
