@@ -55,10 +55,6 @@
             },
             {
               "type": "SYMBOL",
-              "name": "task"
-            },
-            {
-              "type": "SYMBOL",
               "name": "chore"
             },
             {
@@ -854,43 +850,6 @@
         }
       ]
     },
-    "task": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "kind",
-          "content": {
-            "type": "SYMBOL",
-            "name": "task_keyword"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "job_name"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "colon",
-          "content": {
-            "type": "SYMBOL",
-            "name": "colon"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "job_body"
-          }
-        }
-      ]
-    },
     "chore": {
       "type": "SEQ",
       "members": [
@@ -907,7 +866,7 @@
           "name": "name",
           "content": {
             "type": "SYMBOL",
-            "name": "job_name"
+            "name": "chore_name"
           }
         },
         {
@@ -923,7 +882,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "job_body"
+            "name": "chore_body"
           }
         }
       ]
@@ -932,11 +891,11 @@
       "type": "SYMBOL",
       "name": "_snake_kebab_name"
     },
-    "job_name": {
+    "chore_name": {
       "type": "SYMBOL",
       "name": "_snake_kebab_name"
     },
-    "job_body": {
+    "chore_body": {
       "type": "PREC_RIGHT",
       "value": 0,
       "content": {
@@ -5649,10 +5608,6 @@
       "type": "STRING",
       "value": "prompt"
     },
-    "task_keyword": {
-      "type": "STRING",
-      "value": "task"
-    },
     "chore_keyword": {
       "type": "STRING",
       "value": "chore"
@@ -5835,10 +5790,6 @@
         {
           "type": "SYMBOL",
           "name": "prompt_keyword"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "task_keyword"
         },
         {
           "type": "SYMBOL",

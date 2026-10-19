@@ -2,7 +2,7 @@
 const declarations = {
   with: "with_keyword", struct: "struct_keyword", psyche: "psyche_keyword",
   skill: "skill_keyword", service: "service_keyword", prompt: "prompt_keyword",
-  task: "task_keyword", chore: "chore_keyword", context: "context_keyword",
+  chore: "chore_keyword", context: "context_keyword",
   instruct: "instruct_keyword", agic: "agic_keyword", flow: "flow_keyword",
 };
 const operations = {

@@ -138,7 +138,6 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
         ("psyche reviewer:", "Review the evidence."),
         ("skill review:", "Review the evidence."),
         ("prompt review:", "Review the evidence."),
-        ("task review:", "Review the evidence."),
         ("chore review:", "Review the evidence."),
     ],
 )
@@ -326,7 +325,6 @@ def test_blank_only_explicit_text_is_invalid(suffix):
         "skill review:",
         "service search:",
         "prompt review:",
-        "task review:",
         "chore review:",
     ],
 )
@@ -366,7 +364,7 @@ def test_incremental_blank_lines_after_layout_errors_keep_the_same_owner(newline
 
 
 @pytest.mark.parametrize(
-    "kind", ["psyche", "skill", "service", "prompt", "task", "chore"]
+    "kind", ["psyche", "skill", "service", "prompt", "chore"]
 )
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):

@@ -19,10 +19,8 @@
     name: (cap_name) @name)
   (prompt
     name: (cap_name) @name)
-  (task
-    name: (job_name) @name)
   (chore
-    name: (job_name) @name)
+    name: (chore_name) @name)
   (context
     name: (identifier) @name)
   (instruct

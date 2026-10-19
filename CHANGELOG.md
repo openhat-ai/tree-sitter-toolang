@@ -14,6 +14,11 @@ This update implements the [unified grammar definition](docs/plans/grammar-contr
 It changes the public CST and requires a coordinated consumer migration from
 0.4.0-alpha.4; package versions and runtime execution are unchanged.
 
+- Remove the retired `task` declaration and its keyword; `chore` is the only
+  authored work declaration. Rename `job_name` / `job_body` to `chore_name` /
+  `chore_body`. Migrate declarations to `chore` and update CST consumers and
+  queries. `task` is an ordinary word in name/text positions; at top level it
+  is unknown syntax, with no dedicated legacy diagnostic or reservation.
 - Use leaf names/tokens and direct semantic fields. Text values are `content`
   containing `text_line` fragments; `message.role` is optional, and structural
   bodies own their entries directly. Migrate using the [CST migration](#cst-migration-from-alpha4).
@@ -56,7 +61,9 @@ It changes the public CST and requires a coordinated consumer migration from
 | `base_type → builtin_type / user_type`, `type_suffix → array_suffix` | Direct `type.base` and repeated `type.suffix` leaves. |
 | `cap_ref / property_value → text_line` | Direct `reference` / `value: text_line`. |
 | Cap properties on declaration, text-only `body: cap_body → text_body` | Structural `body: cap_body` with `property` and optional `content` fields. |
-| Job text nested under `job_body` | Direct `job_body.content: content`; properties use repeated `property` fields. |
+| `task`, `task_keyword` | Removed; migrate authored work declarations to `chore`. |
+| Chore `name: job_name` | `name: chore_name` leaf. |
+| Chore text nested under `job_body` | Direct `body: chore_body` with `content: content`; properties use repeated `property` fields. |
 | `context_body / instruct_body → text_inline` | Direct declaration `content: content`. |
 | Other text-valued `body: text_inline` | `content: content`; let retains `value`, reduce initializer retains `from`. |
 | `text_inline → text_block → text_body` | One `content` value boundary. |

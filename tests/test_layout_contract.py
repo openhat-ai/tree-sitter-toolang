@@ -46,7 +46,6 @@ def test_repeat_requires_executable_body_with_optional_bounds(
         ("skill review:", False),
         ("service search:", False),
         ("prompt review:", False),
-        ("task review:", False),
         ("chore review:", False),
     ],
 )
@@ -60,7 +59,7 @@ def test_declaration_body_optionality_at_eof_and_next_item(
     if not required:
         items = declarations(root)
         assert len(items) == (2 if ending else 1)
-        # Jobs retain a job_body wrapper even when they contain only trivia.
+        # Chores retain a chore_body node even when they contain only trivia.
         assert not descendants(items[0], "text_line")
         assert not descendants(items[0], "property")
         assert not descendants(items[0], "flow")
@@ -146,7 +145,7 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
     )
 
 
-@pytest.mark.parametrize("kind", ["agic", "prompt", "task"])
+@pytest.mark.parametrize("kind", ["agic", "prompt", "chore"])
 @pytest.mark.parametrize("word", ["run", "until", "sort", "using", "repeat"])
 def test_flow_keywords_do_not_leak_into_other_implicit_contexts(kind, word):
     text = f"{word}, literal prose in this context."

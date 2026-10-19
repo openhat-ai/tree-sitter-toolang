@@ -78,5 +78,5 @@ def edit_tree(tree, previous, current):
 
 def declarations(root):
     kinds = {"with", "struct", "psyche", "skill", "service", "prompt",
-             "task", "chore", "context", "instruct", "agic", "flow"}
+             "chore", "context", "instruct", "agic", "flow"}
     return [node for node in root.named_children if node.type in kinds]

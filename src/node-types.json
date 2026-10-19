@@ -308,7 +308,7 @@
         "required": true,
         "types": [
           {
-            "type": "job_body",
+            "type": "chore_body",
             "named": true
           }
         ]
@@ -338,12 +338,73 @@
         "required": true,
         "types": [
           {
-            "type": "job_name",
+            "type": "chore_name",
             "named": true
           }
         ]
       }
     }
+  },
+  {
+    "type": "chore_body",
+    "named": true,
+    "fields": {
+      "content": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "content",
+            "named": true
+          }
+        ]
+      },
+      "property": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "property",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
+          "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "module_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "chore_name",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "content",
@@ -1460,10 +1521,6 @@
           "named": true
         },
         {
-          "type": "task_keyword",
-          "named": true
-        },
-        {
           "type": "text_line",
           "named": true
         },
@@ -1503,67 +1560,6 @@
         ]
       }
     }
-  },
-  {
-    "type": "job_body",
-    "named": true,
-    "fields": {
-      "content": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "content",
-            "named": true
-          }
-        ]
-      },
-      "property": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "property",
-            "named": true
-          }
-        ]
-      }
-    },
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "line_end",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "job_name",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "keep_statement",
@@ -2864,10 +2860,6 @@
           "named": true
         },
         {
-          "type": "task",
-          "named": true
-        },
-        {
           "type": "with",
           "named": true
         }
@@ -3008,52 +3000,6 @@
           "named": true
         }
       ]
-    }
-  },
-  {
-    "type": "task",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "job_body",
-            "named": true
-          }
-        ]
-      },
-      "colon": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "colon",
-            "named": true
-          }
-        ]
-      },
-      "kind": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "task_keyword",
-            "named": true
-          }
-        ]
-      },
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "job_name",
-            "named": true
-          }
-        ]
-      }
     }
   },
   {
@@ -3480,10 +3426,6 @@
   },
   {
     "type": "struct_keyword",
-    "named": true
-  },
-  {
-    "type": "task_keyword",
     "named": true
   },
   {

@@ -14,9 +14,9 @@ from test_layout_support import declarations, descendants, edit_tree, fingerprin
 ROOT = Path(__file__).parents[1]
 FIXTURES = sorted((ROOT / "tests/fixtures").glob("*.too"))
 LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
-          "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
+          "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
           "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source"}
-REMOVED = {"item", "base_type", "user_type", "struct_name", "type_suffix",
+REMOVED = {"task", "task_keyword", "job_name", "job_body", "item", "base_type", "user_type", "struct_name", "type_suffix",
            "snake_name", "pascal_name", "agic_name", "flow_name", "field_name",
            "property_key", "context_name", "instruct_name", "runnable",
            "agent", "directive_op", "cap_ref", "property_value", "context_body", "instruct_body", "text_inline", "text_block",
@@ -106,7 +106,7 @@ def test_symbol_queries_capture_declaration_names_without_call_targets(filename)
         assert {(name.start_byte, name.end_byte) for name in names} == expected, path
 
 
-@pytest.mark.parametrize("kind", ["prompt", "service", "task", "chore"])
+@pytest.mark.parametrize("kind", ["prompt", "service", "chore"])
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
 def test_missing_property_values_stay_local_during_incremental_edits(kind, newline):
     parser = Parser(Language(tree_sitter_toolang.language()))

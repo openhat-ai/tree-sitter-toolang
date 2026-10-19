@@ -82,7 +82,7 @@ def test_body_fields_own_entries_directly_and_keep_source_order():
     assert valid(root), root
     for owner_kind, body_kind, fields in [
         ("skill", "cap_body", ["property", "content"]),
-        ("task", "job_body", ["property", "content"]),
+        ("chore", "chore_body", ["property", "content"]),
         ("struct", "struct_body", ["field"]),
         ("agic", "agic_body", ["directive", "message"]),
         ("flow", "flow_body", ["directive", "statement"]),
@@ -100,7 +100,7 @@ def test_body_fields_own_entries_directly_and_keep_source_order():
 
 
 @pytest.mark.parametrize("source", [
-    "skill empty:\n", "task empty:\n", "chore empty:\n  # Comment.\n",
+    "skill empty:\n", "chore empty:\n", "chore empty:\n  # Comment.\n",
     "agic configured:\n  models=fast\n", "flow empty:\n  pass\n",
 ])
 def test_optional_entries_and_explicit_pass_do_not_create_missing_diagnostics(source):

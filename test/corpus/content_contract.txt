@@ -12,9 +12,9 @@ skill sample:
   Describe the capability.
   source = literal content after the first text line
 
-task work:
+chore work:
   title = Work
-  Describe the task.
+  Describe the chore.
 
 struct Result:
   summary: Text
@@ -88,11 +88,11 @@ flow example:
         (text_line)
         (newline)
         (blank_line))))
-  (task
-    (task_keyword)
-    (job_name)
+  (chore
+    (chore_keyword)
+    (chore_name)
     (colon)
-    (job_body
+    (chore_body
       (line_end
         (newline))
       (property

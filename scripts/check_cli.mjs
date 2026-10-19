@@ -59,7 +59,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
 
 for (const name of [
   "identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
-  "agent_name", "cap_name", "job_name", "array_suffix", "builtin_type",
+  "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
   "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
 ]) {
   const node = nodeTypes.find(node => node.type === name);
@@ -108,11 +108,12 @@ deepStrictEqual(messageFields.role, {
 // Keyword-led invalid messages can omit content during recovery only.
 deepStrictEqual(messageFields.content, { ...textField, required: false });
 for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
-  ["struct_body", "field"], ["cap_body", "property"], ["job_body", "property"]]) {
+  ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
 }
 for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
-  "unroled_message", "statements", "messages", "invalid_empty_body"]) {
+  "unroled_message", "statements", "messages", "invalid_empty_body",
+  "task", "task_keyword", "job_name", "job_body"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
 }
 for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement"]) {

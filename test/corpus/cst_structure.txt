@@ -5,7 +5,7 @@ prompt broken:
   description =
 
   Body.
-task broken:
+chore broken:
   title =# A value is required.
 
   Body.
@@ -33,11 +33,11 @@ flow next:
       (content
         (text_line)
         (newline))))
-  (task
-    (task_keyword)
-    (job_name)
+  (chore
+    (chore_keyword)
+    (chore_name)
     (colon)
-    (job_body
+    (chore_body
       (line_end
         (newline))
       (ERROR

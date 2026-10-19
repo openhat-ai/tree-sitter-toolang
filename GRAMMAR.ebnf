@@ -59,8 +59,8 @@ source_file ::=
   ( _trivia | _item )*;
 
 _item ::=
-  _line_start ( with | struct | psyche | skill | service | prompt | task | chore | context |
-  instruct | agic | flow );
+  _line_start ( with | struct | psyche | skill | service | prompt | chore | context | instruct |
+  agic | flow );
 
 _inline_comment ::=
   (* token *) ( "#" ? regex "[^\\r\\n]*" ? );
@@ -148,21 +148,17 @@ cap_body ::=
 _cap_content ::=
   _cap_text_start ( _content_row | blank_line )+ _dedent;
 
-task ::=
-  (* field "kind" *) ( task_keyword ) (* field "name" *) ( job_name ) (* field "colon" *) ( colon )
-  (* field "body" *) ( job_body );
-
 chore ::=
-  (* field "kind" *) ( chore_keyword ) (* field "name" *) ( job_name ) (* field "colon" *) ( colon )
-  (* field "body" *) ( job_body );
+  (* field "kind" *) ( chore_keyword ) (* field "name" *) ( chore_name ) (* field "colon" *) ( colon
+  ) (* field "body" *) ( chore_body );
 
 cap_name ::=
   _snake_kebab_name;
 
-job_name ::=
+chore_name ::=
   _snake_kebab_name;
 
-job_body ::=
+chore_body ::=
   (* prec.right 0 *) ( line_end _trivia* ( _indent ( (* field "property" *) ( property ) | _trivia
   )* ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _cap_content ) ) )?
   _dedent )? );
@@ -597,9 +593,6 @@ service_keyword ::=
 prompt_keyword ::=
   "prompt";
 
-task_keyword ::=
-  "task";
-
 chore_keyword ::=
   "chore";
 
@@ -719,10 +712,10 @@ none_keyword ::=
 
 _flow_keyword ::=
   with_keyword | struct_keyword | psyche_keyword | skill_keyword | service_keyword | prompt_keyword
-  | task_keyword | chore_keyword | context_keyword | instruct_keyword | agic_keyword | flow_keyword
-  | flow_run_keyword | flow_seek_keyword | flow_ask_keyword | flow_generate_keyword |
-  flow_map_keyword | flow_reduce_keyword | flow_keep_keyword | flow_drop_keyword | flow_sort_keyword
-  | flow_repeat_keyword | flow_spawn_keyword | flow_await_keyword | flow_until_keyword |
+  | chore_keyword | context_keyword | instruct_keyword | agic_keyword | flow_keyword |
+  flow_run_keyword | flow_seek_keyword | flow_ask_keyword | flow_generate_keyword | flow_map_keyword
+  | flow_reduce_keyword | flow_keep_keyword | flow_drop_keyword | flow_sort_keyword |
+  flow_repeat_keyword | flow_spawn_keyword | flow_await_keyword | flow_until_keyword |
   flow_from_keyword | flow_windowing_keyword | flow_using_keyword | flow_if_keyword |
   flow_by_keyword | flow_in_keyword | flow_lane_keyword | flow_lanes_keyword |
   flow_ascending_keyword | flow_descending_keyword | flow_time_keyword | flow_times_keyword |

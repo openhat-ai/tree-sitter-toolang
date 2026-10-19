@@ -13,7 +13,6 @@
 (skill_keyword) @keyword
 (service_keyword) @keyword
 (prompt_keyword) @keyword
-(task_keyword) @keyword
 (chore_keyword) @keyword
 (context_keyword) @keyword
 (instruct_keyword) @keyword
@@ -99,11 +98,8 @@
 (prompt
   name: (cap_name) @type)
 
-(task
-  name: (job_name) @function)
-
 (chore
-  name: (job_name) @function)
+  name: (chore_name) @function)
 
 (context
   name: (identifier) @function)
@@ -111,10 +107,7 @@
 (instruct
   name: (identifier) @function)
 
-[
-  (task)
-  (chore)
-] @type
+(chore) @type
 
 (param
   name: (param_name) @property)

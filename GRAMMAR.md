@@ -60,7 +60,7 @@ conditions needed to interpret them.
 name           ::= /[a-z][a-z0-9_]*/ ;
 type_name      ::= /[A-Z][A-Za-z0-9]*/ ;
 cap_name       ::= /[a-z][a-z0-9_-]*/ ;
-job_name       ::= /[a-z][a-z0-9_-]*/ ;
+chore_name     ::= /[a-z][a-z0-9_-]*/ ;
 variable_name  ::= name ;
 parameter_name ::= variable_name | "_" ;
 integer        ::= /[0-9]+/ ;
@@ -89,7 +89,7 @@ variable exclusions, rather than reserving words in every name or text position.
 
 ```ebnf
 declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
-                      | "prompt" | "task" | "chore" | "context" | "instruct"
+                      | "prompt" | "chore" | "context" | "instruct"
                       | "agic" | "flow" ;
 operation_keyword   ::= "run" | "seek" | "ask" | "generate" | "map" | "reduce"
                       | "keep" | "drop" | "sort" | "repeat" | "spawn" | "await" ;
@@ -208,7 +208,7 @@ styles. Form feed is not indentation.
 
 Blank lines and structural comments do not establish indentation or satisfy a
 required body. The `block(P)` notation requires the entries described by `P`;
-`optional_block(P)` allows the body to be absent. Cap and job bodies are optional.
+`optional_block(P)` allows the body to be absent. Cap and chore bodies are optional.
 `pass` is accepted only as an entire agic or flow body. A directive-only agic is
 valid; a directive-only flow and a condition-only repeat are invalid.
 
@@ -300,7 +300,7 @@ are language-level validation rather than syntax restrictions.
 
 ```ebnf
 program     ::= trivia* (declaration trivia*)* ;
-declaration ::= import | struct | cap | job | context | instruct | agic | flow ;
+declaration ::= import | struct | cap | chore | context | instruct | agic | flow ;
 ```
 
 A source file is a sequence of declarations and trivia. Arbitrary top-level
@@ -372,13 +372,15 @@ prompt rewrite:
   Rewrite {{_}} in the requested {{tone}} tone.
 ```
 
-## Jobs
+## Chores
 
 ```ebnf
-job ::= ("task" | "chore") job_name ":" optional_block(definition_body) ;
+chore ::= "chore" chore_name ":" optional_block(definition_body) ;
 ```
 
-Tasks and chores use the same property-prefix/text form as caps.
+Chores use the same optional property-prefix/text form as caps. The `chore`
+node exposes `name: chore_name` and `body: chore_body`; the body has repeated
+`property` fields and optional `content`.
 
 ```too
 chore review_changes:

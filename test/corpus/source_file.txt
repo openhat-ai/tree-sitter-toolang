@@ -35,7 +35,7 @@ with prompt https://toolang.ai/review
       (newline))))
 
 ==================
-Cap And Job Items
+Cap And Chore Items
 ==================
 service github:
   protocol = http
@@ -49,7 +49,7 @@ psyche reviewer:
 prompt review:
   Review {{path}} carefully.
 
-task review_api:
+chore review_api:
   title = Review API changes
 
   Review the API changes and summarize risks.
@@ -109,11 +109,11 @@ chore stale-prs:
         (text_line)
         (newline)
         (blank_line))))
-  (task
-    (task_keyword)
-    (job_name)
+  (chore
+    (chore_keyword)
+    (chore_name)
     (colon)
-    (job_body
+    (chore_body
       (line_end
         (newline))
       (property
@@ -129,9 +129,9 @@ chore stale-prs:
         (blank_line))))
   (chore
     (chore_keyword)
-    (job_name)
+    (chore_name)
     (colon)
-    (job_body
+    (chore_body
       (line_end
         (newline))
       (property

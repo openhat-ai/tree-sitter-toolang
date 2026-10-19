@@ -33,7 +33,6 @@ module.exports = grammar({
         $.skill,
         $.service,
         $.prompt,
-        $.task,
         $.chore,
         $.context,
         $.instruct,
@@ -140,26 +139,18 @@ module.exports = grammar({
       $._dedent,
     ),
 
-    task: ($) =>
-      seq(
-        field("kind", $.task_keyword),
-        field("name", $.job_name),
-        field("colon", $.colon),
-        field("body", $.job_body),
-      ),
-
     chore: ($) =>
       seq(
         field("kind", $.chore_keyword),
-        field("name", $.job_name),
+        field("name", $.chore_name),
         field("colon", $.colon),
-        field("body", $.job_body),
+        field("body", $.chore_body),
       ),
 
     cap_name: ($) => $._snake_kebab_name,
-    job_name: ($) => $._snake_kebab_name,
+    chore_name: ($) => $._snake_kebab_name,
 
-    job_body: ($) => definitionBody($),
+    chore_body: ($) => definitionBody($),
 
     property: ($) =>
       seq(

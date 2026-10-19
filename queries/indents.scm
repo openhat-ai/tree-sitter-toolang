@@ -6,7 +6,6 @@
 (skill) @indent
 (service) @indent
 (prompt) @indent
-(task) @indent
 (chore) @indent
 (context) @indent
 (instruct) @indent

@@ -20,7 +20,7 @@ FIXTURE_NAMES = (
     "spawn.too",
     "async_await.too",
     "spawn_await.too",
-    "jobs.too",
+    "chores.too",
     "kitchen_sink.too",
     "flow_upgrade.too",
     "script_agics.too",
@@ -283,21 +283,21 @@ def test_caps_indented_fixture_covers_supported_kinds_and_metadata():
     assert "{{tone}}" in _text(source, bodies[3])
 
 
-def test_jobs_fixture_covers_task_and_chore_items():
+def test_chores_fixture_covers_one_off_and_scheduled_items():
     parser = _parser()
-    source = (FIXTURES_DIR / "jobs.too").read_bytes()
+    source = (FIXTURES_DIR / "chores.too").read_bytes()
 
     tree = parser.parse(source)
-    jobs = _items(tree.root_node)
-    bodies = [job.child_by_field_name("body") for job in jobs]
+    chores = _items(tree.root_node)
+    bodies = [chore.child_by_field_name("body") for chore in chores]
 
     assert tree.root_node.has_error is False
-    assert [job.type for job in jobs] == ["task", "chore"]
-    assert [_text(source, job.child_by_field_name("name")) for job in jobs] == [
+    assert [chore.type for chore in chores] == ["chore", "chore"]
+    assert [_text(source, chore.child_by_field_name("name")) for chore in chores] == [
         "review_api",
         "stale-prs",
     ]
-    assert all(body is not None and body.type == "job_body" for body in bodies)
+    assert all(body is not None and body.type == "chore_body" for body in bodies)
     assert "title = Review API changes" in _text(source, bodies[0])
     assert "schedule = FREQ=HOURLY;INTERVAL=6" in _text(source, bodies[1])
     assert "report actionable items" in _text(source, bodies[1])
