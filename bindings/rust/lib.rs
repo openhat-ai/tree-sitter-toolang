@@ -9,6 +9,79 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn unit_spellings_preserve_integer_fields_and_require_prefix_lanes() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for number in [
+            "0",
+            "1",
+            "01",
+            "2",
+            "0002",
+            "9999999999999999999999999999999999999999",
+        ] {
+            for unit in ["lane", "lanes"] {
+                for (head, connector) in [
+                    ("generate 3", "using"),
+                    ("map", "using"),
+                    ("keep", "if"),
+                    ("drop", "if"),
+                    ("sort ascending", "by"),
+                ] {
+                    let source =
+                        format!("flow work:\n  {head} in {number} {unit} {connector} worker\n");
+                    let tree = parser.parse(&source, None).unwrap();
+                    assert!(!tree.root_node().has_error());
+                    let statement = tree
+                        .root_node()
+                        .named_child(0)
+                        .unwrap()
+                        .child_by_field_name("body")
+                        .unwrap()
+                        .child_by_field_name("statement")
+                        .unwrap();
+                    let lanes = statement.child_by_field_name("lanes").unwrap();
+                    assert_eq!(lanes.kind(), "integer_literal");
+                    assert_eq!(lanes.utf8_text(source.as_bytes()).unwrap(), number);
+                    assert_eq!(lanes.child_count(), 0);
+                }
+            }
+            for unit in ["time", "times"] {
+                let source = format!("flow work:\n  repeat {number} {unit}:\n    run worker\n");
+                let tree = parser.parse(&source, None).unwrap();
+                assert!(!tree.root_node().has_error());
+                let statement = tree
+                    .root_node()
+                    .named_child(0)
+                    .unwrap()
+                    .child_by_field_name("body")
+                    .unwrap()
+                    .child_by_field_name("statement")
+                    .unwrap();
+                assert_eq!(
+                    statement
+                        .child_by_field_name("count")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    number
+                );
+            }
+        }
+        for statement in [
+            "keep if worker in 2 lanes",
+            "drop if worker in 1 lane",
+            "sort ascending by worker in 2 lanes",
+        ] {
+            let source = format!("flow work:\n  {statement}\n  run after\nflow next:\n  pass\n");
+            let tree = parser.parse(source, None).unwrap();
+            assert!(tree.root_node().has_error());
+            assert_eq!(tree.root_node().named_child(1).unwrap().kind(), "flow");
+            assert!(!tree.root_node().named_child(1).unwrap().has_error());
+        }
+    }
+
+    #[test]
     fn unknown_directives_fail_only_in_the_prefix() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

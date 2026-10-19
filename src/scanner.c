@@ -37,8 +37,6 @@ enum Token {
   NAMED_BINDING_START,
   MISSING_REQUIRED,
   INTEGER_LITERAL,
-  ONE_INTEGER_LITERAL,
-  OTHER_INTEGER_LITERAL,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -226,30 +224,19 @@ static void skip_indentation(TSLexer *lexer) {
 
 // Integers need the same complete-word boundary as keywords. Checking the
 // following character without consuming it preserves adjacent punctuation.
-static bool scan_integer(Scanner *scanner, TSLexer *lexer, const bool *valid) {
+static bool scan_integer(Scanner *scanner, TSLexer *lexer) {
   skip_indentation(lexer);
   if (lexer->lookahead < '0' || lexer->lookahead > '9') {
     return false;
   }
-  unsigned value = 0; // Only zero, one, or greater-than-one matters; never overflow.
   do {
-    if (value < 2) {
-      value = value * 10 + (unsigned)(lexer->lookahead - '0');
-    }
     advance(lexer);
   } while (lexer->lookahead >= '0' && lexer->lookahead <= '9');
   if (word_character(lexer->lookahead)) {
     return false;
   }
-  enum Token token = value == 1 ? ONE_INTEGER_LITERAL : OTHER_INTEGER_LITERAL;
-  if (valid[INTEGER_LITERAL]) {
-    token = INTEGER_LITERAL;
-  }
-  if (!valid[token]) {
-    return false;
-  }
   lexer->mark_end(lexer);
-  return emit(scanner, lexer, token);
+  return emit(scanner, lexer, INTEGER_LITERAL);
 }
 
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
@@ -408,11 +395,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
-  if (!at_start && (valid[INTEGER_LITERAL] || valid[ONE_INTEGER_LITERAL] ||
-                    valid[OTHER_INTEGER_LITERAL])) {
+  if (!at_start && valid[INTEGER_LITERAL]) {
     skip_indentation(lexer);
     if (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
-      return scan_integer(scanner, lexer, valid);
+      return scan_integer(scanner, lexer);
     }
   }
   if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||

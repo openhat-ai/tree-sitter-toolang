@@ -77,9 +77,9 @@ def test_token_interiors_and_required_separators_do_not_accept_newlines(source):
 
 
 @pytest.mark.parametrize("number", ["0", "00", "1", "0001", "2", "023", "9" * 100])
-def test_integer_tokens_preserve_digits_and_singular_plural_rules(number):
-    unit = "time" if int(number) == 1 else "times"
-    lane = "lane" if int(number) == 1 else "lanes"
+@pytest.mark.parametrize("unit", ["time", "times"])
+@pytest.mark.parametrize("lane", ["lane", "lanes"])
+def test_integer_tokens_preserve_digits_with_either_unit_spelling(number, unit, lane):
     root = parse(f"flow work:\n  lanes={number}\n"
                  f"  generate {number} in {number} {lane}->Text:Text.\n"
                  f"  repeat {number} {unit} windowing {number}:\n    run worker\n")
@@ -90,7 +90,7 @@ def test_integer_tokens_preserve_digits_and_singular_plural_rules(number):
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
-def test_incremental_separators_and_numeric_categories_match_fresh_parses(newline):
+def test_incremental_separators_and_unit_spellings_match_fresh_parses(newline):
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = b""
     tree = parser.parse(previous)
@@ -98,7 +98,7 @@ def test_incremental_separators_and_numeric_categories_match_fresh_parses(newlin
         ("repeat 2 times:\n    run worker", True),
         ("repeat 2times:\n    run worker", False),
         ("repeat 01 time:\n    run worker", True),
-        ("repeat 01 times:\n    run worker", False),
+        ("repeat 01 times:\n    run worker", True),
         ("repeat 02 times windowing 2:\n    run worker", True),
         ("repeat 02 times windowing2:\n    run worker", False),
         ("generate 2 using worker", True),

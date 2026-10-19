@@ -1,0 +1,363 @@
+================================================================================
+Both unit spellings and prefix lane clauses
+================================================================================
+flow units:
+  generate 0 in 1 lanes using worker
+  let result = generate 01 in 2 lane -> Text[]: Produce results.
+  map in 0 lane using worker
+  let map in 0002 lane -> Text:
+    Keep 1 lanes and 2 time in 3 lanes # literal.
+  keep in 01 lanes if worker
+  drop in 2 lane if -> Boolean: Select this item.
+  sort ascending in 2 lane by worker
+  sort descending in 1 lanes by -> Number:
+    Score 1 lanes in 2 time # literal.
+  repeat 1 times windowing 01:
+    run worker
+  let repeat 02 time:
+    run worker
+  keep first 0
+  drop last 01
+
+flow literal_units:
+  run: keep if worker in 2 lanes
+  let note = 1 lanes, 2 time, and map using worker in 3 lanes
+  map in 1 lanes: using worker in 2 lane is literal.
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (generate_statement
+        (flow_generate_keyword)
+        (integer_literal)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lanes_keyword)
+        (flow_using_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (generate_statement
+          (flow_generate_keyword)
+          (integer_literal)
+          (flow_in_keyword)
+          (integer_literal)
+          (flow_lane_keyword)
+          (inline_agic
+            (arrow)
+            (type
+              (builtin_type)
+              (array_suffix))
+            (colon)
+            (content
+              (text_line))
+            (line_end
+              (newline)))))
+      (map_statement
+        (flow_map_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lane_keyword)
+        (flow_using_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (map_statement
+          (flow_map_keyword)
+          (flow_in_keyword)
+          (integer_literal)
+          (flow_lane_keyword)
+          (inline_agic
+            (arrow)
+            (type
+              (builtin_type))
+            (colon)
+            (line_end
+              (newline))
+            (content
+              (text_line)
+              (newline)))))
+      (keep_statement
+        (flow_keep_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lanes_keyword)
+        (flow_if_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))
+      (drop_statement
+        (flow_drop_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lane_keyword)
+        (flow_if_keyword)
+        (inline_agic
+          (arrow)
+          (type
+            (builtin_type))
+          (colon)
+          (content
+            (text_line))
+          (line_end
+            (newline))))
+      (sort_statement
+        (flow_sort_keyword)
+        (flow_ascending_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lane_keyword)
+        (flow_by_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))
+      (sort_statement
+        (flow_sort_keyword)
+        (flow_descending_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lanes_keyword)
+        (flow_by_keyword)
+        (inline_agic
+          (arrow)
+          (type
+            (builtin_type))
+          (colon)
+          (line_end
+            (newline))
+          (content
+            (text_line)
+            (newline))))
+      (repeat_statement
+        (flow_repeat_keyword)
+        (integer_literal)
+        (flow_times_keyword)
+        (flow_windowing_keyword)
+        (integer_literal)
+        (colon)
+        (line_end
+          (newline))
+        (repeat_body
+          (run_statement
+            (flow_run_keyword)
+            (runnable_name)
+            (line_end
+              (newline)))))
+      (let_statement
+        (flow_let_keyword)
+        (repeat_statement
+          (flow_repeat_keyword)
+          (integer_literal)
+          (flow_time_keyword)
+          (colon)
+          (line_end
+            (newline))
+          (repeat_body
+            (run_statement
+              (flow_run_keyword)
+              (runnable_name)
+              (line_end
+                (newline))))))
+      (keep_statement
+        (flow_keep_keyword)
+        (position
+          (flow_first_keyword)
+          (integer_literal))
+        (line_end
+          (newline)))
+      (drop_statement
+        (flow_drop_keyword)
+        (position
+          (flow_last_keyword)
+          (integer_literal))
+        (line_end
+          (newline)))
+      (blank_line)))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (run_statement
+        (flow_run_keyword)
+        (inline_agic
+          (colon)
+          (content
+            (text_line))
+          (line_end
+            (newline))))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (map_statement
+        (flow_map_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lanes_keyword)
+        (inline_agic
+          (colon)
+          (content
+            (text_line))
+          (line_end
+            (newline)))))))
+
+================================================================================
+Suffix lanes are rejected without losing following source
+================================================================================
+flow work:
+  keep if worker in 2 lanes
+  drop if worker in 1 lane
+  sort ascending by worker in 2 lanes
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (keep_statement
+        (flow_keep_keyword)
+        (flow_if_keyword)
+        (runnable_name)
+        (ERROR)
+        (line_end
+          (newline)))
+      (drop_statement
+        (flow_drop_keyword)
+        (flow_if_keyword)
+        (runnable_name)
+        (ERROR)
+        (line_end
+          (newline)))
+      (sort_statement
+        (flow_sort_keyword)
+        (flow_ascending_keyword)
+        (flow_by_keyword)
+        (runnable_name)
+        (ERROR)
+        (line_end
+          (newline)))
+      (run_statement
+        (flow_run_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))
+
+================================================================================
+Repeat spelling is independent of count and window value
+================================================================================
+flow work:
+  repeat 0 time windowing 0:
+    run worker
+  let result = repeat 01 times windowing 01:
+    run worker
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (repeat_statement
+        (flow_repeat_keyword)
+        (integer_literal)
+        (flow_time_keyword)
+        (flow_windowing_keyword)
+        (integer_literal)
+        (colon)
+        (line_end
+          (newline))
+        (repeat_body
+          (run_statement
+            (flow_run_keyword)
+            (runnable_name)
+            (line_end
+              (newline)))))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (repeat_statement
+          (flow_repeat_keyword)
+          (integer_literal)
+          (flow_times_keyword)
+          (flow_windowing_keyword)
+          (integer_literal)
+          (colon)
+          (line_end
+            (newline))
+          (repeat_body
+            (run_statement
+              (flow_run_keyword)
+              (runnable_name)
+              (line_end
+                (newline)))))))))
+
+================================================================================
+A lane clause stays before an inline target at EOF
+================================================================================
+flow work:
+  map in 0 lane: using worker in 3 lanes is literal.
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (map_statement
+        (flow_map_keyword)
+        (flow_in_keyword)
+        (integer_literal)
+        (flow_lane_keyword)
+        (inline_agic
+          (colon)
+          (content
+            (text_line))
+          (line_end
+            (newline)))))))
+

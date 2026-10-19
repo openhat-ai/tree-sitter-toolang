@@ -19,7 +19,7 @@ module.exports = grammar({
     $._exec_binding_start, $._operation_binding_start,
     $._restricted_binding_start, $._named_binding_start,
     $._missing_required,
-    $.integer_literal, $._one_integer_literal, $._other_integer_literal,
+    $.integer_literal,
   ],
   rules: {
     program: ($) =>
@@ -525,35 +525,21 @@ module.exports = grammar({
         ),
       ),
     _if_complements: ($) =>
-      choice(
-        seq($._named_if_complement, $.line_end),
-        seq($._lanes_complement, $._named_if_complement, $.line_end),
-        seq($._named_if_complement, $._lanes_complement, $.line_end),
-        $._inline_if_complement,
-        seq($._lanes_complement, $._inline_if_complement),
+      seq(
+        optional($._lanes_complement),
+        choice(seq($._named_if_complement, $.line_end), $._inline_if_complement),
       ),
     _by_complements: ($) =>
-      choice(
-        seq($._named_by_complement, $.line_end),
-        seq($._lanes_complement, $._named_by_complement, $.line_end),
-        seq($._named_by_complement, $._lanes_complement, $.line_end),
-        $._inline_by_complement,
-        seq($._lanes_complement, $._inline_by_complement),
+      seq(
+        optional($._lanes_complement),
+        choice(seq($._named_by_complement, $.line_end), $._inline_by_complement),
       ),
     _lanes_complement: ($) =>
       seq(
         $.flow_in_keyword,
         $._required_space,
-        choice(
-          seq(
-            field("lanes", alias($._one_integer_literal, $.integer_literal)),
-            $.flow_lane_keyword,
-          ),
-          seq(
-            field("lanes", alias($._other_integer_literal, $.integer_literal)),
-            $.flow_lanes_keyword,
-          ),
-        ),
+        field("lanes", $.integer_literal),
+        choice($.flow_lane_keyword, $.flow_lanes_keyword),
       ),
     _order_complement: ($) =>
       field("order", choice(
@@ -585,15 +571,9 @@ module.exports = grammar({
       $._required_space, field("window", $.integer_literal),
     ),
     _repeat_count_complement: ($) =>
-      choice(
-        seq(
-          field("count", alias($._one_integer_literal, $.integer_literal)),
-          $.flow_time_keyword,
-        ),
-        seq(
-          field("count", alias($._other_integer_literal, $.integer_literal)),
-          $.flow_times_keyword,
-        ),
+      seq(
+        field("count", $.integer_literal),
+        choice($.flow_time_keyword, $.flow_times_keyword),
       ),
     until_clause: ($) =>
       prec.dynamic(2, seq(

@@ -163,7 +163,7 @@ def test_readable_flow_complements_have_flat_public_fields():
         b"  run combine\n"
         b"  reduce using merge\n"
         b"  map in 2 lanes using convert\n"
-        b"  keep if useful in 2 lanes\n"
+        b"  keep in 2 lanes if useful\n"
         b"  drop in 2 lanes if duplicate\n"
         b"  sort descending in 2 lanes by score\n"
         b"  keep first 3\n"
@@ -326,17 +326,18 @@ def test_lane_clauses_precede_collection_targets_and_other_complements_keep_thei
         b"  generate 4 in 2 lanes using sample\n"
         b"  map in 2 lanes using convert\n"
         b"  keep in 2 lanes if useful\n"
-        b"  keep if useful in 2 lanes\n"
         b"  drop in 2 lanes if duplicate\n"
-        b"  drop if duplicate in 2 lanes\n"
         b"  sort descending in 2 lanes by score\n"
-        b"  sort ascending by score in 1 lane\n"
+        b"  sort ascending in 1 lane by score\n"
         b"  map in 2 lanes -> Note: Convert this item.\n"
         b"  keep in 2 lanes if -> Boolean: Check this item.\n"
         b"  sort descending in 2 lanes by -> Number: Score this item.\n"
     )
     invalid = [
         "generate in 2 lanes 4 using sample",
+        "keep if useful in 2 lanes",
+        "drop if duplicate in 2 lanes",
+        "sort ascending by score in 1 lane",
         "sort by score descending",
         "map in 2 lanes in 3 lanes using convert",
         "map using first using second",
@@ -352,7 +353,7 @@ def test_lane_clauses_precede_collection_targets_and_other_complements_keep_thei
         _assert_invalid_flow_statement(parser, statement)
 
 
-def test_literal_units_agree_with_their_numeric_values():
+def test_literal_units_accept_both_spellings_for_every_numeric_value():
     parser = _parser()
     valid = (
         b"flow valid:\n"
@@ -382,7 +383,7 @@ def test_literal_units_agree_with_their_numeric_values():
         "repeat 0 time:\n    run improve",
         "repeat 5 time:\n    run improve",
     ):
-        _assert_invalid_flow_statement(parser, statement)
+        assert is_valid(parser.parse(f"flow valid:\n  {statement}\n".encode()).root_node), statement
 
 
 def test_malformed_active_words_do_not_fall_back_to_bare_runs():
