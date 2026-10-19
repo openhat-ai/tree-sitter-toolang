@@ -1,11 +1,11 @@
 """Public comment fields, syntax errors, literal boundaries, and queries."""
 
 import pytest
-from tree_sitter import Language, Query, QueryCursor
+from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, parse, point, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, point, valid
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -24,8 +24,8 @@ from test_layout_support import descendants, parse, point, valid
         ("#@", "program_doc", None),
         ("#@ \t", "program_doc", None),
         ("#@Résumé.", "program_doc", "Résumé."),
-        ("##! Résumé.", "program_doc", "Résumé."),
-        ("\t##! Résumé.", "program_doc", "Résumé."),
+        ("##! Résumé.", "item_doc_comment", "! Résumé."),
+        ("\t##! Résumé.", "item_doc_comment", "! Résumé."),
     ],
 )
 def test_comment_kinds_fields_and_physical_ranges(line, kind, text, newline, ending):
@@ -42,6 +42,56 @@ def test_comment_kinds_fields_and_physical_ranges(line, kind, text, newline, end
     if body:
         assert body.start_byte == source.index(text.encode())
         assert body.end_byte == len(line.encode())
+
+
+@pytest.mark.parametrize("indent", ["", "  ", "\t"])
+@pytest.mark.parametrize("suffix", ["", " ", " Text.", "@param _ Text.", " @param", "! Text."])
+@pytest.mark.parametrize("ending", ["", "\n", "\r\n"])
+def test_exclamation_after_item_doc_marker_remains_text(indent, suffix, ending):
+    source = f"{indent}##!{suffix}{ending}".encode()
+    root = parse(source.decode())
+    assert valid(root), root
+    comment, = root.named_children
+    assert comment.type == "item_doc_comment"
+    assert (comment.start_byte, comment.end_byte) == (source.index(b"#"), len(source))
+    text = comment.child_by_field_name("text")
+    assert text.text == f"!{suffix}".encode()
+    assert text.start_byte == source.index(b"!")
+    assert not descendants(root, "program_doc")
+    assert not descendants(root, "param_doc_tag")
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("final_newline", [False, True])
+def test_comment_prefix_edits_preserve_kind_text_and_following_declaration(newline, final_newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    cases = [
+        ("## Note.", "item_doc_comment", b"Note."),
+        ("##! Note.", "item_doc_comment", b"! Note."),
+        ("#@ Note.", "program_doc", b"Note."),
+        ("##! @param _ Text.", "item_doc_comment", b"! @param _ Text."),
+        ("## @param _ Input.", "item_doc_comment", None),
+        ("##!", "item_doc_comment", b"!"),
+        ("## Note.", "item_doc_comment", b"Note."),
+    ]
+    for line, kind, text in cases:
+        source = f"{line}\nflow work(_: Text):\n  pass"
+        if final_newline:
+            source += "\n"
+        current = source.replace("\n", newline).encode()
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        root = tree.root_node
+        assert valid(root), root
+        assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
+        comment = root.named_children[0]
+        assert comment.type == kind
+        body = comment.child_by_field_name("text")
+        assert (body.text if body else None) == text
+        assert root.named_children[1].child_by_field_name("name").text == b"work"
+        previous = current
 
 
 @pytest.mark.parametrize(
@@ -112,9 +162,9 @@ def test_only_the_leading_exact_param_tag_is_reserved(text):
     assert not descendants(root, "param_doc_tag")
 
 
-@pytest.mark.parametrize("marker", ["#@", "##!"])
-def test_program_docs_do_not_interpret_parameter_tags(marker):
-    root = parse(f"{marker} @param _ Just text.\n")
+@pytest.mark.parametrize("ending", ["", "\n", "\r\n"])
+def test_program_docs_do_not_interpret_parameter_tags(ending):
+    root = parse(f"#@ @param _ Just text.{ending}")
     assert valid(root)
     assert (
         root.named_children[0].child_by_field_name("text").text
@@ -187,9 +237,13 @@ def test_explicit_text_preserves_markers_at_first_line_and_deeper(indent, marker
 
 
 @pytest.mark.parametrize("indent", [" ", "\t", "  \t"])
-def test_indented_new_program_marker_is_invalid_but_legacy_remains_valid(indent):
+def test_indented_program_marker_is_invalid_but_item_docs_remain_valid(indent):
     assert parse(f"{indent}#@ Program.\nflow next:\n  pass\n").has_error
-    assert valid(parse(f"{indent}##! Legacy.\nflow next:\n  pass\n"))
+    root = parse(f"{indent}##! Important.\nflow next:\n  pass\n")
+    assert valid(root)
+    comment, = descendants(root, "item_doc_comment")
+    assert comment.child_by_field_name("text").text == b"! Important."
+    assert not descendants(root, "program_doc")
 
 
 def test_packaged_queries_capture_docs_without_adding_symbols_or_injections():

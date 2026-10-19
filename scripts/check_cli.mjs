@@ -179,7 +179,7 @@ try {
     "<span style='color: #112233'>#!/usr/bin/env too</span>",
     "<span style='color: #112233'># Keep summaries short.</span>",
     "<span style='color: #223344'>#@ Research tools for collecting and summarizing evidence.</span>",
-    "<span style='color: #223344'>##! Compatible program documentation.</span>",
+    "<span style='color: #223344'>##! Important item documentation.</span>",
     "<span style='color: #223344'>## Summarize source material when a concise overview is needed.</span>",
     "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>style</span> Preferred summary style.</span>",
     "<span style='color: #556677'>    #@ Literal program marker.</span>",

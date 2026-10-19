@@ -177,7 +177,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
     assert valid(root)
     expected = []
     offset = 0
-    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "program_doc"}
+    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "item_doc_comment"}
     for line in source.splitlines(keepends=True):
         if b"#" in line:
             marker = line.lstrip().split(maxsplit=1)[0].decode()
@@ -186,7 +186,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
             )
         offset += len(line)
     comments = sorted(
-        [node for kind in kinds.values() for node in descendants(root, kind)],
+        [node for kind in set(kinds.values()) for node in descendants(root, kind)],
         key=lambda node: node.start_byte,
     )
     assert [(n.type, n.start_byte, n.end_byte) for n in comments] == expected

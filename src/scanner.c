@@ -270,26 +270,20 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   enum Token token = PLAIN_COMMENT;
   if (lexer->lookahead == '#') {
     advance(lexer);
-    if (lexer->lookahead == '!') {
+    token = ITEM_DOC_START;
+    lexer->mark_end(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
-      token = PROGRAM_DOC_START;
-      lexer->mark_end(lexer);
-    } else {
-      token = ITEM_DOC_START;
-      lexer->mark_end(lexer);
-      while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
-        advance(lexer);
-      }
-      const char *tag = "@param";
-      while (*tag && lexer->lookahead == *tag) {
-        advance(lexer);
-        tag++;
-      }
-      if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
-                    lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
-                    lexer->lookahead == '\n')) {
-        token = PARAM_ITEM_DOC_START;
-      }
+    }
+    const char *tag = "@param";
+    while (*tag && lexer->lookahead == *tag) {
+      advance(lexer);
+      tag++;
+    }
+    if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
+                  lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
+                  lexer->lookahead == '\n')) {
+      token = PARAM_ITEM_DOC_START;
     }
   } else if (lexer->lookahead == '@') {
     advance(lexer);

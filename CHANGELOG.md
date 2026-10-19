@@ -16,8 +16,12 @@ It changes the public CST and requires a coordinated consumer migration from
 
 - Rename the CST root from `source_file` to `program` and program-documentation
   nodes from `module_doc_comment` to `program_doc`. Update root checks, queries,
-  and comment consumers. The `#@` / `##!` markers, accepted source, fields, and
-  ranges are unchanged; module organization and loading remain outside syntax.
+  and comment consumers. The fields and ranges of `#@` documentation are
+  unchanged; module organization and loading remain outside syntax.
+- Recognize program documentation only with `#@`. Lines beginning `##!` are
+  ordinary item documentation, with `!` retained in the `text` field. Use `#@`
+  for program documentation and update consumers that classified these lines
+  as `program_doc`.
 - Remove the retired `task` declaration and its keyword; `chore` is the only
   authored work declaration. Rename `job_name` / `job_body` to `chore_name` /
   `chore_body`. Migrate declarations to `chore` and update CST consumers and

@@ -4,7 +4,7 @@ Comment kinds and structured parameter fields
 #!/usr/bin/env too
 # Plain.
 #@ Module.
-##! Compatible program.
+##! Important item documentation.
 ## Item.
 ## @param _ Input.
 ##@param style Preferred style.
@@ -18,7 +18,7 @@ agic(_: Text, style?: Text):
   (plain_comment)
   (program_doc
     (comment_text))
-  (program_doc
+  (item_doc_comment
     (comment_text))
   (item_doc_comment
     (comment_text))
@@ -72,7 +72,8 @@ flow:
 (program
   (item_doc_comment)
   (program_doc)
-  (program_doc)
+  (item_doc_comment
+    (comment_text))
   (item_doc_comment
     (comment_text))
   (item_doc_comment
@@ -90,14 +91,14 @@ flow:
         (newline)))))
 
 ================================================================================
-Legacy indentation, inline comments and literal markers
+Indented documentation, inline comments and literal markers
 ================================================================================
 flow work: #@ Inline plain.
-  ##! Legacy nested comment.
+  ##! Important nested comment.
   run:
     #@ Literal program marker.
     ## @param _ Literal tag.
-    ##! Literal legacy marker.
+    ##! Literal punctuation.
 #@ Next program contribution.
 flow next:
   pass
@@ -113,7 +114,7 @@ flow next:
       (plain_comment)
       (newline))
     (flow_body
-      (program_doc
+      (item_doc_comment
         (comment_text))
       (run_statement
         (flow_run_keyword)

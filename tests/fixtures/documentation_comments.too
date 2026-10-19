@@ -1,17 +1,17 @@
 #!/usr/bin/env too
 #@ Research tools for collecting and summarizing evidence.
-##! Compatible program documentation.
+##! Important item documentation.
 
 # Keep summaries short.
 ## Summarize source material when a concise overview is needed.
 ## @param _ Source material to summarize.
 ## @param style Preferred summary style.
 agic summarize(_: Text, style?: Text): # Inline annotation.
-  ##! Existing indented legacy comments remain accepted.
+  ##! Important item documentation at body indentation.
   user:
     #@ Literal program marker.
     ## @param _ Literal parameter tag.
-    ##! Literal legacy marker.
+    ##! Literal punctuation.
     Summarize {{_}}.
 
 ## Run the summary workflow.

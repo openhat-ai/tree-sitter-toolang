@@ -138,7 +138,7 @@ comment          ::= plain_comment | shebang_comment
                    | program_doc | item_doc_comment ;
 plain_comment    ::= "#" comment_text comment_end ;
 shebang_comment  ::= "#!" comment_text comment_end ;
-program_doc      ::= ("#@" | "##!") hspace? doc_text? comment_end ;
+program_doc      ::= "#@" hspace? doc_text? comment_end ;
 item_doc_comment ::= "##" hspace? (param_doc_tag | doc_text)? comment_end ;
 param_doc_tag    ::= "@param" hspace param_name hspace doc_text ;
 doc_text         ::= /[^ \t\r\n][^\r\n]*/ ;
@@ -152,9 +152,8 @@ These forms have contextual constraints:
   over `#` or `##`, subject to the position restrictions below.
 - `#!` is a shebang only at byte zero. A later or indented `#!`, including one
   after a leading BOM, is a plain comment. The interpreter text is unrestricted.
-- `#@` is program documentation only at column zero. Indented structural `#@` is
-  invalid. `##!` also introduces program documentation and is accepted in indented
-  structural positions. Program documentation never interprets parameter tags.
+- `#@` introduces program documentation at column zero. Indented structural
+  `#@` is invalid. Program documentation never interprets parameter tags.
 - `##` introduces item documentation. Consecutive lines at the item's indentation
   can document the following item. Blank lines, other comment kinds, intervening
   syntax, and scope endings interrupt attachment; consumers perform attachment.
@@ -162,7 +161,7 @@ These forms have contextual constraints:
   parameter tag. Both name and same-line description are required. A malformed
   tag cannot fall back to ordinary documentation. `@parameter`, `@param:`,
   `@return`, and `@param` later in prose remain ordinary documentation text.
-- Inline `#`, `##`, `#@`, `##!`, and `#!` all introduce plain comments where
+- Inline `#`, `##`, `#@`, and `#!` all introduce plain comments where
   `line_end` allows them. In indented explicit text, every marker is literal.
 
 Descriptions may contain Unicode, punctuation, `#`, and further `@` characters.

@@ -26,9 +26,9 @@ def test_program_root_contains_the_complete_source(source, newline):
     assert root.end_byte == len(source.encode())
 
 
-@pytest.mark.parametrize("marker", ["#@", "##!"])
-def test_program_documentation_exposes_text_without_parameter_tags(marker):
-    source = f"{marker} @param _ Program documentation.\n"
+@pytest.mark.parametrize("ending", ["", "\n", "\r\n"])
+def test_program_documentation_exposes_text_without_parameter_tags(ending):
+    source = f"#@ @param _ Program documentation.{ending}"
     root = parse(source)
     assert valid(root), root
     documentation, = descendants(root, "program_doc")
