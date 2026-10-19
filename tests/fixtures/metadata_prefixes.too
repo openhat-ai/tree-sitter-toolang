@@ -1,0 +1,48 @@
+psyche reviewer:
+  unknown = value
+
+  Review the evidence.
+  answer = literal # retained
+
+skill review:
+  description = Review evidence
+  custom = value
+
+  Review the evidence.
+  custom = literal
+
+service search:
+  transport = stdio
+  target = search-server
+  custom = value
+
+  Use the search service.
+  # Literal heading.
+
+prompt response:
+  answer = yes
+
+  Respond to the evidence.
+  answer = literal
+
+chore review_changes:
+  custom = value
+  title = Review changes
+
+  Review changes.
+  custom = literal
+
+agic summarize:
+  models = fast
+
+  # Prefix annotation.
+  recall = none
+  user: modles = literal
+  modles = literal # retained
+
+flow work:
+  tools = none
+  run: modles = literal
+  modles = literal # retained
+  repeat:
+    modles = nested literal

@@ -17,6 +17,7 @@ enum Token {
   PARAM_DOC_START,
   COMMENT_END,
   INDENT,
+  RUNNABLE_INDENT,
   DEDENT,
   LINE_START,
   DIRECTIVE_START,
@@ -121,6 +122,39 @@ static bool keyword(const char *word, const char *const *words, unsigned count) 
     }
   }
   return false;
+}
+
+static bool assignment_operator(TSLexer *lexer) {
+  while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+    advance(lexer);
+  }
+  if (lexer->lookahead == '+' || lexer->lookahead == '-') {
+    advance(lexer);
+  }
+  return lexer->lookahead == '=';
+}
+
+static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
+  unsigned length = 0;
+  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
+  while (word_character(lexer->lookahead)) {
+    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
+      identifier = false;
+    }
+    if (length + 1 < capacity) {
+      word[length++] = (char)lexer->lookahead;
+    }
+    advance(lexer);
+  }
+  word[length] = '\0';
+  return identifier;
+}
+
+static bool unknown_directive_head(TSLexer *lexer) {
+  char word[32];
+  return read_word(lexer, word, sizeof(word)) &&
+         !keyword(word, directive_keywords, sizeof(directive_keywords) / sizeof(*directive_keywords)) &&
+         assignment_operator(lexer);
 }
 
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
@@ -397,7 +431,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   // Diagnose an absent body before the internal lexer consumes the next
   // sibling's first word. No layout frame is opened for a missing body.
-  bool opening_body = valid[INDENT] || valid[TEXT_INDENT] || valid[REDUCE_INDENT];
+  bool opening_body = valid[INDENT] || valid[RUNNABLE_INDENT] ||
+                      valid[TEXT_INDENT] || valid[REDUCE_INDENT];
   // A text recovery branch can consume outer trivia before requesting the
   // missing value. It no longer offers an indent token, but still cannot take
   // a same-level entry. Existing flow/repeat/reducer bodies can take one.
@@ -483,22 +518,20 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (!scanner->line_started && opening_reduce) {
     return push(scanner, lexer, indent, STRUCTURAL, REDUCE_INDENT);
   }
+  if (!scanner->line_started && valid[RUNNABLE_INDENT] && indent.column > frame.column) {
+    // Reject an unknown header before opening a layout frame that recovery
+    // could abandon. A later valid body entry can still establish the frame.
+    if (unknown_directive_head(lexer)) {
+      return false;
+    }
+    return push(scanner, lexer, indent, STRUCTURAL, RUNNABLE_INDENT);
+  }
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {
     return push(scanner, lexer, indent, STRUCTURAL, INDENT);
   }
 
-  char word[32] = {0};
-  unsigned length = 0;
-  bool property_name = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
-  while (word_character(lexer->lookahead)) {
-    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      property_name = false;
-    }
-    if (length < sizeof(word) - 1) {
-      word[length++] = (char)lexer->lookahead;
-    }
-    advance(lexer);
-  }
+  char word[32];
+  bool property_name = read_word(lexer, word, sizeof(word));
 
   if (frame.mode == REDUCE_TEXT && indent.column == frame.column &&
       strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
@@ -529,11 +562,17 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       start = UNTIL_START;
     } else if (valid[FROM_START] && strcmp(word, "from") == 0) {
       start = FROM_START;
-    } else if (valid[DIRECTIVE_START] &&
-               (strcmp(word, "recall") == 0 ||
-                keyword(word, directive_keywords,
-                        sizeof(directive_keywords) / sizeof(*directive_keywords)))) {
-      start = DIRECTIVE_START;
+    } else if (valid[DIRECTIVE_START]) {
+      bool directive = keyword(word, directive_keywords,
+                               sizeof(directive_keywords) / sizeof(*directive_keywords));
+      if (!directive && property_name && assignment_operator(lexer)) {
+        // The prefix is still open after earlier directives or trivia. This
+        // token is unavailable once a message or statement has begun.
+        return false;
+      }
+      if (directive) {
+        start = DIRECTIVE_START;
+      }
     }
     if (start != LINE_START) {
       scanner->line_started = true;

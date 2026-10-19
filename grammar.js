@@ -13,7 +13,7 @@ module.exports = grammar({
     $.newline, $.blank_line,
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._program_doc_start, $._item_doc_start, $._param_doc_start, $._comment_end,
-    $._indent, $._dedent, $._line_start, $._directive_start,
+    $._indent, $._runnable_indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $._raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
@@ -204,6 +204,7 @@ module.exports = grammar({
           $._messages,
           $._pass_statement,
         ),
+        $._runnable_indent,
       ),
 
     params: ($) =>
@@ -237,6 +238,7 @@ module.exports = grammar({
           $._statements,
           $._pass_statement,
         ),
+        $._runnable_indent,
       ),
     _statements: ($) => prec.right(seq(
       field("statement", $._flow_statement),
@@ -741,9 +743,9 @@ function missing($, kind) {
   return alias($._missing_required, $[`invalid_missing_${kind}`]);
 }
 
-function structuralBody($, content) {
+function structuralBody($, content, indent = $._indent) {
   return prec.right(seq(repeat($._trivia), choice(
-    seq($._indent, content, $._dedent),
+    seq(indent, content, $._dedent),
     missing($, "body"),
   )));
 }

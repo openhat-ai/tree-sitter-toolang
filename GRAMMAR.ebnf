@@ -32,6 +32,7 @@
   {"type":"SYMBOL","name":"_param_doc_start"},
   {"type":"SYMBOL","name":"_comment_end"},
   {"type":"SYMBOL","name":"_indent"},
+  {"type":"SYMBOL","name":"_runnable_indent"},
   {"type":"SYMBOL","name":"_dedent"},
   {"type":"SYMBOL","name":"_line_start"},
   {"type":"SYMBOL","name":"_directive_start"},
@@ -203,8 +204,9 @@ agic ::=
   type ) )? (* field "colon" *) ( colon ) line_end (* field "body" *) ( agic_body ) );
 
 agic_body ::=
-  (* prec.right 0 *) ( _trivia* ( _indent ( _directives _messages? | _messages | _pass_statement )
-  _dedent | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) );
+  (* prec.right 0 *) ( _trivia* ( _runnable_indent ( _directives _messages? | _messages |
+  _pass_statement ) _dedent | (* alias {"value":"invalid_missing_body","named":true} *) (
+  _missing_required ) ) );
 
 params ::=
   lparen ( (* field "param" *) ( param ) ( comma (* field "param" *) ( param ) )* )? rparen;
@@ -223,7 +225,7 @@ flow ::=
   type ) )? (* field "colon" *) ( colon ) line_end (* field "body" *) ( flow_body ) );
 
 flow_body ::=
-  (* prec.right 0 *) ( _trivia* ( _indent ( _directives ( _statements |
+  (* prec.right 0 *) ( _trivia* ( _runnable_indent ( _directives ( _statements |
   (* alias {"value":"invalid_missing_statement","named":true} *) ( _missing_required ) ) |
   _statements | _pass_statement ) _dedent |
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) );
@@ -847,6 +849,9 @@ _comment_end ::=
 
 _indent ::=
   ? external scanner token "_indent" ?;
+
+_runnable_indent ::=
+  ? external scanner token "_runnable_indent" ?;
 
 _dedent ::=
   ? external scanner token "_dedent" ?;

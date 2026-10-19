@@ -1,0 +1,400 @@
+================================================================================
+Open properties and irreversible body entry
+================================================================================
+psyche reviewer:
+  unknown = value
+
+  Review the evidence.
+  answer = literal # retained
+
+skill review:
+  description = Review evidence
+  custom = value
+
+  Review the evidence.
+  custom = literal
+
+service search:
+  transport = stdio
+  target = search-server
+  custom = value
+
+  Use the search service.
+  # Literal heading.
+
+prompt response:
+  answer = yes
+
+  Respond to the evidence.
+  answer = literal
+
+chore review_changes:
+  custom = value
+  title = Review changes
+
+  Review changes.
+  custom = literal
+
+agic summarize:
+  models = fast
+
+  # Prefix annotation.
+  recall = none
+  user: modles = literal
+  modles = literal # retained
+
+flow work:
+  tools = none
+  run: modles = literal
+  modles = literal # retained
+  repeat:
+    modles = nested literal
+
+---
+
+(program
+  (psyche
+    (psyche_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (skill
+    (skill_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (service
+    (service_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (cap_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_keyword)
+    (chore_name)
+    (colon)
+    (chore_body
+      (line_end
+        (newline))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (line_end
+          (newline)))
+      (blank_line)
+      (content
+        (text_line)
+        (newline)
+        (text_line)
+        (newline)
+        (blank_line))))
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (agic_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (blank_line)
+      (plain_comment)
+      (directive
+        (recall_keyword)
+        (assign_operator)
+        (recall_value
+          (none_keyword))
+        (line_end
+          (newline)))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (message
+        (content
+          (text_line)
+          (newline)
+          (blank_line)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (run_statement
+        (flow_run_keyword)
+        (inline_agic
+          (colon)
+          (content
+            (text_line))
+          (line_end
+            (newline))))
+      (implicit_run_statement
+        (content
+          (text_line)
+          (newline)))
+      (repeat_statement
+        (flow_repeat_keyword)
+        (colon)
+        (line_end
+          (newline))
+        (repeat_body
+          (implicit_run_statement
+            (content
+              (text_line)
+              (newline))))))))
+
+================================================================================
+Unknown first agic directive preserves following source
+================================================================================
+agic work:
+  modles = fast
+  models = fast
+  user: Continue.
+flow next:
+  pass
+
+---
+
+(program
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (ERROR)
+    (agic_body
+      (blank_line)
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (line_end
+          (newline)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))
+
+================================================================================
+Unknown flow directive after trivia stays invalid
+================================================================================
+flow work:
+  tools = none
+
+  ## Prefix annotation.
+  modles += fast
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (line_end
+          (newline)))
+      (blank_line)
+      (item_doc
+        (comment_text))
+      (ERROR)
+      (blank_line)
+      (run_statement
+        (flow_run_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))
+
+================================================================================
+Unknown first flow directive preserves body entry
+================================================================================
+flow work:
+
+  # Prefix annotation.
+  modles -= fast
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (blank_line)
+      (plain_comment)
+      (ERROR)
+      (blank_line)
+      (run_statement
+        (flow_run_keyword)
+        (runnable_name)
+        (line_end
+          (newline)))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (pass_keyword)
+      (line_end
+        (newline)))))
+
+================================================================================
+Unknown directive without a value at EOF
+================================================================================
+agic work:
+  modles =
+---
+
+(program
+  (ERROR
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))))
+

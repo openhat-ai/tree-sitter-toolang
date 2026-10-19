@@ -9,6 +9,50 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn unknown_directives_fail_only_in_the_prefix() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for kind in ["agic", "flow"] {
+            let body = if kind == "agic" {
+                "user: Continue."
+            } else {
+                "run after"
+            };
+            let invalid = format!("{kind} work:\n  modles = fast\n  {body}\nflow next:\n  pass\n");
+            let tree = parser.parse(&invalid, None).unwrap();
+            let root = tree.root_node();
+            assert!(root.has_error());
+            let next = root.named_child(root.named_child_count() - 1).unwrap();
+            assert_eq!(next.kind(), "flow");
+            assert!(!next.has_error());
+            assert_eq!(
+                next.child_by_field_name("name")
+                    .unwrap()
+                    .utf8_text(invalid.as_bytes())
+                    .unwrap(),
+                "next"
+            );
+            let valid = format!("{kind} work:\n  {body}\n  modles = literal\n");
+            assert!(!parser.parse(valid, None).unwrap().root_node().has_error());
+        }
+        for kind in ["psyche", "skill", "service", "prompt", "chore"] {
+            let source =
+                format!("{kind} example:\n  unknown = value\n  Body.\n  unknown = literal\n");
+            let tree = parser.parse(source, None).unwrap();
+            assert!(!tree.root_node().has_error());
+            let body = tree
+                .root_node()
+                .named_child(0)
+                .unwrap()
+                .child_by_field_name("body")
+                .unwrap();
+            let property = body.child_by_field_name("property").unwrap();
+            assert_eq!(property.kind(), "property");
+            assert!(body.child_by_field_name("content").is_some());
+        }
+    }
+
+    #[test]
     fn documentation_fields_and_queries_are_available() {
         let language = super::LANGUAGE.into();
         let mut parser = tree_sitter::Parser::new();
@@ -45,7 +89,8 @@ mod tests {
         assert!(comment.child_by_field_name("parameter").is_none());
         for (field, value) in [("param", "_"), ("description", "Input.")] {
             assert_eq!(
-                comment.child_by_field_name(field)
+                comment
+                    .child_by_field_name(field)
                     .unwrap()
                     .utf8_text(source.as_bytes())
                     .unwrap(),

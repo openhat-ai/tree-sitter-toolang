@@ -1487,7 +1487,7 @@
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "_indent"
+                    "name": "_runnable_indent"
                   },
                   {
                     "type": "CHOICE",
@@ -1797,7 +1797,7 @@
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "_indent"
+                    "name": "_runnable_indent"
                   },
                   {
                     "type": "CHOICE",
@@ -6476,6 +6476,10 @@
     {
       "type": "SYMBOL",
       "name": "_indent"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_runnable_indent"
     },
     {
       "type": "SYMBOL",

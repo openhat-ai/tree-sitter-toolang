@@ -12,6 +12,7 @@ const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");
 const REPEAT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flexible_repeat.too");
 const ASYNC_AWAIT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "async_await.too");
 const LITERAL_HASHES_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "literal_hashes.too");
+const METADATA_PREFIXES_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "metadata_prefixes.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
@@ -176,7 +177,20 @@ try {
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE,
     REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"),
-    join(REPO_ROOT, "tests", "fixtures", "whitespace.too"), LITERAL_HASHES_FIXTURE);
+    join(REPO_ROOT, "tests", "fixtures", "whitespace.too"), LITERAL_HASHES_FIXTURE,
+    METADATA_PREFIXES_FIXTURE);
+
+  for (const kind of ["agic", "flow"]) {
+    const path = join(configDir, `${kind}-unknown-directive.too`);
+    const body = kind === "agic" ? "user: Continue." : "run after";
+    writeFileSync(path, `${kind} work:\n  modles = fast\n  ${body}\nflow next:\n  pass\n`);
+    const result = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(result.status, 1, result.stdout + result.stderr);
+    deepStrictEqual(result.stdout.includes("ERROR"), true, result.stdout);
+    deepStrictEqual(result.stdout.includes("[3, 0] - [5, 0]"), true, result.stdout);
+  }
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
