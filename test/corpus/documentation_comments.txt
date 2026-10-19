@@ -46,12 +46,10 @@ agic(_: Text, style?: Text):
           (builtin_type)))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Empty docs and non-reserved parameter-like prose
@@ -81,12 +79,10 @@ flow:
   (flow
     (flow_keyword)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Indented documentation, inline comments and literal markers
@@ -108,18 +104,16 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (plain_comment)
-      (newline))
+    (plain_comment)
+    (newline)
+    (item_doc
+      (comment_text))
     (flow_body
-      (item_doc
-        (comment_text))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (inline_agic
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline)
@@ -133,12 +127,10 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Malformed parameter tag preserves following declaration
@@ -157,9 +149,7 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))

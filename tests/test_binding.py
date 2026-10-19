@@ -537,11 +537,11 @@ def test_recall_directive_uses_canonical_keyword_values():
 
     assert tree.root_node.has_error is False
     assert all(
-        directive.child_by_field_name("key").type == "recall_keyword"
+        directive.child_by_field_name("key").type == "directive_key"
         for directive in directives
     )
     assert all(
-        directive.child_by_field_name("operator").type == "assign_operator"
+        directive.child_by_field_name("operator").type == "directive_operator"
         for directive in directives
     )
     assert [_text(source, value).strip() for value in values] == [
@@ -574,7 +574,7 @@ def test_recall_directive_rejects_noncanonical_forms():
     ):
         tree = parser.parse(source)
         assert tree.root_node.has_error or _nodes(
-            tree.root_node, "invalid_agic_reserved_message"
+            tree.root_node, "invalid_agic_message"
         ), source
 
 
@@ -667,7 +667,7 @@ def test_agic_settings_reject_inline_bodies():
     for key in ("instruct", "context"):
         source = f"agic search:\n  {key}:\n    hello world\n".encode()
         root = _parser().parse(source).root_node
-        assert root.has_error or _nodes(root, "invalid_agic_reserved_message")
+        assert root.has_error or _nodes(root, "invalid_agic_message")
 
 
 def test_agic_instruction_blocks_must_precede_messages():
@@ -677,7 +677,7 @@ def test_agic_instruction_blocks_must_precede_messages():
     tree = parser.parse(source)
 
     assert tree.root_node.has_error is False
-    assert _nodes(tree.root_node, "invalid_agic_reserved_message")
+    assert _nodes(tree.root_node, "invalid_agic_message")
 
 
 def test_unroled_messages_do_not_fallback_from_reserved_words():
@@ -702,7 +702,7 @@ def test_unroled_messages_do_not_fallback_from_reserved_words():
 
     for source in invalid_sources:
         tree = parser.parse(source)
-        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_agic_reserved_message"), source
+        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_agic_message"), source
 
     assert parser.parse(valid_setting).root_node.has_error is False
     assert parser.parse(explicit_message).root_node.has_error is False
@@ -864,22 +864,22 @@ def test_queries_are_packaged():
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY
     assert "@definition" in tree_sitter_toolang.TAGS_QUERY
     for keyword in (
-        "flow_exec_keyword",
-        "flow_spawn_keyword",
-        "flow_async_keyword",
-        "flow_await_keyword",
-        "flow_generate_keyword",
-        "flow_reduce_keyword",
-        "flow_sort_keyword",
-        "flow_using_keyword",
-        "flow_if_keyword",
-        "flow_by_keyword",
-        "flow_in_keyword",
-        "flow_lane_keyword",
-        "flow_lanes_keyword",
-        "flow_ascending_keyword",
-        "flow_descending_keyword",
-        "flow_time_keyword",
-        "flow_times_keyword",
+        "exec_keyword",
+        "spawn_keyword",
+        "async_keyword",
+        "await_keyword",
+        "generate_keyword",
+        "reduce_keyword",
+        "sort_keyword",
+        "using_keyword",
+        "if_keyword",
+        "by_keyword",
+        "in_keyword",
+        "lane_keyword",
+        "lanes_keyword",
+        "ascending_keyword",
+        "descending_keyword",
+        "time_keyword",
+        "times_keyword",
     ):
         assert f"({keyword}) @keyword" in tree_sitter_toolang.HIGHLIGHTS_QUERY

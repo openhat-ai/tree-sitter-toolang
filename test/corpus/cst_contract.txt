@@ -1,0 +1,293 @@
+==================
+Empty declarations preserve peer documentation
+==================
+prompt empty:
+## Next chore.
+chore empty:
+## @param topic Input.
+flow next(topic: Text):
+  pass
+
+---
+
+(program
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (newline))
+  (item_doc
+    (comment_text))
+  (chore
+    (chore_keyword)
+    (chore_name)
+    (colon)
+    (newline))
+  (param_doc
+    (param_name)
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (params
+      (lparen)
+      (param
+        (param_name)
+        (colon)
+        (type
+          (builtin_type)))
+      (rparen))
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Body ranges exclude leading trivia
+==================
+prompt first: # Header.
+# Preface.
+  title = First
+  Body.
+flow work:
+## Preface.
+  repeat:
+    # Preface.
+    run worker
+
+---
+
+(program
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (plain_comment)
+    (newline)
+    (plain_comment)
+    (cap_body
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (newline))
+      (content
+        (text_line)
+        (newline))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (item_doc
+      (comment_text))
+    (flow_body
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (plain_comment)
+        (repeat_body
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline)))))))
+
+==================
+Targets and directive leaves use consistent roles
+==================
+flow work:
+  models += fast
+  hands = worker
+  recall = none
+  instruct = named
+  context = default
+  run worker
+  seek reviewer: Body.
+  map using worker
+  repeat:
+    run worker
+    until: Ready.
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (route_value
+          (runnable_ref))
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (recall_value
+          (none_keyword))
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (identifier)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (default_keyword)
+        (newline))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (seek_statement
+        (seek_keyword)
+        (agent_name)
+        (inline_agic
+          (colon)
+          (content
+            (text_line))
+          (newline)))
+      (map_statement
+        (map_keyword)
+        (using_keyword)
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))
+          (until_clause
+            (until_keyword)
+            (inline_agic
+              (colon)
+              (content
+                (text_line))
+              (newline))))))))
+
+==================
+Diagnostic names distinguish statements and run targets
+==================
+flow work:
+  let result run worker
+  async run worker extra
+  run after
+agic work:
+  user missing colon
+  user: Following.
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (invalid_flow_statement
+        (let_keyword)
+        (local_name)
+        (text_line)
+        (newline))
+      (run_statement
+        (async_keyword)
+        (run_keyword)
+        (invalid_run_target
+          (runnable_name)
+          (text_line)
+          (newline)))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (agic_body
+      (message
+        (invalid_agic_message
+          (role)
+          (text_line)
+          (newline)))
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (newline)))))
+
+==================
+Missing bodies and content preserve peer documentation
+==================
+flow empty:
+## Context documentation.
+context empty:
+## Next flow documentation.
+flow next:
+  run:
+#@ Program documentation.
+flow last:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (invalid_missing_body)))
+  (item_doc
+    (comment_text))
+  (context
+    (context_keyword)
+    (identifier)
+    (colon)
+    (newline)
+    (content
+      (invalid_missing_content)))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (run_statement
+        (run_keyword)
+        (inline_agic
+          (colon)
+          (newline)
+          (content
+            (invalid_missing_content))))))
+  (program_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))

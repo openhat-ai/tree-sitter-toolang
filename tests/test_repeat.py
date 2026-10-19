@@ -29,22 +29,22 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
     assert not descendants(body, "statements")
     statements = body.children_by_field_name("statement")
     assert [node.type for node in statements] == ["run_statement", "run_statement"]
-    assert [node.child_by_field_name("runnable").text.strip() for node in statements] == [b"first", b"last"]
+    assert [node.child_by_field_name("target").text.strip() for node in statements] == [b"first", b"last"]
     assert all(node.parent == body for node in statements)
     conditions = body.children_by_field_name("until")
     assert len(conditions) == int(position is not None)
     if conditions:
         clause, = conditions
         assert clause.type == "until_clause" and clause.parent == body
-        keyword, = descendants(clause, "flow_until_keyword")
+        keyword, = descendants(clause, "until_keyword")
         assert keyword.text == b"until"
         target, = clause.children_by_field_name("target")
-        assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic_body")
+        assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic")
         assert target.parent == clause
         assert clause.start_byte <= keyword.start_byte < target.start_byte < target.end_byte <= clause.end_byte
         assert source.encode()[clause.start_byte:clause.end_byte].strip().startswith(b"until")
         assert b"run first" not in clause.text and b"run last" not in clause.text
-        if target.type == "inline_agic_body":
+        if target.type == "inline_agic":
             assert b"Ready {{_}}." in target.child_by_field_name("content").text
         else:
             assert target.text == b"is_done"

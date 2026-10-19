@@ -20,53 +20,46 @@ flow research:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
+        (item_doc
+          (comment_text))
         (repeat_body
-          (item_doc
-            (comment_text))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))
+            (newline))
           (item_doc
             (comment_text))
           (repeat_statement
-            (flow_repeat_keyword)
+            (repeat_keyword)
             (colon)
-            (line_end
-              (newline))
+            (newline)
+            (plain_comment)
+            (item_doc
+              (comment_text))
             (repeat_body
-              (plain_comment)
-              (item_doc
-                (comment_text))
               (run_statement
-                (flow_run_keyword)
+                (run_keyword)
                 (runnable_name)
-                (line_end
-                  (newline)))
+                (newline))
               (until_clause
-                (flow_until_keyword)
-                (inline_agic_body
+                (until_keyword)
+                (inline_agic
                   (colon)
                   (content
                     (text_line))
-                  (line_end
-                    (newline))))))
+                  (newline)))))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline)))))))))
+              (newline))))))))

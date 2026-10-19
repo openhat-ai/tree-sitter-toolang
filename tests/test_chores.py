@@ -42,4 +42,8 @@ def test_chore_has_its_own_name_and_structural_body(body):
     assert name.type == "chore_name"
     assert name.text == b"review-changes"
     assert name.child_count == 0
-    assert chore.child_by_field_name("body").type == "chore_body"
+    body_node = chore.child_by_field_name("body")
+    if not body or body.lstrip().startswith("#"):
+        assert body_node is None
+    else:
+        assert body_node.type == "chore_body"

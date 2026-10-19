@@ -30,14 +30,12 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
   },
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
-  agic: {
-    multiple: false, required: false, types: [{ type: "inline_agic", named: true }],
-  },
   async: {
-    multiple: false, required: false, types: [{ type: "flow_async_keyword", named: true }],
+    multiple: false, required: false, types: [{ type: "async_keyword", named: true }],
   },
-  runnable: {
-    multiple: false, required: false, types: [{ type: "runnable_name", named: true }],
+  target: {
+    multiple: false, required: false,
+    types: [{ type: "inline_agic", named: true }, { type: "runnable_name", named: true }],
   },
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
@@ -106,12 +104,12 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
   target: {
     multiple: false,
     required: true,
-    types: [{ type: "inline_agic_body", named: true }, { type: "runnable_name", named: true }],
+    types: [{ type: "inline_agic", named: true }, { type: "runnable_name", named: true }],
   },
 });
 
 const textField = { multiple: false, required: true, types: [{ type: "content", named: true }] };
-for (const kind of ["context", "instruct", "inline_agic", "inline_agic_body", "ask_statement", "implicit_run_statement"]) {
+for (const kind of ["context", "instruct", "inline_agic", "ask_statement", "implicit_run_statement"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields.content, textField, kind);
 }
 const messageFields = nodeTypes.find(node => node.type === "message").fields;
@@ -126,6 +124,7 @@ for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"
 }
 for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
   "unroled_message", "statements", "messages", "invalid_empty_body",
+  "line_end", "inline_agic_body", "text_ref", "invalid_flow_reserved_statement", "invalid_agic_reserved_message",
   "task", "task_keyword", "job_name", "job_body",
   "source_file", "module_doc_comment", "module_doc"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
@@ -180,6 +179,9 @@ try {
     REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"),
     join(REPO_ROOT, "tests", "fixtures", "whitespace.too"), LITERAL_HASHES_FIXTURE,
     METADATA_PREFIXES_FIXTURE, UNITS_AND_LANES_FIXTURE);
+
+  runCli("parse", "--config-path", configPath, "--quiet",
+    join(REPO_ROOT, "tests", "fixtures", "cst_contract.too"));
 
   for (const kind of ["agic", "flow"]) {
     const path = join(configDir, `${kind}-unknown-directive.too`);

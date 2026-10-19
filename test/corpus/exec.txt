@@ -21,31 +21,27 @@ flow grow(next: Text):
           (builtin_type)))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (exec_statement
-            (flow_exec_keyword)
+            (exec_keyword)
             (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))))
+              (newline)))))
       (exec_statement
-        (flow_exec_keyword)
+        (exec_keyword)
         (runnable_name)
-        (line_end
-          (plain_comment)
-          (newline))))))
+        (plain_comment)
+        (newline)))))
 
 ==================
 Exec inline layout and following statements
@@ -65,44 +61,38 @@ flow grow:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (exec_statement
-            (flow_exec_keyword)
+            (exec_keyword)
             (inline_agic
               (arrow)
               (type
                 (builtin_type))
               (colon)
-              (line_end
-                (newline))
+              (newline)
               (content
                 (text_line)
                 (newline))))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))
+            (newline))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))))
+              (newline)))))
       (exec_statement
-        (flow_exec_keyword)
+        (exec_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))

@@ -57,15 +57,13 @@ flow work:
     (psyche_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -77,21 +75,18 @@ flow work:
     (skill_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
         (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
-      (property
-        (identifier)
-        (assign_operator)
-        (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -103,27 +98,23 @@ flow work:
     (service_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
         (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
-      (property
-        (identifier)
-        (assign_operator)
-        (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -135,15 +126,13 @@ flow work:
     (prompt_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -155,21 +144,18 @@ flow work:
     (chore_keyword)
     (chore_name)
     (colon)
+    (newline)
     (chore_body
-      (line_end
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
         (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
-      (property
-        (identifier)
-        (assign_operator)
-        (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -181,31 +167,27 @@ flow work:
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (plain_comment)
       (directive
-        (recall_keyword)
-        (assign_operator)
+        (directive_key)
+        (directive_operator)
         (recall_value
           (none_keyword))
-        (line_end
-          (newline)))
+        (newline))
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (message
         (content
           (text_line)
@@ -215,32 +197,28 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (inline_agic
           (colon)
           (content
             (text_line))
-          (line_end
-            (newline))))
+          (newline)))
       (implicit_run_statement
         (content
           (text_line)
           (newline)))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (implicit_run_statement
             (content
@@ -264,34 +242,29 @@ flow next:
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (ERROR)
+    (blank_line)
     (agic_body
-      (blank_line)
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))))
+        (newline))))
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Unknown flow directive after trivia stays invalid
@@ -312,35 +285,30 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (item_doc
         (comment_text))
       (ERROR)
       (blank_line)
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))))
+        (newline))))
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Unknown first flow directive preserves body entry
@@ -360,28 +328,24 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
+    (blank_line)
+    (plain_comment)
+    (ERROR)
+    (blank_line)
     (flow_body
-      (blank_line)
-      (plain_comment)
-      (ERROR)
-      (blank_line)
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))))
+        (newline))))
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Unknown directive without a value at EOF
@@ -395,6 +359,4 @@ agic work:
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))))
-
+    (newline)))

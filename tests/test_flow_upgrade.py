@@ -61,7 +61,7 @@ def test_reduce_fields_separate_reducer_and_initializer(head, newline, indent):
     root = parse(source)
     assert valid(root)
     reduce = descendants(root, "reduce_statement")[0]
-    reducer = reduce.child_by_field_name("runnable")
+    reducer = reduce.child_by_field_name("target")
     assert reducer.type == "inline_agic"
     body = reducer.child_by_field_name("content").text
     assert b"from: literal nested text" in body
@@ -138,7 +138,7 @@ def test_reduce_leading_comment_markers_are_literal_reducer_text(prefix, initial
     root = parse(source)
     assert valid(root)
     reduce = descendants(root, "reduce_statement")[0]
-    reducer = reduce.child_by_field_name("runnable").child_by_field_name("content")
+    reducer = reduce.child_by_field_name("target").child_by_field_name("content")
     assert reducer.text.decode().lstrip().startswith(prefix)
     assert not descendants(reducer, "plain_comment")
     assert not descendants(reducer, "item_doc")

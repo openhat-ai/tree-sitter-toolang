@@ -13,26 +13,22 @@ with prompt https://toolang.ai/review
     (with_keyword)
     (cap_kind)
     (text_line)
-    (line_end
-      (newline)))
+    (newline))
   (with
     (with_keyword)
     (cap_kind)
     (text_line)
-    (line_end
-      (newline)))
+    (newline))
   (with
     (with_keyword)
     (cap_kind)
     (text_line)
-    (line_end
-      (newline)))
+    (newline))
   (with
     (with_keyword)
     (cap_kind)
     (text_line)
-    (line_end
-      (newline))))
+    (newline)))
 
 ==================
 Cap And Chore Items
@@ -67,21 +63,18 @@ chore stale-prs:
     (service_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
         (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
-      (property
-        (identifier)
-        (assign_operator)
-        (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -91,9 +84,8 @@ chore stale-prs:
     (psyche_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (content
         (text_line)
         (newline)
@@ -102,9 +94,8 @@ chore stale-prs:
     (prompt_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (content
         (text_line)
         (newline)
@@ -113,15 +104,13 @@ chore stale-prs:
     (chore_keyword)
     (chore_name)
     (colon)
+    (newline)
     (chore_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -131,21 +120,18 @@ chore stale-prs:
     (chore_keyword)
     (chore_name)
     (colon)
+    (newline)
     (chore_body
-      (line_end
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
         (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
-      (property
-        (identifier)
-        (assign_operator)
-        (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -171,30 +157,26 @@ context:
     (struct_keyword)
     (type_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (struct_body
       (field
         (identifier)
         (colon)
         (type
           (builtin_type))
-        (line_end
-          (newline)))
+        (newline))
       (field
         (identifier)
         (colon)
         (type
           (type_name)
           (array_suffix))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (instruct
     (instruct_keyword)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (content
       (text_line)
       (newline)
@@ -202,8 +184,7 @@ context:
   (context
     (context_keyword)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (content
       (text_line)
       (newline))))
@@ -256,58 +237,48 @@ agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
     (type
       (type_name))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
         (route_value
           (runnable_ref))
-        (line_end
-          (newline)))
+        (newline))
       (directive
-        (recall_keyword)
-        (assign_operator)
+        (directive_key)
+        (directive_operator)
         (recall_value
           (recall_source)
           (comma)
           (recall_source))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (directive
-        (instruct_keyword)
-        (assign_operator)
-        (text_ref
-          (default_keyword))
-        (line_end
-          (newline)))
+        (directive_key)
+        (directive_operator)
+        (default_keyword)
+        (newline))
       (directive
-        (context_keyword)
-        (assign_operator)
-        (text_ref
-          (default_keyword))
-        (line_end
-          (newline)))
+        (directive_key)
+        (directive_operator)
+        (default_keyword)
+        (newline))
       (blank_line)
       (message
         (role)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline)
@@ -359,146 +330,130 @@ flow research(input: Part[]) -> Answer:
     (type
       (type_name))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (item_doc
         (comment_text))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (seek_statement
-        (flow_seek_keyword)
+        (seek_keyword)
         (agent_name)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (ask_statement
-        (flow_ask_keyword)
+        (ask_keyword)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (inline_agic
           (arrow)
           (type
             (type_name)
             (array_suffix))
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline))))
       (generate_statement
-        (flow_generate_keyword)
+        (generate_keyword)
         (integer_literal)
-        (flow_in_keyword)
+        (in_keyword)
         (integer_literal)
-        (flow_lanes_keyword)
-        (flow_using_keyword)
+        (lanes_keyword)
+        (using_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (keep_statement
-        (flow_keep_keyword)
-        (flow_in_keyword)
+        (keep_keyword)
+        (in_keyword)
         (integer_literal)
-        (flow_lanes_keyword)
-        (flow_if_keyword)
+        (lanes_keyword)
+        (if_keyword)
         (inline_agic
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline))))
       (drop_statement
-        (flow_drop_keyword)
+        (drop_keyword)
         (position
-          (flow_last_keyword)
+          (last_keyword)
           (integer_literal))
-        (line_end
-          (newline)))
+        (newline))
       (sort_statement
-        (flow_sort_keyword)
-        (flow_descending_keyword)
-        (flow_in_keyword)
+        (sort_keyword)
+        (descending_keyword)
+        (in_keyword)
         (integer_literal)
-        (flow_lanes_keyword)
-        (flow_by_keyword)
+        (lanes_keyword)
+        (by_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (map_statement
-        (flow_map_keyword)
-        (flow_in_keyword)
+        (map_keyword)
+        (in_keyword)
         (integer_literal)
-        (flow_lanes_keyword)
+        (lanes_keyword)
         (inline_agic
           (arrow)
           (type
             (type_name))
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline))))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (inline_agic
           (arrow)
           (type
             (type_name))
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline))))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (run_statement
-          (flow_run_keyword)
+          (run_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))
+            (newline))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline)))))))))
+              (newline))))))))
 
 ==================
 Comments
@@ -519,38 +474,31 @@ agic raw:
     (with_keyword)
     (cap_kind)
     (text_line)
-    (line_end
-      (plain_comment)
-      (newline)))
+    (plain_comment)
+    (newline))
   (blank_line)
   (agic
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
-        (instruct_keyword)
-        (assign_operator)
-        (text_ref
-          (none_keyword))
-        (line_end
-          (newline)))
+        (directive_key)
+        (directive_operator)
+        (none_keyword)
+        (newline))
       (directive
-        (context_keyword)
-        (assign_operator)
-        (text_ref
-          (none_keyword))
-        (line_end
-          (newline)))
+        (directive_key)
+        (directive_operator)
+        (none_keyword)
+        (newline))
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline))))))
+        (newline)))))
 
 ==================
 Recall Directive
@@ -565,15 +513,13 @@ agic recall:
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
-        (recall_keyword)
-        (assign_operator)
+        (directive_key)
+        (directive_operator)
         (recall_value
           (recall_source)
           (comma)
           (recall_source))
-        (line_end
-          (newline))))))
+        (newline)))))

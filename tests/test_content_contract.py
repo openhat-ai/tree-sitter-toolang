@@ -21,7 +21,7 @@ ROOT = Path(__file__).parents[1]
     ("flow work:\n  spawn:", "inline_agic", "content"),
     ("flow work:\n  ask:", "ask_statement", "content"),
     ("flow work:\n  let note =", "let_statement", "value"),
-    ("flow work:\n  repeat:\n    until:", "inline_agic_body", "content"),
+    ("flow work:\n  repeat:\n    until:", "inline_agic", "content"),
     ("flow work:\n  reduce using worker:\n    from:", "reduce_statement", "from"),
 ])
 @pytest.mark.parametrize("multiline", [False, True])

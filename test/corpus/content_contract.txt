@@ -52,14 +52,12 @@ flow example:
     (colon)
     (content
       (text_line))
-    (line_end
-      (newline)))
+    (newline))
   (instruct
     (instruct_keyword)
     (identifier)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (content
       (text_line)
       (newline)
@@ -72,15 +70,13 @@ flow example:
     (skill_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (content
         (text_line)
         (newline)
@@ -91,15 +87,13 @@ flow example:
     (chore_keyword)
     (chore_name)
     (colon)
+    (newline)
     (chore_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (content
         (text_line)
         (newline)
@@ -108,42 +102,36 @@ flow example:
     (struct_keyword)
     (type_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (struct_body
       (field
         (identifier)
         (colon)
         (type
           (builtin_type))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (agic
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (message
         (role)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline)
@@ -160,81 +148,70 @@ flow example:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (inline_agic
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (content
               (text_line)
               (newline)))))
       (await_statement
-        (flow_await_keyword)
+        (await_keyword)
         (handle_name)
-        (line_end
-          (newline)))
+        (newline))
       (ask_statement
-        (flow_ask_keyword)
+        (ask_keyword)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (reduce_statement
-        (flow_reduce_keyword)
+        (reduce_keyword)
         (inline_agic
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline)))
-        (flow_from_keyword)
+        (from_keyword)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))
+              (newline)))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline))))))))
+            (newline)))))))

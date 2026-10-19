@@ -162,8 +162,8 @@ def test_keyword_binding_errors_preserve_following_source(head, newline):
     root = parse(source)
     assert not valid(root), root
     assert len([node for node in root.named_children if node.type == "flow"]) == 2
-    assert any(node.child_by_field_name("runnable") is not None
-               and node.child_by_field_name("runnable").text == b"after"
+    assert any(node.child_by_field_name("target") is not None
+               and node.child_by_field_name("target").text == b"after"
                for node in descendants(root, "run_statement"))
 
 
@@ -181,7 +181,7 @@ def test_incremental_keyword_assignments_match_fresh_parses(name, newline):
         tree = parser.parse(current, tree)
         assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node), current
         assert len([node for node in tree.root_node.named_children if node.type == "flow"]) == 2
-        assert any(node.child_by_field_name("runnable") is not None
-                   and node.child_by_field_name("runnable").text == b"after"
+        assert any(node.child_by_field_name("target") is not None
+                   and node.child_by_field_name("target").text == b"after"
                    for node in descendants(tree.root_node, "run_statement"))
         previous = current

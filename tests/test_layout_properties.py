@@ -59,7 +59,7 @@ def program_shape(statements):
     for statement in statements.named_children:
         if statement.type == "run_statement":
             result.append(
-                ("run", statement.child_by_field_name("runnable").text.decode().strip())
+                ("run", statement.child_by_field_name("target").text.decode().strip())
             )
         elif statement.type == "repeat_statement":
             count = statement.child_by_field_name("count")
@@ -67,7 +67,7 @@ def program_shape(statements):
             if condition is not None:
                 assert condition.type == "until_clause"
                 target = condition.child_by_field_name("target")
-                assert target.type == "inline_agic_body"
+                assert target.type == "inline_agic"
                 assert target.child_by_field_name("content").text.strip() == b"Ready."
             body = statement.child_by_field_name("body")
             assert body.type == "repeat_body"
@@ -213,7 +213,7 @@ def test_missing_binding_assignment_recovers_identically_during_edits(newline, o
         assert valid(root) == expected_valid
         assert len(descendants(root, "repeat_statement")) == 1
         if not expected_valid:
-            assert len(descendants(root, "invalid_flow_reserved_statement")) == 1
+            assert len(descendants(root, "invalid_flow_statement")) == 1
         previous = current
 
 
@@ -247,7 +247,7 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
             assert valid(tree.root_node)
             assert len(descendants(tree.root_node, "repeat_statement")) == depth
             publish = descendants(tree.root_node, "run_statement")[-1]
-            assert publish.child_by_field_name("runnable").text.strip() == b"publish"
+            assert publish.child_by_field_name("target").text.strip() == b"publish"
             owner = publish.parent
             owners = 0
             while owner is not None:

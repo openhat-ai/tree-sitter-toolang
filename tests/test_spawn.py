@@ -50,7 +50,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     root = parse(source)
     assert valid(root), root
     statement, = descendants(root, "spawn_statement")
-    keyword, = descendants(statement, "flow_spawn_keyword")
+    keyword, = descendants(statement, "spawn_keyword")
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
     if target.startswith(" missing_name"):
@@ -153,7 +153,7 @@ def test_spawn_inline_text_ends_before_following_statements(binding, header, ind
     assert not descendants(target, "item_doc")
     assert not descendants(target, "spawn_statement")
     run, = descendants(loop, "run_statement")
-    assert run.child_by_field_name("runnable").text.strip() == b"after_inline"
+    assert run.child_by_field_name("target").text.strip() == b"after_inline"
     assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"worker"
 
@@ -171,8 +171,8 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert len(descendants(outer, "spawn_statement")) == 3
     assert len(descendants(inner, "spawn_statement")) == 1
     assert b"spawn remains literal inside inline text." in targets[2].text
-    assert not descendants(descendants(root, "agic")[0], "flow_spawn_keyword")
-    assert len(descendants(root, "flow_spawn_keyword")) == 5
+    assert not descendants(descendants(root, "agic")[0], "spawn_keyword")
+    assert len(descendants(root, "spawn_keyword")) == 5
     assert any(b"{{description}}" in node.text for node in descendants(root, "content"))
 
 

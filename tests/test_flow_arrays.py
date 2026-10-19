@@ -36,17 +36,17 @@ def test_collection_targets_and_bindings(head, kind, count, lanes, binding, targ
     root = parse(source)
     assert valid(root), root
     operation, = descendants(root, kind)
-    runnable = operation.child_by_field_name("runnable")
+    runnable = operation.child_by_field_name("target")
     if output is None and target.startswith(" using"):
         assert runnable.type == "runnable_name"
         assert runnable.text == b"worker"
-        assert len(descendants(operation, "flow_using_keyword")) == 1
+        assert len(descendants(operation, "using_keyword")) == 1
     else:
         assert runnable.type == "inline_agic"
         result = runnable.child_by_field_name("return")
         assert (result.text.decode() if result else None) == output
         assert runnable.child_by_field_name("content").text.strip() == b"Complete {{_}}."
-        assert not descendants(operation, "flow_using_keyword")
+        assert not descendants(operation, "using_keyword")
     for name, expected in [("count", count), ("lanes", lanes)]:
         value = operation.child_by_field_name(name)
         assert (value.text.decode().strip() if value else None) == expected
@@ -98,7 +98,7 @@ def test_reduce_initializer_with_all_bindings(binding, target, indent):
     assert valid(root), root
     operation, = descendants(root, "reduce_statement")
     assert operation.child_by_field_name("from").text.strip() == b"Seed."
-    runnable = operation.child_by_field_name("runnable")
+    runnable = operation.child_by_field_name("target")
     assert b"Seed." not in runnable.text
     assert len(descendants(root, "run_statement")) == 1
 
@@ -175,7 +175,7 @@ def test_named_target_can_start_with_using_after_horizontal_space(head, binding,
     root = parse(f"flow work:\n  {binding}{head} using{space}usingworker\n")
     assert valid(root), root
     operation, = descendants(root, f"{head.split()[0]}_statement")
-    assert operation.child_by_field_name("runnable").text.strip() == b"usingworker"
+    assert operation.child_by_field_name("target").text.strip() == b"usingworker"
 
 
 @pytest.mark.parametrize("head", ["generate 2", "map", "reduce"])
@@ -192,5 +192,5 @@ def test_using_separator_edits_preserve_the_complete_target(head, binding):
         assert valid(tree.root_node) == bool(space)
         if space:
             operation, = descendants(tree.root_node, f"{head.split()[0]}_statement")
-            assert operation.child_by_field_name("runnable").text.strip() == b"usingworker"
+            assert operation.child_by_field_name("target").text.strip() == b"usingworker"
         previous = current

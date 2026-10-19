@@ -9,6 +9,95 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn public_cst_fields_and_body_ranges_keep_their_roles() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "prompt empty:\n## Next.\nflow work:\n# Preface.\n  instruct = named\n  run worker\n  repeat:\n    run worker\n    until: Ready.\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(!root.has_error());
+        assert!(root
+            .named_child(0)
+            .unwrap()
+            .child_by_field_name("body")
+            .is_none());
+        assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+        let flow = root.named_child(2).unwrap();
+        let body = flow.child_by_field_name("body").unwrap();
+        assert_eq!(body.start_byte(), source.find("  instruct").unwrap());
+        let directive = body.child_by_field_name("directive").unwrap();
+        for (field, kind) in [
+            ("key", "directive_key"),
+            ("operator", "directive_operator"),
+            ("value", "identifier"),
+        ] {
+            assert_eq!(directive.child_by_field_name(field).unwrap().kind(), kind);
+        }
+        let run = body.child_by_field_name("statement").unwrap();
+        assert_eq!(
+            run.child_by_field_name("target").unwrap().kind(),
+            "runnable_name"
+        );
+        let condition = body
+            .named_child(body.named_child_count() - 1)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap()
+            .child_by_field_name("until")
+            .unwrap();
+        let target = condition.child_by_field_name("target").unwrap();
+        assert_eq!(target.kind(), "inline_agic");
+        assert!(target.child_by_field_name("return").is_none());
+        assert_eq!(
+            target
+                .child_by_field_name("content")
+                .unwrap()
+                .utf8_text(source.as_bytes())
+                .unwrap(),
+            " Ready."
+        );
+        assert_eq!(
+            run.named_child(run.named_child_count() - 1).unwrap().kind(),
+            "newline"
+        );
+    }
+
+    #[test]
+    fn empty_body_and_content_recovery_preserve_peer_documentation() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for header in [
+            "prompt empty:",
+            "chore empty:",
+            "flow empty:",
+            "context empty:",
+            "flow empty:\n  run:",
+        ] {
+            for ending in ["\n", "\r\n"] {
+                let source =
+                    format!("{header}\n## Next.\nflow next:\n  pass\n").replace('\n', ending);
+                let tree = parser.parse(&source, None).unwrap();
+                let root = tree.root_node();
+                assert!(!root.has_error());
+                assert_eq!(root.named_child_count(), 3);
+                let doc = root.named_child(1).unwrap();
+                assert_eq!(doc.kind(), "item_doc");
+                assert_eq!(doc.start_byte(), source.find("## Next.").unwrap());
+                assert!(root.named_child(0).unwrap().end_byte() <= doc.start_byte());
+                assert_eq!(
+                    root.named_child(2)
+                        .unwrap()
+                        .child_by_field_name("name")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    "next"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn unit_spellings_preserve_integer_fields_and_require_prefix_lanes() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
@@ -259,7 +348,7 @@ mod tests {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&language).unwrap();
         for (operation, kind, target) in [
-            ("async run", "run_statement", "runnable"),
+            ("async run", "run_statement", "target"),
             ("spawn", "spawn_statement", "target"),
         ] {
             let source = format!("flow launch:\n  let h = {operation} worker\n  await h\n  let x = await h\n  let await h\n  let h = await h\n");
@@ -279,7 +368,7 @@ mod tests {
                     .child_by_field_name("async")
                     .map(|node| node.kind()),
                 if operation == "async run" {
-                    Some("flow_async_keyword")
+                    Some("async_keyword")
                 } else {
                     None
                 }

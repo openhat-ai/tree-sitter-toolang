@@ -34,7 +34,7 @@ def test_primary_input_diagnostics_preserve_following_statements(statement):
     )
     assert not valid(root), root
     assert len(descendants(root, "flow")) == 2
-    assert [node.child_by_field_name("runnable").text.strip()
+    assert [node.child_by_field_name("target").text.strip()
             for node in descendants(root, "run_statement")] == [b"after", b"finish"]
     assert [node.text.strip() for node in descendants(root, "implicit_run_statement")] == [
         b"Read the input.",

@@ -43,16 +43,14 @@ flow improve(_):
     (type
       (builtin_type))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (flow
     (flow_keyword)
@@ -63,126 +61,108 @@ flow improve(_):
         (param_name))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
+        (item_doc
+          (comment_text))
         (repeat_body
-          (item_doc
-            (comment_text))
           (until_clause
-            (flow_until_keyword)
+            (until_keyword)
             (runnable_name)
-            (line_end
-              (newline)))
+            (newline))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))))
+            (newline))))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
-        (flow_windowing_keyword)
+        (times_keyword)
+        (windowing_keyword)
         (integer_literal)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (implicit_run_statement
             (content
               (text_line)
               (newline)))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))
+              (newline)))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))))
+            (newline))))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_time_keyword)
+        (time_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (repeat_statement
-            (flow_repeat_keyword)
+            (repeat_keyword)
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (repeat_body
               (until_clause
-                (flow_until_keyword)
-                (inline_agic_body
+                (until_keyword)
+                (inline_agic
                   (colon)
-                  (line_end
-                    (newline))
+                  (newline)
                   (content
                     (text_line)
                     (newline)
                     (text_line)
                     (newline))))
               (run_statement
-                (flow_run_keyword)
+                (run_keyword)
                 (runnable_name)
-                (line_end
-                  (newline)))))
+                (newline))))
           (until_clause
-            (flow_until_keyword)
+            (until_keyword)
             (runnable_name)
-            (line_end
-              (newline)))))
+            (newline))))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))))
+            (newline))))
       (repeat_statement
-        (flow_repeat_keyword)
-        (flow_windowing_keyword)
+        (repeat_keyword)
+        (windowing_keyword)
         (integer_literal)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (let_statement
-            (flow_let_keyword)
+            (let_keyword)
             (local_name)
             (assign_operator)
-            (line_end
-              (newline))
+            (newline)
             (content
               (text_line)
               (newline)))
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (runnable_name)
-            (line_end
-              (newline)))))
+            (newline))))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))

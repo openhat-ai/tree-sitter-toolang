@@ -56,16 +56,16 @@ def test_lane_spellings_preserve_direct_fields_ranges_and_highlights(
     assert source[lanes.start_byte:lanes.end_byte] == number.encode()
     assert tuple(lanes.start_point) == point(source, lanes.start_byte)
     assert tuple(lanes.end_point) == point(source, lanes.end_byte)
-    keyword, = descendants(operation, f"flow_{unit}_keyword")
+    keyword, = descendants(operation, f"{unit}_keyword")
     assert keyword.child_count == 0 and keyword.text == unit.encode()
     assert keyword.start_byte == lanes.end_byte + 1
     captures = QueryCursor(highlights).captures(root)
     assert keyword in captures["keyword"]
     assert lanes in captures["number"]
-    runnable = operation.child_by_field_name("runnable")
+    runnable = operation.child_by_field_name("target")
     if form == "named":
         assert runnable.type == "runnable_name" and runnable.text == b"worker"
-        assert keyword.end_byte < descendants(operation, f"flow_{connector}_keyword")[0].start_byte
+        assert keyword.end_byte < descendants(operation, f"{connector}_keyword")[0].start_byte
     else:
         assert runnable.type == "inline_agic"
         content = runnable.child_by_field_name("content")
@@ -97,11 +97,11 @@ def test_repeat_units_do_not_classify_numeric_value(number, unit, binding, newli
     assert count.type == window.type == "integer_literal"
     assert count.text == number.encode() and window.text == b"01"
     assert count.child_count == window.child_count == 0
-    keyword, = descendants(repeat, f"flow_{unit}_keyword")
+    keyword, = descendants(repeat, f"{unit}_keyword")
     captures = QueryCursor(highlights).captures(root)
     assert keyword in captures["keyword"] and count in captures["number"]
     assert count.end_byte + 1 == keyword.start_byte
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
 
 
 @pytest.mark.parametrize("head,kind,connector,type_name", OPERATIONS)
@@ -131,7 +131,7 @@ def test_suffix_and_duplicate_lanes_are_invalid_and_preserve_following_source(
     assert not valid(root), root
     assert not descendants(root, "implicit_run_statement"), root
     assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement"))
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
 
@@ -219,5 +219,5 @@ def test_incremental_unit_and_clause_edits_match_fresh_trees(newline, binding):
 def test_suffix_lane_on_first_statement_reports_error_without_losing_following_code(statement, binding, newline):
     root = parse((f"flow work:\n  {binding}{statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline))
     assert not valid(root), root
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"

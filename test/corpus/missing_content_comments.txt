@@ -19,46 +19,40 @@ agic chat:
     (context_keyword)
     (identifier)
     (colon)
-    (line_end
-      (newline))
-    (plain_comment)
-    (blank_line)
+    (newline)
     (content
       (invalid_missing_content)))
+  (plain_comment)
+  (blank_line)
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (run_statement
-        (flow_async_keyword)
-        (flow_run_keyword)
+        (async_keyword)
+        (run_keyword)
         (inline_agic
           (colon)
-          (line_end
-            (newline))
-          (plain_comment)
+          (newline)
           (content
             (invalid_missing_content))))
+      (plain_comment)
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))))
+        (newline))))
   (agic
     (agic_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (message
         (role)
         (colon)
-        (line_end
-          (newline))
-        (plain_comment)
+        (newline)
         (content
-          (invalid_missing_content))))))
+          (invalid_missing_content)))))
+  (plain_comment))

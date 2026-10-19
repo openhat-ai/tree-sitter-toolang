@@ -16,26 +16,24 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (generate_statement
-        (flow_generate_keyword)
+        (generate_keyword)
         (integer_literal)
-        (flow_using_keyword)
+        (using_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (generate_statement
-          (flow_generate_keyword)
+          (generate_keyword)
           (integer_literal)
-          (flow_in_keyword)
+          (in_keyword)
           (integer_literal)
-          (flow_lane_keyword)
+          (lane_keyword)
           (inline_agic
             (arrow)
             (type
@@ -44,21 +42,19 @@ flow work:
             (colon)
             (content
               (text_line))
-            (line_end
-              (newline)))))
+            (newline))))
       (map_statement
-        (flow_map_keyword)
-        (flow_in_keyword)
+        (map_keyword)
+        (in_keyword)
         (integer_literal)
-        (flow_lanes_keyword)
-        (flow_using_keyword)
+        (lanes_keyword)
+        (using_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (map_statement
-          (flow_map_keyword)
+          (map_keyword)
           (inline_agic
             (arrow)
             (type
@@ -66,25 +62,22 @@ flow work:
             (colon)
             (content
               (text_line))
-            (line_end
-              (newline)))))
+            (newline))))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (reduce_statement
-          (flow_reduce_keyword)
-          (flow_using_keyword)
+          (reduce_keyword)
+          (using_keyword)
           (runnable_name)
           (colon)
-          (line_end
-            (newline))
-          (flow_from_keyword)
+          (newline)
+          (from_keyword)
           (colon)
           (content
             (text_line))
-          (line_end
-            (newline)))))))
+          (newline))))))
 
 ==================
 Inline reducer and initializer in a binding
@@ -102,36 +95,32 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (reduce_statement
-          (flow_reduce_keyword)
+          (reduce_keyword)
           (inline_agic
             (arrow)
             (type
               (builtin_type))
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (content
               (text_line)
               (newline)))
-          (flow_from_keyword)
+          (from_keyword)
           (colon)
           (content
             (text_line))
-          (line_end
-            (newline))))
+          (newline)))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))
 
 ==================
 Removed collection words are ordinary content
@@ -153,8 +142,7 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (implicit_run_statement
         (content
@@ -167,37 +155,33 @@ flow work:
           (text_line)
           (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline))))))
+        (newline)))))
 
 ==================
 Inline using in a binding exposes an error
@@ -212,20 +196,18 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (map_statement
-          (flow_map_keyword)
+          (map_keyword)
           (ERROR
-            (flow_using_keyword))
+            (using_keyword))
           (inline_agic
             (colon)
             (content
               (text_line))
-            (line_end
-              (newline))))))))
+            (newline)))))))

@@ -30,31 +30,27 @@ flow summarize:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
+        (item_doc
+          (comment_text))
         (repeat_body
-          (item_doc
-            (comment_text))
           (repeat_statement
-            (flow_repeat_keyword)
+            (repeat_keyword)
             (integer_literal)
-            (flow_times_keyword)
+            (times_keyword)
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (repeat_body
               (run_statement
-                (flow_run_keyword)
+                (run_keyword)
                 (inline_agic
                   (colon)
-                  (line_end
-                    (newline))
+                  (newline)
                   (content
                     (text_line)
                     (newline)
@@ -63,31 +59,27 @@ flow summarize:
                     (text_line)
                     (newline))))
               (run_statement
-                (flow_run_keyword)
+                (run_keyword)
                 (runnable_name)
-                (line_end
-                  (newline)))))
+                (newline))))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
-              (line_end
-                (newline))
+              (newline)
               (content
                 (text_line)
                 (newline))))))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (implicit_run_statement
         (content
@@ -99,9 +91,8 @@ flow summarize:
           (newline)
           (blank_line)))
       (keep_statement
-        (flow_keep_keyword)
+        (keep_keyword)
         (position
-          (flow_first_keyword)
+          (first_keyword)
           (integer_literal))
-        (line_end
-          (newline))))))
+        (newline)))))

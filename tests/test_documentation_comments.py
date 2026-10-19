@@ -308,7 +308,7 @@ def test_malformed_nested_docs_preserve_following_statement_and_top_level_item(c
     )
     assert root.has_error
     assert [
-        node.child_by_field_name("runnable").text.strip()
+        node.child_by_field_name("target").text.strip()
         for node in descendants(root, "run_statement")
     ] == [b"first", b"last"]
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"

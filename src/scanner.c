@@ -16,6 +16,8 @@ enum Token {
   ITEM_DOC_START,
   PARAM_DOC_START,
   COMMENT_END,
+  BODY_START,
+  EMPTY_BODY,
   INDENT,
   RUNNABLE_INDENT,
   DEDENT,
@@ -177,10 +179,17 @@ static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode
 
 // Inspect a trivia run once. The hidden start token records this dependency in
 // Tree-sitter, so an edit anywhere in the lookahead invalidates the cached result.
-static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia) {
+static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia, bool text) {
   uint32_t lines = 0;
   for (;;) {
     bool comment = lexer->lookahead == '#';
+    // A text body owns an indented '#' line. An outer comment ends the
+    // pending value, even when more deeply indented text follows it.
+    if (comment && text) {
+      trivia->lines = lines;
+      trivia->column = indent.column;
+      return true;
+    }
     if (comment) {
       while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
         advance(lexer);
@@ -419,10 +428,42 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   // sibling's first word. No layout frame is opened for a missing body.
   bool opening_body = valid[INDENT] || valid[RUNNABLE_INDENT] ||
                       valid[TEXT_INDENT] || valid[REDUCE_INDENT];
-  // A text recovery branch can consume outer trivia before requesting the
-  // missing value. It no longer offers an indent token, but still cannot take
-  // a same-level entry. Existing flow/repeat/reducer bodies can take one.
+  // Only commit leading structural trivia to a declaration when a real body
+  // follows it. Otherwise finish the empty owner before the outer comments.
+  if (at_start && !scanner->line_started && !scanner->trivia.lines &&
+      (valid[BODY_START] || valid[EMPTY_BODY] || (valid[MISSING_REQUIRED] && opening_body)) &&
+      !((valid[TEXT_INDENT] || valid[REDUCE_INDENT]) && lexer->lookahead == '#' && indent.column > frame.column) &&
+      (lexer->lookahead == '#' || lexer->lookahead == '\r' || lexer->lookahead == '\n')) {
+    bool comment = lexer->lookahead == '#';
+    Trivia trivia = {0};
+    if (!lookahead_trivia(lexer, indent, &trivia, valid[TEXT_INDENT] || valid[REDUCE_INDENT])) {
+      return false;
+    }
+    if (trivia.column > frame.column) {
+      if (valid[BODY_START] && trivia.lines) {
+        scanner->trivia = trivia;
+        return emit(scanner, lexer, BODY_START);
+      }
+    } else if (valid[EMPTY_BODY]) {
+      return emit(scanner, lexer, EMPTY_BODY);
+    } else if (valid[MISSING_REQUIRED] && opening_body) {
+      return emit(scanner, lexer, MISSING_REQUIRED);
+    } else if (comment && valid[COMMENT_START]) {
+      scanner->trivia = trivia;
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
+    }
+    // Lookahead advanced the lexer without consuming a token. A successful
+    // start signal is the only branch that can continue from that position.
+    return false;
+  }
+  // Existing flow/repeat/reducer bodies can take same-level entries; pending
+  // body and content values require a deeper indentation level.
   bool awaiting_body = opening_body || (!valid[LINE_START] && !valid[REDUCE_TEXT_START]);
+  if (valid[EMPTY_BODY] && !scanner->line_started &&
+      (lexer->eof(lexer) || (at_start && indent.column <= frame.column))) {
+    return emit(scanner, lexer, EMPTY_BODY);
+  }
   if (valid[MISSING_REQUIRED] && !scanner->line_started &&
       (lexer->eof(lexer) || (at_start &&
        (indent.column < frame.column || (awaiting_body && indent.column == frame.column)) &&
@@ -479,7 +520,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       return false;
     }
     Trivia trivia = scanner->trivia;
-    if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia)) {
+    if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia, false)) {
       return false;
     }
     enum Token token;
@@ -506,9 +547,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
   if (!scanner->line_started && valid[RUNNABLE_INDENT] && indent.column > frame.column) {
     // Reject an unknown header before opening a layout frame that recovery
-    // could abandon. A later valid body entry can still establish the frame.
+    // could abandon. Commit the pending prefix so native recovery keeps the
+    // declaration header and can resume at a later directive or body entry.
     if (unknown_directive_head(lexer)) {
-      return false;
+      return valid[BODY_START] && emit(scanner, lexer, BODY_START);
     }
     return push(scanner, lexer, indent, STRUCTURAL, RUNNABLE_INDENT);
   }

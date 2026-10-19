@@ -19,16 +19,14 @@ flow next:
     (prompt_keyword)
     (cap_name)
     (colon)
+    (newline)
     (cap_body
-      (line_end
-        (newline))
       (property
         (identifier)
         (assign_operator)
         (text_line
           (MISSING _text_line))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)
       (content
         (text_line)
@@ -37,9 +35,8 @@ flow next:
     (chore_keyword)
     (chore_name)
     (colon)
+    (newline)
     (chore_body
-      (line_end
-        (newline))
       (ERROR
         (identifier)
         (assign_operator))
@@ -52,9 +49,7 @@ flow next:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))

@@ -13,12 +13,11 @@
 (flow) @indent
 (repeat_statement) @indent
 ; Capture structural headers, not the first text row of semantic content.
-(reduce_statement runnable: (runnable_name) (colon)) @indent
-(inline_agic (line_end) content: (content)) @indent
-(inline_agic_body (line_end) content: (content)) @indent
-(ask_statement (line_end) content: (content)) @indent
-(let_statement (line_end) value: (content)) @indent
-(message role: (role) (line_end) content: (content)) @indent
+(reduce_statement target: (runnable_name) (colon)) @indent
+(inline_agic (newline) content: (content)) @indent
+(ask_statement (newline) content: (content)) @indent
+(let_statement (newline) value: (content)) @indent
+(message role: (role) (newline) content: (content)) @indent
 (reduce_statement
-  (flow_from_keyword) @indent
-  (line_end) from: (content))
+  (from_keyword) @indent
+  (newline) from: (content))

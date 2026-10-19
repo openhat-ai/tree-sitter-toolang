@@ -1,0 +1,34 @@
+#@ Public CST contract coverage.
+with skill shared
+
+prompt empty:
+## Documentation remains outside the empty prompt.
+chore empty:
+## @param topic Input for the following flow.
+flow work(topic: Text): # Header comment.
+# Preface belongs to the declaration, before its body.
+  models += fast
+  hands = worker
+  recall = far, near
+  lanes = 2
+  instruct = guidance
+  context = default
+  run worker
+  async run: Inline # text.
+  seek reviewer worker
+  exec: Inline.
+  let handle = spawn worker
+  await handle
+  generate 2 in 1 lanes using worker
+  map in 2 lane: Inline.
+  reduce:
+    # Literal reducer heading.
+    Merge.
+    from: Seed.
+  keep if worker
+  drop if: Done.
+  sort ascending by worker
+  repeat 2 time:
+    # Leading structural comment belongs to repeat.
+    run worker
+    until: Ready.

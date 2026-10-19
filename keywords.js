@@ -6,18 +6,18 @@ const declarations = {
   instruct: "instruct_keyword", agic: "agic_keyword", flow: "flow_keyword",
 };
 const operations = {
-  run: "flow_run_keyword", seek: "flow_seek_keyword", ask: "flow_ask_keyword",
-  generate: "flow_generate_keyword", map: "flow_map_keyword", reduce: "flow_reduce_keyword",
-  keep: "flow_keep_keyword", drop: "flow_drop_keyword", sort: "flow_sort_keyword",
-  repeat: "flow_repeat_keyword", spawn: "flow_spawn_keyword", await: "flow_await_keyword",
+  run: "run_keyword", seek: "seek_keyword", ask: "ask_keyword",
+  generate: "generate_keyword", map: "map_keyword", reduce: "reduce_keyword",
+  keep: "keep_keyword", drop: "drop_keyword", sort: "sort_keyword",
+  repeat: "repeat_keyword", spawn: "spawn_keyword", await: "await_keyword",
 };
 const clauses = {
-  until: "flow_until_keyword", from: "flow_from_keyword", windowing: "flow_windowing_keyword",
-  using: "flow_using_keyword", if: "flow_if_keyword", by: "flow_by_keyword",
-  in: "flow_in_keyword", lane: "flow_lane_keyword", lanes: "flow_lanes_keyword",
-  ascending: "flow_ascending_keyword", descending: "flow_descending_keyword",
-  time: "flow_time_keyword", times: "flow_times_keyword",
-  first: "flow_first_keyword", last: "flow_last_keyword",
+  until: "until_keyword", from: "from_keyword", windowing: "windowing_keyword",
+  using: "using_keyword", if: "if_keyword", by: "by_keyword",
+  in: "in_keyword", lane: "lane_keyword", lanes: "lanes_keyword",
+  ascending: "ascending_keyword", descending: "descending_keyword",
+  time: "time_keyword", times: "times_keyword",
+  first: "first_keyword", last: "last_keyword",
 };
 const queryKeys = ["models", "tools", "skills", "services", "psyches", "prompts"];
 const routeKeys = ["hands", "handoffs"];
@@ -31,7 +31,7 @@ const capKinds = ["psyche", "skill", "service", "prompt"];
 const reservedWords = [];
 const wordNodes = {
   ...declarations, ...operations, ...clauses,
-  let: "flow_let_keyword", exec: "flow_exec_keyword", async: "flow_async_keyword",
+  let: "let_keyword", exec: "exec_keyword", async: "async_keyword",
   pass: "pass_keyword", recall: "recall_keyword",
   default: "default_keyword", none: "none_keyword",
 };

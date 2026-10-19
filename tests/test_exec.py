@@ -37,7 +37,7 @@ def test_exec_target_fields_match_run(target, output, nested, ending):
     run_root = parse(source.replace("exec", "run", 1))
     assert valid(run_root), run_root
     run, = descendants(run_root, "run_statement")
-    run_target = run.child_by_field_name("runnable" if node.type == "runnable_name" else "agic")
+    run_target = run.child_by_field_name("target")
     assert str(node) == str(run_target)
     assert node.text == run_target.text
 
@@ -127,7 +127,7 @@ def test_inline_exec_owns_text_but_not_following_statements(header, indent):
     assert b"exec finish" in target.text
     assert not descendants(target, "item_doc")
     assert not descendants(target, "run_statement")
-    assert [node.child_by_field_name("runnable").text.strip()
+    assert [node.child_by_field_name("target").text.strip()
             for node in descendants(loop, "run_statement")] == [b"after_inline"]
     assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"grow"

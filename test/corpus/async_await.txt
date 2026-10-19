@@ -18,64 +18,56 @@ flow second:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (run_statement
-        (flow_async_keyword)
-        (flow_run_keyword)
-        (invalid_flow_reserved_statement
-          (line_end
-            (newline))))
-      (run_statement
-        (flow_run_keyword)
-        (runnable_name)
-        (line_end
+        (async_keyword)
+        (run_keyword)
+        (invalid_run_target
           (newline)))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
-          (invalid_flow_reserved_statement
+          (async_keyword)
+          (run_keyword)
+          (invalid_run_target
             (runnable_name)
             (text_line)
-            (line_end
-              (newline)))))
+            (newline))))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (inline_agic
             (arrow)
             (type
               (builtin_type))
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (content
               (invalid_missing_content)))))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (flow
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))
 
 ==================
 Async run targets and binding wrappers
@@ -99,70 +91,62 @@ flow launch:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (run_statement
-        (flow_async_keyword)
-        (flow_run_keyword)
+        (async_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (run_statement
-        (flow_async_keyword)
-        (flow_run_keyword)
+        (async_keyword)
+        (run_keyword)
         (inline_agic
           (colon)
           (content
             (text_line))
-          (line_end
-            (newline))))
+          (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (inline_agic
             (arrow)
             (type
@@ -170,17 +154,15 @@ flow launch:
             (colon)
             (content
               (text_line))
-            (line_end
-              (newline)))))
+            (newline))))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (run_statement
-          (flow_async_keyword)
-          (flow_run_keyword)
+          (async_keyword)
+          (run_keyword)
           (inline_agic
             (colon)
-            (line_end
-              (newline))
+            (newline)
             (content
               (text_line)
               (newline))))))))
@@ -202,48 +184,42 @@ flow launch:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (await_statement
-        (flow_await_keyword)
+        (await_keyword)
         (handle_name)
-        (line_end
+        (newline))
+      (let_statement
+        (let_keyword)
+        (local_name)
+        (assign_operator)
+        (await_statement
+          (await_keyword)
+          (handle_name)
           (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
+        (await_statement
+          (await_keyword)
+          (handle_name)
+          (newline)))
+      (let_statement
+        (let_keyword)
         (local_name)
         (assign_operator)
         (await_statement
-          (flow_await_keyword)
+          (await_keyword)
           (handle_name)
-          (line_end
-            (newline))))
+          (newline)))
       (let_statement
-        (flow_let_keyword)
-        (await_statement
-          (flow_await_keyword)
-          (handle_name)
-          (line_end
-            (newline))))
-      (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (await_statement
-          (flow_await_keyword)
+          (await_keyword)
           (handle_name)
-          (line_end
-            (newline))))
-      (let_statement
-        (flow_let_keyword)
-        (local_name)
-        (assign_operator)
-        (await_statement
-          (flow_await_keyword)
-          (handle_name)
-          (line_end
-            (newline)))))))
+          (newline))))))
 
 ==================
 Async inline text and await preserve repeat boundaries
@@ -264,56 +240,50 @@ flow launch:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
+        (times_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (let_statement
-            (flow_let_keyword)
+            (let_keyword)
             (local_name)
             (assign_operator)
             (run_statement
-              (flow_async_keyword)
-              (flow_run_keyword)
+              (async_keyword)
+              (run_keyword)
               (inline_agic
                 (arrow)
                 (type
                   (type_name)
                   (array_suffix))
                 (colon)
-                (line_end
-                  (newline))
+                (newline)
                 (content
                   (text_line)
                   (newline)
                   (text_line)
                   (newline)))))
           (await_statement
-            (flow_await_keyword)
+            (await_keyword)
             (handle_name)
-            (line_end
-              (plain_comment)
-              (newline)))
+            (plain_comment)
+            (newline))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))))
+              (newline)))))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))
 
 ==================
 Spawn handles use ordinary await binding wrappers
@@ -332,48 +302,42 @@ flow launch:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (spawn_statement
-          (flow_spawn_keyword)
+          (spawn_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (await_statement
-        (flow_await_keyword)
+        (await_keyword)
         (handle_name)
-        (line_end
+        (newline))
+      (let_statement
+        (let_keyword)
+        (local_name)
+        (assign_operator)
+        (await_statement
+          (await_keyword)
+          (handle_name)
           (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
+        (await_statement
+          (await_keyword)
+          (handle_name)
+          (newline)))
+      (let_statement
+        (let_keyword)
         (local_name)
         (assign_operator)
         (await_statement
-          (flow_await_keyword)
+          (await_keyword)
           (handle_name)
-          (line_end
-            (newline))))
-      (let_statement
-        (flow_let_keyword)
-        (await_statement
-          (flow_await_keyword)
-          (handle_name)
-          (line_end
-            (newline))))
-      (let_statement
-        (flow_let_keyword)
-        (local_name)
-        (assign_operator)
-        (await_statement
-          (flow_await_keyword)
-          (handle_name)
-          (line_end
-            (newline)))))))
+          (newline))))))
 
 ==================
 Primary input cannot be an operation or await handle
@@ -392,34 +356,28 @@ flow launch:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
-      (invalid_flow_reserved_statement
-        (line_end
-          (newline)))
-      (invalid_flow_reserved_statement
-        (flow_let_keyword)
+      (invalid_flow_statement
+        (newline))
+      (invalid_flow_statement
+        (let_keyword)
         (local_name)
         (assign_operator)
-        (line_end
-          (newline)))
-      (invalid_flow_reserved_statement
-        (flow_await_keyword)
+        (newline))
+      (invalid_flow_statement
+        (await_keyword)
         (text_line)
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
-        (invalid_flow_reserved_statement
-          (flow_await_keyword)
+        (invalid_flow_statement
+          (await_keyword)
           (text_line)
-          (line_end
-            (newline))))
+          (newline)))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline))))))
+        (newline)))))

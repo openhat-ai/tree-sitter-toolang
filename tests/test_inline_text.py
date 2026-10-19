@@ -29,7 +29,7 @@ CONTENT_CONTEXTS = [
     ("flow work:\n  sort ascending by:", "inline_agic", "content", ""),
     ("flow work:\n  ask:", "ask_statement", "content", ""),
     ("flow work:\n  let note =", "let_statement", "value", ""),
-    ("flow work:\n  repeat:\n    until:", "inline_agic_body", "content", "    run worker\n"),
+    ("flow work:\n  repeat:\n    until:", "inline_agic", "content", "    run worker\n"),
     ("flow work:\n  reduce using worker:\n    from:", "reduce_statement", "from", ""),
 ]
 VALUES = [
@@ -134,7 +134,7 @@ def test_literal_hashes_do_not_hide_malformed_bound_operations(head, newline):
     root = parse(f"flow work:\n  {head}\n  run after\nflow next:\n  pass\n".replace("\n", newline))
     assert not valid(root), root
     assert not any(node.child_by_field_name("value") for node in descendants(root, "let_statement"))
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
     assert len(descendants(root, "flow")) == 2
 
 
@@ -162,5 +162,5 @@ def test_incremental_text_and_comment_boundaries_match_fresh_parses(newline):
         assert [n.text for n in descendants(root, "text_line")] == ([] if text is None else [text])
         assert [n.text for n in descendants(root, "plain_comment")] == ([] if comment is None else [comment])
         assert len(descendants(root, "flow")) == 2
-        assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+        assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
         previous = current

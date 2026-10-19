@@ -106,7 +106,7 @@ def test_keyword_aliases_preserve_named_leaf_nodes():
                  "flow work:\n  lanes = 2\n  map in 2 lanes using worker\n")
     assert valid(root), root
     for kind in ["cap_kind", "skill_keyword", "builtin_type", "recall_source",
-                 "role", "directive_key", "flow_lanes_keyword"]:
+                 "role", "directive_key", "lanes_keyword"]:
         nodes = descendants(root, kind)
         assert nodes, kind
         assert all(node.child_count == 0 for node in nodes), nodes
@@ -118,7 +118,7 @@ def test_bound_run_range_starts_at_its_keyword(space):
     assert valid(root), root
     operation, = descendants(root, "run_statement")
     keyword = operation.named_children[0]
-    assert keyword.type == "flow_run_keyword"
+    assert keyword.type == "run_keyword"
     assert operation.start_byte == keyword.start_byte
     assert operation.text == b"run worker\n"
 
@@ -153,4 +153,4 @@ def test_malformed_bound_operation_does_not_consume_following_statements():
     flows = descendants(root, "flow")
     assert [flow.child_by_field_name("name").text for flow in flows] == [b"work", b"next"]
     after, = descendants(root, "run_statement")
-    assert after.child_by_field_name("runnable").text == b"after"
+    assert after.child_by_field_name("target").text == b"after"

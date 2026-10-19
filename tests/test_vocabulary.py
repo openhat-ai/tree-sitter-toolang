@@ -56,7 +56,7 @@ def test_removed_words_do_not_become_bindable_operations(word):
 def test_removed_keyword_nodes_are_absent_from_metadata():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
     types = {node["type"] for node in nodes}
-    assert not {f"flow_{word}_keyword" for word in REMOVED_WORDS} & types
+    assert not {f"{word}_keyword" for word in REMOVED_WORDS} & types
     assert "thunk_keyword" not in types
 
 
@@ -78,5 +78,5 @@ def test_incremental_removed_heads_switch_cleanly_to_active_operations(newline):
             tree = parser.parse(current, tree)
             assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node)
             assert valid(tree.root_node) == expected_valid
-            assert descendants(tree.root_node, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+            assert descendants(tree.root_node, "run_statement")[-1].child_by_field_name("target").text == b"after"
             previous = current

@@ -63,7 +63,7 @@ def test_name_fields_distinguish_declarations_bindings_and_references():
     for kind in ["agic", "flow"]:
         declaration, = descendants(root, kind)
         assert declaration.child_by_field_name("name").type == "runnable_name"
-        assert declaration.child_by_field_name("runnable") is None
+        assert declaration.child_by_field_name("target") is None
     parameter, = descendants(root, "param")
     assert parameter.child_by_field_name("name").type == "param_name"
     assert parameter.child_by_field_name("param") is None

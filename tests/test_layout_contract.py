@@ -30,7 +30,7 @@ def test_repeat_requires_executable_body_with_optional_bounds(
         if until is not None:
             assert until.type == "until_clause"
             target = until.child_by_field_name("target")
-            assert target.type == "inline_agic_body"
+            assert target.type == "inline_agic"
             assert target.child_by_field_name("content").text.strip() == b"Ready."
 
 
@@ -59,7 +59,7 @@ def test_declaration_body_optionality_at_eof_and_next_item(
     if not required:
         items = declarations(root)
         assert len(items) == (2 if ending else 1)
-        # Chores retain a chore_body node even when they contain only trivia.
+        # Empty declarations do not manufacture a body from header trivia.
         assert not descendants(items[0], "text_line")
         assert not descendants(items[0], "property")
         assert not descendants(items[0], "flow")

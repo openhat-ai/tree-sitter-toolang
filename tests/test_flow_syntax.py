@@ -98,14 +98,14 @@ def test_flow_fixture_covers_complete_statement_set():
         "repeat_statement",
     ]
 
-    inline_run = research[1].child_by_field_name("agic")
+    inline_run = research[1].child_by_field_name("target")
     assert inline_run is not None and inline_run.type == "inline_agic"
     assert _text(source, inline_run.child_by_field_name("return")) == "Note"
     assert "Extract one note." in _text(
         source, inline_run.child_by_field_name("content")
     )
 
-    inline_sort = research[19].child_by_field_name("runnable")
+    inline_sort = research[19].child_by_field_name("target")
     assert inline_sort is not None and inline_sort.type == "inline_agic"
     assert inline_sort.child_by_field_name("return") is None
     assert research[20].child_by_field_name("body").child_by_field_name("until") is not None
@@ -116,7 +116,7 @@ def test_flow_fixture_covers_complete_statement_set():
         if index not in {3, 7, 12, 15}
     ]
     assert all(
-        statement.child_by_field_name("runnable") is not None
+        statement.child_by_field_name("target") is not None
         for statement in runnable_statements
     )
     assert all(
@@ -130,8 +130,8 @@ def test_flow_fixture_covers_complete_statement_set():
         "seek_statement",
         "ask_statement",
     ]
-    assert delegate[0].child_by_field_name("runnable") is not None
-    assert delegate[1].child_by_field_name("agic") is not None
+    assert delegate[0].child_by_field_name("target") is not None
+    assert delegate[1].child_by_field_name("target") is not None
 
     bindings = _statements(flows[2])
     assert [statement.type for statement in bindings] == [
@@ -189,7 +189,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     ]
 
     for statement in statements[:8]:
-        runnable = statement.child_by_field_name("runnable")
+        runnable = statement.child_by_field_name("target")
         assert runnable is not None and runnable.type == "runnable_name"
         assert statement.child_by_field_name("agic") is None
 
@@ -216,7 +216,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     assert repeat.child_by_field_name("body").type == "repeat_body"
     clause = repeat.child_by_field_name("body").child_by_field_name("until")
     assert clause.type == "until_clause"
-    assert clause.child_by_field_name("target").type == "inline_agic_body"
+    assert clause.child_by_field_name("target").type == "inline_agic"
 
 
 def test_unnamed_flow_supports_signatures():
@@ -517,7 +517,7 @@ def test_malformed_statement_after_blank_line_does_not_become_an_implicit_run():
     implicit_runs = _descendants(tree.root_node, "implicit_run_statement")
 
     assert tree.root_node.has_error or _descendants(
-        tree.root_node, "invalid_flow_reserved_statement"
+        tree.root_node, "invalid_flow_statement"
     )
     assert len(implicit_runs) == 1
     assert "map using review." not in _text(source, implicit_runs[0])
@@ -539,7 +539,7 @@ def test_statement_keywords_only_reserve_complete_words():
 
         assert tree.root_node.has_error is False
         assert len(_descendants(tree.root_node, "implicit_run_statement")) == 1
-        assert not _descendants(tree.root_node, "invalid_flow_reserved_statement")
+        assert not _descendants(tree.root_node, "invalid_flow_statement")
 
 
 def test_until_is_reserved_at_statement_boundaries():
@@ -615,10 +615,11 @@ def test_repeat_leading_trivia_preserves_executable_body(
         "run_statement",
     ]
     assert [
-        _text(source, node.child_by_field_name("runnable")).strip()
+        _text(source, node.child_by_field_name("target")).strip()
         for node in statements
     ] == ["search", "summarize"]
-    assert [node.type for node in body.named_children if node.type in trivia] == trivia
+    assert [node.type for node in loop.named_children if node.type in trivia] == trivia
+    assert not any(node.type in trivia for node in body.named_children)
     assert bool(loop.child_by_field_name("body").child_by_field_name("until")) == bool(ending)
     assert not _descendants(loop, "implicit_run_statement")
 
@@ -661,7 +662,6 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     outer = _statements(_items(root)[0])[0]
     outer_body = outer.child_by_field_name("body")
     assert [node.type for node in outer_body.named_children] == [
-        "item_doc",
         "run_statement",
         "item_doc",
         "repeat_statement",
@@ -674,7 +674,7 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     assert [node.type for node in statements] == ["run_statement"]
     assert (
         _text(
-            source, statements[0].child_by_field_name("runnable")
+            source, statements[0].child_by_field_name("target")
         ).strip()
         == "revise"
     )

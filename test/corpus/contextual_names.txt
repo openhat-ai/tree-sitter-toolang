@@ -36,14 +36,12 @@ agic describe(until?: Text):
         (param_name))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (await_statement
-        (flow_await_keyword)
+        (await_keyword)
         (handle_name)
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (agic
     (agic_keyword)
@@ -58,12 +56,10 @@ agic describe(until?: Text):
           (builtin_type)))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (pass_keyword)
-      (line_end
-        (newline)))))
+      (newline))))
 
 ================================================================================
 Contextual keyword destinations and anonymous operations
@@ -86,73 +82,64 @@ flow work:
     (flow_keyword)
     (runnable_name)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (sort_statement
-          (flow_sort_keyword)
-          (flow_ascending_keyword)
-          (flow_by_keyword)
+          (sort_keyword)
+          (ascending_keyword)
+          (by_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (spawn_statement
-          (flow_spawn_keyword)
+          (spawn_keyword)
           (runnable_name)
-          (line_end
-            (newline))))
+          (newline)))
       (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (local_name)
         (assign_operator)
         (await_statement
-          (flow_await_keyword)
+          (await_keyword)
           (handle_name)
-          (line_end
-            (newline))))
+          (newline)))
       (await_statement
-        (flow_await_keyword)
+        (await_keyword)
         (handle_name)
-        (line_end
+        (newline))
+      (let_statement
+        (let_keyword)
+        (run_statement
+          (run_keyword)
+          (runnable_name)
           (newline)))
       (let_statement
-        (flow_let_keyword)
-        (run_statement
-          (flow_run_keyword)
-          (runnable_name)
-          (line_end
-            (newline))))
-      (let_statement
-        (flow_let_keyword)
+        (let_keyword)
         (sort_statement
-          (flow_sort_keyword)
-          (flow_ascending_keyword)
-          (flow_by_keyword)
+          (sort_keyword)
+          (ascending_keyword)
+          (by_keyword)
           (runnable_name)
-          (line_end
-            (newline)))))))
+          (newline))))))

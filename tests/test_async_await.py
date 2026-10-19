@@ -45,11 +45,11 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
     assert valid(root), root
     statement, = descendants(root, "run_statement")
     modifier = statement.child_by_field_name("async")
-    assert modifier.type == "flow_async_keyword"
+    assert modifier.type == "async_keyword"
     assert modifier.text.strip() == b"async"
-    field = "runnable" if target.startswith(" research") else "agic"
-    node = statement.child_by_field_name(field)
-    if field == "runnable":
+    node = statement.child_by_field_name("target")
+    if target.startswith(" research"):
+        assert node.type == "runnable_name"
         assert node.text.strip() == b"research"
     else:
         assert node.type == "inline_agic"
@@ -61,8 +61,8 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
     assert valid(synchronous), synchronous
     run, = descendants(synchronous, "run_statement")
     assert run.child_by_field_name("async") is None
-    assert str(run.child_by_field_name(field)) == str(node)
-    assert run.child_by_field_name(field).text.strip() == node.text.strip()
+    assert str(run.child_by_field_name("target")) == str(node)
+    assert run.child_by_field_name("target").text.strip() == node.text.strip()
 
 
 @pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
@@ -197,9 +197,9 @@ def test_invalid_async_run_preserves_following_statements_and_declarations(bindi
     ).replace("\n", newline))
     assert not valid(root), root
     assert [node.child_by_field_name("name").text.strip() for node in descendants(root, "flow")] == [b"first", b"second"]
-    targets = [node.child_by_field_name("runnable").text.strip()
+    targets = [node.child_by_field_name("target").text.strip()
                for node in descendants(root, "run_statement")
-               if node.child_by_field_name("runnable")]
+               if node.child_by_field_name("target")]
     assert b"after" in targets, root
     assert b"finish" in targets, root
 
@@ -242,8 +242,8 @@ def test_incremental_async_header_repair_preserves_following_code(binding, newli
 def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
     root = parse(f"flow launch:\n  {binding}{prefix} is ordinary text.\n")
     assert valid(root), root
-    assert not descendants(root, "flow_async_keyword")
-    assert not descendants(root, "flow_await_keyword")
+    assert not descendants(root, "async_keyword")
+    assert not descendants(root, "await_keyword")
     if binding:
         wrapper, = descendants(root, "let_statement")
         assert prefix.encode() in wrapper.child_by_field_name("value").text
@@ -286,7 +286,7 @@ def test_async_target_names_remain_contextual(name):
     root = parse(f"flow launch:\n  async run {name}\n")
     assert valid(root), root
     run, = descendants(root, "run_statement")
-    assert run.child_by_field_name("runnable").text.strip() == name.encode()
+    assert run.child_by_field_name("target").text.strip() == name.encode()
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -297,9 +297,9 @@ def test_async_run_target_separators(binding, spacing, target):
     assert valid(root), root
     run, = descendants(root, "run_statement")
     if target == "worker":
-        assert run.child_by_field_name("runnable").text.strip() == b"worker"
+        assert run.child_by_field_name("target").text.strip() == b"worker"
     else:
-        assert run.child_by_field_name("agic").child_by_field_name("content").text.strip() == b"Research."
+        assert run.child_by_field_name("target").child_by_field_name("content").text.strip() == b"Research."
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -313,14 +313,14 @@ def test_async_inline_body_preserves_literal_text_and_repeat_boundaries(binding,
     assert valid(root), root
     loop, = descendants(root, "repeat_statement")
     run, = descendants(loop, "run_statement")
-    assert b"async run worker" in run.child_by_field_name("agic").text
-    assert b"await h" in run.child_by_field_name("agic").text
+    assert b"async run worker" in run.child_by_field_name("target").text
+    assert b"await h" in run.child_by_field_name("target").text
     assert not descendants(run, "await_statement")
     assert not descendants(run, "item_doc")
     assert len(descendants(loop, "await_statement")) == 1
     condition = loop.child_by_field_name("body").child_by_field_name("until")
     assert condition.child_by_field_name("target").text.strip() == b": Ready."
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text.strip() == b"finish"
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text.strip() == b"finish"
 
 
 def test_async_and_await_end_implicit_text_paragraphs():
@@ -337,11 +337,11 @@ def test_async_await_fixture_keeps_text_literal_and_run_as_an_authored_type(newl
     source = Path(__file__).with_name("fixtures").joinpath("async_await.too").read_text()
     root = parse(source.replace("\n", newline))
     assert valid(root), root
-    assert len(descendants(root, "flow_async_keyword")) == 4
-    assert len(descendants(root, "flow_await_keyword")) == 4
+    assert len(descendants(root, "async_keyword")) == 4
+    assert len(descendants(root, "await_keyword")) == 4
     for agic in descendants(root, "agic"):
-        assert not descendants(agic, "flow_async_keyword")
-        assert not descendants(agic, "flow_await_keyword")
+        assert not descendants(agic, "async_keyword")
+        assert not descendants(agic, "await_keyword")
     assert any(node.text == b"Run" for node in descendants(root, "type_name"))
     assert not any(node.text == b"Run" for node in descendants(root, "builtin_type"))
 

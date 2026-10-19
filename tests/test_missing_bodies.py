@@ -21,7 +21,7 @@ def test_missing_body_fixture_uses_local_leaf_diagnostics():
                for node in diagnostics)
     assert [node.child_by_field_name("name").text
             for node in descendants(root, "flow")] == [b"first", b"next"]
-    assert [node.child_by_field_name("runnable").text
+    assert [node.child_by_field_name("target").text
             for node in descendants(root, "run_statement")] == [
         b"after_repeat", b"after_text", b"after_reduce",
     ]
@@ -72,9 +72,9 @@ def test_missing_body_recovers_at_the_next_statement_or_declaration(header, newl
         assert b"next" in [node.child_by_field_name("name").text
                             for node in descendants(root, "flow")]
         if nested:
-            assert b"after" in [node.child_by_field_name("runnable").text
+            assert b"after" in [node.child_by_field_name("target").text
                                  for node in descendants(root, "run_statement")
-                                 if node.child_by_field_name("runnable")]
+                                 if node.child_by_field_name("target")]
         previous = current
 
 
@@ -92,11 +92,11 @@ def test_empty_repeat_diagnostic_does_not_open_a_layout_frame(indent, newline, t
     diagnostic, = descendants(body, "invalid_missing_body")
     assert diagnostic.child_count == 0
     assert diagnostic.start_byte == diagnostic.end_byte
-    assert diagnostic.start_point.row == (3 if trivia else 2)
+    assert diagnostic.start_point.row == 2
     assert not descendants(body, "run_statement")
     assert [node.child_by_field_name("name").text
             for node in descendants(root, "flow")] == [b"first", b"next"]
-    assert descendants(root, "run_statement")[0].child_by_field_name("runnable").text == b"after"
+    assert descendants(root, "run_statement")[0].child_by_field_name("target").text == b"after"
 
 
 @pytest.mark.parametrize("role", ["user", "assistant", "tool"])
@@ -172,7 +172,7 @@ def test_missing_content_before_outer_comments_retains_its_owner(header, marker,
         if source == malformed:
             diagnostic, = descendants(root, "invalid_missing_content")
             assert diagnostic.parent.type == "content"
-            boundary = current.find(b"flow next") if "flow next" in source else len(current)
+            boundary = current.index(marker.split("\n", 1)[0].encode())
             assert diagnostic.start_byte == diagnostic.end_byte == boundary
         if "flow next" in source:
             assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
@@ -190,5 +190,6 @@ def test_missing_content_comment_fixture_retains_all_declarations():
     root = parse((Path(__file__).parent / "fixtures/invalid/missing_content_comments.too").read_text())
     assert not root.has_error
     assert len(descendants(root, "invalid_missing_content")) == 3
-    assert [node.type for node in root.named_children] == ["context", "flow", "agic"]
-    assert descendants(root, "run_statement")[-1].child_by_field_name("runnable").text == b"after"
+    assert [node.type for node in root.named_children
+            if node.type not in {"plain_comment", "item_doc", "param_doc", "program_doc", "blank_line"}] == ["context", "flow", "agic"]
+    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"

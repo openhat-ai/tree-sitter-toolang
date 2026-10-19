@@ -57,8 +57,7 @@ flow seeded(_):
   (instruct
     (instruct_keyword)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (content
       (text_line)
       (newline)
@@ -67,8 +66,7 @@ flow seeded(_):
     (context_keyword)
     (identifier)
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (content
       (text_line)
       (newline)
@@ -86,65 +84,54 @@ flow seeded(_):
       (builtin_type)
       (array_suffix))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
         (default_keyword)
-        (line_end
-          (newline)))
+        (newline))
       (directive
-        (recall_keyword)
-        (assign_operator)
+        (directive_key)
+        (directive_operator)
         (recall_value
           (recall_source)
           (comma)
           (recall_source))
-        (line_end
-          (newline)))
-      (directive
-        (instruct_keyword)
-        (assign_operator)
-        (text_ref
-          (default_keyword))
-        (line_end
-          (newline)))
-      (directive
-        (context_keyword)
-        (assign_operator)
-        (text_ref
-          (identifier))
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
+        (default_keyword)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (identifier)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
         (route_value
           (none_keyword))
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
         (route_value
           (all_keyword))
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (agic
     (agic_keyword)
@@ -155,16 +142,14 @@ flow seeded(_):
         (param_name))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (agic_body
       (message
         (role)
         (colon)
         (content
           (text_line))
-        (line_end
-          (newline)))
+        (newline))
       (blank_line)))
   (flow
     (flow_keyword)
@@ -175,135 +160,114 @@ flow seeded(_):
         (param_name))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
         (directive_operator)
         (directive_value)
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
         (integer_literal)
-        (line_end
-          (newline)))
+        (newline))
       (directive
-        (recall_keyword)
-        (assign_operator)
+        (directive_key)
+        (directive_operator)
         (recall_value
           (recall_source)
           (comma)
           (recall_source))
-        (line_end
-          (newline)))
-      (directive
-        (instruct_keyword)
-        (assign_operator)
-        (text_ref
-          (default_keyword))
-        (line_end
-          (newline)))
-      (directive
-        (context_keyword)
-        (assign_operator)
-        (text_ref
-          (identifier))
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
+        (default_keyword)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
+        (identifier)
+        (newline))
+      (directive
+        (directive_key)
+        (directive_operator)
         (route_value
           (runnable_ref)
           (comma)
           (runnable_ref))
-        (line_end
-          (newline)))
+        (newline))
       (directive
         (directive_key)
-        (assign_operator)
+        (directive_operator)
         (route_value
           (none_keyword))
-        (line_end
-          (newline)))
+        (newline))
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (runnable_name)
-        (line_end
-          (newline)))
+        (newline))
       (reduce_statement
-        (flow_reduce_keyword)
-        (flow_using_keyword)
+        (reduce_keyword)
+        (using_keyword)
         (runnable_name)
         (colon)
-        (line_end
-          (newline))
-        (flow_from_keyword)
+        (newline)
+        (from_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline)))
       (repeat_statement
-        (flow_repeat_keyword)
+        (repeat_keyword)
         (integer_literal)
-        (flow_times_keyword)
-        (flow_windowing_keyword)
+        (times_keyword)
+        (windowing_keyword)
         (integer_literal)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (repeat_body
           (run_statement
-            (flow_run_keyword)
+            (run_keyword)
             (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))
+              (newline)))
           (until_clause
-            (flow_until_keyword)
-            (inline_agic_body
+            (until_keyword)
+            (inline_agic
               (colon)
               (content
                 (text_line))
-              (line_end
-                (newline))))
+              (newline)))
           (blank_line)))))
   (flow
     (flow_keyword)
@@ -314,35 +278,31 @@ flow seeded(_):
         (param_name))
       (rparen))
     (colon)
-    (line_end
-      (newline))
+    (newline)
     (flow_body
       (run_statement
-        (flow_run_keyword)
+        (run_keyword)
         (inline_agic
           (arrow)
           (type
             (builtin_type)
             (array_suffix))
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline))))
       (reduce_statement
-        (flow_reduce_keyword)
+        (reduce_keyword)
         (inline_agic
           (colon)
-          (line_end
-            (newline))
+          (newline)
           (content
             (text_line)
             (newline)))
-        (flow_from_keyword)
+        (from_keyword)
         (colon)
-        (line_end
-          (newline))
+        (newline)
         (content
           (text_line)
           (newline))))))
