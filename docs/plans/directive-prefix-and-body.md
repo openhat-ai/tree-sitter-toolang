@@ -1,182 +1,157 @@
-# Define metadata prefixes and body entry
+# Define property prefixes and runnable directives
 
-Status: proposed; requires human approval before implementation. Baselines:
-grammar `49436c4` in [PR #62](https://github.com/openhat-ai/tree-sitter-toolang/pull/62)
-and Toolang `3cca3b44` (using the published `0.4.0a4` parser).
-Blank lines and structural comments may separate metadata lines; the first
-substantive body line ends the prefix. This boundary decision is confirmed.
+Status: proposed; revised after design discussion on 2026-10-19. Grammar
+baseline: `49436c4` in [PR #62](https://github.com/openhat-ai/tree-sitter-toolang/pull/62).
+Consumer baseline: Toolang `3cca3b44`, using the published `0.4.0a4` parser.
+Property recognition independent of name support, and trivia/body transitions,
+are confirmed. The proposed unknown-directive prefix guard awaits approval.
+This definition changes no implementation.
 
 ## Goal and scope
 
-Make metadata recognition depend on source form and the owning construct,
-without silently converting unknown configuration into executable prose or
-mistaking a pure-text body's first assignment for metadata. Separate syntactic
-recognition from whether a key, operator, or value is supported.
+Keep two distinct concepts: open-schema properties for declarations and closed
+language directives for runnables. Specify prefix/body ownership without using
+consumer property schemas to guess whether a source line is prose.
 
-This definition covers body entry, unknown runnable directives, their CST, and
-coordinated consumer validation/formatting. Preserve operation syntax, literal
-hash/quote rules, documentation nodes, indentation, and body optionality.
-Exclude new directive names, extension registries, package version changes,
-publication, and merging the public `property` and `directive` node families.
+Cover prefix boundaries, documentation, unknown directive handling, and their
+acceptance checks. Preserve existing public CST fields, typed directive values,
+body optionality, operation syntax, layout, and literal hash/quote behavior.
+Exclude generic runnable directive names, CST `known` flags, new syntax for
+body delimiters, property-schema changes, version bumps, and publication.
 
 ## Verified current behavior
 
-| Owner | Grammar behavior | Consumer behavior |
+| Owners | Grammar | Consumer |
 | --- | --- | --- |
-| `prompt`, `psyche` | Shared `cap_body` recognizes any lowercase `key = value` prefix as `property`; then optional literal `content`. | Both kinds reject all properties. |
-| `skill`, `service` | Same generic property prefix and literal body. | Kind-specific property schemas reject unsupported names and check required fields/values. |
-| `chore` | Same prefix under `chore_body`. | Keeps metadata in `meta`; checks schedule syntax when present. |
-| `agic`, `flow` | Only 12 built-in directive names are recognized; some values have key-specific CSTs. Unknown assignments become messages/implicit runs. | Validates particular known directives; there is no general unknown-name guard. |
-| `context`, `instruct`, explicit text values | Enter text directly. | Interpret text/templates after parsing. |
+| `psyche`, `skill`, `service`, `prompt` | Generic `property` prefix under `cap_body`, followed by optional literal `content`. | Prompt/psyche reject all properties; skill/service validate their own schemas. |
+| `chore` | Same prefix under `chore_body`. | Preserves metadata in `meta`; validates schedule syntax when present. |
+| `agic`, `flow` | Recognizes the 12 built-in directive names below. Unknown assignment lines become messages/implicit runs. | Checks known directive semantics; `_validate_directives` has no general unknown-name guard. |
 
-Reproductions on the grammar baseline:
+Blank lines and structural comments already leave property prefixes open.
+A leading `answer = yes` becomes a property even in prompt/psyche; after an
+ordinary body line, the same source remains literal text. In runnables,
+`models = fast` is a directive, `modles = fast` is prose, and `lanes = banana`
+or `recall = auto` are syntax errors. Known directive heads after body entry
+are rejected by the existing keyword-boundary rules.
 
-- `prompt p:\n  answer = yes\n` and the equivalent psyche produce a property.
-  The consumer rejects it rather than preserving an authored text line.
-- A leading blank line or structural comment does not change that outcome.
-- After `Start body.`, an assignment remains literal cap body text.
-- In an agic/flow prefix, `answer = yes` is prose, `models = fast` is a
-  directive, and `lanes = banana` / `recall = auto` are grammar errors.
-- A bare `models are useful` line is rejected through keyword boundaries.
-  A known directive after a message/statement is rejected; an unknown one is prose.
-- Passing an AST directive named `unknown` or `modles` directly to
-  `_validate_directives` currently succeeds. Parser relaxation alone would
-  therefore be insufficient to reject unsupported configuration.
+Sources: `grammar.js` (`definitionBody`, `property`, `directive`),
+`src/scanner.c` (prefix entry and prose boundaries), `GRAMMAR.md` (Property,
+Directive), and Toolang `src/toolang/lang/{lower,validate,format}.py`.
 
-Sources: `grammar.js` (`definitionBody`, `directive`, runnable bodies),
-`src/scanner.c` (cap-text/directive entry and prose boundaries), and Toolang
-`src/toolang/lang/{lower,validate,format}.py`.
+## Proposed contract
 
-## Design choice
+### Property prefixes
 
-| Approach | Consequence |
-| --- | --- |
-| Grammar allowlist; reject every unknown assignment prefix | Catches typos if fallback is forbidden, but duplicates schemas and requires parser updates for new keys. |
-| Generic syntax with CST `known` variants/flags | Preserves unknown source but still embeds a versioned, owner-dependent schema in syntax; the flag cannot establish validity. |
-| Generic syntax with strict consumer validation | Preserves source and detects typos against the owning schema before execution. Recommended. |
-
-## Recommended contract
-
-### Owners and transitions
-
-| Owner | Prefix | What follows |
-| --- | --- | --- |
-| `prompt`, `psyche` | None. | Literal text from the first body line, including `answer = yes` and comment markers. |
-| `skill`, `service`, `chore` | Existing `property` syntax: identifier, `=`, raw value. Unknown keys are still properties. | Optional literal text. |
-| `agic`, `flow` | Generic `directive` syntax below, including unknown keys. | Existing messages or statements, respectively. |
-| `context`, `instruct`, explicit text values | None; unchanged. | Existing literal text. |
-
-Prefix recognition occurs only at the owner's structural body baseline.
-Blank lines and structural comments are trivia while the prefix is open;
-they neither end it nor create a body. The first substantive non-metadata
-line enters the owner's body rules permanently until that owner ends.
-Metadata-looking text cannot reopen the prefix. Dedents and nested owners
-retain their existing layout behavior.
-
-In pure-text bodies every marker is literal once the text block begins.
-Header comments and comments outside the block retain structural semantics.
-Keep existing public body/content fields; do not add phase wrappers.
-
-### Directive syntax and CST
-
-Use one schema-independent runnable directive envelope:
+Apply the same rule to `psyche`, `skill`, `service`, `prompt`, and `chore`:
 
 ```ebnf
-directive          ::= directive_key hspace? directive_operator hspace? directive_value line_end ;
-directive_key      ::= /[a-z][a-z0-9_]*/ ;
-directive_operator ::= "=" | "+=" | "-=" ;
-directive_value    ::= /[^ \t#\r\n][^#\r\n]*/ ;
+property       ::= identifier "=" property_value line_end ;
+property_value ::= /[^#\r\n]+/ ;
 ```
 
-Recognize the complete key/operator prefix, rather than just a built-in word.
-`models are useful` starts a body; `modles = fast` is a directive. A recognized
-assignment prefix missing its value is a syntax error, including for unknown
-keys; it cannot fall back to text or borrow the following line. Key matching
-must cover the complete identifier, including keyword spellings and long names.
+- The grammar defines the identifier, operator, and raw-value syntax. It contains
+  no supported-property-name list and does not consult the consumer's schema.
+  Only `=` is a property operator; `+=` and `-=` do not form properties.
+- At the owner's body baseline, blank lines and structural comments may precede
+  or separate properties. They neither end the prefix nor establish text.
+- The first substantive non-property line starts literal body content. Once
+  started, the body cannot return to property parsing before its owner ends.
+  Keywords, assignments, and comment markers within that text remain literal.
+- A complete `identifier =` prefix with a missing value remains a syntax error;
+  it cannot fall back to text or borrow the next line. Preserve current raw
+  value ranges, including permitted whitespace; nonempty-value semantics belong
+  to the consumer.
+- The consumer determines supported names, duplicates, required metadata,
+  value meanings, and extensions for each owner. It may reject, tolerate, or
+  preserve a property according to its own policy, including for prompt/psyche.
+  The grammar neither enforces the current consumer policy nor requires
+  consumers to accept arbitrary metadata.
 
-Every directive has direct leaf fields `key: directive_key`,
-`operator: directive_operator`, and `value: directive_value`. Preserve key and
-operator ranges and the exact nonempty RHS, excluding separating whitespace
-and structural inline comments. Quotes remain ordinary characters.
+Keep `property.key: identifier`, `operator: assign_operator`, and
+`value: text_line`, and existing `cap_body` / `chore_body` fields. Do not add a
+`known` marker or split known/unknown property nodes.
 
-Known directive values use the same raw value leaf. Move their name-specific
-operator restrictions, lists, references, selectors, integer ranges, and query
-validation to the consumer before execution. This includes forms such as
-`lanes += 4`, `recall = auto`, or `hands = worker,`: a CST can represent them,
-while semantic validation reports the unsupported form and source location.
+This deliberately means `prompt p:\n  answer = yes` is a property. The current
+consumer rejects it, but another consumer may tolerate it. Neither a blank line
+nor a structural comment forces that line into text. An ordinary preceding body line makes it literal. Also,
+`answer += yes` does not match property syntax and therefore starts body text.
+Do not use whether `answer` is supported to reinterpret either line.
 
-Once an agic/flow body begins, remove directive-name membership alone as a
-prose boundary. A line beginning `models` can be text; it cannot become a late
-directive. Existing operation, role, declaration, and malformed-operation
-rules still apply. An agic may still contain directives alone; a flow still
-requires a statement. Preserve the current whole-body `pass` alternative.
+### Runnable directives
 
-### Unknown names and `known`
+Agic/flow directives are closed language syntax. Keep the existing names,
+operator restrictions, typed value productions, and CST fields:
 
-Accept unknown keys syntactically. Determine support from the owning semantic
-schema; do not add `known` fields, known/unknown node variants, or a grammar
-allowlist. A global flag cannot answer whether a key is supported by this
-owner, operator, value, consumer version, or extension policy.
+| Names | Operators | Source value syntax |
+| --- | --- | --- |
+| `models`, `tools`, `psyches`, `skills`, `services`, `prompts` | `=`, `+=`, `-=` | Nonempty raw query value. |
+| `hands`, `handoffs` | `=` | Runnable-reference list or standalone `none` / `*`. |
+| `recall` | `=` | `far` / `near` list or standalone `none` / `default` / `*`. |
+| `lanes` | `=` | Integer literal or `default`. |
+| `context`, `instruct` | `=` | Identifier, `none`, or `default`. |
 
-The runtime must explicitly reject unknown runnable directives and unsupported
-skill/service properties with a located diagnostic before configuration or
-execution. Preserve chore metadata's existing open-map behavior; do not add a
-new blanket prohibition there. Editors may expose derived support status;
-syntax-only formatting must preserve unknown keys and their raw values.
-Nothing may silently discard an unknown directive.
+Directives precede messages/statements. Blank lines and structural comments may
+separate them. The first message/statement ends the prefix; it cannot reopen.
+Existing reserved-head and malformed-operation rules still apply in the body.
+Explicit text always treats directive-looking lines literally. Preserve
+existing directives-only agics, required flow statements, and whole-body `pass`.
 
-Compared with a grammar allowlist, this keeps typos out of implicit executable
-prose without requiring parser releases for configuration-schema changes.
-Compared with a CST `known` flag, support stays with the schema that owns it.
+Proposed strictness to confirm with this contract: while the runnable directive
+prefix is open, a complete assignment-shaped head with an unsupported name is
+a syntax error, rather than implicit prose. Thus `modles = fast` cannot silently
+become executable text. Do not expose an unknown `directive` or add a `known`
+flag. Known malformed directives also remain errors without prose fallback.
+After body entry, unknown assignments follow the existing message/statement
+rules and never become directives. This proposal adds no general assignment ban
+inside existing bodies or explicit text constructs.
 
-## Compatibility and implementation
+The consumer still validates numeric ranges, query expressions, name resolution,
+duplicates, and runtime/configuration constraints. An integer literal in the
+CST does not establish that its value is a positive lane count. A defensive
+unknown-name check may protect manually constructed ASTs, but does not replace
+the grammar's closed directive productions.
 
-Pure-text prompt/psyche assignments become body text; existing valid body text
-is preserved. Cap/chore properties keep their public family, fields, and rules.
-Unknown runnable assignment prefixes become directives and fail semantic
-validation instead of entering messages/implicit runs. To express one as body
-text, enter the body first or use an existing explicit text construct.
+## Compatibility and delivery
 
-Runnable values formerly represented by `route_value`, `recall_value`,
-`integer_literal`, or `text_ref` become `directive_value`; all keys/operators
-use their uniform directive leaves. Migrate lowering, queries, diagnostics,
-and formatting together. Existing valid directive meanings must be preserved.
+The property contract preserves current parsing, including the prompt/psyche
+assignment behavior. The directive contract preserves existing known syntax and
+public CST shapes. The proposed unknown-prefix guard rejects assignment-led
+runnable prose that was previously accepted. Express intended literal text as
+an existing explicit message (`user: modles = fast`) or flow body
+(`run: modles = fast`), or enter an ordinary body before that prose.
 
-Grammar touchpoints: `grammar.js`, `keywords.js`, `src/scanner.c`, generated
-parser/keyword/EBNF artifacts, queries, corpus/fixtures, binding and CLI tests,
-`GRAMMAR.md`, and Changelog migration notes. Consumer touchpoints:
-`src/toolang/lang/{ast,lower,validate,format}.py`, directive resolution,
-syntax diagnostics, language/formatter tests, and affected examples.
+Grammar touchpoints: `grammar.js`, `src/scanner.c`, keyword tables as needed,
+generated parser/EBNF artifacts if behavior changes, corpus/fixtures, binding
+and CLI tests, `GRAMMAR.md`, and Changelog migration notes. Consumer checks
+cover property validation, lowering, syntax diagnostics, and syntax-only
+formatting; no property policy or directive meaning changes are implied.
 
-Implement grammar and coordinated Toolang adoption as reviewable changes;
-release readiness requires both. Current `GRAMMAR.md` and Changelog remain
-unchanged while this is a proposed definition.
+This replaces the earlier proposal to make prompt/psyche immediately literal,
+accept arbitrary runnable directive names, and flatten typed values to raw text.
+Current syntax documentation and Changelog remain factual until implementation.
 
 ## Acceptance and risks
 
-1. Prompt/psyche first substantive lines containing assignments, Markdown,
-   hashes, and keyword-looking text remain literal. Preserve existing text-block
-   blank-line rules and optional empty bodies. Skill/service/chore distinguish
-   properties from their later body without schema name checks.
-2. Known/unknown directive prefixes, keyword/long names, compact spacing,
-   operators, nonempty values, inline comments, LF/CRLF, tabs, EOF, and missing
-   values have the specified fields and exact source ranges. Trivia does not
-   end the prefix; body entry never reverses.
-3. A known or unknown assignment after body entry is processed by the owner's
-   body rules. Bare directive words no longer imply configuration syntax;
-   operation/role recognition, malformed-operation recovery, siblings, required
-   bodies, and `pass` remain intact.
-4. Consumer checks reject unknown runnable keys and every previously invalid
-   known directive form before execution. Known valid configurations retain
-   their effects; chore extension metadata remains preserved. Formatting known
-   and unknown source is idempotent and does not move text across the boundary.
-5. Fresh and incremental trees agree across prefix/body edits. Verify packaged
-   queries, installed bindings, generated output, documentation examples, and
-   all grammar and Toolang default checks during implementation.
+1. All five declaration kinds share property recognition, independent of name
+   support. Cover ordinary/unknown/keyword/long keys, only `=`, malformed values,
+   and unchanged direct fields/ranges. Verify whitespace-only values retain
+   current syntax and consumer validation behavior.
+2. Blank lines and structural comments leave prefixes open. The first body
+   line closes property parsing permanently; later assignments and hashes stay
+   text. Include the assignment-led prompt/psyche counterexample above.
+3. Every listed directive retains its operators, typed values, separators,
+   malformed-form rejection, public fields, and query captures. Unknown
+   assignment-shaped heads in an open prefix fail without a synthetic known
+   flag, directive node, or prose fallback; following source survives recovery.
+4. Verify body-phase unknown assignments and explicit literal text still work;
+   known misplaced directive heads retain their existing diagnostics. Preserve
+   required bodies, operation/role guards, `pass`, and nested layout.
+5. Cover LF/CRLF, tabs, EOF, long names, fresh/incremental equivalence, installed
+   bindings, highlighting, formatter idempotence, and documentation examples.
+   Run grammar default checks and relevant consumer checks for implementation.
 
-The main risks are converting existing assignment-led prose into directives,
-relaxing a known-value parser check without its semantic replacement, and
-formatter reordering that changes body entry. Test these migrations explicitly;
-no compatibility heuristic should infer intent from whether a name is known.
-The proposed owner split, generic directive representation, and semantic policy
-await approval. There are no additional proposed syntax choices.
+The main design limitation is intentional: assignment-led cap/chore text cannot
+be distinguished from a property while the prefix is open. The main change risk
+is overextending the unknown-directive guard into body text or swallowing the
+next source line during recovery. The revised owner split and the proposed
+guard remain a proposed definition; no parser changes are delivered here.
