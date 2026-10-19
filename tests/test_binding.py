@@ -15,6 +15,7 @@ FIXTURE_NAMES = (
     "comments.too",
     "documentation_comments.too",
     "contextual_names.too",
+    "literal_hashes.too",
     "flows.too",
     "flow_arrays.too",
     "exec.too",

@@ -161,8 +161,9 @@ These forms have contextual constraints:
   parameter tag. Both name and same-line description are required. A malformed
   tag cannot fall back to ordinary documentation. `@parameter`, `@param:`,
   `@return`, and `@param` later in prose remain ordinary documentation text.
-- Inline `#`, `##`, `#@`, and `#!` all introduce plain comments where
-  `line_end` allows them. In indented explicit text, every marker is literal.
+- Inline `#`, `##`, `#@`, and `#!` introduce plain comments only in
+  structural positions where `line_end` allows them. Inline and indented
+  explicit text treat every marker as literal content.
 
 Descriptions may contain Unicode, punctuation, `#`, and further `@` characters.
 There is no parameter-documentation continuation syntax. Unknown or duplicate
@@ -220,22 +221,35 @@ is valid.
 
 ## Text
 
-Quotation marks are literal characters. The containing construct selects
+Quotation marks and backslashes are literal characters: there is no quoted
+string, escape decoding, or quote-closure requirement. `""` contains two quote
+characters rather than an empty value. The containing construct selects
 same-line text, an indented block, or an implicit paragraph.
 
 ```ebnf
-text          ::= inline_text line_end
-                | line_end blank_line* indented_text ;
-inline_text   ::= /[^#\r\n]+/ ;
+text          ::= inline_text text_end
+                | text_end blank_line* indented_text ;
+inline_text   ::= /[ \t]*[^ \t\r\n][^\r\n]*/ ;
+text_end      ::= newline | eof ;
 indented_text ::= ? nonempty literal text block at a deeper baseline ? ;
 paragraph(C)  ::= ? implicit text paragraph using boundary set C ? ;
 ```
 
-Same-line text requires a non-space/tab character before any comment marker
-and ends on that physical line. Indented text may follow blank lines; keywords,
-comment markers, and Markdown fences at or beyond its baseline are literal.
+Same-line text requires a non-space/tab character and consumes the rest of its
+physical line, including every `#`. It has no inline comments: `run: # Heading`
+contains `# Heading`, and `let note = "a#b"` retains the quotes and hash.
+A text introducer followed only by spaces/tabs and a newline selects indented
+text. It cannot have an inline header comment. Indented text may follow blank
+lines; keywords, comment markers, and Markdown fences at or beyond its baseline
+are literal.
 Structural comments outside the text prevent a following text block, except
 for the reducer-header rule described under [Reduce](#reduce).
+
+Move existing annotations after inline text or on text-introducer lines to
+standalone structural comment lines before the owning construct. For example,
+`run: Reply. # note` now contains `Reply. # note`. Declarations, typed fields,
+named operations, directives, properties, and `with` references retain their
+existing structural comment rules.
 
 An implicit paragraph checks the first complete token of every substantive
 line, including continuations. A word in its boundary set selects structural
@@ -251,8 +265,10 @@ Template spellings such as `{{_}}`, `{{style}}`, and `{{_1._}}` remain literal
 source text; consumers interpret them.
 
 ```too
-flow explain:
+flow explain: # Structural annotation.
   let note = A same-line text value.
+  let quoted = "a#b"
+  run: Visit https://example.com/#details
   let literal =
     run is literal inside this text block.
     # This line is text too.

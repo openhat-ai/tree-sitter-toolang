@@ -1,4 +1,4 @@
-context inline: Same-line text. # Header comment.
+context inline: Same-line text. # Literal suffix.
 instruct multiline:
   # Literal heading.
   First line.

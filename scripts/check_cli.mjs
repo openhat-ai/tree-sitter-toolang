@@ -11,6 +11,7 @@ const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too
 const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");
 const REPEAT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flexible_repeat.too");
 const ASYNC_AWAIT_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "async_await.too");
+const LITERAL_HASHES_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "literal_hashes.too");
 const DOCUMENTATION_FIXTURE = join(
   REPO_ROOT, "tests", "fixtures", "documentation_comments.too",
 );
@@ -165,7 +166,7 @@ try {
     join(REPO_ROOT, "tests", "fixtures", "flow_upgrade.too"), DOCUMENTATION_FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "exec.too"), COLLECTION_FIXTURE, SPAWN_FIXTURE,
     REPEAT_FIXTURE, ASYNC_AWAIT_FIXTURE, join(REPO_ROOT, "tests", "fixtures", "spawn_await.too"),
-    join(REPO_ROOT, "tests", "fixtures", "whitespace.too"));
+    join(REPO_ROOT, "tests", "fixtures", "whitespace.too"), LITERAL_HASHES_FIXTURE);
 
   const highlightOutput = runCli("highlight", "--config-path", configPath, FIXTURE);
   if (highlightOutput.includes("No syntax highlighting config found")) {
@@ -175,6 +176,21 @@ try {
   const documentationHtml = runCli(
     "highlight", "--config-path", configPath, "--html", DOCUMENTATION_FIXTURE,
   );
+  const literalHtml = runCli(
+    "highlight", "--config-path", configPath, "--html", LITERAL_HASHES_FIXTURE,
+  );
+  for (const expected of [
+    "<span style='color: #556677'> Visit https://example.com/#details</span>",
+    "<span style='color: #556677'> # Follow this heading.</span>",
+    "<span style='color: #556677'> ## Literal Markdown heading.</span>",
+    "<span style='color: #556677'>    # Literal multiline heading.</span>",
+    "<span style='color: #112233'># Structural declaration comment.</span>",
+    "<span style='color: #112233'># Structural operation comment.</span>",
+  ]) {
+    if (!literalHtml.includes(expected)) {
+      throw new Error(`Literal-text highlighting was missing: ${expected}\n${literalHtml}`);
+    }
+  }
   for (const expected of [
     "<span style='color: #112233'>#!/usr/bin/env too</span>",
     "<span style='color: #112233'># Keep summaries short.</span>",

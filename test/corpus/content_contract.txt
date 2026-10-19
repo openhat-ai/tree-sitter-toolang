@@ -1,7 +1,7 @@
 ==================
 Content values and structural body fields
 ==================
-context inline: Same-line text. # Header comment.
+context inline: Same-line text. # Literal suffix.
 instruct multiline:
   # Literal heading.
   First line.
@@ -53,7 +53,6 @@ flow example:
     (content
       (text_line))
     (line_end
-      (plain_comment)
       (newline)))
   (instruct
     (instruct_keyword)

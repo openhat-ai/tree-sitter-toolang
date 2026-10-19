@@ -1,0 +1,22 @@
+context fragment: Visit https://example.com/#details
+instruct heading: # Follow this heading.
+
+agic reader:
+  user: ## Literal Markdown heading.
+  assistant: "a#b"
+
+flow work: # Structural declaration comment.
+  # Comment about the next operation.
+  run: Visit https://example.com/#details
+  let note = "a#b"
+  ask: # Continue?
+  run:
+    # Literal multiline heading.
+    "Quotes" and \n remain literal.
+  run worker # Structural operation comment.
+  reduce:
+    Combine the material.
+    from: # Initial heading.
+  repeat:
+    until: # Ready?
+    run worker

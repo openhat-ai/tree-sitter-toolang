@@ -42,6 +42,7 @@ module.exports = grammar({
 
     _inline_comment: () => token(seq("#", /[^\r\n]*/)),
     line_end: ($) => seq(optional(alias($._inline_comment, $.plain_comment)), $.newline),
+    _text_line_end: ($) => $.newline,
     program_doc: ($) => seq(
       $._program_doc_start, optional(field("text", $.comment_text)), $._comment_end,
     ),
@@ -177,7 +178,7 @@ module.exports = grammar({
         content($, "content"),
       ),
 
-    _inline_content: ($) => $.text_line,
+    _inline_content: ($) => alias($._literal_text_line, $.text_line),
     _block_content: ($) => seq(
       repeat($.blank_line),
       choice(
@@ -431,11 +432,11 @@ module.exports = grammar({
       ),
     _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, field("content", alias($._inline_content, $.content)), $.line_end,
+      $.colon, field("content", alias($._inline_content, $.content)), alias($._text_line_end, $.line_end),
     ),
     _reduce_block_header: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, $.line_end, repeat($._trivia),
+      $.colon, alias($._text_line_end, $.line_end), repeat($._trivia),
     ),
     _reduce_inline_block: ($) => seq(
       $._reduce_block_header, $._reduce_indent,
@@ -703,9 +704,11 @@ module.exports = grammar({
     _identifier: () => token(/[a-z][a-z0-9_]*(_[a-z0-9]+)*/),
     kebab_name: () => token(/[a-z][a-z0-9]*(-[a-z0-9]+)*/),
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
-    // Preserve missing-value recovery while exposing only one public text leaf.
+    // Inline content owns its entire physical line. Structural raw values keep
+    // their comment delimiter; both expose the same public text leaf.
     text_line: ($) => $._text_line,
     _text_line: () => token(prec(-1, /[^#\r\n]+/)),
+    _literal_text_line: () => token(prec(-1, /[ \t]*[^ \t\r\n][^\r\n]*/)),
     // Recovery text must not absorb extras shared with structural tokens.
     _diagnostic_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
   },
@@ -714,8 +717,8 @@ module.exports = grammar({
 // Content is a semantic value; spelling and line endings do not add wrappers.
 function content($, name) {
   return choice(
-    seq(field(name, alias($._inline_content, $.content)), $.line_end),
-    prec.right(seq($.line_end, choice(
+    seq(field(name, alias($._inline_content, $.content)), alias($._text_line_end, $.line_end)),
+    prec.right(seq(alias($._text_line_end, $.line_end), choice(
       field(name, alias($._block_content, $.content)),
       // Outdented comments cannot fill a text value. Keep them outside content
       // while retaining its owner and diagnostic at the next boundary or EOF.

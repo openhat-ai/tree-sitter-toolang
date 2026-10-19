@@ -68,6 +68,9 @@ _inline_comment ::=
 line_end ::=
   ( (* alias {"value":"plain_comment","named":true} *) ( _inline_comment ) )? newline;
 
+_text_line_end ::=
+  newline;
+
 program_doc ::=
   _program_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end;
 
@@ -170,21 +173,23 @@ property ::=
 instruct ::=
   (* field "keyword" *) ( instruct_keyword ) ( (* field "name" *) ( identifier ) )?
   (* field "colon" *) ( colon ) ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
-  ) | blank_line* _comment _trivia* (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
 
 context ::=
   (* field "keyword" *) ( context_keyword ) ( (* field "name" *) ( identifier ) )?
   (* field "colon" *) ( colon ) ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
-  ) | blank_line* _comment _trivia* (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
 
 _inline_content ::=
-  text_line;
+  (* alias {"value":"text_line","named":true} *) ( _literal_text_line );
 
 _block_content ::=
   blank_line* ( _text_indent ( _content_row | blank_line )+ _dedent |
@@ -261,10 +266,11 @@ let_statement ::=
   (* field "statement" *) ( _bound_operation ) | flow_let_keyword (* field "statement" *) (
   _flow_operation ) | (* prec.right 0 *) ( flow_let_keyword _named_binding_start (* field "local" *)
   ( local_name ) assign_operator ( (* field "value" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _block_content ) )
-  | blank_line* _comment _trivia* (* field "value" *) ( (* alias {"value":"content","named":true} *)
-  ( _empty_content ) ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "value" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) );
 
 exec_statement ::=
   flow_exec_keyword (* field "target" *) ( runnable_name ) line_end | (* prec.right 0 *) (
@@ -330,10 +336,11 @@ seek_statement ::=
 
 ask_statement ::=
   (* prec.right 0 *) ( flow_ask_keyword colon ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
-  ) | blank_line* _comment _trivia* (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) );
 
 generate_statement ::=
   flow_generate_keyword _required_space (* field "count" *) ( integer_literal )
@@ -352,10 +359,12 @@ reduce_statement ::=
 
 _reduce_inline_line ::=
   ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type ) )? colon (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end;
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end );
 
 _reduce_block_header ::=
-  ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type ) )? colon line_end _trivia*;
+  ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type ) )? colon
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) _trivia*;
 
 _reduce_inline_block ::=
   _reduce_block_header _reduce_indent (* field "content" *) (
@@ -374,10 +383,11 @@ _reduce_content ::=
 
 _from_complement ::=
   _from_start flow_from_keyword colon ( (* field "from" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "from" *) ( (* alias {"value":"content","named":true} *) ( _block_content ) )
-  | blank_line* _comment _trivia* (* field "from" *) ( (* alias {"value":"content","named":true} *)
-  ( _empty_content ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "from" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "from" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
 
 map_statement ::=
   flow_map_keyword _runnable_complements;
@@ -466,14 +476,16 @@ invalid_flow_reserved_statement ::=
 
 inline_agic ::=
   ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type ) )? colon ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
-  ) | blank_line* _comment _trivia* (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
 
 inline_agic_body ::=
   colon ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _inline_content ) )
-  line_end | (* prec.right 0 *) ( line_end ( (* field "content" *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
   (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) );
 
@@ -551,10 +563,11 @@ _messages ::=
 
 message ::=
   _line_start ( (* field "role" *) ( _role ) colon ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
-  line_end ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
-  ) | blank_line* _comment _trivia* (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) |
+  (* alias {"value":"content","named":true} *) ( _inline_content ) )
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) | (* prec.right 0 *) (
+  (* alias {"value":"line_end","named":true} *) ( _text_line_end ) ( (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) |
   invalid_agic_reserved_message | (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _message_content ) ) );
 
@@ -799,6 +812,9 @@ text_line ::=
 
 _text_line ::=
   (* token *) ( (* prec -1 *) ( ? regex "[^#\\r\\n]+" ? ) );
+
+_literal_text_line ::=
+  (* token *) ( (* prec -1 *) ( ? regex "[ \\t]*[^ \\t\\r\\n][^\\r\\n]*" ? ) );
 
 _diagnostic_text ::=
   (* token *) ( (* prec -1 *) ( ? regex "[^ \\t#\\r\\n][^#\\r\\n]*" ? ) );

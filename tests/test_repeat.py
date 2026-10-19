@@ -71,7 +71,7 @@ def test_condition_separates_all_ordinary_flow_statement_kinds(statement):
 
 @pytest.mark.parametrize("binding", ["", "let ", "let result = "])
 @pytest.mark.parametrize("condition", [
-    "until", "until:", "until:   ", "until: # Missing text.",
+    "until", "until:", "until:   ",
     "until # Missing target.", "until using check", "until check()",
     "until check: text", "until -> Boolean: Ready.", "until check -> Boolean",
     "until agic:check", "until module::check", "until module::flow:check",
@@ -84,7 +84,7 @@ def test_invalid_conditions_never_become_valid_text(binding, condition):
     assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement")), root
 
 
-@pytest.mark.parametrize("condition", ["until done", "until: Ready.", "until:\n      Ready."])
+@pytest.mark.parametrize("condition", ["until done", "until: Ready.", "until: # Ready.", "until:\n      Ready."])
 @pytest.mark.parametrize("binding", ["let ", "let result = "])
 def test_conditions_cannot_be_bound(binding, condition):
     root = parse(f"flow work:\n  repeat:\n    run work\n    {binding}{condition}\n")

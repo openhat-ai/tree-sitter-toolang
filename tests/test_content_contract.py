@@ -29,7 +29,7 @@ ROOT = Path(__file__).parents[1]
 def test_content_fields_do_not_include_headers_or_forwarding_nodes(header, kind, field, multiline, newline):
     indent = " " * (len(header.rsplit("\n", 1)[-1]) - len(header.rsplit("\n", 1)[-1].lstrip()) + 2)
     value = f"{indent}First.\n{indent}  # Literal detail.\n" if multiline else "First."
-    source = header + (" # Header.\n" + value if multiline else " " + value + " # Header.\n")
+    source = "# Header.\n" + header + ("\n" + value if multiline else " " + value + " # Literal detail.\n")
     if "repeat:" in source:
         source += "    run worker\n"
     source += "flow next:\n  pass\n"
@@ -39,7 +39,7 @@ def test_content_fields_do_not_include_headers_or_forwarding_nodes(header, kind,
     owner, = descendants(root, kind)
     content = owner.child_by_field_name(field)
     assert content.type == "content"
-    expected = value.replace("\n", newline) if multiline else " " + value + " "
+    expected = value.replace("\n", newline) if multiline else " " + value + " # Literal detail."
     assert content.text == expected.encode()
     assert b"Header." not in content.text and b"flow next" not in content.text
     assert {node.type for node in content.named_children} <= {"text_line", "newline", "blank_line"}

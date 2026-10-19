@@ -14,6 +14,15 @@ This update implements the [unified grammar definition](docs/plans/grammar-contr
 It changes the public CST and requires a coordinated consumer migration from
 0.4.0-alpha.4; package versions and runtime execution are unchanged.
 
+- Preserve every `#` in inline content, including URLs and quoted-looking text.
+  Inline text and text-introducer lines no longer support inline comments:
+  `run: # Heading` contains `# Heading`, and `let note = "a#b"` retains all five
+  characters. Move intended text/header annotations to standalone structural
+  comment lines before the construct. Structural comments, including those on
+  declarations, named operations, properties, and `with` references, retain
+  their rules. Quotes and backslashes remain ordinary characters; no string or
+  escape syntax is added. Existing content/text node shapes and fields remain;
+  affected text ranges now include the former comment suffix.
 - Rename the CST root from `source_file` to `program` and program-documentation
   nodes from `module_doc_comment` to `program_doc`. Update root checks, queries,
   and comment consumers. The fields and ranges of `#@` documentation are
@@ -89,7 +98,8 @@ It changes the public CST and requires a coordinated consumer migration from
 
 Update field paths and queries together. New semantic content ranges omit the
 header newline/comment formerly included by forwarding wrappers. Physical text
-leaf ranges remain unchanged; removed line wrappers no longer contribute a
+leaf ranges remain unchanged except for inline text's newly retained hash
+suffixes; removed line wrappers no longer contribute a
 newline to a text leaf. Body ownership changes for caps are explicit above.
 Consumers must reject native missing tokens, `ERROR`, and `invalid_*` diagnostics
 before lowering, formatting, or execution. No runtime binding effect changes.
