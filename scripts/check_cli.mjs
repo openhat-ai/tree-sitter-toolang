@@ -6,6 +6,14 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const config = JSON.parse(readFileSync(join(REPO_ROOT, "tree-sitter.json"), "utf8"));
+const packageConfig = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8"));
+deepStrictEqual(config.bindings, {
+  c: false, go: false, node: false, python: true, rust: true, swift: false,
+});
+for (const key of ["name", "scope", "file-types", "highlights", "injections", "tags"]) {
+  deepStrictEqual(config.grammars[0][key], packageConfig["tree-sitter"][0][key], key);
+}
 const FIXTURE = join(REPO_ROOT, "tests", "fixtures", "kitchen_sink.too");
 const COLLECTION_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "flow_arrays.too");
 const SPAWN_FIXTURE = join(REPO_ROOT, "tests", "fixtures", "spawn.too");

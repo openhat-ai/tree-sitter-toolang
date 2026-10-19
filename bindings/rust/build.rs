@@ -8,7 +8,5 @@ fn main() {
         .warnings(false)
         .compile("tree-sitter-toolang");
 
-    for file in ["parser.c", "scanner.c", "keywords.h"] {
-        println!("cargo:rerun-if-changed=src/{file}");
-    }
+    println!("cargo:rerun-if-changed=src");
 }

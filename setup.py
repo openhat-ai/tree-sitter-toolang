@@ -1,3 +1,4 @@
+from glob import glob
 from os import path
 from sysconfig import get_config_var
 
@@ -60,6 +61,7 @@ class EggInfo(egg_info):
         self.filelist.include("grammar.js")
         self.filelist.include("keywords.js")
         self.filelist.recursive_include("tests/fixtures", "*.too")
+        self.filelist.recursive_include("test/corpus", "*.txt")
 
 
 setup(
@@ -82,6 +84,7 @@ setup(
                 ("TREE_SITTER_HIDE_SYMBOLS", None),
             ],
             include_dirs=["src"],
+            depends=["src/keywords.h", *glob("src/tree_sitter/*.h")],
             py_limited_api=not get_config_var("Py_GIL_DISABLED"),
         )
     ],
