@@ -1,0 +1,116 @@
+==================
+Rejected outer prefix keeps leading member documentation
+==================
+flow first:
+#@ Wrong scope.
+# Outer.
+
+  ## First.
+  run one
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (ERROR
+      (plain_comment))
+    (blank_line)
+    (plain_comment)
+    (blank_line)
+    (flow_body
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Rejected repeat prefix keeps parameter documentation
+==================
+flow first:
+  repeat:
+  #@ Wrong scope.
+  # Outer.
+
+    ## @param topic First.
+    run one
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (newline)
+        (ERROR
+          (plain_comment))
+        (blank_line)
+        (plain_comment)
+        (blank_line)
+        (repeat_body
+          (param_doc
+            (param_name)
+            (text))
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Rejected property prefix keeps leading documentation
+==================
+prompt first:
+#@ Wrong scope.
+  ## First.
+  one = Value
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (prompt
+    (cap_name)
+    (newline)
+    (ERROR
+      (plain_comment))
+    (blank_line)
+    (cap_body
+      (item_doc
+        (text))
+      (property
+        (identifier)
+        (text)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pytest
@@ -6,7 +5,9 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_vocabulary_support import FLOW_KEYWORDS
+
+from test_layout_support import declarations, descendants, edit_tree, fingerprint, parse, valid
 
 
 def test_repeat_does_not_capture_outer_statement():
@@ -28,7 +29,7 @@ def test_nested_text_does_not_capture_siblings():
     assert len(descendants(loop, "run_statement")) == 2
     assert loop.child_by_field_name("body").child_by_field_name("until") is not None
     assert (
-        descendants(loop, "text_body_line")[0].text == b"      Improve the evidence.\n"
+        descendants(loop, "text")[0].text == b"      Improve the evidence."
     )
 
 
@@ -103,7 +104,7 @@ def test_all_inline_bodies_share_relative_layout(indent, header):
     root = parse(source)
     assert valid(root)
     outer = descendants(root, "repeat_statement")[0]
-    text = descendants(outer, "text_body")[0]
+    text = descendants(outer, "content")[0]
     assert text.text.decode() == body
     assert outer.child_by_field_name("body").child_by_field_name("until") is not None
     assert descendants(root, "run_statement")[-1].text.strip() == b"run publish"
@@ -116,7 +117,7 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
     )
     assert valid(root)
     assert (
-        descendants(root, "text_body")[0].text
+        descendants(root, "content")[0].text
         == b"  # Heading.\n  flow is literal text.\n"
     )
     assert len(descendants(root, "flow")) == 1
@@ -137,7 +138,6 @@ def test_top_level_explicit_text_keeps_keywords_and_markdown(header):
         ("psyche reviewer:", "Review the evidence."),
         ("skill review:", "Review the evidence."),
         ("prompt review:", "Review the evidence."),
-        ("task review:", "Review the evidence."),
         ("chore review:", "Review the evidence."),
     ],
 )
@@ -148,9 +148,9 @@ def test_declaration_bodies_end_before_following_declaration(
     source = f"{header}\n{body}\nflow publish:\n{indent}pass"
     root = parse(source.replace("\n", newline))
     assert valid(root)
-    items = [child for child in root.named_children if child.type == "item"]
+    items = declarations(root)
     assert len(items) == 2
-    assert items[-1].named_children[0].child_by_field_name("name").text == b"publish"
+    assert items[-1].child_by_field_name("name").text == b"publish"
 
 
 @pytest.mark.parametrize("header", ["flow work:", "agic work:", "struct Item:"])
@@ -159,24 +159,7 @@ def test_required_declaration_body_cannot_borrow_next_declaration(header, trivia
     assert not valid(parse(f"{header}\n{trivia}flow publish:\n  pass\n"))
 
 
-def reserved_words():
-    rules = json.loads((Path(__file__).parents[1] / "src/grammar.json").read_text())[
-        "rules"
-    ]
-
-    def words(rule):
-        if rule["type"] == "STRING":
-            return [rule["value"]]
-        if rule["type"] == "SYMBOL":
-            return words(rules[rule["name"]])
-        if "content" in rule:
-            return words(rule["content"])
-        return [word for member in rule.get("members", []) for word in words(member)]
-
-    return sorted(set(words(rules["_flow_reserved_word"])))
-
-
-@pytest.mark.parametrize("word", reserved_words())
+@pytest.mark.parametrize("word", sorted(FLOW_KEYWORDS))
 @pytest.mark.parametrize(
     "prefix",
     ["", "  Review the evidence.\n", "  Review the evidence.\n\n", "  # Stage.\n"],
@@ -190,7 +173,7 @@ def test_every_keyword_is_structural_on_every_implicit_line(word, prefix):
     )
 
 
-@pytest.mark.parametrize("word", reserved_words())
+@pytest.mark.parametrize("word", sorted(FLOW_KEYWORDS))
 def test_keywords_have_case_sensitive_complete_token_boundaries(word):
     prose_forms = [
         f"{word}_suffix is prose.",
@@ -205,8 +188,7 @@ def test_keywords_have_case_sensitive_complete_token_boundaries(word):
     root = parse(f"flow work:\n  run:\n    {word}, literal text.\n")
     assert valid(root)
     assert (
-        descendants(root, "text_body_line")[0]
-        .child_by_field_name("content")
+        descendants(root, "text")[0]
         .text.strip()
         == f"{word}, literal text.".encode()
     )
@@ -230,8 +212,8 @@ def test_comments_do_not_change_layout_and_outer_docs_keep_their_owner():
     assert valid(root)
     loop = descendants(root, "repeat_statement")[0]
     assert len(descendants(loop, "run_statement")) == 2
-    assert not descendants(loop, "item_doc_comment")
-    assert descendants(root, "item_doc_comment")[0].parent.type == "statements"
+    assert not descendants(loop, "item_doc")
+    assert descendants(root, "item_doc")[0].parent.type == "flow_body"
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -321,7 +303,7 @@ def test_cap_text_only_recognizes_valid_property_keys(line):
     root = parse(f"prompt example:\n  {line}\n")
     assert valid(root)
     assert not descendants(root, "property")
-    assert descendants(root, "text_body_line")[0].text.strip() == line.encode()
+    assert descendants(root, "text")[0].text.strip() == line.encode()
 
 
 def test_dedented_comment_ends_explicit_text_before_later_deeper_prose():
@@ -343,7 +325,6 @@ def test_blank_only_explicit_text_is_invalid(suffix):
         "skill review:",
         "service search:",
         "prompt review:",
-        "task review:",
         "chore review:",
     ],
 )
@@ -383,7 +364,7 @@ def test_incremental_blank_lines_after_layout_errors_keep_the_same_owner(newline
 
 
 @pytest.mark.parametrize(
-    "kind", ["psyche", "skill", "service", "prompt", "task", "chore"]
+    "kind", ["psyche", "skill", "service", "prompt", "chore"]
 )
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):
@@ -393,7 +374,7 @@ def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):
     owner = descendants(root, kind)[0]
     # Both ERROR nodes and missing required tokens must stay under the owner.
     assert owner.has_error
-    assert descendants(owner, "text_body_line")[0].text.strip() == b"Review."
+    assert descendants(owner.child_by_field_name("body").child_by_field_name("content"), "text")[0].text.strip() == b"Review."
 
 
 @pytest.mark.parametrize("comment", ["# Note.", "## Note.", "##! Note."])

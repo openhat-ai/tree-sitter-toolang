@@ -1,0 +1,178 @@
+==================
+Malformed first operation preserves following statement and item
+==================
+flow first:
+  map in 2 lanes in 3 lanes using worker
+  ## Following statement.
+  run after
+## Next flow.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (ERROR
+        (integer_literal))
+      (blank_line)
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Invalid typed directives preserve later metadata and messages
+==================
+agic first:
+  recall = wrong
+  # Following metadata.
+  tools = none
+  user: Following.
+flow next:
+  hands += worker
+  recall = none
+  run after
+flow last:
+  pass
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (invalid_directive
+        (directive_key)
+        (ERROR)
+        (newline))
+      (plain_comment)
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (invalid_directive
+        (directive_key)
+        (text)
+        (newline))
+      (directive
+        (directive_key)
+        (recall_value)
+        (newline))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Malformed declaration headers and fields preserve outer items
+==================
+struct Broken:
+  value Text
+## Next context.
+context next: Body.
+flow broken(
+with skill shared
+flow last:
+  pass
+
+---
+
+(program
+  (struct
+    (type_name)
+    (newline)
+    (struct_body
+      (ERROR
+        (identifier)
+        (newline))
+      (invalid_missing_body)))
+  (item_doc
+    (text))
+  (context
+    (identifier)
+    (content
+      (text))
+    (newline))
+  (ERROR
+    (runnable_name)
+    (newline))
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Nested recovery preserves until and outer statements
+==================
+flow first:
+  repeat:
+    keep in 2 lanes in 3 lanes if worker
+    ## Following condition.
+    until: Ready.
+    run inner
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (ERROR
+            (integer_literal))
+          (blank_line)
+          (item_doc
+            (text))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline)))
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

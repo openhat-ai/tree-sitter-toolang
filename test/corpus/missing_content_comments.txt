@@ -1,0 +1,47 @@
+==================
+Missing content keeps outer comments and owners
+==================
+context notes:
+# No context value.
+
+flow first:
+  async run:
+  # No inline value.
+  run after
+agic chat:
+  user:
+# No message value at EOF.
+
+---
+
+(program
+  (context
+    (identifier)
+    (newline)
+    (content
+      (invalid_missing_content)))
+  (plain_comment)
+  (blank_line)
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (inline_agic
+          (newline)
+          (content
+            (invalid_missing_content))))
+      (plain_comment)
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (message
+        (role)
+        (newline)
+        (content
+          (invalid_missing_content)))))
+  (plain_comment))

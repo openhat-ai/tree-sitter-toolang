@@ -1,8 +1,8 @@
 # Unify the grammar contract
 
-Status: proposed for maintainer review. This document collects the discussion
-and replaces incremental implementation decisions with one target contract.
-It does not approve or publish the unfinished content prototype.
+Status: approved in [PR #59](https://github.com/openhat-ai/tree-sitter-toolang/pull/59).
+This document records the agreed target contract. The current implemented
+syntax and migration reference is [GRAMMAR.md](../../GRAMMAR.md).
 
 ## Goal and scope
 
@@ -59,7 +59,7 @@ reservation set.
 | Category | Decision |
 | --- | --- |
 | Active syntax | Keep words used by current productions: declarations, operation heads, modifiers, connectors, clauses, directives, roles, and named values. Recognition remains contextual. |
-| Intentionally reserved words | No production exists, but use is deliberately prohibited. Give every entry an explicit reason and scope. The proposed initial set is empty. |
+| Intentionally reserved words | No production exists, but use is deliberately prohibited. Give every entry an explicit reason and scope. The approved initial set is empty. |
 | Removed words | Remove keyword rules, scanner memberships, keyword highlighting, and variable exclusions. Apply ordinary name/text rules in each position. |
 | Symbols and markers | Keep their own syntax, including `->`, `[]`, `*`, `_`, and comment markers; these are not a list of future statement names. |
 
@@ -72,8 +72,7 @@ think use thunk
 call do unfold each fold head tail
 ```
 
-The empty reserved set is a recommendation, not a claim that the maintainer
-has already chosen it. Merely discussing `seq`, `spread`, `produce`, `gen`,
+The approved reserved set is empty. Merely discussing `seq`, `spread`, `produce`, `gen`,
 `fut`, `wait`, or another possible spelling does not reserve it.
 
 Active Flow heads remain `let`, `exec`, `run`, `spawn`, `seek`, `ask`, `async`,
@@ -218,12 +217,12 @@ these categories separately when the new CST is adopted.
 
 ## Delivery and verification
 
-Recommend one replacement PR based on current `origin/main`, incorporating
+Deliver one replacement PR based on current `origin/main`, incorporating
 #55, #56, #57, content restructuring, and keyword cleanup. Keep the existing
 branches and unfinished prototype until the replacement is verified and linked.
 Then close the superseded PRs with the replacement reference. Do not merge or
-publish intermediate CST contracts. Consolidation is still a proposal; this
-definition step does not rewrite or close those PRs.
+publish intermediate CST contracts. The definition PR did not rewrite or close
+those PRs; its approval authorizes this implementation and consolidation.
 
 Organize the replacement into reviewable commits: explicit vocabulary and
 boundary fixes; layout recovery; final CST and consumer fixtures. Each commit
@@ -259,5 +258,5 @@ The main risks are accidental text/statement reclassification, changed text
 bytes or paragraph boundaries, recovery swallowing siblings, and downstream
 formatter assumptions. Old operation-looking lines may now become ordinary
 prose; document that intentional change rather than preserving hidden legacy
-reservations. The remaining maintainer decisions are acceptance of this
-combined contract, the proposed empty reserved set, and PR consolidation.
+reservations. Approval of #59 confirms this combined contract, the empty
+reserved set, and PR consolidation.

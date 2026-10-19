@@ -1,0 +1,149 @@
+==================
+Missing generate count preserves the completed flow header
+==================
+flow first:
+  run before
+  generate :
+    Orphaned text.
+  ## Following.
+  run after
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (runnable_name)
+        (newline))
+      (invalid_flow_statement
+        (ERROR)
+        (newline))
+      (ERROR)
+      (blank_line)
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Missing filter connector preserves a nested repeat header
+==================
+flow first:
+  run before
+  repeat:
+    run inner
+    keep in 2 lanes:
+      Orphaned text.
+    ## Following.
+    run after
+  run after_outer
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (invalid_flow_statement
+            (ERROR
+              (integer_literal))
+            (newline))
+          (ERROR)
+          (blank_line)
+          (item_doc
+            (text))
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Malformed bound sort preserves its enclosing headers
+==================
+flow first:
+  run before
+  repeat:
+    run inner
+    let value = sort ascending:
+      Orphaned text.
+    ## Following.
+    run after
+  run after_outer
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (let_statement
+            (local_name)
+            (invalid_flow_statement
+              (ERROR)
+              (newline)))
+          (ERROR)
+          (blank_line)
+          (item_doc
+            (text))
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

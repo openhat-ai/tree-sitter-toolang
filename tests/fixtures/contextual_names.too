@@ -1,0 +1,15 @@
+## @param sort Source material.
+## @param run Optional detail.
+## @param default Preferred style.
+## @param none Optional context.
+flow work(sort: Text, run?: Text, default?: Text, none?: Text):
+  let sort = Evidence.
+  let run = run worker
+  let spawn = spawn worker
+  let until =
+    run is literal text here.
+  let exec = await spawn
+  await exec
+
+agic describe(sort, run?: Text):
+  Summarize {{sort}} with {{run}}.

@@ -23,6 +23,17 @@ def walk(node):
         yield from walk(child)
 
 
+def walk_all(node):
+    yield node
+    for child in node.children:
+        yield from walk_all(child)
+
+
+def tokens(node, literal):
+    return [child for child in walk_all(node)
+            if not child.is_named and child.type == literal]
+
+
 def valid(root):
     return not root.has_error and not any(
         node.type.startswith("invalid_") for node in walk(root)
@@ -30,20 +41,21 @@ def valid(root):
 
 
 def fingerprint(node):
-    return (
-        node.type,
-        node.is_named,
-        node.is_missing,
-        node.has_error,
-        node.start_byte,
-        node.end_byte,
-        node.start_point,
-        node.end_point,
-        tuple(
-            (node.field_name_for_child(i), fingerprint(child))
-            for i, child in enumerate(node.children)
-        ),
-    )
+    # Flat preorder plus child counts preserves the entire tree shape without
+    # hitting Python 3.11's recursion limit when comparing deep nested tuples.
+    records = []
+    pending = [(node, None)]
+    while pending:
+        current, field = pending.pop()
+        children = current.children
+        records.append((
+            field, current.type, current.is_named, current.is_missing,
+            current.has_error, current.start_byte, current.end_byte,
+            current.start_point, current.end_point, len(children),
+        ))
+        pending.extend((child, current.field_name_for_child(i))
+                       for i, child in reversed(list(enumerate(children))))
+    return tuple(records)
 
 
 def point(source, offset):
@@ -73,3 +85,9 @@ def edit_tree(tree, previous, current):
         old_end_point=point(previous, old_end),
         new_end_point=point(current, new_end),
     )
+
+
+def declarations(root):
+    kinds = {"with", "struct", "psyche", "skill", "service", "prompt",
+             "chore", "context", "instruct", "agic", "flow"}
+    return [node for node in root.named_children if node.type in kinds]

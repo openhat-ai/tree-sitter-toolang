@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -15,10 +15,12 @@ BINDINGS = ["", "let job = ", "let "]
     "Hello.", "\n    spawn remains literal.", "run worker", "spawn worker",
 ])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
-def test_spawn_keyword_cannot_be_a_local_name(value, ending):
+def test_spawn_keyword_can_be_a_local_name(value, ending):
     source = f"flow launch:\n  let spawn = {value}".replace("\n", ending or "\n") + ending
     root = parse(source)
-    assert not valid(root), root
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    assert binding.child_by_field_name("local").text == b"spawn"
 
 
 @pytest.mark.parametrize("value", ["spawn", "spawn a process", "spawn using: Research."])
@@ -48,22 +50,22 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     root = parse(source)
     assert valid(root), root
     statement, = descendants(root, "spawn_statement")
-    keyword, = descendants(statement, "flow_spawn_keyword")
+    keyword, = tokens(statement, "spawn")
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
     if target.startswith(" missing_name"):
-        assert node.type == "runnable"
+        assert node.type == "runnable_name"
         assert node.text.strip() == b"missing_name"
     else:
         assert node.type == "inline_agic"
         return_type = node.child_by_field_name("return")
         assert (return_type.text.decode() if return_type else None) == output
-        assert node.child_by_field_name("body").text.strip() == b"Research {{_}}."
+        assert node.child_by_field_name("content").text.strip() == b"Research {{_}}."
     if binding:
         wrapper, = descendants(root, "let_statement")
         assert wrapper.child_by_field_name("statement") == statement
         assert wrapper.child_by_field_name("value") is None
-        name = wrapper.child_by_field_name("name")
+        name = wrapper.child_by_field_name("local")
         assert (name.text.strip() if name else None) == (b"job" if "=" in binding else None)
     else:
         assert not descendants(root, "let_statement")
@@ -148,10 +150,10 @@ def test_spawn_inline_text_ends_before_following_statements(binding, header, ind
     assert target.type == "inline_agic"
     assert b"## Literal documentation." in target.text
     assert b"spawn finish" in target.text
-    assert not descendants(target, "item_doc_comment")
+    assert not descendants(target, "item_doc")
     assert not descendants(target, "spawn_statement")
     run, = descendants(loop, "run_statement")
-    assert run.child_by_field_name("runnable").text.strip() == b"after_inline"
+    assert run.child_by_field_name("target").text.strip() == b"after_inline"
     assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"worker"
 
@@ -163,15 +165,15 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert valid(root), root
     targets = [node.child_by_field_name("target") for node in descendants(root, "spawn_statement")]
     assert [node.type for node in targets] == [
-        "runnable", "runnable", "inline_agic", "inline_agic", "runnable",
+        "runnable_name", "runnable_name", "inline_agic", "inline_agic", "runnable_name",
     ]
     outer, inner = descendants(root, "repeat_statement")
     assert len(descendants(outer, "spawn_statement")) == 3
     assert len(descendants(inner, "spawn_statement")) == 1
     assert b"spawn remains literal inside inline text." in targets[2].text
-    assert not descendants(descendants(root, "agic")[0], "flow_spawn_keyword")
-    assert len(descendants(root, "flow_spawn_keyword")) == 5
-    assert any(b"{{description}}" in node.text for node in descendants(root, "text_body"))
+    assert not tokens(descendants(root, "agic")[0], "spawn")
+    assert len(tokens(root, "spawn")) == 5
+    assert any(b"{{description}}" in node.text for node in descendants(root, "content"))
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

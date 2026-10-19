@@ -1,0 +1,44 @@
+================================================================================
+Inline content retains hashes while structural comments remain comments
+================================================================================
+context fragment: Visit https://example.com/#details
+flow work: # Structural.
+  run: # Heading
+  let note = "a#b"
+  run worker # Structural operation.
+  run:
+    # Literal block.
+
+---
+
+(program
+  (context
+    (identifier)
+    (content
+      (text))
+    (newline))
+  (flow
+    (runnable_name)
+    (plain_comment)
+    (newline)
+    (flow_body
+      (run_statement
+        (inline_agic
+          (content
+            (text))
+          (newline)))
+      (let_statement
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (run_statement
+        (runnable_name)
+        (plain_comment)
+        (newline))
+      (run_statement
+        (inline_agic
+          (newline)
+          (content
+            (text)
+            (newline)))))))

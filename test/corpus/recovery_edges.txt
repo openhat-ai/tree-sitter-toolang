@@ -1,0 +1,131 @@
+==================
+Rejected program documentation leaves later statements and items intact
+==================
+flow first:
+  run before
+  #@ Wrong scope.
+  run after
+flow next:
+  pass
+agic last:
+  user: Body.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (runnable_name)
+        (newline))
+      (ERROR
+        (plain_comment))
+      (blank_line)
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline)))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (message
+        (role)
+        (content
+          (text))
+        (newline)))))
+
+==================
+Pending statements finish before outer documentation
+==================
+flow missing:
+  models = fast
+## @param topic Input for the next flow.
+flow condition:
+  repeat:
+    until: Done.
+## Next flow.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (invalid_missing_statement)))
+  (param_doc
+    (param_name)
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline)))
+          (invalid_missing_statement)))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Malformed until stays within its repeat entry
+==================
+flow first:
+  repeat:
+    run worker
+    until 42
+    run inner_after
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (invalid_flow_statement
+            (text)
+            (newline))
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

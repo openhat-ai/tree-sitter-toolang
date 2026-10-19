@@ -38,12 +38,12 @@ flow research(_: Part[]) -> Answer:
   map in 5 lanes using extract_note
   map in 5 lanes -> Note: Extract one note.
   keep first 5
-  keep if useful in 5 lanes
+  keep in 5 lanes if useful
   keep in 5 lanes if: Return true for useful items.
   drop last 2
   drop in 5 lanes if duplicate
   drop in 5 lanes if: Return true for duplicate items.
-  sort descending by relevance in 5 lanes
+  sort descending in 5 lanes by relevance
   sort ascending in 5 lanes by: Score this item.
 
   ## Repeat with a count and optional condition.

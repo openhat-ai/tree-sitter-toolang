@@ -1,6 +1,6 @@
 #!/usr/bin/env toolang
 
-##! Program documentation.
+#@ Program documentation.
 
 ## Review skill documentation.
 skill review:

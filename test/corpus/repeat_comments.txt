@@ -15,63 +15,38 @@ flow research:
 
 ---
 
-(source_file
-  (item
-    (flow
-      (flow_keyword)
-      (flow_name
-        (snake_name))
-      (colon)
-      (line_end
-        (newline))
-      (flow_body
-        (statements
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (item_doc
+            (text))
+          (run_statement
+            (runnable_name)
+            (newline))
+          (item_doc
+            (text))
           (repeat_statement
-            (flow_repeat_keyword)
-            (integer_literal)
-            (flow_times_keyword)
-            (colon)
-            (line_end
-              (newline))
+            (newline)
             (repeat_body
-              (item_doc_comment
-                (comment_text))
+              (plain_comment)
+              (item_doc
+                (text))
               (run_statement
-                (flow_run_keyword)
-                (runnable
-                  (snake_name))
-                (line_end
-                  (newline)))
-              (item_doc_comment
-                (comment_text))
-              (repeat_statement
-                (flow_repeat_keyword)
-                (colon)
-                (line_end
-                  (newline))
-                (repeat_body
-                  (plain_comment)
-                  (item_doc_comment
-                    (comment_text))
-                  (run_statement
-                    (flow_run_keyword)
-                    (runnable
-                      (snake_name))
-                    (line_end
-                      (newline)))
-                  (until_clause
-                    (flow_until_keyword)
-                    (inline_agic_body
-                      (colon)
-                      (text_inline
-                        (text_line)
-                        (line_end
-                          (newline)))))))
+                (runnable_name)
+                (newline))
               (until_clause
-                (flow_until_keyword)
-                (inline_agic_body
-                  (colon)
-                  (text_inline
-                    (text_line)
-                    (line_end
-                      (newline))))))))))))
+                (inline_agic
+                  (content
+                    (text))
+                  (newline)))))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline))))))))

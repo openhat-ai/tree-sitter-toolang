@@ -1,0 +1,17 @@
+with skill ./skills/review
+
+flow work(input?:Text,count:Number)->Text[]:
+  models+=fast
+  tools-=slow
+  hands=ns::flow:worker
+  lanes=2
+  let job=async run worker
+  let result=await job
+  generate 2->Text:Generate text.
+  map in 2 lanes using worker
+  repeat 2 times windowing 1:
+    run worker# Comment.
+  let text=2times runworker skill./foo
+
+flow empty( )->Text []:
+  pass

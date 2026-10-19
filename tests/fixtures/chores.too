@@ -1,4 +1,4 @@
-task review_api:
+chore review_api:
   title = Review API changes
 
   Review the API changes and summarize risks.

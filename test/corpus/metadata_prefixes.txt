@@ -1,0 +1,308 @@
+================================================================================
+Open properties and irreversible body entry
+================================================================================
+psyche reviewer:
+  unknown = value
+
+  Review the evidence.
+  answer = literal # retained
+
+skill review:
+  description = Review evidence
+  custom = value
+
+  Review the evidence.
+  custom = literal
+
+service search:
+  transport = stdio
+  target = search-server
+  custom = value
+
+  Use the search service.
+  # Literal heading.
+
+prompt response:
+  answer = yes
+
+  Respond to the evidence.
+  answer = literal
+
+chore review_changes:
+  custom = value
+  title = Review changes
+
+  Review changes.
+  custom = literal
+
+agic summarize:
+  models = fast
+
+  # Prefix annotation.
+  recall = none
+  user: modles = literal
+  modles = literal # retained
+
+flow work:
+  tools = none
+  run: modles = literal
+  modles = literal # retained
+  repeat:
+    modles = nested literal
+
+---
+
+(program
+  (psyche
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (skill
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (service
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (prompt
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (blank_line)
+      (plain_comment)
+      (directive
+        (directive_key)
+        (recall_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))
+      (message
+        (content
+          (text)
+          (newline)
+          (blank_line)))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (run_statement
+        (inline_agic
+          (content
+            (text))
+          (newline)))
+      (implicit_run_statement
+        (content
+          (text)
+          (newline)))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (implicit_run_statement
+            (content
+              (text)
+              (newline))))))))
+
+================================================================================
+Unknown first agic directive preserves following source
+================================================================================
+agic work:
+  modles = fast
+  models = fast
+  user: Continue.
+flow next:
+  pass
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (ERROR)
+      (blank_line)
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+================================================================================
+Unknown flow directive after trivia stays invalid
+================================================================================
+flow work:
+  tools = none
+
+  ## Prefix annotation.
+  modles += fast
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (blank_line)
+      (item_doc
+        (text))
+      (ERROR)
+      (blank_line)
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+================================================================================
+Unknown first flow directive preserves body entry
+================================================================================
+flow work:
+
+  # Prefix annotation.
+  modles -= fast
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (blank_line)
+    (flow_body
+      (plain_comment)
+      (ERROR)
+      (blank_line)
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+================================================================================
+Unknown directive without a value at EOF
+================================================================================
+agic work:
+  modles =
+---
+
+(program
+  (ERROR
+    (runnable_name)
+    (newline)))

@@ -12,11 +12,16 @@ enum Token {
   COMMENT_START,
   PLAIN_COMMENT,
   SHEBANG_COMMENT,
-  MODULE_DOC_START,
+  PROGRAM_DOC_START,
   ITEM_DOC_START,
-  PARAM_ITEM_DOC_START,
+  PARAM_DOC_START,
   COMMENT_END,
+  BODY_START,
+  EMPTY_BODY,
+  ITEM_START,
+  ITEM_INDENT,
   INDENT,
+  RUNNABLE_INDENT,
   DEDENT,
   LINE_START,
   DIRECTIVE_START,
@@ -31,15 +36,18 @@ enum Token {
   AGIC_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
-  COLLECTION_BINDING_START,
-  SPAWN_BINDING_START,
-  RESERVED_BINDING_START,
-  VARIABLE_NAME,
-  ASYNC_AWAIT_BINDING_START,
+  OPERATION_BINDING_START,
+  RESTRICTED_BINDING_START,
+  NAMED_BINDING_START,
+  MISSING_REQUIRED,
+  INTEGER_LITERAL,
+  PARAM_ERROR,
+  MISSING_TYPE,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
 enum Prefix { NONE, SPACES, TABS, MIXED };
+enum TriviaPhase { TRIVIA, BODY_BASELINE, BODY_OUTER_PREFIX };
 
 typedef struct {
   uint32_t column;
@@ -49,12 +57,14 @@ typedef struct {
 
 // The header includes the pending trivia lookahead. Refuse deeper input instead
 // of losing state during incremental parsing; each frame needs six bytes.
-#define HEADER_SIZE 15
+#define HEADER_SIZE 16
 #define MAX_FRAMES ((TREE_SITTER_SERIALIZATION_BUFFER_SIZE - HEADER_SIZE) / 6)
 
 typedef struct {
   uint32_t lines;
   uint32_t column;
+  uint8_t prefix;
+  uint8_t phase;
 } Trivia;
 
 typedef struct {
@@ -121,12 +131,38 @@ static bool keyword(const char *word, const char *const *words, unsigned count) 
   return false;
 }
 
+static bool assignment_operator(TSLexer *lexer) {
+  while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+    advance(lexer);
+  }
+  if (lexer->lookahead == '+' || lexer->lookahead == '-') {
+    advance(lexer);
+  }
+  return lexer->lookahead == '=';
+}
+
+static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
+  unsigned length = 0;
+  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
+  while (word_character(lexer->lookahead)) {
+    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
+      identifier = false;
+    }
+    if (length + 1 < capacity) {
+      word[length++] = (char)lexer->lookahead;
+    }
+    advance(lexer);
+  }
+  word[length] = '\0';
+  return identifier;
+}
+
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
   if (token != COMMENT_START) {
     scanner->file_start = false;
   }
-  if (token == DEDENT) {
+  if (token == DEDENT && scanner->depth > 1) {
     scanner->depth--;
   }
   return true;
@@ -138,15 +174,26 @@ static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode
     return false;
   }
   scanner->frames[scanner->depth++] = (Frame){indent.column, indent.prefix, mode};
+  if (scanner->trivia.phase != TRIVIA) {
+    scanner->trivia = (Trivia){0};
+  }
   return emit(scanner, lexer, token);
 }
 
 // Inspect a trivia run once. The hidden start token records this dependency in
 // Tree-sitter, so an edit anywhere in the lookahead invalidates the cached result.
-static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia) {
+static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia, bool text) {
   uint32_t lines = 0;
   for (;;) {
     bool comment = lexer->lookahead == '#';
+    // A text body owns an indented '#' line. An outer comment ends the
+    // pending value, even when more deeply indented text follows it.
+    if (comment && text) {
+      trivia->lines = lines;
+      trivia->column = indent.column;
+      trivia->prefix = indent.prefix;
+      return true;
+    }
     if (comment) {
       while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
         advance(lexer);
@@ -158,11 +205,45 @@ static bool lookahead_trivia(TSLexer *lexer, Indentation indent, Trivia *trivia)
       }
       trivia->lines = lines + comment;
       trivia->column = 0;
+      trivia->prefix = NONE;
       return true;
     }
     if (!line_end(lexer)) {
       trivia->lines = lines;
       trivia->column = indent.column;
+      trivia->prefix = indent.prefix;
+      return true;
+    }
+    if (lines == UINT32_MAX) {
+      return false;
+    }
+    lines++;
+    indent = indentation(lexer);
+  }
+}
+
+// A body is contiguous: everything through the last outer comment stays in
+// the declaration prefix. Once the member baseline is known, classify the run
+// in one more pass without storing a list of comment indentation levels.
+static bool lookahead_body_prefix(TSLexer *lexer, Indentation indent, Trivia *trivia) {
+  uint32_t lines = 0;
+  uint32_t outer_lines = 0;
+  for (;;) {
+    bool comment = lexer->lookahead == '#';
+    if (comment) {
+      if (lines == UINT32_MAX) {
+        return false;
+      }
+      if (indent.column < trivia->column) {
+        outer_lines = lines + 1;
+      }
+      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+        advance(lexer);
+      }
+    }
+    if (lexer->eof(lexer) || !line_end(lexer)) {
+      trivia->lines = outer_lines;
+      trivia->phase = BODY_OUTER_PREFIX;
       return true;
     }
     if (lines == UINT32_MAX) {
@@ -177,9 +258,32 @@ static void finish_trivia_line(Scanner *scanner) {
   scanner->comment_started = false;
   scanner->doc_started = false;
   scanner->line_started = false;
-  if (scanner->trivia.lines && --scanner->trivia.lines == 0) {
-    scanner->trivia.column = 0;
+  if (scanner->trivia.lines && --scanner->trivia.lines == 0 &&
+      scanner->trivia.phase != BODY_OUTER_PREFIX) {
+    scanner->trivia = (Trivia){0};
   }
+}
+
+// Recovery always makes progress on the current physical line and releases any
+// rejected comment entry before the next line can establish a layout boundary.
+static bool scan_error_line(Scanner *scanner, TSLexer *lexer) {
+  if (line_end(lexer)) {
+    lexer->mark_end(lexer);
+    enum Token newline = scanner->line_started ? NEWLINE : BLANK_LINE;
+    finish_trivia_line(scanner);
+    scanner->trivia = (Trivia){0};
+    return emit(scanner, lexer, newline);
+  }
+  if (lexer->eof(lexer)) {
+    return false;
+  }
+  while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    advance(lexer);
+  }
+  lexer->mark_end(lexer);
+  scanner->line_started = scanner->comment_started = false;
+  scanner->trivia = (Trivia){0};
+  return emit(scanner, lexer, ERROR_LINE);
 }
 
 static void skip_indentation(TSLexer *lexer) {
@@ -188,48 +292,98 @@ static void skip_indentation(TSLexer *lexer) {
   }
 }
 
+// Integers need the same complete-word boundary as keywords. Checking the
+// following character without consuming it preserves adjacent punctuation.
+static bool scan_integer(Scanner *scanner, TSLexer *lexer) {
+  skip_indentation(lexer);
+  if (lexer->lookahead < '0' || lexer->lookahead > '9') {
+    return false;
+  }
+  do {
+    advance(lexer);
+  } while (lexer->lookahead >= '0' && lexer->lookahead <= '9');
+  if (word_character(lexer->lookahead)) {
+    return false;
+  }
+  lexer->mark_end(lexer);
+  return emit(scanner, lexer, INTEGER_LITERAL);
+}
+
+// Recovery inside a parameter entry requires a real delimiter on this line.
+// Leave complete array suffixes to the type grammar and missing ')' to native
+// recovery, so an error fragment cannot consume the return annotation or body.
+static bool scan_param_error(TSLexer *lexer) {
+  skip_indentation(lexer);
+  if (lexer->eof(lexer) || lexer->lookahead == ',' || lexer->lookahead == ')' ||
+      lexer->lookahead == '\r' || lexer->lookahead == '\n') {
+    return false;
+  }
+  if (lexer->lookahead == '[') {
+    advance(lexer);
+    if (lexer->lookahead == ']') {
+      return false;
+    }
+  }
+  while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    if (lexer->lookahead == ',' || lexer->lookahead == ')') {
+      lexer->mark_end(lexer);
+      return true;
+    }
+    // A colon introducing a header comment ends this scope before any
+    // delimiter inside that comment. Other colons and arrows are still part
+    // of the malformed parameter until its own comma or ')' is reached.
+    if (lexer->lookahead == ':') {
+      advance(lexer);
+      while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+      }
+      if (lexer->lookahead == '#') {
+        return false;
+      }
+      continue;
+    }
+    advance(lexer);
+  }
+  return false;
+}
+
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   skip_indentation(lexer);
   lexer->mark_end(lexer);
   char word[32] = {0};
   unsigned length = 0;
-  bool variable = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
+  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
   while (word_character(lexer->lookahead)) {
     if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      variable = false;
+      identifier = false;
     }
     if (length < sizeof(word) - 1) {
       word[length++] = (char)lexer->lookahead;
     }
     advance(lexer);
   }
+  // An explicit assignment selects a destination before operation heads. Keep
+  // the marked end at the name's start; the grammar consumes the name and '='.
+  if (valid[NAMED_BINDING_START] && identifier) {
+    skip_indentation(lexer);
+    if (lexer->lookahead == '=') {
+      return emit(scanner, lexer, NAMED_BINDING_START);
+    }
+  }
   // Reserve operation heads after both let prefixes before Content can consume
   // them. The start tokens are zero-width; the grammar consumes the keyword.
   if (valid[EXEC_BINDING_START] && strcmp(word, "exec") == 0) {
     return emit(scanner, lexer, EXEC_BINDING_START);
   }
-  if (valid[SPAWN_BINDING_START] && strcmp(word, "spawn") == 0) {
-    return emit(scanner, lexer, SPAWN_BINDING_START);
+  if (valid[RESTRICTED_BINDING_START] &&
+      keyword(word, restricted_binding_keywords,
+              sizeof(restricted_binding_keywords) / sizeof(*restricted_binding_keywords))) {
+    return emit(scanner, lexer, RESTRICTED_BINDING_START);
   }
-  if (valid[ASYNC_AWAIT_BINDING_START] &&
-      keyword(word, async_await_binding_keywords,
-              sizeof(async_await_binding_keywords) / sizeof(*async_await_binding_keywords))) {
-    return emit(scanner, lexer, ASYNC_AWAIT_BINDING_START);
-  }
-  if (valid[RESERVED_BINDING_START] &&
-      keyword(word, reserved_binding_keywords,
-              sizeof(reserved_binding_keywords) / sizeof(*reserved_binding_keywords))) {
-    return emit(scanner, lexer, RESERVED_BINDING_START);
-  }
-  if (valid[COLLECTION_BINDING_START] &&
-      keyword(word, collection_binding_keywords,
-              sizeof(collection_binding_keywords) / sizeof(*collection_binding_keywords))) {
-    return emit(scanner, lexer, COLLECTION_BINDING_START);
-  }
-  if (valid[VARIABLE_NAME] && variable &&
-      !keyword(word, variable_keywords, sizeof(variable_keywords) / sizeof(*variable_keywords))) {
-    lexer->mark_end(lexer);
-    return emit(scanner, lexer, VARIABLE_NAME);
+  if (valid[OPERATION_BINDING_START] &&
+      keyword(word, operation_binding_keywords,
+              sizeof(operation_binding_keywords) / sizeof(*operation_binding_keywords))) {
+    return emit(scanner, lexer, OPERATION_BINDING_START);
   }
   return false;
 }
@@ -245,33 +399,27 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   enum Token token = PLAIN_COMMENT;
   if (lexer->lookahead == '#') {
     advance(lexer);
-    if (lexer->lookahead == '!') {
+    token = ITEM_DOC_START;
+    lexer->mark_end(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
-      token = MODULE_DOC_START;
-      lexer->mark_end(lexer);
-    } else {
-      token = ITEM_DOC_START;
-      lexer->mark_end(lexer);
-      while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
-        advance(lexer);
-      }
-      const char *tag = "@param";
-      while (*tag && lexer->lookahead == *tag) {
-        advance(lexer);
-        tag++;
-      }
-      if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
-                    lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
-                    lexer->lookahead == '\n')) {
-        token = PARAM_ITEM_DOC_START;
-      }
+    }
+    const char *tag = "@param";
+    while (*tag && lexer->lookahead == *tag) {
+      advance(lexer);
+      tag++;
+    }
+    if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
+                  lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
+                  lexer->lookahead == '\n')) {
+      token = PARAM_DOC_START;
     }
   } else if (lexer->lookahead == '@') {
     advance(lexer);
     if (column != 0 || scanner->trivia.column != 0) {
       return false;
     }
-    token = MODULE_DOC_START;
+    token = PROGRAM_DOC_START;
     lexer->mark_end(lexer);
   } else if (lexer->lookahead == '!' && column == 0 && scanner->file_start) {
     token = SHEBANG_COMMENT;
@@ -279,7 +427,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   if (!valid[token]) {
     return false;
   }
-  if (token == MODULE_DOC_START || token == ITEM_DOC_START || token == PARAM_ITEM_DOC_START) {
+  if (token == PROGRAM_DOC_START || token == ITEM_DOC_START || token == PARAM_DOC_START) {
     scanner->comment_started = false;
     scanner->doc_started = true;
     return emit(scanner, lexer, token);
@@ -311,19 +459,12 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
         finish_trivia_line(scanner);
         return emit(scanner, lexer, BLANK_LINE);
       }
-      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
-        advance(lexer);
-      }
-      lexer->mark_end(lexer);
-      return emit(scanner, lexer, ERROR_LINE);
+      return scan_error_line(scanner, lexer);
     }
     if (valid[COMMENT_END] && (lexer->eof(lexer) || line_end(lexer))) {
       lexer->mark_end(lexer);
       finish_trivia_line(scanner);
       return emit(scanner, lexer, COMMENT_END);
-    }
-    if (valid[VARIABLE_NAME]) {
-      return scan_inline_token(scanner, lexer, valid);
     }
     return false;
   }
@@ -331,36 +472,69 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     // All external tokens are enabled during recovery. Keep unexpected content
     // on its physical line instead of letting recovery borrow a later header.
     // ERROR_LINE is never accepted by a normal grammar production.
-    skip_indentation(lexer);
-    if (at_start && scan_comment(scanner, lexer, valid)) {
-      scanner->trivia = (Trivia){0};
-      return true;
-    }
-    if (!line_end(lexer)) {
-      if (lexer->eof(lexer)) {
-        return false;
+    if (scanner->comment_started) {
+      skip_indentation(lexer);
+      if (scan_comment(scanner, lexer, valid)) {
+        return true;
       }
-      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
-        advance(lexer);
-      }
-      lexer->mark_end(lexer);
-      scanner->line_started = scanner->comment_started = false;
-      scanner->trivia = (Trivia){0};
-      return emit(scanner, lexer, ERROR_LINE);
+      return scan_error_line(scanner, lexer);
     }
     lexer->mark_end(lexer);
-    enum Token newline = scanner->line_started ? NEWLINE : BLANK_LINE;
-    finish_trivia_line(scanner);
-    scanner->trivia = (Trivia){0};
-    return emit(scanner, lexer, newline);
+    Indentation indent = indentation(lexer);
+    Frame frame = scanner->frames[scanner->depth - 1];
+    if (at_start && indent.column < frame.column) {
+      scanner->line_started = scanner->comment_started = false;
+      scanner->trivia = (Trivia){0};
+      return emit(scanner, lexer, DEDENT);
+    }
+    if (at_start && !scanner->line_started && indent.column == frame.column &&
+        frame.mode == STRUCTURAL && !lexer->eof(lexer) &&
+        lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+      scanner->line_started = true;
+      return emit(scanner, lexer, indent.column == 0 ? ITEM_START : LINE_START);
+    }
+    if (at_start && lexer->lookahead == '#') {
+      Trivia trivia = scanner->trivia;
+      if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia, false)) {
+        return false;
+      }
+      scanner->trivia = trivia;
+      if (trivia.column < frame.column) {
+        return emit(scanner, lexer, DEDENT);
+      }
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
+    }
+    return scan_error_line(scanner, lexer);
   }
   if (scanner->comment_started) {
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
-  if (!at_start && (valid[EXEC_BINDING_START] || valid[COLLECTION_BINDING_START] ||
-                    valid[SPAWN_BINDING_START] || valid[RESERVED_BINDING_START] ||
-                    valid[VARIABLE_NAME] || valid[ASYNC_AWAIT_BINDING_START])) {
+  // An explicit body/header colon commits a return annotation even when its
+  // type is absent. Leave the colon to the grammar and stay on this line.
+  if (!at_start && valid[MISSING_TYPE]) {
+    skip_indentation(lexer);
+    lexer->mark_end(lexer);
+    if (lexer->lookahead == ':') {
+      return emit(scanner, lexer, MISSING_TYPE);
+    }
+    return false;
+  }
+  if (!at_start && valid[PARAM_ERROR]) {
+    if (scan_param_error(lexer)) {
+      return emit(scanner, lexer, PARAM_ERROR);
+    }
+    return false;
+  }
+  if (!at_start && valid[INTEGER_LITERAL]) {
+    skip_indentation(lexer);
+    if (lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+      return scan_integer(scanner, lexer);
+    }
+  }
+  if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
+                    valid[RESTRICTED_BINDING_START] || valid[NAMED_BINDING_START])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);
@@ -371,7 +545,104 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   lexer->mark_end(lexer);
   Indentation indent = indentation(lexer);
+  // Item bodies are always rooted in the program. Native recovery may roll
+  // the parser back to a header while retaining an abandoned scanner frame.
+  if (at_start && !scanner->line_started &&
+      (valid[ITEM_START] || valid[ITEM_INDENT] || valid[RUNNABLE_INDENT] || valid[EMPTY_BODY])) {
+    scanner->depth = 1;
+  }
   Frame frame = scanner->frames[scanner->depth - 1];
+
+  // Diagnose an absent body before the internal lexer consumes the next
+  // sibling's first word. No layout frame is opened for a missing body.
+  bool opening_body = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT] ||
+                      valid[TEXT_INDENT] || valid[REDUCE_INDENT];
+  bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
+                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
+  bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
+  bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
+  bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
+  // Reduce opens a structural clause scope, then a literal reducer at the same
+  // baseline. Both transitions preserve leading Markdown as literal content.
+  bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
+  bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
+                             indent.prefix == frame.prefix;
+  bool opening_structural = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT];
+  if (at_start && !scanner->line_started && opening_structural &&
+      scanner->trivia.phase != TRIVIA && lexer->lookahead == '#') {
+    Trivia trivia = scanner->trivia;
+    if (trivia.phase == BODY_BASELINE && !lookahead_body_prefix(lexer, indent, &trivia)) {
+      return false;
+    }
+    scanner->trivia = trivia;
+    if (trivia.lines == 0) {
+      enum Token token = valid[RUNNABLE_INDENT] ? RUNNABLE_INDENT :
+                         valid[ITEM_INDENT] ? ITEM_INDENT : INDENT;
+      return push(scanner, lexer, (Indentation){trivia.column, trivia.prefix}, STRUCTURAL, token);
+    }
+    if (valid[COMMENT_START]) {
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
+    }
+    return false;
+  }
+  // Resolve every pending requirement before outer comments, including an
+  // already-open body that still needs a statement. Existing same-level entries
+  // keep the prefix open; new bodies and values require deeper indentation.
+  // Without a body-start signal, blank lines can be consumed normally before
+  // inspecting the next comment, substantive line, or EOF.
+  if (at_start && !scanner->line_started && !scanner->trivia.lines &&
+      scanner->trivia.phase == TRIVIA &&
+      (valid[BODY_START] || valid[EMPTY_BODY] ||
+       (valid[MISSING_REQUIRED] && (opening_body || lexer->lookahead == '#'))) &&
+      !(lexer->lookahead == '#' && (literal || opening_text || opening_reduce || starting_reduce_text)) &&
+      (lexer->lookahead == '#' || lexer->lookahead == '\r' || lexer->lookahead == '\n')) {
+    bool comment = lexer->lookahead == '#';
+    Trivia trivia = {0};
+    if (!lookahead_trivia(lexer, indent, &trivia, valid[TEXT_INDENT] || valid[REDUCE_INDENT])) {
+      return false;
+    }
+    bool outside_requirement = trivia.column < frame.column ||
+                               (awaiting_body && trivia.column == frame.column);
+    if (valid[MISSING_REQUIRED] && outside_requirement) {
+      return emit(scanner, lexer, MISSING_REQUIRED);
+    }
+    if (trivia.column > frame.column) {
+      if (valid[BODY_START] && trivia.lines) {
+        if (opening_structural) {
+          trivia.phase = BODY_BASELINE;
+        }
+        scanner->trivia = trivia;
+        return emit(scanner, lexer, BODY_START);
+      }
+    } else if (valid[EMPTY_BODY]) {
+      return emit(scanner, lexer, EMPTY_BODY);
+    } else if (comment && valid[COMMENT_START]) {
+      scanner->trivia = trivia;
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
+    }
+    // Lookahead advanced the lexer without consuming a token. A successful
+    // start signal is the only branch that can continue from that position.
+    return false;
+  }
+  if (valid[EMPTY_BODY] && !scanner->line_started &&
+      (lexer->eof(lexer) || (at_start && indent.column <= frame.column))) {
+    return emit(scanner, lexer, EMPTY_BODY);
+  }
+  if (valid[MISSING_REQUIRED] && !scanner->line_started &&
+      (lexer->eof(lexer) || (at_start &&
+       (indent.column < frame.column || (awaiting_body && indent.column == frame.column)) &&
+       lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
+    return emit(scanner, lexer, MISSING_REQUIRED);
+  }
+
+  // Recovery can abandon scanner frames before the parser has reduced their
+  // owning blocks. Close those parser scopes at the program boundary too.
+  if (at_start && indent.column == 0 && scanner->depth == 1 && valid[DEDENT]) {
+    scanner->line_started = false;
+    return emit(scanner, lexer, DEDENT);
+  }
 
   if (lexer->eof(lexer)) {
     if (valid[NEWLINE] && scanner->line_started && !scanner->eof_newline) {
@@ -406,13 +677,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return false;
   }
 
-  bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
-  bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
-  // Reduce opens a structural clause scope, then a literal reducer at the same
-  // baseline. Preserve leading Markdown through both transitions.
-  bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
-  bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
-                             indent.prefix == frame.prefix;
   if (frame.mode != STRUCTURAL && !literal && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
@@ -422,7 +686,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       return false;
     }
     Trivia trivia = scanner->trivia;
-    if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia)) {
+    if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia, false)) {
       return false;
     }
     enum Token token;
@@ -447,22 +711,20 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (!scanner->line_started && opening_reduce) {
     return push(scanner, lexer, indent, STRUCTURAL, REDUCE_INDENT);
   }
+  if (!scanner->line_started && valid[RUNNABLE_INDENT] && indent.column > frame.column) {
+    // Establish layout before validating the first entry. Rejecting a header
+    // first would let an orphaned nested line take over the body's baseline.
+    return push(scanner, lexer, indent, STRUCTURAL, RUNNABLE_INDENT);
+  }
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {
     return push(scanner, lexer, indent, STRUCTURAL, INDENT);
   }
-
-  char word[32] = {0};
-  unsigned length = 0;
-  bool property_name = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
-  while (word_character(lexer->lookahead)) {
-    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      property_name = false;
-    }
-    if (length < sizeof(word) - 1) {
-      word[length++] = (char)lexer->lookahead;
-    }
-    advance(lexer);
+  if (!scanner->line_started && valid[ITEM_INDENT] && indent.column > frame.column) {
+    return push(scanner, lexer, indent, STRUCTURAL, ITEM_INDENT);
   }
+
+  char word[32];
+  bool property_name = read_word(lexer, word, sizeof(word));
 
   if (frame.mode == REDUCE_TEXT && indent.column == frame.column &&
       strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
@@ -470,6 +732,14 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[ITEM_START] && !scanner->line_started && at_baseline) {
+    scanner->line_started = true;
+    return emit(scanner, lexer, ITEM_START);
+  }
+  if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
+      !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
+    return emit(scanner, lexer, MISSING_REQUIRED);
+  }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
       strcmp(word, "from") != 0) {
     return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);
@@ -489,11 +759,17 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       start = UNTIL_START;
     } else if (valid[FROM_START] && strcmp(word, "from") == 0) {
       start = FROM_START;
-    } else if (valid[DIRECTIVE_START] &&
-               (strcmp(word, "recall") == 0 ||
-                keyword(word, directive_keywords,
-                        sizeof(directive_keywords) / sizeof(*directive_keywords)))) {
-      start = DIRECTIVE_START;
+    } else if (valid[DIRECTIVE_START]) {
+      bool directive = keyword(word, directive_keywords,
+                               sizeof(directive_keywords) / sizeof(*directive_keywords));
+      if (!directive && property_name && assignment_operator(lexer)) {
+        // The prefix is still open after earlier directives or trivia. This
+        // token is unavailable once a message or statement has begun.
+        return false;
+      }
+      if (directive) {
+        start = DIRECTIVE_START;
+      }
     }
     if (start != LINE_START) {
       scanner->line_started = true;
@@ -560,6 +836,7 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)scanner->comment_started;
   buffer[size++] = (char)scanner->doc_started;
   buffer[size++] = (char)scanner->file_start;
+  buffer[size++] = (char)(scanner->trivia.prefix | (scanner->trivia.phase << 2));
   for (unsigned j = 0; j < 4; j++) {
     buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
   }
@@ -597,7 +874,9 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   scanner->comment_started = bytes[4];
   scanner->doc_started = bytes[5];
   scanner->file_start = bytes[6];
-  unsigned offset = 7;
+  scanner->trivia.prefix = bytes[7] & 3;
+  scanner->trivia.phase = bytes[7] >> 2;
+  unsigned offset = 8;
   for (unsigned j = 0; j < 4; j++) {
     scanner->trivia.lines |= (uint32_t)bytes[offset++] << (j * 8);
   }

@@ -1,0 +1,104 @@
+================================================================================
+Contextual keyword parameter documentation and handle names
+================================================================================
+## @param sort Input.
+flow work(sort: Text, run?, default, none):
+  await sort
+
+agic describe(until?: Text):
+  pass
+
+---
+
+(program
+  (param_doc
+    (param_name)
+    (text))
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type)))
+      (param
+        (param_name))
+      (param
+        (param_name))
+      (param
+        (param_name)))
+    (newline)
+    (flow_body
+      (await_statement
+        (handle_name)
+        (newline))
+      (blank_line)))
+  (agic
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (newline)
+    (agic_body
+      (newline))))
+
+================================================================================
+Contextual keyword destinations and anonymous operations
+================================================================================
+flow work:
+  let run = Evidence.
+  let sort=sort ascending by score
+  let until =
+    run remains literal.
+  let exec = spawn worker
+  let await = await exec
+  await await
+  let run worker
+  let sort ascending by score
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (let_statement
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (let_statement
+        (local_name)
+        (sort_statement
+          (runnable_name)
+          (newline)))
+      (let_statement
+        (local_name)
+        (newline)
+        (content
+          (text)
+          (newline)))
+      (let_statement
+        (local_name)
+        (spawn_statement
+          (runnable_name)
+          (newline)))
+      (let_statement
+        (local_name)
+        (await_statement
+          (handle_name)
+          (newline)))
+      (await_statement
+        (handle_name)
+        (newline))
+      (let_statement
+        (run_statement
+          (runnable_name)
+          (newline)))
+      (let_statement
+        (sort_statement
+          (runnable_name)
+          (newline))))))

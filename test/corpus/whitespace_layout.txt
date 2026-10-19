@@ -1,0 +1,158 @@
+============================================================
+Horizontal whitespace and compact symbol boundaries
+============================================================
+with skill ./skills/review
+
+flow work(input?:Text,count:Number)->Text[]:
+  models+=fast
+  tools-=slow
+  hands=ns::flow:worker
+  lanes=2
+  let job=async run worker
+  let result=await job
+  generate 2->Text:Generate text.
+  map in 2 lanes using worker
+  repeat 2 times windowing 1:
+    run worker# Comment.
+  let text=2times runworker skill./foo
+
+flow empty( )->Text []:
+  pass
+
+---
+
+(program
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (blank_line)
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type)))
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (type
+      (builtin_type))
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (route_value
+          (runnable_ref))
+        (newline))
+      (directive
+        (directive_key)
+        (integer_literal)
+        (newline))
+      (let_statement
+        (local_name)
+        (run_statement
+          (runnable_name)
+          (newline)))
+      (let_statement
+        (local_name)
+        (await_statement
+          (handle_name)
+          (newline)))
+      (generate_statement
+        (integer_literal)
+        (inline_agic
+          (type
+            (builtin_type))
+          (content
+            (text))
+          (newline)))
+      (map_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (integer_literal)
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (plain_comment)
+            (newline))))
+      (let_statement
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (blank_line)))
+  (flow
+    (runnable_name)
+    (params)
+    (type
+      (builtin_type))
+    (newline)
+    (flow_body
+      (newline))))
+
+============================================================
+Missing bodies preserve following siblings and declarations
+============================================================
+flow first:
+  repeat:
+    ## No executable body.
+  run after_repeat
+  let value =
+  run after_text
+  reduce:
+  run after_reduce
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (invalid_missing_body)))
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))
+      (let_statement
+        (local_name)
+        (newline)
+        (content
+          (invalid_missing_content)))
+      (run_statement
+        (runnable_name)
+        (newline))
+      (reduce_statement
+        (inline_agic
+          (newline)
+          (content
+            (invalid_missing_content))))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

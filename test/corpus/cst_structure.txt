@@ -1,0 +1,44 @@
+==================
+Missing property values preserve their bodies and following declarations
+==================
+prompt broken:
+  description =
+
+  Body.
+chore broken:
+  title =# A value is required.
+
+  Body.
+flow next:
+  pass
+
+---
+
+(program
+  (prompt
+    (cap_name)
+    (newline)
+    (cap_body
+      (ERROR
+        (identifier)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (ERROR
+        (identifier))
+      (blank_line)
+      (blank_line)
+      (content
+        (text)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

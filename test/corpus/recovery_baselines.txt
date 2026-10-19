@@ -1,0 +1,76 @@
+==================
+Unknown first flow header cannot rebase to nested statements
+==================
+flow first:
+  repeat =
+    run worker
+    until: Ready.
+  ## Following.
+  run after
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (ERROR)
+      (blank_line)
+      (ERROR)
+      (blank_line)
+      (ERROR)
+      (blank_line)
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Unknown first agic header cannot rebase to nested messages
+==================
+agic first:
+  modles += fast
+    user: Orphaned content.
+  ## Following.
+  user: Following.
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (ERROR)
+      (blank_line)
+      (ERROR)
+      (blank_line)
+      (item_doc
+        (text))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

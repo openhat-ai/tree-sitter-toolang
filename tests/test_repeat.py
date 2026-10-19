@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 @pytest.mark.parametrize("position", [None, 0, 1, 2])
@@ -29,23 +29,23 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
     assert not descendants(body, "statements")
     statements = body.children_by_field_name("statement")
     assert [node.type for node in statements] == ["run_statement", "run_statement"]
-    assert [node.child_by_field_name("runnable").text.strip() for node in statements] == [b"first", b"last"]
+    assert [node.child_by_field_name("target").text.strip() for node in statements] == [b"first", b"last"]
     assert all(node.parent == body for node in statements)
     conditions = body.children_by_field_name("until")
     assert len(conditions) == int(position is not None)
     if conditions:
         clause, = conditions
         assert clause.type == "until_clause" and clause.parent == body
-        keyword, = descendants(clause, "flow_until_keyword")
+        keyword, = tokens(clause, "until")
         assert keyword.text == b"until"
         target, = clause.children_by_field_name("target")
-        assert target.type == ("runnable" if condition == "until is_done" else "inline_agic_body")
+        assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic")
         assert target.parent == clause
         assert clause.start_byte <= keyword.start_byte < target.start_byte < target.end_byte <= clause.end_byte
         assert source.encode()[clause.start_byte:clause.end_byte].strip().startswith(b"until")
         assert b"run first" not in clause.text and b"run last" not in clause.text
-        if target.type == "inline_agic_body":
-            assert b"Ready {{_}}." in target.child_by_field_name("body").text
+        if target.type == "inline_agic":
+            assert b"Ready {{_}}." in target.child_by_field_name("content").text
         else:
             assert target.text == b"is_done"
         preceding = sum(statement.end_byte <= clause.start_byte for statement in statements)
@@ -71,7 +71,7 @@ def test_condition_separates_all_ordinary_flow_statement_kinds(statement):
 
 @pytest.mark.parametrize("binding", ["", "let ", "let result = "])
 @pytest.mark.parametrize("condition", [
-    "until", "until:", "until:   ", "until: # Missing text.",
+    "until", "until:", "until:   ",
     "until # Missing target.", "until using check", "until check()",
     "until check: text", "until -> Boolean: Ready.", "until check -> Boolean",
     "until agic:check", "until module::check", "until module::flow:check",
@@ -84,7 +84,7 @@ def test_invalid_conditions_never_become_valid_text(binding, condition):
     assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement")), root
 
 
-@pytest.mark.parametrize("condition", ["until done", "until: Ready.", "until:\n      Ready."])
+@pytest.mark.parametrize("condition", ["until done", "until: Ready.", "until: # Ready.", "until:\n      Ready."])
 @pytest.mark.parametrize("binding", ["let ", "let result = "])
 def test_conditions_cannot_be_bound(binding, condition):
     root = parse(f"flow work:\n  repeat:\n    run work\n    {binding}{condition}\n")
@@ -100,7 +100,7 @@ def test_explicit_content_binding_keeps_literal_until_after_header_whitespace(sp
     root = parse(source)
     assert valid(root), root
     binding, = descendants(root, "let_statement")
-    assert binding.child_by_field_name("value").child_count == 1
+    assert [child.type for child in binding.child_by_field_name("value").named_children] == ["text", "newline"]
     assert b"until dawn." in binding.child_by_field_name("value").text
     assert not descendants(root, "until_clause")
     assert not descendants(root, "implicit_run_statement")
@@ -156,8 +156,8 @@ def test_nested_conditions_trivia_prose_and_dedented_siblings(newline):
     assert outer_clause.child_by_field_name("target").text == b"outer_done"
     assert b"until remains literal here." in inner_clause.child_by_field_name("target").text
     assert len(descendants(root, "until_clause")) == 2
-    assert len(descendants(inner_body, "item_doc_comment")) == 1
-    assert descendants(root, "run_statement")[-1].parent.type == "statements"
+    assert len(descendants(inner_body, "item_doc")) == 1
+    assert descendants(root, "run_statement")[-1].parent.type == "flow_body"
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

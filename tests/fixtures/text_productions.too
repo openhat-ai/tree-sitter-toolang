@@ -1,0 +1,27 @@
+#@ Text fragments retain # literally.
+## Review the supplied material.
+## @param topic Input # details.
+with skill ./review
+prompt review:
+  answer = yes # Structural comment.
+  Body # literal.
+flow work(topic: Text):
+  models = fast
+  recall = near
+  let note = "a#b"
+  map in 1 lanes using worker
+  keep in 2 lane if useful
+  sort ascending in 2 lanes by score
+  reduce:
+
+    # Literal reducer heading.
+    Merge {{_}}.
+    from:
+
+      Seed # literal.
+  repeat 2 time windowing 1:
+    run worker
+    until: Ready # literal.
+## Following declaration.
+flow next:
+  pass

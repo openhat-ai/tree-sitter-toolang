@@ -59,7 +59,7 @@ def program_shape(statements):
     for statement in statements.named_children:
         if statement.type == "run_statement":
             result.append(
-                ("run", statement.child_by_field_name("runnable").text.decode().strip())
+                ("run", statement.child_by_field_name("target").text.decode().strip())
             )
         elif statement.type == "repeat_statement":
             count = statement.child_by_field_name("count")
@@ -67,8 +67,8 @@ def program_shape(statements):
             if condition is not None:
                 assert condition.type == "until_clause"
                 target = condition.child_by_field_name("target")
-                assert target.type == "inline_agic_body"
-                assert target.child_by_field_name("body").text.strip() == b"Ready."
+                assert target.type == "inline_agic"
+                assert target.child_by_field_name("content").text.strip() == b"Ready."
             body = statement.child_by_field_name("body")
             assert body.type == "repeat_body"
             result.append(
@@ -82,8 +82,9 @@ def program_shape(statements):
         else:
             assert statement.type in {
                 "plain_comment",
-                "item_doc_comment",
-                "module_doc_comment",
+                "item_doc",
+                "param_doc",
+                "program_doc",
                 "blank_line",
                 "until_clause",
             }
@@ -106,7 +107,7 @@ def test_generated_layout_preserves_the_independent_statement_tree(seed):
         b"work",
         b"next",
     ]
-    statements = descendants(flows[0].child_by_field_name("body"), "statements")[0]
+    statements = flows[0].child_by_field_name("body")
     assert program_shape(statements) == expected, source
     assert not descendants(flows[1], "run_statement")
 
@@ -212,7 +213,7 @@ def test_missing_binding_assignment_recovers_identically_during_edits(newline, o
         assert valid(root) == expected_valid
         assert len(descendants(root, "repeat_statement")) == 1
         if not expected_valid:
-            assert len(descendants(root, "invalid_flow_reserved_statement")) == 1
+            assert len(descendants(root, "invalid_flow_statement")) == 1
         previous = current
 
 
@@ -246,7 +247,7 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
             assert valid(tree.root_node)
             assert len(descendants(tree.root_node, "repeat_statement")) == depth
             publish = descendants(tree.root_node, "run_statement")[-1]
-            assert publish.child_by_field_name("runnable").text.strip() == b"publish"
+            assert publish.child_by_field_name("target").text.strip() == b"publish"
             owner = publish.parent
             owners = 0
             while owner is not None:
@@ -255,6 +256,28 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
             assert owners == publish_depth
         else:
             assert not valid(tree.root_node)
+        previous = current
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_layout_serialization_capacity_rejects_overflow_and_recovers(newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    # The 1024-byte serialization buffer holds 168 frames: root, flow, and
+    # at most 166 repeat bodies. Text modes may use additional frames.
+    for depth in [165, 166, 167, 168, 166]:
+        current = (b"flow work:\n" + b"".join(
+            b" " * level + b"repeat:\n" for level in range(1, depth + 1)
+        ) + b" " * (depth + 1) + b"run worker\n"
+            + b"# Pending dedents.\nflow next:\n  pass").replace(b"\n", newline)
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node)
+        assert valid(tree.root_node) == (depth <= 166)
+        if depth <= 166:
+            assert len(descendants(tree.root_node, "repeat_statement")) == depth
+            assert len(descendants(tree.root_node, "flow")) == 2
         previous = current
 
 

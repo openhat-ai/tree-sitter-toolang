@@ -1,0 +1,140 @@
+==================
+Leading member documentation belongs to its body
+==================
+#@ Leading member documentation belongs to its structural body.
+struct Report:
+  ## Summary field.
+  summary: Text
+
+prompt review:
+  ## Output property.
+  output = Text
+  Review the evidence.
+
+chore review:
+  ## Schedule property.
+  schedule = daily
+  Review the latest changes.
+
+agic inspect:
+  ## Model directive.
+  models = fast
+  user: Inspect the evidence.
+
+flow work:
+  ## Before an outer comment.
+# Outer comment stays before the body.
+
+  ## First operation.
+    ## Additional operation documentation.
+  run inspect
+  repeat:
+    ## Loop operation.
+    run inspect
+    until: Ready.
+
+prompt empty:
+## Documentation remains outside an empty body.
+flow next:
+  pass
+
+---
+
+(program
+  (program_doc
+    (text))
+  (struct
+    (type_name)
+    (newline)
+    (struct_body
+      (item_doc
+        (text))
+      (field
+        (identifier)
+        (type
+          (builtin_type))
+        (newline))
+      (blank_line)))
+  (prompt
+    (cap_name)
+    (newline)
+    (cap_body
+      (item_doc
+        (text))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (item_doc
+        (text))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (item_doc
+        (text))
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))
+      (blank_line)))
+  (flow
+    (runnable_name)
+    (newline)
+    (item_doc
+      (text))
+    (plain_comment)
+    (blank_line)
+    (flow_body
+      (item_doc
+        (text))
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (item_doc
+            (text))
+          (run_statement
+            (runnable_name)
+            (newline))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline)))
+          (blank_line)))))
+  (prompt
+    (cap_name)
+    (newline))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

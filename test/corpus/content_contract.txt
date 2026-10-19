@@ -1,0 +1,177 @@
+==================
+Content values and structural body fields
+==================
+context inline: Same-line text. # Literal suffix.
+instruct multiline:
+  # Literal heading.
+  First line.
+    Nested detail.
+
+skill sample:
+  source = example/sample
+  Describe the capability.
+  source = literal content after the first text line
+
+chore work:
+  title = Work
+  Describe the chore.
+
+struct Result:
+  summary: Text
+
+agic chat:
+  models = default
+  user: First message.
+  assistant:
+    Multiline reply.
+    More detail.
+  Bare message.
+  Its continuation.
+
+flow example:
+  tools = none
+  let note =
+    Literal content.
+  let job = async run:
+    Research.
+  await job
+  ask: Continue?
+  reduce:
+    Combine.
+    from: Seed.
+  repeat:
+    until: Ready?
+    run worker
+
+---
+
+(program
+  (context
+    (identifier)
+    (content
+      (text))
+    (newline))
+  (instruct
+    (identifier)
+    (newline)
+    (content
+      (text)
+      (newline)
+      (text)
+      (newline)
+      (text)
+      (newline)
+      (blank_line)))
+  (skill
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (content
+        (text)
+        (newline)
+        (text)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (struct
+    (type_name)
+    (newline)
+    (struct_body
+      (field
+        (identifier)
+        (type
+          (builtin_type))
+        (newline))
+      (blank_line)))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))
+      (message
+        (role)
+        (newline)
+        (content
+          (text)
+          (newline)
+          (text)
+          (newline)))
+      (message
+        (content
+          (text)
+          (newline)
+          (text)
+          (newline)
+          (blank_line)))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (let_statement
+        (local_name)
+        (newline)
+        (content
+          (text)
+          (newline)))
+      (let_statement
+        (local_name)
+        (run_statement
+          (inline_agic
+            (newline)
+            (content
+              (text)
+              (newline)))))
+      (await_statement
+        (handle_name)
+        (newline))
+      (ask_statement
+        (content
+          (text))
+        (newline))
+      (reduce_statement
+        (inline_agic
+          (newline)
+          (content
+            (text)
+            (newline)))
+        (content
+          (text))
+        (newline))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline)))
+          (run_statement
+            (runnable_name)
+            (newline)))))))

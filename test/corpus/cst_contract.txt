@@ -1,0 +1,235 @@
+==================
+Empty declarations preserve peer documentation
+==================
+prompt empty:
+## Next chore.
+chore empty:
+## @param topic Input.
+flow next(topic: Text):
+  pass
+
+---
+
+(program
+  (prompt
+    (cap_name)
+    (newline))
+  (item_doc
+    (text))
+  (chore
+    (chore_name)
+    (newline))
+  (param_doc
+    (param_name)
+    (text))
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Body ranges exclude leading trivia
+==================
+prompt first: # Header.
+# Preface.
+  title = First
+  Body.
+flow work:
+## Preface.
+  repeat:
+    # Preface.
+    run worker
+
+---
+
+(program
+  (prompt
+    (cap_name)
+    (plain_comment)
+    (newline)
+    (plain_comment)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (content
+        (text)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (item_doc
+      (text))
+    (flow_body
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (plain_comment)
+          (run_statement
+            (runnable_name)
+            (newline)))))))
+
+==================
+Targets and directive leaves use consistent roles
+==================
+flow work:
+  models += fast
+  hands = worker
+  recall = none
+  instruct = named
+  context = default
+  run worker
+  seek reviewer: Body.
+  map using worker
+  repeat:
+    run worker
+    until: Ready.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (route_value
+          (runnable_ref))
+        (newline))
+      (directive
+        (directive_key)
+        (recall_value)
+        (newline))
+      (directive
+        (directive_key)
+        (identifier)
+        (newline))
+      (directive
+        (directive_key)
+        (newline))
+      (run_statement
+        (runnable_name)
+        (newline))
+      (seek_statement
+        (agent_name)
+        (inline_agic
+          (content
+            (text))
+          (newline)))
+      (map_statement
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline))))))))
+
+==================
+Diagnostic names distinguish statements and run targets
+==================
+flow work:
+  let result run worker
+  async run worker extra
+  run after
+agic work:
+  user missing colon
+  user: Following.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (invalid_flow_statement
+        (local_name)
+        (text)
+        (newline))
+      (run_statement
+        (invalid_run_target
+          (runnable_name)
+          (text)
+          (newline)))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (invalid_agic_message
+        (role)
+        (text)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline)))))
+
+==================
+Missing bodies and content preserve peer documentation
+==================
+flow empty:
+## Context documentation.
+context empty:
+## Next flow documentation.
+flow next:
+  run:
+#@ Program documentation.
+flow last:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (invalid_missing_body)))
+  (item_doc
+    (text))
+  (context
+    (identifier)
+    (newline)
+    (content
+      (invalid_missing_content)))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (inline_agic
+          (newline)
+          (content
+            (invalid_missing_content))))))
+  (program_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

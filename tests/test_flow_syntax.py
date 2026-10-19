@@ -6,6 +6,8 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
+from test_layout_support import declarations, valid as is_valid
+
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
 STATEMENT_TYPES = {
@@ -33,11 +35,7 @@ def _text(source: bytes, node) -> str:
 
 
 def _items(root):
-    return [
-        child.named_children[0]
-        for child in root.named_children
-        if child.type == "item"
-    ]
+    return declarations(root)
 
 
 def _descendants(node, node_type: str):
@@ -50,25 +48,14 @@ def _descendants(node, node_type: str):
 
 
 def _statements(flow):
-    body = flow.child_by_field_name("body")
-    statement_list = next(
-        (child for child in body.named_children if child.type == "statements"),
-        None,
-    )
-    if statement_list is None:
-        return []
-    return [
-        child for child in statement_list.named_children if child.type in STATEMENT_TYPES
-    ]
+    return flow.child_by_field_name("body").children_by_field_name("statement")
 
 
 def _assert_invalid_flow_statement(parser: Parser, statement: str) -> None:
     source = f"flow bad:\n  {statement}\n".encode()
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error or _descendants(
-        tree.root_node, "invalid_flow_reserved_statement"
-    ), statement
+    assert not is_valid(tree.root_node), statement
     assert not _descendants(tree.root_node, "implicit_run_statement"), statement
 
 
@@ -111,14 +98,14 @@ def test_flow_fixture_covers_complete_statement_set():
         "repeat_statement",
     ]
 
-    inline_run = research[1].child_by_field_name("agic")
+    inline_run = research[1].child_by_field_name("target")
     assert inline_run is not None and inline_run.type == "inline_agic"
     assert _text(source, inline_run.child_by_field_name("return")) == "Note"
     assert "Extract one note." in _text(
-        source, inline_run.child_by_field_name("body")
+        source, inline_run.child_by_field_name("content")
     )
 
-    inline_sort = research[19].child_by_field_name("runnable")
+    inline_sort = research[19].child_by_field_name("target")
     assert inline_sort is not None and inline_sort.type == "inline_agic"
     assert inline_sort.child_by_field_name("return") is None
     assert research[20].child_by_field_name("body").child_by_field_name("until") is not None
@@ -129,7 +116,7 @@ def test_flow_fixture_covers_complete_statement_set():
         if index not in {3, 7, 12, 15}
     ]
     assert all(
-        statement.child_by_field_name("runnable") is not None
+        statement.child_by_field_name("target") is not None
         for statement in runnable_statements
     )
     assert all(
@@ -143,8 +130,8 @@ def test_flow_fixture_covers_complete_statement_set():
         "seek_statement",
         "ask_statement",
     ]
-    assert delegate[0].child_by_field_name("runnable") is not None
-    assert delegate[1].child_by_field_name("agic") is not None
+    assert delegate[0].child_by_field_name("target") is not None
+    assert delegate[1].child_by_field_name("target") is not None
 
     bindings = _statements(flows[2])
     assert [statement.type for statement in bindings] == [
@@ -153,9 +140,9 @@ def test_flow_fixture_covers_complete_statement_set():
         "let_statement",
         "repeat_statement",
     ]
-    assert _text(source, bindings[0].child_by_field_name("name")).strip() == "jobs"
+    assert _text(source, bindings[0].child_by_field_name("local")).strip() == "jobs"
     assert bindings[0].child_by_field_name("statement").type == "run_statement"
-    assert bindings[1].child_by_field_name("name") is None
+    assert bindings[1].child_by_field_name("local") is None
     assert bindings[1].child_by_field_name("statement").type == "run_statement"
     assert "Prefer primary sources." in _text(
         source, bindings[2].child_by_field_name("value")
@@ -176,7 +163,7 @@ def test_readable_flow_complements_have_flat_public_fields():
         b"  run combine\n"
         b"  reduce using merge\n"
         b"  map in 2 lanes using convert\n"
-        b"  keep if useful in 2 lanes\n"
+        b"  keep in 2 lanes if useful\n"
         b"  drop in 2 lanes if duplicate\n"
         b"  sort descending in 2 lanes by score\n"
         b"  keep first 3\n"
@@ -202,8 +189,8 @@ def test_readable_flow_complements_have_flat_public_fields():
     ]
 
     for statement in statements[:8]:
-        runnable = statement.child_by_field_name("runnable")
-        assert runnable is not None and runnable.type == "runnable"
+        runnable = statement.child_by_field_name("target")
+        assert runnable is not None and runnable.type == "runnable_name"
         assert statement.child_by_field_name("agic") is None
 
     assert statements[0].child_by_field_name("count") is None
@@ -220,7 +207,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     order = statements[7].child_by_field_name("order")
     assert _text(source, order).strip() == "descending"
     selection = statements[8].child_by_field_name("selection")
-    assert selection is not None and selection.type == "position"
+    assert selection is not None and selection.type == "selection"
     assert _text(source, selection.child_by_field_name("side")).strip() == "first"
     assert _text(source, selection.child_by_field_name("count")).strip() == "3"
 
@@ -229,7 +216,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     assert repeat.child_by_field_name("body").type == "repeat_body"
     clause = repeat.child_by_field_name("body").child_by_field_name("until")
     assert clause.type == "until_clause"
-    assert clause.child_by_field_name("target").type == "inline_agic_body"
+    assert clause.child_by_field_name("target").type == "inline_agic"
 
 
 def test_unnamed_flow_supports_signatures():
@@ -318,11 +305,11 @@ def test_let_uses_equals_for_operation_results_and_content_locals():
         True,
     ]
     assert (
-        _text(source, statements[0].child_by_field_name("name")).strip()
+        _text(source, statements[0].child_by_field_name("local")).strip()
         == "result"
     )
-    assert statements[1].child_by_field_name("name") is None
-    assert _text(source, statements[2].child_by_field_name("name")).strip() == "note"
+    assert statements[1].child_by_field_name("local") is None
+    assert _text(source, statements[2].child_by_field_name("local")).strip() == "note"
     assert "Keep this block too." in _text(
         source, statements[3].child_by_field_name("value")
     )
@@ -339,17 +326,18 @@ def test_lane_clauses_precede_collection_targets_and_other_complements_keep_thei
         b"  generate 4 in 2 lanes using sample\n"
         b"  map in 2 lanes using convert\n"
         b"  keep in 2 lanes if useful\n"
-        b"  keep if useful in 2 lanes\n"
         b"  drop in 2 lanes if duplicate\n"
-        b"  drop if duplicate in 2 lanes\n"
         b"  sort descending in 2 lanes by score\n"
-        b"  sort ascending by score in 1 lane\n"
+        b"  sort ascending in 1 lane by score\n"
         b"  map in 2 lanes -> Note: Convert this item.\n"
         b"  keep in 2 lanes if -> Boolean: Check this item.\n"
         b"  sort descending in 2 lanes by -> Number: Score this item.\n"
     )
     invalid = [
         "generate in 2 lanes 4 using sample",
+        "keep if useful in 2 lanes",
+        "drop if duplicate in 2 lanes",
+        "sort ascending by score in 1 lane",
         "sort by score descending",
         "map in 2 lanes in 3 lanes using convert",
         "map using first using second",
@@ -365,7 +353,7 @@ def test_lane_clauses_precede_collection_targets_and_other_complements_keep_thei
         _assert_invalid_flow_statement(parser, statement)
 
 
-def test_literal_units_agree_with_their_numeric_values():
+def test_literal_units_accept_both_spellings_for_every_numeric_value():
     parser = _parser()
     valid = (
         b"flow valid:\n"
@@ -395,43 +383,14 @@ def test_literal_units_agree_with_their_numeric_values():
         "repeat 0 time:\n    run improve",
         "repeat 5 time:\n    run improve",
     ):
-        _assert_invalid_flow_statement(parser, statement)
+        assert is_valid(parser.parse(f"flow valid:\n  {statement}\n".encode()).root_node), statement
 
 
-def test_legacy_and_reserved_words_do_not_fall_back_to_bare_runs():
+def test_malformed_active_words_do_not_fall_back_to_bare_runs():
     parser = _parser()
-    statements = [
-        "call work",
-        "do work",
-        "unfold work",
-        "each work",
-        "fold work",
-        "sort work",
-        "rank score",
-        "par 2",
-        "top 2",
-        "bottom 2",
-        "head 2",
-        "tail 2",
-        "think: Work.",
-        "use shell",
-        "thunk future",
-        "until: Done.",
-    ]
-
-    for statement in statements:
-        _assert_invalid_flow_statement(parser, statement)
-
     for statement in (
-        "scatter 4 generate",
-        "storm 4 generate par 2",
-        "gather combine",
-        "settle merge",
-        "map convert par 2",
-        "keep useful par 2",
-        "drop duplicate par 2",
-        "rank score top 2 par 2",
-        "repeat 3:\n    run improve",
+        "sort work", "until: Done.", "map convert par 2",
+        "keep useful par 2", "drop duplicate par 2", "repeat 3:\n    run improve",
     ):
         _assert_invalid_flow_statement(parser, statement)
 
@@ -558,7 +517,7 @@ def test_malformed_statement_after_blank_line_does_not_become_an_implicit_run():
     implicit_runs = _descendants(tree.root_node, "implicit_run_statement")
 
     assert tree.root_node.has_error or _descendants(
-        tree.root_node, "invalid_flow_reserved_statement"
+        tree.root_node, "invalid_flow_statement"
     )
     assert len(implicit_runs) == 1
     assert "map using review." not in _text(source, implicit_runs[0])
@@ -580,7 +539,7 @@ def test_statement_keywords_only_reserve_complete_words():
 
         assert tree.root_node.has_error is False
         assert len(_descendants(tree.root_node, "implicit_run_statement")) == 1
-        assert not _descendants(tree.root_node, "invalid_flow_reserved_statement")
+        assert not _descendants(tree.root_node, "invalid_flow_statement")
 
 
 def test_until_is_reserved_at_statement_boundaries():
@@ -628,12 +587,12 @@ def test_with_and_agic_replace_use_and_thunk():
 @pytest.mark.parametrize(
     ("prefix", "trivia"),
     [
-        ("    ## Improve the evidence.\n", ["item_doc_comment"]),
+        ("    ## Improve the evidence.\n", ["item_doc"]),
         ("    # Respect the provider quota.\n", ["plain_comment"]),
         ("\n", ["blank_line"]),
         (
             "\n    # Respect the provider quota.\n    ## Improve the evidence.\n",
-            ["blank_line", "plain_comment", "item_doc_comment"],
+            ["blank_line", "plain_comment", "item_doc"],
         ),
     ],
 )
@@ -656,10 +615,15 @@ def test_repeat_leading_trivia_preserves_executable_body(
         "run_statement",
     ]
     assert [
-        _text(source, node.child_by_field_name("runnable")).strip()
+        _text(source, node.child_by_field_name("target")).strip()
         for node in statements
     ] == ["search", "summarize"]
-    assert [node.type for node in body.named_children if node.type in trivia] == trivia
+    assert [node.type for node in loop.named_children if node.type in trivia] == [
+        kind for kind in trivia if kind == "blank_line"
+    ]
+    assert [node.type for node in body.named_children if node.type in trivia] == [
+        kind for kind in trivia if kind != "blank_line"
+    ]
     assert bool(loop.child_by_field_name("body").child_by_field_name("until")) == bool(ending)
     assert not _descendants(loop, "implicit_run_statement")
 
@@ -702,20 +666,23 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     outer = _statements(_items(root)[0])[0]
     outer_body = outer.child_by_field_name("body")
     assert [node.type for node in outer_body.named_children] == [
-        "item_doc_comment",
+        "item_doc",
         "run_statement",
-        "item_doc_comment",
+        "item_doc",
         "repeat_statement",
         "until_clause",
     ]
     inner = outer_body.children_by_field_name("statement")[1]
     inner_body = inner.child_by_field_name("body")
     assert inner_body.type == "repeat_body"
+    assert [node.type for node in inner_body.named_children] == [
+        "plain_comment", "item_doc", "run_statement", "until_clause",
+    ]
     statements = inner_body.children_by_field_name("statement")
     assert [node.type for node in statements] == ["run_statement"]
     assert (
         _text(
-            source, statements[0].child_by_field_name("runnable")
+            source, statements[0].child_by_field_name("target")
         ).strip()
         == "revise"
     )
@@ -729,4 +696,4 @@ def test_repeat_comments_do_not_replace_required_statements(header):
     source = f"flow research:\n  {header}\n    ## No executable body.\n".encode()
     root = _parser().parse(source).root_node
 
-    assert root.has_error or _descendants(root, "invalid_flow_reserved_statement")
+    assert not is_valid(root)

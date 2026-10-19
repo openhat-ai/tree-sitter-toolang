@@ -1,0 +1,22 @@
+flow units:
+  generate 0 in 1 lanes using worker
+  let result = generate 01 in 2 lane -> Text[]: Produce results.
+  map in 0 lane using worker
+  let map in 0002 lane -> Text:
+    Keep 1 lanes and 2 time in 3 lanes # literal.
+  keep in 01 lanes if worker
+  drop in 2 lane if -> Boolean: Select this item.
+  sort ascending in 2 lane by worker
+  sort descending in 1 lanes by -> Number:
+    Score 1 lanes in 2 time # literal.
+  repeat 1 times windowing 01:
+    run worker
+  let repeat 02 time:
+    run worker
+  keep first 0
+  drop last 01
+
+flow literal_units:
+  run: keep if worker in 2 lanes
+  let note = 1 lanes, 2 time, and map using worker in 3 lanes
+  map in 1 lanes: using worker in 2 lane is literal.

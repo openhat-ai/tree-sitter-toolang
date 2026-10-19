@@ -1,0 +1,186 @@
+==================
+Unified text leaves and explicit target clauses
+==================
+#@ Text fragments retain # literally.
+## Review the supplied material.
+## @param topic Input # details.
+with skill ./review
+prompt review:
+  answer = yes # Structural comment.
+  Body # literal.
+flow work(topic: Text):
+  models = fast
+  recall = near
+  let note = "a#b"
+  map in 1 lanes using worker
+  keep in 2 lane if useful
+  sort ascending in 2 lanes by score
+  reduce:
+
+    # Literal reducer heading.
+    Merge {{_}}.
+    from:
+
+      Seed # literal.
+  repeat 2 time windowing 1:
+    run worker
+    until: Ready # literal.
+## Following declaration.
+flow next:
+  pass
+
+---
+
+(program
+  (program_doc
+    (text))
+  (item_doc
+    (text))
+  (param_doc
+    (param_name)
+    (text))
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (prompt
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (plain_comment)
+        (newline))
+      (content
+        (text)
+        (newline))))
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (recall_value
+          (recall_source))
+        (newline))
+      (let_statement
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (map_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (keep_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (sort_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (reduce_statement
+        (inline_agic
+          (newline)
+          (content
+            (blank_line)
+            (text)
+            (newline)
+            (text)
+            (newline)))
+        (newline)
+        (content
+          (blank_line)
+          (text)
+          (newline)))
+      (repeat_statement
+        (integer_literal)
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline)))))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Incomplete recall keys preserve following source
+==================
+agic first:
+  recall = auto
+  user: Next.
+flow next:
+  pass
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (invalid_directive
+        (directive_key)
+        (ERROR)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Blank reducer content remains invalid before its initializer
+==================
+flow work:
+  reduce:
+
+    from: Seed.
+  run next
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (reduce_statement
+        (inline_agic
+          (newline)
+          (content
+            (blank_line)
+            (invalid_missing_content)))
+        (content
+          (text))
+        (newline))
+      (run_statement
+        (runnable_name)
+        (newline)))))

@@ -1,0 +1,226 @@
+================================================================================
+Both unit spellings and prefix lane clauses
+================================================================================
+flow units:
+  generate 0 in 1 lanes using worker
+  let result = generate 01 in 2 lane -> Text[]: Produce results.
+  map in 0 lane using worker
+  let map in 0002 lane -> Text:
+    Keep 1 lanes and 2 time in 3 lanes # literal.
+  keep in 01 lanes if worker
+  drop in 2 lane if -> Boolean: Select this item.
+  sort ascending in 2 lane by worker
+  sort descending in 1 lanes by -> Number:
+    Score 1 lanes in 2 time # literal.
+  repeat 1 times windowing 01:
+    run worker
+  let repeat 02 time:
+    run worker
+  keep first 0
+  drop last 01
+
+flow literal_units:
+  run: keep if worker in 2 lanes
+  let note = 1 lanes, 2 time, and map using worker in 3 lanes
+  map in 1 lanes: using worker in 2 lane is literal.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (generate_statement
+        (integer_literal)
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (let_statement
+        (local_name)
+        (generate_statement
+          (integer_literal)
+          (integer_literal)
+          (inline_agic
+            (type
+              (builtin_type))
+            (content
+              (text))
+            (newline))))
+      (map_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (let_statement
+        (map_statement
+          (integer_literal)
+          (inline_agic
+            (type
+              (builtin_type))
+            (newline)
+            (content
+              (text)
+              (newline)))))
+      (keep_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (drop_statement
+        (integer_literal)
+        (inline_agic
+          (type
+            (builtin_type))
+          (content
+            (text))
+          (newline)))
+      (sort_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (sort_statement
+        (integer_literal)
+        (inline_agic
+          (type
+            (builtin_type))
+          (newline)
+          (content
+            (text)
+            (newline))))
+      (repeat_statement
+        (integer_literal)
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (let_statement
+        (repeat_statement
+          (integer_literal)
+          (newline)
+          (repeat_body
+            (run_statement
+              (runnable_name)
+              (newline)))))
+      (keep_statement
+        (selection
+          (integer_literal))
+        (newline))
+      (drop_statement
+        (selection
+          (integer_literal))
+        (newline))
+      (blank_line)))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (run_statement
+        (inline_agic
+          (content
+            (text))
+          (newline)))
+      (let_statement
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (map_statement
+        (integer_literal)
+        (inline_agic
+          (content
+            (text))
+          (newline))))))
+
+================================================================================
+Suffix lanes are rejected without losing following source
+================================================================================
+flow work:
+  keep if worker in 2 lanes
+  drop if worker in 1 lane
+  sort ascending by worker in 2 lanes
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (keep_statement
+        (runnable_name)
+        (ERROR)
+        (newline))
+      (drop_statement
+        (runnable_name)
+        (ERROR)
+        (newline))
+      (sort_statement
+        (runnable_name)
+        (ERROR)
+        (newline))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+================================================================================
+Repeat spelling is independent of count and window value
+================================================================================
+flow work:
+  repeat 0 time windowing 0:
+    run worker
+  let result = repeat 01 times windowing 01:
+    run worker
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (integer_literal)
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))))
+      (let_statement
+        (local_name)
+        (repeat_statement
+          (integer_literal)
+          (integer_literal)
+          (newline)
+          (repeat_body
+            (run_statement
+              (runnable_name)
+              (newline))))))))
+
+================================================================================
+A lane clause stays before an inline target at EOF
+================================================================================
+flow work:
+  map in 0 lane: using worker in 3 lanes is literal.
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (map_statement
+        (integer_literal)
+        (inline_agic
+          (content
+            (text))
+          (newline))))))

@@ -4,6 +4,11 @@ Status: Approved on 2026-09-13 for tree-sitter-toolang 0.3.2, including `##!`
 compatibility. Baseline: upstream `e520a926` (0.3.1), also used by Toolang
 `02419769`.
 
+The public CST and marker contract below records the 0.3.2 design. For the
+current documentation nodes and syntax, see
+[Comments and Documentation](../../GRAMMAR.md#comments-and-documentation) and
+[Unreleased migration notes](../../CHANGELOG.md#unreleased).
+
 ## Goal and Delivery Boundary
 
 Expose consistent comment nodes and structured parameter documentation so

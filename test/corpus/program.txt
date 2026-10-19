@@ -1,0 +1,414 @@
+==================
+With Items
+==================
+with psyche toolang.ai/reviewer
+with skill briceyan/pdf-processing
+with service github://briceyan/caps/services/github@main
+with prompt https://toolang.ai/review
+
+---
+
+(program
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (with
+    (cap_kind)
+    (text)
+    (newline))
+  (with
+    (cap_kind)
+    (text)
+    (newline)))
+
+==================
+Cap And Chore Items
+==================
+service github:
+  protocol = http
+  target = https://mcp.github.com/mcp
+
+  Use this service when the agent needs GitHub access.
+
+psyche reviewer:
+  Prefer concrete findings and direct language.
+
+prompt review:
+  Review {{path}} carefully.
+
+chore review_api:
+  title = Review API changes
+
+  Review the API changes and summarize risks.
+
+chore stale-prs:
+  title = Check stale PRs
+  schedule = FREQ=HOURLY;INTERVAL=6
+
+  Check stale PRs and report actionable items.
+
+---
+
+(program
+  (service
+    (cap_name)
+    (newline)
+    (cap_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (psyche
+    (cap_name)
+    (newline)
+    (cap_body
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (prompt
+    (cap_name)
+    (newline)
+    (cap_body
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)
+        (blank_line))))
+  (chore
+    (chore_name)
+    (newline)
+    (chore_body
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (property
+        (identifier)
+        (text)
+        (newline))
+      (blank_line)
+      (content
+        (text)
+        (newline)))))
+
+==================
+Struct, Instruct, And Context
+==================
+struct ReviewResult:
+  summary: Text
+  findings: Finding[]
+
+instruct:
+  You are running {{agic.name}}.
+
+context:
+  Add current workspace context to the final user message.
+
+---
+
+(program
+  (struct
+    (type_name)
+    (newline)
+    (struct_body
+      (field
+        (identifier)
+        (type
+          (builtin_type))
+        (newline))
+      (field
+        (identifier)
+        (type
+          (type_name))
+        (newline))
+      (blank_line)))
+  (instruct
+    (newline)
+    (content
+      (text)
+      (newline)
+      (blank_line)))
+  (context
+    (newline)
+    (content
+      (text)
+      (newline))))
+
+==================
+Agic With Directives And Blocks
+==================
+agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
+  models = gpt-5
+  tools += shell, filesystem
+  hands = summarize
+  recall = far, near
+
+  instruct = default
+  context = default
+
+  user:
+    Review {{path}} carefully.
+    {{focus}}
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type)))
+      (param
+        (param_name)
+        (type
+          (builtin_type)))
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (type
+      (type_name))
+    (newline)
+    (agic_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (directive
+        (directive_key)
+        (route_value
+          (runnable_ref))
+        (newline))
+      (directive
+        (directive_key)
+        (recall_value
+          (recall_source)
+          (recall_source))
+        (newline))
+      (blank_line)
+      (directive
+        (directive_key)
+        (newline))
+      (directive
+        (directive_key)
+        (newline))
+      (blank_line)
+      (message
+        (role)
+        (newline)
+        (content
+          (text)
+          (newline)
+          (text)
+          (newline))))))
+
+==================
+Flow Statements
+==================
+flow research(input: Part[]) -> Answer:
+  models = gpt-5
+
+  ## Prepare the request.
+  run normalize
+  seek alice review
+  ask: Approve the plan?
+  run -> SearchJob[]:
+    Create five search jobs.
+  generate 3 in 2 lanes using sample
+  keep in 8 lanes if:
+    Return true for useful jobs.
+  drop last 1
+  sort descending in 3 lanes by relevance
+  map in 5 lanes -> Note:
+    Extract one note.
+  run -> Answer:
+    Synthesize notes.
+  let draft = run summarize
+  repeat 5 times:
+    run collect_evidence
+    until: Return true when enough evidence exists.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (type
+      (type_name))
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (blank_line)
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))
+      (seek_statement
+        (agent_name)
+        (runnable_name)
+        (newline))
+      (ask_statement
+        (content
+          (text))
+        (newline))
+      (run_statement
+        (inline_agic
+          (type
+            (type_name))
+          (newline)
+          (content
+            (text)
+            (newline))))
+      (generate_statement
+        (integer_literal)
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (keep_statement
+        (integer_literal)
+        (inline_agic
+          (newline)
+          (content
+            (text)
+            (newline))))
+      (drop_statement
+        (selection
+          (integer_literal))
+        (newline))
+      (sort_statement
+        (integer_literal)
+        (runnable_name)
+        (newline))
+      (map_statement
+        (integer_literal)
+        (inline_agic
+          (type
+            (type_name))
+          (newline)
+          (content
+            (text)
+            (newline))))
+      (run_statement
+        (inline_agic
+          (type
+            (type_name))
+          (newline)
+          (content
+            (text)
+            (newline))))
+      (let_statement
+        (local_name)
+        (run_statement
+          (runnable_name)
+          (newline)))
+      (repeat_statement
+        (integer_literal)
+        (newline)
+        (repeat_body
+          (run_statement
+            (runnable_name)
+            (newline))
+          (until_clause
+            (inline_agic
+              (content
+                (text))
+              (newline))))))))
+
+==================
+Comments
+==================
+# top-level comment
+with skill briceyan/pdf-processing # inline comment
+
+agic raw:
+  instruct = none
+  context = none
+  user: none
+
+---
+
+(program
+  (plain_comment)
+  (with
+    (cap_kind)
+    (text)
+    (plain_comment)
+    (newline))
+  (blank_line)
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (directive
+        (directive_key)
+        (newline))
+      (directive
+        (directive_key)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline)))))
+
+==================
+Recall Directive
+==================
+agic recall:
+  recall = far, near
+
+---
+
+(program
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (directive
+        (directive_key)
+        (recall_value
+          (recall_source)
+          (recall_source))
+        (newline)))))

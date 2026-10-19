@@ -2,7 +2,7 @@
 
 import pytest
 
-from test_layout_support import descendants, parse, point, valid
+from test_layout_support import declarations, descendants, parse, point, valid
 
 
 @pytest.mark.parametrize("count", ["", " 2 times"])
@@ -30,8 +30,8 @@ def test_repeat_requires_executable_body_with_optional_bounds(
         if until is not None:
             assert until.type == "until_clause"
             target = until.child_by_field_name("target")
-            assert target.type == "inline_agic_body"
-            assert target.child_by_field_name("body").text.strip() == b"Ready."
+            assert target.type == "inline_agic"
+            assert target.child_by_field_name("content").text.strip() == b"Ready."
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,6 @@ def test_repeat_requires_executable_body_with_optional_bounds(
         ("skill review:", False),
         ("service search:", False),
         ("prompt review:", False),
-        ("task review:", False),
         ("chore review:", False),
     ],
 )
@@ -58,14 +57,10 @@ def test_declaration_body_optionality_at_eof_and_next_item(
     root = parse(header + "\n" + trivia + ending)
     assert valid(root) == (not required)
     if not required:
-        items = [
-            node.named_children[0]
-            for node in root.named_children
-            if node.type == "item"
-        ]
+        items = declarations(root)
         assert len(items) == (2 if ending else 1)
-        # Jobs retain a job_body wrapper even when they contain only trivia.
-        assert not descendants(items[0], "text_body_line")
+        # Empty declarations do not manufacture a body from header trivia.
+        assert not descendants(items[0], "text")
         assert not descendants(items[0], "property")
         assert not descendants(items[0], "flow")
         if ending:
@@ -99,19 +94,19 @@ def test_agic_explicit_bodies_preserve_literal_bytes_and_end_before_siblings(
     root = parse(source.decode())
     assert valid(root)
     owner = descendants(root, "agic")[0]
-    block = descendants(owner, "text_body")[0]
+    block = descendants(owner, "content")[0]
     assert block.text == content
     assert block.start_byte == source.index(content)
     assert block.end_byte == block.start_byte + len(content)
     assert tuple(block.start_point) == point(source, block.start_byte)
     assert tuple(block.end_point) == point(source, block.end_byte)
-    for line in descendants(block, "text_body_line"):
-        value = line.child_by_field_name("content")
+    for line in descendants(block, "text"):
+        value = line
         assert value.text == source[value.start_byte : value.end_byte]
         assert tuple(value.start_point) == point(source, value.start_byte)
         assert tuple(value.end_point) == point(source, value.end_byte)
     assert not descendants(block, "plain_comment")
-    assert not descendants(block, "item_doc_comment")
+    assert not descendants(block, "item_doc")
     assert descendants(owner, "message")[-1].text.strip() == b"user: Continue."
     assert len(descendants(root, "flow")) == 1
 
@@ -134,29 +129,30 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
 ):
     root = parse(f"{kind} work:\n  Review the evidence.\n{separator}  Summarize it.\n")
     assert valid(root)
-    node_type = "implicit_run_statement" if kind == "flow" else "unroled_message"
+    node_type = "implicit_run_statement" if kind == "flow" else "message"
     prose = descendants(root, node_type)
     assert len(prose) == paragraphs
     assert [
-        line.child_by_field_name("content").text.strip()
+        line.text.strip()
         for node in prose
-        for line in descendants(node, "text_body_line")
+        for line in descendants(node, "text")
     ] == [b"Review the evidence.", b"Summarize it."]
     assert not any(
         descendants(node, "plain_comment")
-        or descendants(node, "item_doc_comment")
-        or descendants(node, "module_doc_comment")
+        or descendants(node, "item_doc")
+        or descendants(node, "param_doc")
+        or descendants(node, "program_doc")
         for node in prose
     )
 
 
-@pytest.mark.parametrize("kind", ["agic", "prompt", "task"])
+@pytest.mark.parametrize("kind", ["agic", "prompt", "chore"])
 @pytest.mark.parametrize("word", ["run", "until", "sort", "using", "repeat"])
 def test_flow_keywords_do_not_leak_into_other_implicit_contexts(kind, word):
     text = f"{word}, literal prose in this context."
     root = parse(f"{kind} work:\n  {text}\n")
     assert valid(root)
-    assert descendants(root, "text_body_line")[0].text.strip() == text.encode()
+    assert descendants(root, "text")[0].text.strip() == text.encode()
     assert not descendants(root, "implicit_run_statement")
 
 
@@ -182,7 +178,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
     assert valid(root)
     expected = []
     offset = 0
-    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "module_doc_comment"}
+    kinds = {"#": "plain_comment", "##": "item_doc", "##!": "item_doc"}
     for line in source.splitlines(keepends=True):
         if b"#" in line:
             marker = line.lstrip().split(maxsplit=1)[0].decode()
@@ -191,7 +187,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
             )
         offset += len(line)
     comments = sorted(
-        [node for kind in kinds.values() for node in descendants(root, kind)],
+        [node for kind in set(kinds.values()) for node in descendants(root, kind)],
         key=lambda node: node.start_byte,
     )
     assert [(n.type, n.start_byte, n.end_byte) for n in comments] == expected
