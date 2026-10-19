@@ -18,6 +18,8 @@ enum Token {
   COMMENT_END,
   BODY_START,
   EMPTY_BODY,
+  ITEM_START,
+  ITEM_INDENT,
   INDENT,
   RUNNABLE_INDENT,
   DEDENT,
@@ -162,7 +164,7 @@ static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   if (token != COMMENT_START) {
     scanner->file_start = false;
   }
-  if (token == DEDENT) {
+  if (token == DEDENT && scanner->depth > 1) {
     scanner->depth--;
   }
   return true;
@@ -377,10 +379,35 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     // All external tokens are enabled during recovery. Keep unexpected content
     // on its physical line instead of letting recovery borrow a later header.
     // ERROR_LINE is never accepted by a normal grammar production.
-    skip_indentation(lexer);
-    if (at_start && scan_comment(scanner, lexer, valid)) {
+    if (scanner->comment_started) {
+      skip_indentation(lexer);
+      return scan_comment(scanner, lexer, valid);
+    }
+    lexer->mark_end(lexer);
+    Indentation indent = indentation(lexer);
+    Frame frame = scanner->frames[scanner->depth - 1];
+    if (at_start && indent.column < frame.column) {
+      scanner->line_started = scanner->comment_started = false;
       scanner->trivia = (Trivia){0};
-      return true;
+      return emit(scanner, lexer, DEDENT);
+    }
+    if (at_start && !scanner->line_started && indent.column == frame.column &&
+        frame.mode == STRUCTURAL && !lexer->eof(lexer) &&
+        lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+      scanner->line_started = true;
+      return emit(scanner, lexer, indent.column == 0 ? ITEM_START : LINE_START);
+    }
+    if (at_start && lexer->lookahead == '#') {
+      Trivia trivia = scanner->trivia;
+      if (!trivia.lines && !lookahead_trivia(lexer, indent, &trivia, false)) {
+        return false;
+      }
+      scanner->trivia = trivia;
+      if (trivia.column < frame.column) {
+        return emit(scanner, lexer, DEDENT);
+      }
+      scanner->comment_started = true;
+      return emit(scanner, lexer, COMMENT_START);
     }
     if (!line_end(lexer)) {
       if (lexer->eof(lexer)) {
@@ -422,11 +449,17 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   lexer->mark_end(lexer);
   Indentation indent = indentation(lexer);
+  // Item bodies are always rooted in the program. Native recovery may roll
+  // the parser back to a header while retaining an abandoned scanner frame.
+  if (at_start && !scanner->line_started &&
+      (valid[ITEM_START] || valid[ITEM_INDENT] || valid[RUNNABLE_INDENT] || valid[EMPTY_BODY])) {
+    scanner->depth = 1;
+  }
   Frame frame = scanner->frames[scanner->depth - 1];
 
   // Diagnose an absent body before the internal lexer consumes the next
   // sibling's first word. No layout frame is opened for a missing body.
-  bool opening_body = valid[INDENT] || valid[RUNNABLE_INDENT] ||
+  bool opening_body = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT] ||
                       valid[TEXT_INDENT] || valid[REDUCE_INDENT];
   // Only commit leading structural trivia to a declaration when a real body
   // follows it. Otherwise finish the empty owner before the outer comments.
@@ -459,7 +492,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
   // Existing flow/repeat/reducer bodies can take same-level entries; pending
   // body and content values require a deeper indentation level.
-  bool awaiting_body = opening_body || (!valid[LINE_START] && !valid[REDUCE_TEXT_START]);
+  bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
+                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
+  bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
   if (valid[EMPTY_BODY] && !scanner->line_started &&
       (lexer->eof(lexer) || (at_start && indent.column <= frame.column))) {
     return emit(scanner, lexer, EMPTY_BODY);
@@ -469,6 +504,13 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
        (indent.column < frame.column || (awaiting_body && indent.column == frame.column)) &&
        lexer->lookahead != '#' && lexer->lookahead != '\r' && lexer->lookahead != '\n'))) {
     return emit(scanner, lexer, MISSING_REQUIRED);
+  }
+
+  // Recovery can abandon scanner frames before the parser has reduced their
+  // owning blocks. Close those parser scopes at the program boundary too.
+  if (at_start && indent.column == 0 && scanner->depth == 1 && valid[DEDENT]) {
+    scanner->line_started = false;
+    return emit(scanner, lexer, DEDENT);
   }
 
   if (lexer->eof(lexer)) {
@@ -557,6 +599,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {
     return push(scanner, lexer, indent, STRUCTURAL, INDENT);
   }
+  if (!scanner->line_started && valid[ITEM_INDENT] && indent.column > frame.column) {
+    return push(scanner, lexer, indent, STRUCTURAL, ITEM_INDENT);
+  }
 
   char word[32];
   bool property_name = read_word(lexer, word, sizeof(word));
@@ -567,6 +612,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
+  if (valid[ITEM_START] && !scanner->line_started && at_baseline) {
+    scanner->line_started = true;
+    return emit(scanner, lexer, ITEM_START);
+  }
   if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
       !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
     return emit(scanner, lexer, MISSING_REQUIRED);

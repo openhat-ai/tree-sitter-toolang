@@ -9,6 +9,51 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn native_recovery_synchronizes_at_statements_and_program_items() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for prefix in [
+            "flow broken:\n  map in 2 lanes in 3 lanes using worker\n  ## Following.\n  run after\n",
+            "flow broken:\n  hands += worker\n  run after\n",
+            "agic broken:\n  recall = wrong\n  user: Following.\n",
+            "struct Broken:\n  value Text\n",
+            "flow broken(\n",
+        ] {
+            let source = format!("{prefix}flow next:\n  pass\n");
+            let tree = parser.parse(&source, None).unwrap();
+            let root = tree.root_node();
+            assert!(root.has_error());
+            let next = root.named_child(root.named_child_count() - 1).unwrap();
+            assert_eq!(next.kind(), "flow");
+            assert!(!next.has_error());
+            assert_eq!(next.start_byte(), prefix.len());
+            assert_eq!(
+                next.child_by_field_name("name")
+                    .unwrap()
+                    .utf8_text(source.as_bytes())
+                    .unwrap(),
+                "next"
+            );
+            if prefix.starts_with("flow broken:") {
+                let body = root
+                    .named_child(0)
+                    .unwrap()
+                    .child_by_field_name("body")
+                    .unwrap();
+                assert_eq!(
+                    body.child_by_field_name("statement")
+                        .unwrap()
+                        .child_by_field_name("target")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    "after"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn public_cst_fields_and_body_ranges_keep_their_roles() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

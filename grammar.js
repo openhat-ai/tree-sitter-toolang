@@ -13,7 +13,7 @@ module.exports = grammar({
     $.newline, $.blank_line,
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._program_doc_start, $._item_doc_start, $._param_doc_start, $._comment_end,
-    $._body_start, $._empty_body, $._indent, $._runnable_indent, $._dedent, $._line_start, $._directive_start,
+    $._body_start, $._empty_body, $._item_start, $._item_indent, $._indent, $._runnable_indent, $._dedent, $._line_start, $._directive_start,
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $._raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
@@ -26,7 +26,7 @@ module.exports = grammar({
       repeat(choice($._trivia, $._item)),
 
     _item: ($) =>
-      seq($._line_start, choice(
+      seq($._item_start, choice(
         $.with,
         $.struct,
         $.psyche,
@@ -90,7 +90,7 @@ module.exports = grammar({
       ),
 
     struct_body: ($) =>
-      structuralBody($, seq(field("field", $.field), repeat(choice(field("field", $.field), $._trivia)))),
+      structuralBody($, seq(field("field", $.field), repeat(choice(field("field", $.field), $._trivia))), $._item_indent),
     field: ($) =>
       seq(
         $._line_start,
@@ -710,7 +710,7 @@ function optionalBody($, node) {
 
 function definitionBody($) {
   return seq(
-    $._indent,
+    $._item_indent,
     repeat(choice(field("property", $.property), $._trivia)),
     optional(field("content", alias($._cap_content, $.content))),
     $._dedent,
@@ -723,7 +723,13 @@ function missing($, kind) {
 }
 
 function structuralBody($, content, indent = $._indent) {
-  return prec.right(choice(seq(indent, content, $._dedent), missing($, "body")));
+  // The prefix guard keeps authored leading trivia outside the body. Once a
+  // frame is open, trivia also provides a synchronization point after an error
+  // in the first entry; the real content remains required.
+  return prec.right(choice(
+    seq(indent, repeat($._trivia), choice(content, missing($, "body")), $._dedent),
+    missing($, "body"),
+  ));
 }
 
 function paragraph($, line) {

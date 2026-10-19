@@ -24,7 +24,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_line_start"
+          "name": "_item_start"
         },
         {
           "type": "CHOICE",
@@ -496,38 +496,59 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_indent"
+                "name": "_item_indent"
               },
               {
-                "type": "SEQ",
+                "type": "REPEAT",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_trivia"
+                }
+              },
+              {
+                "type": "CHOICE",
                 "members": [
                   {
-                    "type": "FIELD",
-                    "name": "field",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "field"
-                    }
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "field",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "field"
+                        }
+                      },
+                      {
+                        "type": "REPEAT",
+                        "content": {
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "field",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "field"
+                              }
+                            },
+                            {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          ]
+                        }
+                      }
+                    ]
                   },
                   {
-                    "type": "REPEAT",
+                    "type": "ALIAS",
                     "content": {
-                      "type": "CHOICE",
-                      "members": [
-                        {
-                          "type": "FIELD",
-                          "name": "field",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "field"
-                          }
-                        },
-                        {
-                          "type": "SYMBOL",
-                          "name": "_trivia"
-                        }
-                      ]
-                    }
+                      "type": "SYMBOL",
+                      "name": "_missing_required"
+                    },
+                    "named": true,
+                    "value": "invalid_missing_body"
                   }
                 ]
               },
@@ -875,7 +896,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_indent"
+          "name": "_item_indent"
         },
         {
           "type": "REPEAT",
@@ -1033,7 +1054,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_indent"
+          "name": "_item_indent"
         },
         {
           "type": "REPEAT",
@@ -1522,36 +1543,57 @@
                 "name": "_runnable_indent"
               },
               {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_trivia"
+                }
+              },
+              {
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SEQ",
+                    "type": "CHOICE",
                     "members": [
                       {
-                        "type": "SYMBOL",
-                        "name": "_directives"
-                      },
-                      {
-                        "type": "CHOICE",
+                        "type": "SEQ",
                         "members": [
                           {
                             "type": "SYMBOL",
-                            "name": "_messages"
+                            "name": "_directives"
                           },
                           {
-                            "type": "BLANK"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "_messages"
+                              },
+                              {
+                                "type": "BLANK"
+                              }
+                            ]
                           }
                         ]
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_messages"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_pass_statement"
                       }
                     ]
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "_messages"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "_pass_statement"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_missing_required"
+                    },
+                    "named": true,
+                    "value": "invalid_missing_body"
                   }
                 ]
               },
@@ -1837,42 +1879,63 @@
                 "name": "_runnable_indent"
               },
               {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_trivia"
+                }
+              },
+              {
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SEQ",
+                    "type": "CHOICE",
                     "members": [
                       {
-                        "type": "SYMBOL",
-                        "name": "_directives"
-                      },
-                      {
-                        "type": "CHOICE",
+                        "type": "SEQ",
                         "members": [
                           {
                             "type": "SYMBOL",
-                            "name": "_statements"
+                            "name": "_directives"
                           },
                           {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_missing_required"
-                            },
-                            "named": true,
-                            "value": "invalid_missing_statement"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "_statements"
+                              },
+                              {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_missing_required"
+                                },
+                                "named": true,
+                                "value": "invalid_missing_statement"
+                              }
+                            ]
                           }
                         ]
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_statements"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_pass_statement"
                       }
                     ]
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "_statements"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "_pass_statement"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_missing_required"
+                    },
+                    "named": true,
+                    "value": "invalid_missing_body"
                   }
                 ]
               },
@@ -3174,18 +3237,39 @@
                         "name": "_indent"
                       },
                       {
-                        "type": "SEQ",
+                        "type": "REPEAT",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "_trivia"
+                        }
+                      },
+                      {
+                        "type": "CHOICE",
                         "members": [
                           {
-                            "type": "SYMBOL",
-                            "name": "_from_complement"
+                            "type": "SEQ",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "_from_complement"
+                              },
+                              {
+                                "type": "REPEAT",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_trivia"
+                                }
+                              }
+                            ]
                           },
                           {
-                            "type": "REPEAT",
+                            "type": "ALIAS",
                             "content": {
                               "type": "SYMBOL",
-                              "name": "_trivia"
-                            }
+                              "name": "_missing_required"
+                            },
+                            "named": true,
+                            "value": "invalid_missing_body"
                           }
                         ]
                       },
@@ -4059,94 +4143,115 @@
                 "name": "_indent"
               },
               {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_trivia"
+                }
+              },
+              {
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SEQ",
+                    "type": "CHOICE",
                     "members": [
                       {
-                        "type": "SYMBOL",
-                        "name": "_statements"
-                      },
-                      {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SEQ",
-                            "members": [
-                              {
-                                "type": "FIELD",
-                                "name": "until",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "until_clause"
-                                }
-                              },
-                              {
-                                "type": "REPEAT",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_trivia"
-                                }
-                              },
-                              {
-                                "type": "CHOICE",
-                                "members": [
-                                  {
-                                    "type": "SYMBOL",
-                                    "name": "_statements"
-                                  },
-                                  {
-                                    "type": "BLANK"
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "type": "BLANK"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "type": "SEQ",
-                    "members": [
-                      {
-                        "type": "FIELD",
-                        "name": "until",
-                        "content": {
-                          "type": "SYMBOL",
-                          "name": "until_clause"
-                        }
-                      },
-                      {
-                        "type": "REPEAT",
-                        "content": {
-                          "type": "SYMBOL",
-                          "name": "_trivia"
-                        }
-                      },
-                      {
-                        "type": "CHOICE",
+                        "type": "SEQ",
                         "members": [
                           {
                             "type": "SYMBOL",
                             "name": "_statements"
                           },
                           {
-                            "type": "ALIAS",
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SEQ",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "until",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "until_clause"
+                                    }
+                                  },
+                                  {
+                                    "type": "REPEAT",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_trivia"
+                                    }
+                                  },
+                                  {
+                                    "type": "CHOICE",
+                                    "members": [
+                                      {
+                                        "type": "SYMBOL",
+                                        "name": "_statements"
+                                      },
+                                      {
+                                        "type": "BLANK"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "BLANK"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "FIELD",
+                            "name": "until",
                             "content": {
                               "type": "SYMBOL",
-                              "name": "_missing_required"
-                            },
-                            "named": true,
-                            "value": "invalid_missing_statement"
+                              "name": "until_clause"
+                            }
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SYMBOL",
+                              "name": "_trivia"
+                            }
+                          },
+                          {
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "_statements"
+                              },
+                              {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_missing_required"
+                                },
+                                "named": true,
+                                "value": "invalid_missing_statement"
+                              }
+                            ]
                           }
                         ]
                       }
                     ]
+                  },
+                  {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_missing_required"
+                    },
+                    "named": true,
+                    "value": "invalid_missing_body"
                   }
                 ]
               },
@@ -6094,6 +6199,14 @@
     {
       "type": "SYMBOL",
       "name": "_empty_body"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_item_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_item_indent"
     },
     {
       "type": "SYMBOL",
