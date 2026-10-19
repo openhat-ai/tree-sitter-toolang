@@ -4,8 +4,9 @@
 (plain_comment) @comment
 (shebang_comment) @comment
 (program_doc) @comment.documentation
-(item_doc_comment) @comment.documentation
-(param_doc_tag "@param" @keyword param: (param_name) @variable.parameter)
+(item_doc) @comment.documentation
+(param_doc) @comment.documentation
+(param_doc "@param" @keyword param: (param_name) @variable.parameter)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword

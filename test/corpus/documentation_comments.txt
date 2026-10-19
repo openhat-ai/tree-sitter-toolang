@@ -18,18 +18,16 @@ agic(_: Text, style?: Text):
   (plain_comment)
   (program_doc
     (comment_text))
-  (item_doc_comment
+  (item_doc
     (comment_text))
-  (item_doc_comment
+  (item_doc
     (comment_text))
-  (item_doc_comment
-    (param_doc_tag
-      (param_name)
-      (comment_text)))
-  (item_doc_comment
-    (param_doc_tag
-      (param_name)
-      (comment_text)))
+  (param_doc
+    (param_name)
+    (comment_text))
+  (param_doc
+    (param_name)
+    (comment_text))
   (agic
     (agic_keyword)
     (params
@@ -70,13 +68,13 @@ flow:
 ---
 
 (program
-  (item_doc_comment)
+  (item_doc)
   (program_doc)
-  (item_doc_comment
+  (item_doc
     (comment_text))
-  (item_doc_comment
+  (item_doc
     (comment_text))
-  (item_doc_comment
+  (item_doc
     (comment_text))
   (program_doc
     (comment_text))
@@ -114,7 +112,7 @@ flow next:
       (plain_comment)
       (newline))
     (flow_body
-      (item_doc_comment
+      (item_doc
         (comment_text))
       (run_statement
         (flow_run_keyword)

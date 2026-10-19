@@ -34,7 +34,7 @@ def test_program_documentation_exposes_text_without_parameter_tags(ending):
     documentation, = descendants(root, "program_doc")
     assert documentation.parent == root
     assert documentation.child_by_field_name("text").text == b"@param _ Program documentation."
-    assert not descendants(documentation, "param_doc_tag")
+    assert not descendants(documentation, "param_doc")
 
 
 def test_public_metadata_has_no_source_file_or_module_documentation_nodes():

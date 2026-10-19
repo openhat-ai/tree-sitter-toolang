@@ -34,7 +34,7 @@ names where applicable; helper productions describe source forms and constraints
 
 Construct names are singular. Flow statements use the `_statement` suffix;
 clauses use `_clause`. Parameter nodes use `param`, `params`, `param_name`, and
-`param_doc_tag` consistently with the parser.
+`param_doc` consistently with the parser.
 
 [GRAMMAR.ebnf](GRAMMAR.ebnf) is the generated implementation reference, including
 Tree-sitter annotations, helper rules, and recovery alternatives.
@@ -134,17 +134,31 @@ Words outside these sets follow the ordinary name and text rules.
 ### Comments and Documentation
 
 ```ebnf
-comment          ::= plain_comment | shebang_comment
-                   | program_doc | item_doc_comment ;
-plain_comment    ::= "#" comment_text comment_end ;
-shebang_comment  ::= "#!" comment_text comment_end ;
-program_doc      ::= "#@" hspace? doc_text? comment_end ;
-item_doc_comment ::= "##" hspace? (param_doc_tag | doc_text)? comment_end ;
-param_doc_tag    ::= "@param" hspace param_name hspace doc_text ;
-doc_text         ::= /[^ \t\r\n][^\r\n]*/ ;
-comment_end      ::= newline | eof ;
-trivia           ::= blank_line | comment ;
+comment         ::= plain_comment | shebang_comment
+                  | program_doc | item_doc | param_doc ;
+plain_comment   ::= "#" comment_text comment_end ;
+shebang_comment ::= "#!" comment_text comment_end ;
+program_doc     ::= "#@" hspace? doc_text? comment_end ;
+item_doc        ::= "##" hspace? doc_text? comment_end ;
+param_doc       ::= "##" hspace? "@param" hspace param_name hspace doc_text comment_end ;
+doc_text        ::= /[^ \t\r\n][^\r\n]*/ ;
+comment_end     ::= newline | eof ;
+trivia          ::= blank_line | comment ;
 ```
+
+Documentation uses three peer CST nodes at structural comment positions:
+
+| Node | Fields |
+| --- | --- |
+| `program_doc` | Optional `text: comment_text`. |
+| `item_doc` | Optional `text: comment_text`. |
+| `param_doc` | Required `param: param_name` and `description: comment_text`. |
+
+Each node spans the complete physical comment line, starting at `#` after
+indentation and including the line ending when present. `param_doc` directly
+contains its fields and the `"@param"` token; there is no outer `item_doc` node.
+Fields exclude markers and separating whitespace, retain trailing whitespace,
+and use exact UTF-8 byte ranges. Consumers own documentation attachment.
 
 These forms have contextual constraints:
 
@@ -158,8 +172,8 @@ These forms have contextual constraints:
   can document the following item. Blank lines, other comment kinds, intervening
   syntax, and scope endings interrupt attachment; consumers perform attachment.
 - A leading `@param` followed by space, tab, a line ending, or EOF selects a
-  parameter tag. Both name and same-line description are required. A malformed
-  tag cannot fall back to ordinary documentation. `@parameter`, `@param:`,
+  `param_doc`. Both name and same-line description are required. A malformed
+  tag cannot fall back to `item_doc`. `@parameter`, `@param:`,
   `@return`, and `@param` later in prose remain ordinary documentation text.
 - Inline `#`, `##`, `#@`, and `#!` introduce plain comments only in
   structural positions where `line_end` allows them. Inline and indented

@@ -212,8 +212,8 @@ def test_comments_do_not_change_layout_and_outer_docs_keep_their_owner():
     assert valid(root)
     loop = descendants(root, "repeat_statement")[0]
     assert len(descendants(loop, "run_statement")) == 2
-    assert not descendants(loop, "item_doc_comment")
-    assert descendants(root, "item_doc_comment")[0].parent.type == "flow_body"
+    assert not descendants(loop, "item_doc")
+    assert descendants(root, "item_doc")[0].parent.type == "flow_body"
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])

@@ -14,7 +14,7 @@ enum Token {
   SHEBANG_COMMENT,
   PROGRAM_DOC_START,
   ITEM_DOC_START,
-  PARAM_ITEM_DOC_START,
+  PARAM_DOC_START,
   COMMENT_END,
   INDENT,
   DEDENT,
@@ -283,7 +283,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
     if (!*tag && (lexer->eof(lexer) || lexer->lookahead == ' ' ||
                   lexer->lookahead == '\t' || lexer->lookahead == '\r' ||
                   lexer->lookahead == '\n')) {
-      token = PARAM_ITEM_DOC_START;
+      token = PARAM_DOC_START;
     }
   } else if (lexer->lookahead == '@') {
     advance(lexer);
@@ -298,7 +298,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   if (!valid[token]) {
     return false;
   }
-  if (token == PROGRAM_DOC_START || token == ITEM_DOC_START || token == PARAM_ITEM_DOC_START) {
+  if (token == PROGRAM_DOC_START || token == ITEM_DOC_START || token == PARAM_DOC_START) {
     scanner->comment_started = false;
     scanner->doc_started = true;
     return emit(scanner, lexer, token);

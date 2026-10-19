@@ -125,7 +125,7 @@ def test_inline_exec_owns_text_but_not_following_statements(header, indent):
     assert target.type == "inline_agic"
     assert b"## Literal documentation." in target.text
     assert b"exec finish" in target.text
-    assert not descendants(target, "item_doc_comment")
+    assert not descendants(target, "item_doc")
     assert not descendants(target, "run_statement")
     assert [node.child_by_field_name("runnable").text.strip()
             for node in descendants(loop, "run_statement")] == [b"after_inline"]

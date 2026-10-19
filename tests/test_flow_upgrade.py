@@ -141,7 +141,7 @@ def test_reduce_leading_comment_markers_are_literal_reducer_text(prefix, initial
     reducer = reduce.child_by_field_name("runnable").child_by_field_name("content")
     assert reducer.text.decode().lstrip().startswith(prefix)
     assert not descendants(reducer, "plain_comment")
-    assert not descendants(reducer, "item_doc_comment")
+    assert not descendants(reducer, "item_doc")
 
 
 @pytest.mark.parametrize("name", ["DeepSearch", "deep-search", "_review"])

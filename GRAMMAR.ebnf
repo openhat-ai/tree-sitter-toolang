@@ -29,7 +29,7 @@
   {"type":"SYMBOL","name":"shebang_comment"},
   {"type":"SYMBOL","name":"_program_doc_start"},
   {"type":"SYMBOL","name":"_item_doc_start"},
-  {"type":"SYMBOL","name":"_param_item_doc_start"},
+  {"type":"SYMBOL","name":"_param_doc_start"},
   {"type":"SYMBOL","name":"_comment_end"},
   {"type":"SYMBOL","name":"_indent"},
   {"type":"SYMBOL","name":"_dedent"},
@@ -74,13 +74,12 @@ _text_line_end ::=
 program_doc ::=
   _program_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end;
 
-item_doc_comment ::=
-  _item_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end | _param_item_doc_start
-  (* field "parameter" *) ( param_doc_tag ) _comment_end;
+item_doc ::=
+  _item_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end;
 
-param_doc_tag ::=
-  "@param" _doc_space (* field "param" *) ( _param_name ) _doc_space (* field "description" *) (
-  comment_text );
+param_doc ::=
+  _param_doc_start "@param" _doc_space (* field "param" *) ( _param_name ) _doc_space
+  (* field "description" *) ( comment_text ) _comment_end;
 
 _doc_space ::=
   (* token.immediate *) ( ? regex "[ \\t]+" ? );
@@ -89,7 +88,7 @@ comment_text ::=
   (* token *) ( ? regex "[^ \\t\\r\\n][^\\r\\n]*" ? );
 
 _comment ::=
-  _comment_start ( program_doc | item_doc_comment | plain_comment | shebang_comment );
+  _comment_start ( program_doc | item_doc | param_doc | plain_comment | shebang_comment );
 
 _trivia ::=
   _comment | blank_line;
@@ -840,8 +839,8 @@ _program_doc_start ::=
 _item_doc_start ::=
   ? external scanner token "_item_doc_start" ?;
 
-_param_item_doc_start ::=
-  ? external scanner token "_param_item_doc_start" ?;
+_param_doc_start ::=
+  ? external scanner token "_param_doc_start" ?;
 
 _comment_end ::=
   ? external scanner token "_comment_end" ?;

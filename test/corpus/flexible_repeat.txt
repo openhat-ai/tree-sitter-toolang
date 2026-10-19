@@ -72,7 +72,7 @@ flow improve(_):
         (line_end
           (newline))
         (repeat_body
-          (item_doc_comment
+          (item_doc
             (comment_text))
           (until_clause
             (flow_until_keyword)

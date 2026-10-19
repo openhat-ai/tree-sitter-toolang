@@ -58,7 +58,7 @@ def test_inline_content_retains_exact_source_including_hashes(header, kind, fiel
     assert content.type == "content" and content.text == (" " + value).encode()
     assert line.text == content.text and line.child_count == 0
     assert not descendants(root, "plain_comment")
-    assert not descendants(root, "item_doc_comment")
+    assert not any(descendants(root, kind) for kind in ("item_doc", "param_doc"))
     for node in [content, line]:
         assert source[node.start_byte:node.end_byte] == (" " + value).encode()
         assert tuple(node.start_point) == point(source, node.start_byte)
@@ -108,7 +108,8 @@ def test_structural_headers_keep_inline_comments(source, marker, newline):
     assert valid(root), root
     comment, = descendants(root, "plain_comment")
     assert comment.text == f"{marker} Structural.".encode()
-    assert not descendants(root, "item_doc_comment") and not descendants(root, "program_doc")
+    assert not any(descendants(root, kind)
+                   for kind in ("program_doc", "item_doc", "param_doc"))
 
 
 @pytest.mark.parametrize("header", ["context note:", "flow work:\n  run:"])

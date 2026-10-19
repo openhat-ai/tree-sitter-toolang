@@ -82,7 +82,8 @@ def program_shape(statements):
         else:
             assert statement.type in {
                 "plain_comment",
-                "item_doc_comment",
+                "item_doc",
+                "param_doc",
                 "program_doc",
                 "blank_line",
                 "until_clause",

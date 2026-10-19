@@ -166,8 +166,9 @@ def test_missing_content_before_outer_comments_retains_its_owner(header, marker,
         assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
         assert not root.has_error, root
         assert valid(root) == (source == repaired)
-        assert not any(descendants(content, "plain_comment") or descendants(content, "item_doc_comment")
-                       for content in descendants(root, "content"))
+        assert not any(descendants(content, kind)
+                       for content in descendants(root, "content")
+                       for kind in ("plain_comment", "item_doc", "param_doc"))
         if source == malformed:
             diagnostic, = descendants(root, "invalid_missing_content")
             assert diagnostic.parent.type == "content"

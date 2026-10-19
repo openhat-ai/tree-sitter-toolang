@@ -156,7 +156,7 @@ def test_nested_conditions_trivia_prose_and_dedented_siblings(newline):
     assert outer_clause.child_by_field_name("target").text == b"outer_done"
     assert b"until remains literal here." in inner_clause.child_by_field_name("target").text
     assert len(descendants(root, "until_clause")) == 2
-    assert len(descendants(inner_body, "item_doc_comment")) == 1
+    assert len(descendants(inner_body, "item_doc")) == 1
     assert descendants(root, "run_statement")[-1].parent.type == "flow_body"
 
 

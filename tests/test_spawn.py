@@ -150,7 +150,7 @@ def test_spawn_inline_text_ends_before_following_statements(binding, header, ind
     assert target.type == "inline_agic"
     assert b"## Literal documentation." in target.text
     assert b"spawn finish" in target.text
-    assert not descendants(target, "item_doc_comment")
+    assert not descendants(target, "item_doc")
     assert not descendants(target, "spawn_statement")
     run, = descendants(loop, "run_statement")
     assert run.child_by_field_name("runnable").text.strip() == b"after_inline"

@@ -369,7 +369,7 @@ flow research(input: Part[]) -> Answer:
         (line_end
           (newline)))
       (blank_line)
-      (item_doc_comment
+      (item_doc
         (comment_text))
       (run_statement
         (flow_run_keyword)

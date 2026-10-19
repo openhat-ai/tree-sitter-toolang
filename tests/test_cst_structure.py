@@ -16,7 +16,7 @@ FIXTURES = sorted((ROOT / "tests/fixtures").glob("*.too"))
 LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
           "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
           "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source"}
-REMOVED = {"task", "task_keyword", "job_name", "job_body", "item", "base_type", "user_type", "struct_name", "type_suffix",
+REMOVED = {"item_doc_comment", "param_doc_tag", "task", "task_keyword", "job_name", "job_body", "item", "base_type", "user_type", "struct_name", "type_suffix",
            "snake_name", "pascal_name", "agic_name", "flow_name", "field_name",
            "property_key", "context_name", "instruct_name", "runnable",
            "agent", "directive_op", "cap_ref", "property_value", "context_body", "instruct_body", "text_inline", "text_block",
@@ -67,7 +67,7 @@ def test_name_fields_distinguish_declarations_bindings_and_references():
     parameter, = descendants(root, "param")
     assert parameter.child_by_field_name("name").type == "param_name"
     assert parameter.child_by_field_name("param") is None
-    doc, = descendants(root, "param_doc_tag")
+    doc, = descendants(root, "param_doc")
     assert doc.child_by_field_name("name") is None
     assert doc.child_by_field_name("param").type == "param_name"
     for binding in descendants(root, "let_statement"):

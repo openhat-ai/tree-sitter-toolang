@@ -106,7 +106,7 @@ def test_agic_explicit_bodies_preserve_literal_bytes_and_end_before_siblings(
         assert tuple(value.start_point) == point(source, value.start_byte)
         assert tuple(value.end_point) == point(source, value.end_byte)
     assert not descendants(block, "plain_comment")
-    assert not descendants(block, "item_doc_comment")
+    assert not descendants(block, "item_doc")
     assert descendants(owner, "message")[-1].text.strip() == b"user: Continue."
     assert len(descendants(root, "flow")) == 1
 
@@ -139,7 +139,8 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
     ] == [b"Review the evidence.", b"Summarize it."]
     assert not any(
         descendants(node, "plain_comment")
-        or descendants(node, "item_doc_comment")
+        or descendants(node, "item_doc")
+        or descendants(node, "param_doc")
         or descendants(node, "program_doc")
         for node in prose
     )
@@ -177,7 +178,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
     assert valid(root)
     expected = []
     offset = 0
-    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "item_doc_comment"}
+    kinds = {"#": "plain_comment", "##": "item_doc", "##!": "item_doc"}
     for line in source.splitlines(keepends=True):
         if b"#" in line:
             marker = line.lstrip().split(maxsplit=1)[0].decode()

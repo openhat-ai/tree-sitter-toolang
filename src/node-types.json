@@ -128,11 +128,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -186,11 +190,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -272,11 +280,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -379,11 +391,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -487,11 +503,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -944,11 +964,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1114,11 +1138,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1164,11 +1192,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1240,11 +1272,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1536,19 +1572,9 @@
     }
   },
   {
-    "type": "item_doc_comment",
+    "type": "item_doc",
     "named": true,
     "fields": {
-      "parameter": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "param_doc_tag",
-            "named": true
-          }
-        ]
-      },
       "text": {
         "multiple": false,
         "required": false,
@@ -1731,11 +1757,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1879,11 +1909,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -1948,7 +1982,7 @@
     }
   },
   {
-    "type": "param_doc_tag",
+    "type": "param_doc",
     "named": true,
     "fields": {
       "description": {
@@ -2071,7 +2105,11 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -2356,11 +2394,15 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
           "named": true
         },
         {
           "type": "line_end",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -2480,7 +2522,11 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {
@@ -2984,7 +3030,11 @@
           "named": true
         },
         {
-          "type": "item_doc_comment",
+          "type": "item_doc",
+          "named": true
+        },
+        {
+          "type": "param_doc",
           "named": true
         },
         {

@@ -316,7 +316,7 @@ def test_async_inline_body_preserves_literal_text_and_repeat_boundaries(binding,
     assert b"async run worker" in run.child_by_field_name("agic").text
     assert b"await h" in run.child_by_field_name("agic").text
     assert not descendants(run, "await_statement")
-    assert not descendants(run, "item_doc_comment")
+    assert not descendants(run, "item_doc")
     assert len(descendants(loop, "await_statement")) == 1
     condition = loop.child_by_field_name("body").child_by_field_name("until")
     assert condition.child_by_field_name("target").text.strip() == b": Ready."

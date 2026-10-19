@@ -21,7 +21,7 @@ mod tests {
         assert_eq!(root.named_child(0).unwrap().kind(), "shebang_comment");
         for (index, kind, text) in [
             (1, "program_doc", "Program."),
-            (2, "item_doc_comment", "! Important."),
+            (2, "item_doc", "! Important."),
         ] {
             let comment = root.named_child(index).unwrap();
             assert_eq!(comment.kind(), kind);
@@ -39,12 +39,13 @@ mod tests {
             );
         }
         let comment = root.named_child(3).unwrap();
-        assert_eq!(comment.kind(), "item_doc_comment");
-        let tag = comment.child_by_field_name("parameter").unwrap();
-        assert_eq!(tag.kind(), "param_doc_tag");
+        assert_eq!(comment.kind(), "param_doc");
+        assert_eq!(comment.start_byte(), source.find("## @param").unwrap());
+        assert_eq!(comment.end_byte(), source.len());
+        assert!(comment.child_by_field_name("parameter").is_none());
         for (field, value) in [("param", "_"), ("description", "Input.")] {
             assert_eq!(
-                tag.child_by_field_name(field)
+                comment.child_by_field_name(field)
                     .unwrap()
                     .utf8_text(source.as_bytes())
                     .unwrap(),

@@ -14,6 +14,13 @@ This update implements the [unified grammar definition](docs/plans/grammar-contr
 It changes the public CST and requires a coordinated consumer migration from
 0.4.0-alpha.4; package versions and runtime execution are unchanged.
 
+- Expose documentation as three peer nodes: `program_doc`, `item_doc`, and
+  `param_doc`. Rename ordinary `item_doc_comment` to `item_doc`; replace
+  `item_doc_comment.parameter: param_doc_tag` with a direct `param_doc` containing
+  required `param` and `description` fields. `param_doc` spans the whole comment
+  line, including `##` and its line ending, rather than just the tag text.
+  Update queries and consumer field paths; accepted source syntax and field
+  value ranges are unchanged.
 - Preserve every `#` in inline content, including URLs and quoted-looking text.
   Inline text and text-introducer lines no longer support inline comments:
   `run: # Heading` contains `# Heading`, and `let note = "a#b"` retains all five
@@ -40,7 +47,7 @@ It changes the public CST and requires a coordinated consumer migration from
   containing `text_line` fragments; `message.role` is optional, and structural
   bodies own their entries directly. Migrate using the [CST migration](#cst-migration-from-alpha4).
 - `let_statement.local: local_name`, `await_statement.handle: handle_name`, and
-  `param_doc_tag.param: param_name` identify bindings and references precisely.
+  `param_doc.param: param_name` identify bindings and references precisely.
 - Accept active keywords, `default`, and `none` as named parameters,
   parameter-documentation names, local destinations, and await handles. A name
   followed by `=` on the same line selects a named `let` binding, so
@@ -80,7 +87,8 @@ It changes the public CST and requires a coordinated consumer migration from
 | `param_name → snake_name` | `param_name` leaf, also for `_`; `local_name` was already a leaf in alpha.4. |
 | `let_statement.name` | `let_statement.local`, including binding diagnostics. |
 | `await_statement.handle: local_name` | `await_statement.handle: handle_name`. |
-| `param_doc_tag.name` | `param_doc_tag.param`; declarations retain `param.name`. |
+| Ordinary `item_doc_comment` | `item_doc` with optional `text: comment_text`. |
+| `item_doc_comment.parameter: param_doc_tag` with `name` / `description` | Direct `param_doc`, covering the entire comment line, with required `param: param_name` and `description: comment_text`; declarations retain `param.name`. |
 | `agent`, `directive_op` | `agent_name`, `directive_operator`. |
 | Named lexical wrappers around anonymous tokens | Leaf `builtin_type`, `role`, `directive_key`, `recall_source`, `assign_operator`, and `flow_lanes_keyword`. |
 | `base_type → builtin_type / user_type`, `type_suffix → array_suffix` | Direct `type.base` and repeated `type.suffix` leaves. |

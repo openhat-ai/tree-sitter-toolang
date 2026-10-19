@@ -586,12 +586,12 @@ def test_with_and_agic_replace_use_and_thunk():
 @pytest.mark.parametrize(
     ("prefix", "trivia"),
     [
-        ("    ## Improve the evidence.\n", ["item_doc_comment"]),
+        ("    ## Improve the evidence.\n", ["item_doc"]),
         ("    # Respect the provider quota.\n", ["plain_comment"]),
         ("\n", ["blank_line"]),
         (
             "\n    # Respect the provider quota.\n    ## Improve the evidence.\n",
-            ["blank_line", "plain_comment", "item_doc_comment"],
+            ["blank_line", "plain_comment", "item_doc"],
         ),
     ],
 )
@@ -660,9 +660,9 @@ def test_repeat_comments_fixture_preserves_nested_statement_fields():
     outer = _statements(_items(root)[0])[0]
     outer_body = outer.child_by_field_name("body")
     assert [node.type for node in outer_body.named_children] == [
-        "item_doc_comment",
+        "item_doc",
         "run_statement",
-        "item_doc_comment",
+        "item_doc",
         "repeat_statement",
         "until_clause",
     ]

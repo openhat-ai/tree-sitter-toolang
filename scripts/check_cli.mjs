@@ -48,12 +48,22 @@ deepStrictEqual(Object.keys(letFields).sort(), ["local", "statement", "value"]);
 deepStrictEqual(letFields.local, {
   multiple: false, required: false, types: [{ type: "local_name", named: true }],
 });
-const paramDocFields = nodeTypes.find(node => node.type === "param_doc_tag").fields;
+const paramDocFields = nodeTypes.find(node => node.type === "param_doc").fields;
 deepStrictEqual(Object.keys(paramDocFields).sort(), ["description", "param"]);
 deepStrictEqual(paramDocFields.param, {
   multiple: false, required: true, types: [{ type: "param_name", named: true }],
 });
-deepStrictEqual(nodeTypes.some(node => node.type === "local_reference"), false);
+deepStrictEqual(paramDocFields.description, {
+  multiple: false, required: true, types: [{ type: "comment_text", named: true }],
+});
+for (const name of ["program_doc", "item_doc"]) {
+  deepStrictEqual(nodeTypes.find(node => node.type === name).fields, {
+    text: { multiple: false, required: false, types: [{ type: "comment_text", named: true }] },
+  });
+}
+for (const name of ["local_reference", "item_doc_comment", "param_doc_tag"]) {
+  deepStrictEqual(nodeTypes.some(node => node.type === name), false);
+}
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
   type: "local_name", named: true, fields: {},
 });

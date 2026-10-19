@@ -39,7 +39,7 @@ flow summarize:
         (line_end
           (newline))
         (repeat_body
-          (item_doc_comment
+          (item_doc
             (comment_text))
           (repeat_statement
             (flow_repeat_keyword)

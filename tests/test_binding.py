@@ -319,7 +319,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
         "blank_line",
         "program_doc",
         "blank_line",
-        "item_doc_comment",
+        "item_doc",
     ]
     assert [item.type for item in items] == [
         "skill",

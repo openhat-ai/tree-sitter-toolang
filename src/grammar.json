@@ -152,64 +152,42 @@
         }
       ]
     },
-    "item_doc_comment": {
-      "type": "CHOICE",
+    "item_doc": {
+      "type": "SEQ",
       "members": [
         {
-          "type": "SEQ",
+          "type": "SYMBOL",
+          "name": "_item_doc_start"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "_item_doc_start"
+              "type": "FIELD",
+              "name": "text",
+              "content": {
+                "type": "SYMBOL",
+                "name": "comment_text"
+              }
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "FIELD",
-                  "name": "text",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "comment_text"
-                  }
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_comment_end"
+              "type": "BLANK"
             }
           ]
         },
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_param_item_doc_start"
-            },
-            {
-              "type": "FIELD",
-              "name": "parameter",
-              "content": {
-                "type": "SYMBOL",
-                "name": "param_doc_tag"
-              }
-            },
-            {
-              "type": "SYMBOL",
-              "name": "_comment_end"
-            }
-          ]
+          "type": "SYMBOL",
+          "name": "_comment_end"
         }
       ]
     },
-    "param_doc_tag": {
+    "param_doc": {
       "type": "SEQ",
       "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_param_doc_start"
+        },
         {
           "type": "STRING",
           "value": "@param"
@@ -237,6 +215,10 @@
             "type": "SYMBOL",
             "name": "comment_text"
           }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_comment_end"
         }
       ]
     },
@@ -270,7 +252,11 @@
             },
             {
               "type": "SYMBOL",
-              "name": "item_doc_comment"
+              "name": "item_doc"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "param_doc"
             },
             {
               "type": "SYMBOL",
@@ -6481,7 +6467,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_param_item_doc_start"
+      "name": "_param_doc_start"
     },
     {
       "type": "SYMBOL",

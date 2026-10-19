@@ -11,10 +11,9 @@ agic describe(until?: Text):
 ---
 
 (program
-  (item_doc_comment
-    (param_doc_tag
-      (param_name)
-      (comment_text)))
+  (param_doc
+    (param_name)
+    (comment_text))
   (flow
     (flow_keyword)
     (runnable_name)

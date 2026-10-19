@@ -193,7 +193,7 @@ flow next:
         (line_end
           (newline))
         (repeat_body
-          (item_doc_comment
+          (item_doc
             (comment_text))
           (invalid_missing_body)))
       (run_statement
