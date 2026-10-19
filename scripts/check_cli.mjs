@@ -113,7 +113,8 @@ for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"
 }
 for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
   "unroled_message", "statements", "messages", "invalid_empty_body",
-  "task", "task_keyword", "job_name", "job_body"]) {
+  "task", "task_keyword", "job_name", "job_body",
+  "source_file", "module_doc_comment", "module_doc"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
 }
 for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement"]) {
@@ -178,10 +179,10 @@ try {
     "<span style='color: #112233'>#!/usr/bin/env too</span>",
     "<span style='color: #112233'># Keep summaries short.</span>",
     "<span style='color: #223344'>#@ Research tools for collecting and summarizing evidence.</span>",
-    "<span style='color: #223344'>##! Compatible module documentation.</span>",
+    "<span style='color: #223344'>##! Compatible program documentation.</span>",
     "<span style='color: #223344'>## Summarize source material when a concise overview is needed.</span>",
     "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>style</span> Preferred summary style.</span>",
-    "<span style='color: #556677'>    #@ Literal module marker.</span>",
+    "<span style='color: #556677'>    #@ Literal program marker.</span>",
     "<span style='color: #556677'>    ## @param _ Literal parameter tag.</span>",
   ]) {
     if (!documentationHtml.includes(expected)) {

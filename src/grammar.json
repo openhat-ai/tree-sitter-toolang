@@ -3,7 +3,7 @@
   "name": "toolang",
   "word": "_word",
   "rules": {
-    "source_file": {
+    "program": {
       "type": "REPEAT",
       "content": {
         "type": "CHOICE",
@@ -119,12 +119,12 @@
         }
       ]
     },
-    "module_doc_comment": {
+    "program_doc": {
       "type": "SEQ",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_module_doc_start"
+          "name": "_program_doc_start"
         },
         {
           "type": "CHOICE",
@@ -262,7 +262,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "module_doc_comment"
+              "name": "program_doc"
             },
             {
               "type": "SYMBOL",
@@ -6347,7 +6347,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_module_doc_start"
+      "name": "_program_doc_start"
     },
     {
       "type": "SYMBOL",

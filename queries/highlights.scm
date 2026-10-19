@@ -3,7 +3,7 @@
 
 (plain_comment) @comment
 (shebang_comment) @comment
-(module_doc_comment) @comment.documentation
+(program_doc) @comment.documentation
 (item_doc_comment) @comment.documentation
 (param_doc_tag "@param" @keyword param: (param_name) @variable.parameter)
 

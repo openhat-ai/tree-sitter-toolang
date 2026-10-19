@@ -13,7 +13,7 @@ flow second:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -94,7 +94,7 @@ flow launch:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -197,7 +197,7 @@ flow launch:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -259,7 +259,7 @@ flow launch:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -327,7 +327,7 @@ flow launch:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -387,7 +387,7 @@ flow launch:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)

@@ -4,7 +4,7 @@ Comment kinds and structured parameter fields
 #!/usr/bin/env too
 # Plain.
 #@ Module.
-##! Compatible module.
+##! Compatible program.
 ## Item.
 ## @param _ Input.
 ##@param style Preferred style.
@@ -13,12 +13,12 @@ agic(_: Text, style?: Text):
 
 ---
 
-(source_file
+(program
   (shebang_comment)
   (plain_comment)
-  (module_doc_comment
+  (program_doc
     (comment_text))
-  (module_doc_comment
+  (program_doc
     (comment_text))
   (item_doc_comment
     (comment_text))
@@ -63,21 +63,21 @@ Empty docs and non-reserved parameter-like prose
 ##!
 ## @parameter Text.
 ## Use @param in prose.
-#@ @param _ Plain module text.
+#@ @param _ Plain program text.
 flow:
   pass
 
 ---
 
-(source_file
+(program
   (item_doc_comment)
-  (module_doc_comment)
-  (module_doc_comment)
+  (program_doc)
+  (program_doc)
   (item_doc_comment
     (comment_text))
   (item_doc_comment
     (comment_text))
-  (module_doc_comment
+  (program_doc
     (comment_text))
   (flow
     (flow_keyword)
@@ -95,16 +95,16 @@ Legacy indentation, inline comments and literal markers
 flow work: #@ Inline plain.
   ##! Legacy nested comment.
   run:
-    #@ Literal module marker.
+    #@ Literal program marker.
     ## @param _ Literal tag.
     ##! Literal legacy marker.
-#@ Next module contribution.
+#@ Next program contribution.
 flow next:
   pass
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -113,7 +113,7 @@ flow next:
       (plain_comment)
       (newline))
     (flow_body
-      (module_doc_comment
+      (program_doc
         (comment_text))
       (run_statement
         (flow_run_keyword)
@@ -128,7 +128,7 @@ flow next:
             (newline)
             (text_line)
             (newline))))))
-  (module_doc_comment
+  (program_doc
     (comment_text))
   (flow
     (flow_keyword)
@@ -150,7 +150,7 @@ flow next:
 
 ---
 
-(source_file
+(program
   (ERROR
     (param_name))
   (blank_line)

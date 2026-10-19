@@ -24,7 +24,7 @@ flow summarize:
 
 ---
 
-(source_file
+(program
   (blank_line)
   (flow
     (flow_keyword)

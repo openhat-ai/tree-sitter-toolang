@@ -13,14 +13,15 @@ mod tests {
         let language = super::LANGUAGE.into();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&language).unwrap();
-        let source = "#!/usr/bin/env too\n#@ Module.\n##! Legacy.\n## @param _ Input.\n";
+        let source = "#!/usr/bin/env too\n#@ Program.\n##! Legacy.\n## @param _ Input.\n";
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
+        assert_eq!(root.kind(), "program");
         assert!(!root.has_error());
         assert_eq!(root.named_child(0).unwrap().kind(), "shebang_comment");
         for index in [1, 2] {
             let comment = root.named_child(index).unwrap();
-            assert_eq!(comment.kind(), "module_doc_comment");
+            assert_eq!(comment.kind(), "program_doc");
             assert_eq!(
                 comment.child_by_field_name("text").unwrap().kind(),
                 "comment_text"

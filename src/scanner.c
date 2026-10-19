@@ -12,7 +12,7 @@ enum Token {
   COMMENT_START,
   PLAIN_COMMENT,
   SHEBANG_COMMENT,
-  MODULE_DOC_START,
+  PROGRAM_DOC_START,
   ITEM_DOC_START,
   PARAM_ITEM_DOC_START,
   COMMENT_END,
@@ -269,7 +269,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
     advance(lexer);
     if (lexer->lookahead == '!') {
       advance(lexer);
-      token = MODULE_DOC_START;
+      token = PROGRAM_DOC_START;
       lexer->mark_end(lexer);
     } else {
       token = ITEM_DOC_START;
@@ -293,7 +293,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
     if (column != 0 || scanner->trivia.column != 0) {
       return false;
     }
-    token = MODULE_DOC_START;
+    token = PROGRAM_DOC_START;
     lexer->mark_end(lexer);
   } else if (lexer->lookahead == '!' && column == 0 && scanner->file_start) {
     token = SHEBANG_COMMENT;
@@ -301,7 +301,7 @@ static bool scan_comment(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   if (!valid[token]) {
     return false;
   }
-  if (token == MODULE_DOC_START || token == ITEM_DOC_START || token == PARAM_ITEM_DOC_START) {
+  if (token == PROGRAM_DOC_START || token == ITEM_DOC_START || token == PARAM_ITEM_DOC_START) {
     scanner->comment_started = false;
     scanner->doc_started = true;
     return emit(scanner, lexer, token);

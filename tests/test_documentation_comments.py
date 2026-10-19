@@ -21,11 +21,11 @@ from test_layout_support import descendants, parse, point, valid
         ("##", "item_doc_comment", None),
         ("\t## \t", "item_doc_comment", None),
         ("  ## \tRésumé.  ", "item_doc_comment", "Résumé.  "),
-        ("#@", "module_doc_comment", None),
-        ("#@ \t", "module_doc_comment", None),
-        ("#@Résumé.", "module_doc_comment", "Résumé."),
-        ("##! Résumé.", "module_doc_comment", "Résumé."),
-        ("\t##! Résumé.", "module_doc_comment", "Résumé."),
+        ("#@", "program_doc", None),
+        ("#@ \t", "program_doc", None),
+        ("#@Résumé.", "program_doc", "Résumé."),
+        ("##! Résumé.", "program_doc", "Résumé."),
+        ("\t##! Résumé.", "program_doc", "Résumé."),
     ],
 )
 def test_comment_kinds_fields_and_physical_ranges(line, kind, text, newline, ending):
@@ -112,7 +112,7 @@ def test_only_the_leading_exact_param_tag_is_reserved(text):
 
 
 @pytest.mark.parametrize("marker", ["#@", "##!"])
-def test_module_docs_do_not_interpret_parameter_tags(marker):
+def test_program_docs_do_not_interpret_parameter_tags(marker):
     root = parse(f"{marker} @param _ Just text.\n")
     assert valid(root)
     assert (
@@ -179,22 +179,22 @@ def test_explicit_text_preserves_markers_at_first_line_and_deeper(indent, marker
             "plain_comment",
             "shebang_comment",
             "item_doc_comment",
-            "module_doc_comment",
+            "program_doc",
         )
     )
     assert len(descendants(root, "flow")) == 1
 
 
 @pytest.mark.parametrize("indent", [" ", "\t", "  \t"])
-def test_indented_new_module_marker_is_invalid_but_legacy_remains_valid(indent):
-    assert parse(f"{indent}#@ Module.\nflow next:\n  pass\n").has_error
+def test_indented_new_program_marker_is_invalid_but_legacy_remains_valid(indent):
+    assert parse(f"{indent}#@ Program.\nflow next:\n  pass\n").has_error
     assert valid(parse(f"{indent}##! Legacy.\nflow next:\n  pass\n"))
 
 
 def test_packaged_queries_capture_docs_without_adding_symbols_or_injections():
     language = Language(tree_sitter_toolang.language())
     root = parse(
-        "#!/usr/bin/env too\n# Plain.\n#@ Module.\n## Item.\n## @param _ Input.\n"
+        "#!/usr/bin/env too\n# Plain.\n#@ Program.\n## Item.\n## @param _ Input.\n"
     )
     queries = [
         Query(language, getattr(tree_sitter_toolang, name))
@@ -213,7 +213,7 @@ def test_packaged_queries_capture_docs_without_adding_symbols_or_injections():
     }
     assert {node.type for node in captures["comment.documentation"]} == {
         "item_doc_comment",
-        "module_doc_comment",
+        "program_doc",
     }
     assert [node.text for node in captures["keyword"]] == [b"@param"]
     assert [node.text for node in captures["variable.parameter"]] == [b"_"]
@@ -221,13 +221,13 @@ def test_packaged_queries_capture_docs_without_adding_symbols_or_injections():
         assert not QueryCursor(query).captures(root)
 
 
-def test_new_module_docs_cannot_interrupt_a_continuing_body():
-    assert parse("flow work:\n  run first\n#@ Module.\n  run next\n").has_error
-    assert valid(parse("flow work:\n  pass\n#@ Module.\nflow next:\n  pass\n"))
+def test_new_program_docs_cannot_interrupt_a_continuing_body():
+    assert parse("flow work:\n  run first\n#@ Program.\n  run next\n").has_error
+    assert valid(parse("flow work:\n  pass\n#@ Program.\nflow next:\n  pass\n"))
 
 
 @pytest.mark.parametrize(
-    "comment", ["## Item.", "## @param _ Input.", "#@ Module.", "##! Legacy."]
+    "comment", ["## Item.", "## @param _ Input.", "#@ Program.", "##! Legacy."]
 )
 @pytest.mark.parametrize("kind", ["flow", "agic", "struct"])
 def test_documentation_does_not_fill_required_bodies(kind, comment):

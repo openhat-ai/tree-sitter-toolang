@@ -136,15 +136,15 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
           "type": "pass_keyword",
           "named": true
         },
         {
           "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "program_doc",
           "named": true
         },
         {
@@ -194,11 +194,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -280,11 +280,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -387,11 +387,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -495,11 +495,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -952,15 +952,15 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
           "type": "pass_keyword",
           "named": true
         },
         {
           "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1122,11 +1122,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1172,11 +1172,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1248,11 +1248,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1739,11 +1739,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1887,11 +1887,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -1899,22 +1899,6 @@
           "named": true
         }
       ]
-    }
-  },
-  {
-    "type": "module_doc_comment",
-    "named": true,
-    "fields": {
-      "text": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "comment_text",
-            "named": true
-          }
-        ]
-      }
     }
   },
   {
@@ -2047,6 +2031,98 @@
           },
           {
             "type": "flow_last_keyword",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "program",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "agic",
+          "named": true
+        },
+        {
+          "type": "blank_line",
+          "named": true
+        },
+        {
+          "type": "chore",
+          "named": true
+        },
+        {
+          "type": "context",
+          "named": true
+        },
+        {
+          "type": "flow",
+          "named": true
+        },
+        {
+          "type": "instruct",
+          "named": true
+        },
+        {
+          "type": "item_doc_comment",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "program_doc",
+          "named": true
+        },
+        {
+          "type": "prompt",
+          "named": true
+        },
+        {
+          "type": "psyche",
+          "named": true
+        },
+        {
+          "type": "service",
+          "named": true
+        },
+        {
+          "type": "shebang_comment",
+          "named": true
+        },
+        {
+          "type": "skill",
+          "named": true
+        },
+        {
+          "type": "struct",
+          "named": true
+        },
+        {
+          "type": "with",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "program_doc",
+    "named": true,
+    "fields": {
+      "text": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "comment_text",
             "named": true
           }
         ]
@@ -2288,11 +2364,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -2408,11 +2484,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {
@@ -2791,82 +2867,6 @@
     }
   },
   {
-    "type": "source_file",
-    "named": true,
-    "root": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "agic",
-          "named": true
-        },
-        {
-          "type": "blank_line",
-          "named": true
-        },
-        {
-          "type": "chore",
-          "named": true
-        },
-        {
-          "type": "context",
-          "named": true
-        },
-        {
-          "type": "flow",
-          "named": true
-        },
-        {
-          "type": "instruct",
-          "named": true
-        },
-        {
-          "type": "item_doc_comment",
-          "named": true
-        },
-        {
-          "type": "module_doc_comment",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "prompt",
-          "named": true
-        },
-        {
-          "type": "psyche",
-          "named": true
-        },
-        {
-          "type": "service",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
-          "named": true
-        },
-        {
-          "type": "skill",
-          "named": true
-        },
-        {
-          "type": "struct",
-          "named": true
-        },
-        {
-          "type": "with",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "spawn_statement",
     "named": true,
     "fields": {
@@ -2988,11 +2988,11 @@
           "named": true
         },
         {
-          "type": "module_doc_comment",
+          "type": "plain_comment",
           "named": true
         },
         {
-          "type": "plain_comment",
+          "type": "program_doc",
           "named": true
         },
         {

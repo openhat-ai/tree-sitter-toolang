@@ -1,6 +1,6 @@
 #!/usr/bin/env too
 #@ Research tools for collecting and summarizing evidence.
-##! Compatible module documentation.
+##! Compatible program documentation.
 
 # Keep summaries short.
 ## Summarize source material when a concise overview is needed.
@@ -9,7 +9,7 @@
 agic summarize(_: Text, style?: Text): # Inline annotation.
   ##! Existing indented legacy comments remain accepted.
   user:
-    #@ Literal module marker.
+    #@ Literal program marker.
     ## @param _ Literal parameter tag.
     ##! Literal legacy marker.
     Summarize {{_}}.
@@ -19,4 +19,4 @@ agic summarize(_: Text, style?: Text): # Inline annotation.
 flow(_: Text):
   run summarize
 
-#@ Additional module documentation.
+#@ Additional program documentation.

@@ -14,7 +14,7 @@ flow next:
 
 ---
 
-(source_file
+(program
   (prompt
     (prompt_keyword)
     (cap_name)

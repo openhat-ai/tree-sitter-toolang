@@ -15,7 +15,7 @@ flow research:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)

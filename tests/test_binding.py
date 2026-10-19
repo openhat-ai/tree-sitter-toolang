@@ -90,7 +90,7 @@ def test_parser_can_parse_all_fixtures():
         tree = parser.parse(source_path.read_bytes())
         root = tree.root_node
 
-        assert root.type == "source_file", source_path.name
+        assert root.type == "program", source_path.name
         assert root.has_error is False, source_path.name
         assert root.named_child_count > 0, source_path.name
 
@@ -315,7 +315,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
     assert [child.type for child in root.named_children[:5]] == [
         "shebang_comment",
         "blank_line",
-        "module_doc_comment",
+        "program_doc",
         "blank_line",
         "item_doc_comment",
     ]

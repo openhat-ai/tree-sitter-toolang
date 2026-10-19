@@ -140,7 +140,7 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
     assert not any(
         descendants(node, "plain_comment")
         or descendants(node, "item_doc_comment")
-        or descendants(node, "module_doc_comment")
+        or descendants(node, "program_doc")
         for node in prose
     )
 
@@ -177,7 +177,7 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
     assert valid(root)
     expected = []
     offset = 0
-    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "module_doc_comment"}
+    kinds = {"#": "plain_comment", "##": "item_doc_comment", "##!": "program_doc"}
     for line in source.splitlines(keepends=True):
         if b"#" in line:
             marker = line.lstrip().split(maxsplit=1)[0].decode()

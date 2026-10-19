@@ -30,7 +30,7 @@ flow improve(_):
 
 ---
 
-(source_file
+(program
   (agic
     (agic_keyword)
     (runnable_name)

@@ -52,7 +52,7 @@ flow seeded(_):
 
 ---
 
-(source_file
+(program
   (blank_line)
   (instruct
     (instruct_keyword)

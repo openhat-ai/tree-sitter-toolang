@@ -21,7 +21,7 @@ flow empty( )->Text []:
 
 ---
 
-(source_file
+(program
   (with
     (with_keyword)
     (cap_kind)
@@ -179,7 +179,7 @@ flow next:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)

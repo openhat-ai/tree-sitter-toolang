@@ -8,7 +8,7 @@ flow grow(next: Text):
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -60,7 +60,7 @@ flow grow:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)

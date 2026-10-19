@@ -11,7 +11,7 @@ flow work:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -97,7 +97,7 @@ flow work:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -148,7 +148,7 @@ flow work:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -207,7 +207,7 @@ flow work:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)

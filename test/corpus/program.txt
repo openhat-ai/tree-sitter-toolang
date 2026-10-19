@@ -8,7 +8,7 @@ with prompt https://toolang.ai/review
 
 ---
 
-(source_file
+(program
   (with
     (with_keyword)
     (cap_kind)
@@ -62,7 +62,7 @@ chore stale-prs:
 
 ---
 
-(source_file
+(program
   (service
     (service_keyword)
     (cap_name)
@@ -166,7 +166,7 @@ context:
 
 ---
 
-(source_file
+(program
   (struct
     (struct_keyword)
     (type_name)
@@ -226,7 +226,7 @@ agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
 
 ---
 
-(source_file
+(program
   (agic
     (agic_keyword)
     (runnable_name)
@@ -342,7 +342,7 @@ flow research(input: Part[]) -> Answer:
 
 ---
 
-(source_file
+(program
   (flow
     (flow_keyword)
     (runnable_name)
@@ -513,7 +513,7 @@ agic raw:
 
 ---
 
-(source_file
+(program
   (plain_comment)
   (with
     (with_keyword)
@@ -560,7 +560,7 @@ agic recall:
 
 ---
 
-(source_file
+(program
   (agic
     (agic_keyword)
     (runnable_name)

@@ -14,6 +14,10 @@ This update implements the [unified grammar definition](docs/plans/grammar-contr
 It changes the public CST and requires a coordinated consumer migration from
 0.4.0-alpha.4; package versions and runtime execution are unchanged.
 
+- Rename the CST root from `source_file` to `program` and program-documentation
+  nodes from `module_doc_comment` to `program_doc`. Update root checks, queries,
+  and comment consumers. The `#@` / `##!` markers, accepted source, fields, and
+  ranges are unchanged; module organization and loading remain outside syntax.
 - Remove the retired `task` declaration and its keyword; `chore` is the only
   authored work declaration. Rename `job_name` / `job_body` to `chore_name` /
   `chore_body`. Migrate declarations to `chore` and update CST consumers and
@@ -48,7 +52,9 @@ It changes the public CST and requires a coordinated consumer migration from
 
 | Previous shape | Current shape |
 | --- | --- |
-| `item → declaration` | Declaration directly under `source_file`. |
+| `source_file` | `program`, containing the complete parsed source. |
+| `item → declaration` | Declaration directly under `program`. |
+| `module_doc_comment` | `program_doc`, retaining the optional `text: comment_text` field. |
 | `agic_name / flow_name / runnable → snake_name` | `runnable_name` leaf. |
 | `field_name / property_key / context_name / instruct_name → snake_name` | `identifier` leaf. |
 | `struct_name / user_type → type_name → pascal_name` | `type_name` leaf. |

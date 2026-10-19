@@ -27,7 +27,7 @@
   {"type":"SYMBOL","name":"_comment_start"},
   {"type":"SYMBOL","name":"plain_comment"},
   {"type":"SYMBOL","name":"shebang_comment"},
-  {"type":"SYMBOL","name":"_module_doc_start"},
+  {"type":"SYMBOL","name":"_program_doc_start"},
   {"type":"SYMBOL","name":"_item_doc_start"},
   {"type":"SYMBOL","name":"_param_item_doc_start"},
   {"type":"SYMBOL","name":"_comment_end"},
@@ -55,7 +55,7 @@
   {"type":"SYMBOL","name":"_other_integer_literal"}
 ] *)
 
-source_file ::=
+program ::=
   ( _trivia | _item )*;
 
 _item ::=
@@ -68,8 +68,8 @@ _inline_comment ::=
 line_end ::=
   ( (* alias {"value":"plain_comment","named":true} *) ( _inline_comment ) )? newline;
 
-module_doc_comment ::=
-  _module_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end;
+program_doc ::=
+  _program_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end;
 
 item_doc_comment ::=
   _item_doc_start ( (* field "text" *) ( comment_text ) )? _comment_end | _param_item_doc_start
@@ -86,7 +86,7 @@ comment_text ::=
   (* token *) ( ? regex "[^ \\t\\r\\n][^\\r\\n]*" ? );
 
 _comment ::=
-  _comment_start ( module_doc_comment | item_doc_comment | plain_comment | shebang_comment );
+  _comment_start ( program_doc | item_doc_comment | plain_comment | shebang_comment );
 
 _trivia ::=
   _comment | blank_line;
@@ -817,8 +817,8 @@ plain_comment ::=
 shebang_comment ::=
   ? external scanner token "shebang_comment" ?;
 
-_module_doc_start ::=
-  ? external scanner token "_module_doc_start" ?;
+_program_doc_start ::=
+  ? external scanner token "_program_doc_start" ?;
 
 _item_doc_start ::=
   ? external scanner token "_item_doc_start" ?;
