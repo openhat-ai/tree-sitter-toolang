@@ -56,8 +56,7 @@ runs the Python test suite.
 6. Verify the Release workflow and availability of the exact target version on
    npm, PyPI, and crates.io. Missing Rust credentials require a separate publish.
 
-Do not include a version bump in a grammar feature PR. The current cleanup is
-unreleased; preparing 0.4.0 is a separate release step.
+Keep grammar changes and package version bumps in separate pull requests.
 
 ## Version and workflow behavior
 

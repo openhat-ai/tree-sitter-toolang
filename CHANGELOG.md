@@ -8,6 +8,8 @@ backfills the verified notes from 0.3.2 onward.
 
 ## [Unreleased]
 
+## [0.4.0-alpha.5] - 2026-10-19
+
 ### Added
 
 - Generate `GRAMMAR.ebnf` as an annotated implementation reference, including
@@ -18,7 +20,7 @@ backfills the verified notes from 0.3.2 onward.
 
 This is a breaking syntax and CST update from `0.4.0-alpha.4`. Migrate source,
 field paths, queries, and source-range handling together using the table below.
-Package versions and runtime execution remain unchanged.
+Runtime execution remains outside this parser package.
 
 - Use `program` as the complete-source root. Documentation has three peer nodes:
   `program_doc`, `item_doc`, and `param_doc`. Their text fields use `text` leaves;
@@ -301,7 +303,8 @@ becomes `item_doc_comment`, and `parent_doc_line` becomes `module_doc_comment`.
 Update queries and node consumers together. Existing `##!` source remains
 valid; do not replace marker-like strings inside literal prompts or history.
 
-[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.4...HEAD
+[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.5...HEAD
+[0.4.0-alpha.5]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.4...v0.4.0-alpha.5
 [0.4.0-alpha.4]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [0.4.0-alpha.3]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
 [0.4.0-alpha.2]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.1...v0.4.0-alpha.2
