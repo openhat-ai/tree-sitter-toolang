@@ -211,7 +211,7 @@ param ::=
 
 _param_name ::=
   (* alias {"value":"param_name","named":true} *) ( "_" ) |
-  (* alias {"value":"param_name","named":true} *) ( _variable_name );
+  (* alias {"value":"param_name","named":true} *) ( _identifier );
 
 flow ::=
   (* prec.right 0 *) ( (* field "keyword" *) ( flow_keyword ) ( (* field "name" *) ( runnable_name )
@@ -490,7 +490,7 @@ local_name ::=
   _variable_name;
 
 handle_name ::=
-  _variable_name;
+  _identifier;
 
 directive ::=
   _directive_start ( (* field "key" *) ( _query_directive_key ) (* field "operator" *) (

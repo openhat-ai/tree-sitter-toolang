@@ -1656,7 +1656,7 @@
           "type": "ALIAS",
           "content": {
             "type": "SYMBOL",
-            "name": "_variable_name"
+            "name": "_identifier"
           },
           "named": true,
           "value": "param_name"
@@ -4774,7 +4774,7 @@
     },
     "handle_name": {
       "type": "SYMBOL",
-      "name": "_variable_name"
+      "name": "_identifier"
     },
     "directive": {
       "type": "SEQ",

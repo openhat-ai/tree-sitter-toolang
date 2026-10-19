@@ -87,18 +87,19 @@ runnable_name   ::= identifier ;
 agent_name      ::= identifier ;
 variable_name   ::= identifier ;
 local_name      ::= variable_name ;
-handle_name     ::= variable_name ;
-param_name      ::= variable_name | "_" ;
+handle_name     ::= identifier ;
+param_name      ::= identifier | "_" ;
 integer_literal ::= /[0-9]+/ ;
 
 runnable_ref    ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/ ;
 ```
 
-Local destinations, await handles, and named parameters use `variable_name`:
+Named parameters and await handles accept any `identifier`, including keywords,
+`default`, and `none`. Local destinations currently use `variable_name`:
 `identifier` excluding `flow_keyword`, `default`, and `none`. Other `identifier`
 positions, including declarations and call targets, have no such exclusion.
-`far` and `near` are valid variable names. `_` may name a parameter, but not a
-local destination or await handle.
+`far` and `near` are valid local names. `_` may name a parameter, but not a local
+destination or await handle.
 
 Integers contain decimal digits only. Signs, fractions, exponent notation, and
 underscores are not accepted in structural numeric positions. Leading zeros
@@ -109,7 +110,7 @@ the language consumer.
 ### Keywords
 
 Keywords are lowercase and case-sensitive. These context-dependent sets govern
-implicit-text boundaries and variable-name restrictions:
+implicit-text boundaries and local-name restrictions:
 
 ```ebnf
 declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"

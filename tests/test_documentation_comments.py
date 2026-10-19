@@ -67,7 +67,8 @@ def test_inline_markers_remain_plain_comments(marker):
 
 
 @pytest.mark.parametrize("space", [" ", "\t", " \t"])
-@pytest.mark.parametrize("name", ["_", "topic", "some_name", "x1", "trailing_"])
+@pytest.mark.parametrize("name", ["_", "topic", "some_name", "x1", "trailing_",
+                                  "sort", "until", "default", "none"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n", ""])
 def test_parameter_fields_use_signature_names_and_preserve_description(
     space, name, newline

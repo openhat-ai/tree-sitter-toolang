@@ -1,9 +1,8 @@
 # Contextual variable names
 
-Status: proposed; requires approval before implementation. Grammar baseline:
+Status: approved for implementation on 2026-10-19. Grammar baseline:
 `11c2dd0` in [PR #62](https://github.com/openhat-ai/tree-sitter-toolang/pull/62).
-Toolang baseline: `3cca3b44`. Only isolated prototypes have been exercised;
-this definition ships no parser behavior change.
+Toolang baseline: `3cca3b44`.
 
 ## Goal and scope
 
@@ -54,8 +53,8 @@ new statements, numeric/clause changes, version bumps, and publication.
 | `let x = until check` / `let x = exec worker` | Existing invalid RHS forms |
 | `let _ = Evidence.` | Invalid local destination |
 
-This broadens accepted source without requiring a source migration. On approval,
-it supersedes only the blanket variable exclusions in the flexible-repeat and
+This broadens accepted source without requiring a source migration. It
+supersedes only the blanket variable exclusions in the flexible-repeat and
 grammar-contract-cleanup definitions. Primary-input and runtime-local rules stay
 in force. Update current syntax documentation and Unreleased accordingly.
 
@@ -103,4 +102,4 @@ needed based on the inspected implementation; verify this with integration tests
 
 The main risk is misclassifying a keyword after `let` or weakening RHS error
 recovery. The bounded assignment-prefix decision addresses that risk without
-expanding a global reserved set. Approval of this definition remains outstanding.
+expanding a global reserved set.

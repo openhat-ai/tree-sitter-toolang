@@ -218,7 +218,7 @@ module.exports = grammar({
         optional(field("optional", $.optional_marker)),
         optional(seq(field("colon", $.colon), field("type", $.type))),
       ),
-    _param_name: ($) => choice(alias("_", $.param_name), alias($._variable_name, $.param_name)),
+    _param_name: ($) => choice(alias("_", $.param_name), alias($._identifier, $.param_name)),
 
     flow: ($) =>
       prec.right(seq(
@@ -626,7 +626,7 @@ module.exports = grammar({
     runnable_name: ($) => $._identifier,
     agent_name: ($) => $._identifier,
     local_name: ($) => $._variable_name,
-    handle_name: ($) => $._variable_name,
+    handle_name: ($) => $._identifier,
 
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_directive_key),

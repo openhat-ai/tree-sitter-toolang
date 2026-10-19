@@ -14,6 +14,7 @@ FIXTURE_NAMES = (
     "caps_indented.too",
     "comments.too",
     "documentation_comments.too",
+    "contextual_names.too",
     "flows.too",
     "flow_arrays.too",
     "exec.too",

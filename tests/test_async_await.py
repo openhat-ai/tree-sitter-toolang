@@ -86,9 +86,11 @@ def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, n
 
 @pytest.mark.parametrize("binding", ["", "let x = ", "let ", "let h = "])
 @pytest.mark.parametrize("name", ["async", "await", "spawn", "run", "until", "map", "default"])
-def test_await_handle_uses_the_same_keyword_exclusion_as_local_bindings(binding, name):
+def test_await_handle_accepts_keywords_in_every_binding_form(binding, name):
     root = parse(f"flow launch:\n  {binding}await {name}\n")
-    assert not valid(root), root
+    assert valid(root), root
+    handle, = descendants(root, "handle_name")
+    assert handle.text == name.encode() and handle.child_count == 0
 
 
 @pytest.mark.parametrize("target", [

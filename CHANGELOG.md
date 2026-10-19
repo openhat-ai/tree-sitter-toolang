@@ -28,6 +28,9 @@ It changes the public CST and requires a coordinated consumer migration from
   bodies own their entries directly. Migrate using the [CST migration](#cst-migration-from-alpha4).
 - `let_statement.local: local_name`, `await_statement.handle: handle_name`, and
   `param_doc_tag.param: param_name` identify bindings and references precisely.
+- Accept active keywords, `default`, and `none` as named parameters,
+  parameter-documentation names, and await handles. Their existing name leaves
+  and source ranges are unchanged; `_` retains its primary-input meaning.
 - Remove obsolete keyword restrictions for `scatter`, `gather`, `storm`,
   `settle`, `rank`, `par`, `top`, `bottom`, `think`, `use`, `thunk`, `call`, `do`,
   `unfold`, `each`, `fold`, `head`, and `tail`. These words are ordinary names
