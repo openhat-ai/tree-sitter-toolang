@@ -120,8 +120,11 @@ array_suffix ::=
   "[]";
 
 struct ::=
+  _struct_header _body_prefix* (* field "body" *) ( struct_body );
+
+_struct_header ::=
   (* field "keyword" *) ( struct_keyword ) (* field "name" *) ( type_name ) (* field "colon" *) (
-  colon ) _line_end _body_prefix* (* field "body" *) ( struct_body );
+  colon ) _line_end;
 
 struct_body ::=
   (* prec.right 0 *) ( _body_start? _item_indent _trivia* ( (* field "field" *) ( field ) (
@@ -134,20 +137,32 @@ field ::=
   (* field "colon" *) ( colon ) (* field "type" *) ( type ) _line_end;
 
 psyche ::=
+  _psyche_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+
+_psyche_header ::=
   (* field "keyword" *) ( psyche_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end;
 
 skill ::=
+  _skill_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+
+_skill_header ::=
   (* field "keyword" *) ( skill_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end;
 
 service ::=
+  _service_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+
+_service_header ::=
   (* field "keyword" *) ( service_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end;
 
 prompt ::=
+  _prompt_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+
+_prompt_header ::=
   (* field "keyword" *) ( prompt_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end;
 
 cap_body ::=
   _body_start? _item_indent ( (* field "property" *) ( property ) | _trivia )* (
@@ -157,8 +172,11 @@ _cap_content ::=
   _cap_text_start ( _content_row | blank_line )+ _dedent;
 
 chore ::=
+  _chore_header ( _body_prefix* (* field "body" *) ( chore_body ) | _empty_body );
+
+_chore_header ::=
   (* field "keyword" *) ( chore_keyword ) (* field "name" *) ( chore_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix* (* field "body" *) ( chore_body ) | _empty_body );
+  colon ) _line_end;
 
 cap_name ::=
   _snake_kebab_name;
@@ -175,18 +193,22 @@ property ::=
   (* field "value" *) ( text_line ) _line_end;
 
 instruct ::=
-  (* field "keyword" *) ( instruct_keyword ) ( (* field "name" *) ( identifier ) )?
-  (* field "colon" *) ( colon ) ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_line_end |
-  (* prec.right 0 *) ( _text_line_end (* field "content" *) (
+  _instruct_header ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _inline_content ) ) _text_line_end | (* prec.right 0 *) ( _text_line_end (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
+_instruct_header ::=
+  (* field "keyword" *) ( instruct_keyword ) ( (* field "name" *) ( identifier ) )?
+  (* field "colon" *) ( colon );
+
 context ::=
-  (* field "keyword" *) ( context_keyword ) ( (* field "name" *) ( identifier ) )?
-  (* field "colon" *) ( colon ) ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_line_end |
-  (* prec.right 0 *) ( _text_line_end (* field "content" *) (
+  _context_header ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _inline_content ) ) _text_line_end | (* prec.right 0 *) ( _text_line_end (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
+
+_context_header ::=
+  (* field "keyword" *) ( context_keyword ) ( (* field "name" *) ( identifier ) )?
+  (* field "colon" *) ( colon );
 
 _inline_content ::=
   (* alias {"value":"text_line","named":true} *) ( _literal_text_line );
@@ -199,9 +221,12 @@ _content_row ::=
   (* alias {"value":"text_line","named":true} *) ( _raw_text ) newline;
 
 agic ::=
-  (* prec.right 0 *) ( (* field "keyword" *) ( agic_keyword ) ( (* field "name" *) ( runnable_name )
-  )? ( (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) (
-  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix* (* field "body" *) ( agic_body ) );
+  (* prec.right 0 *) ( _agic_header _body_prefix* (* field "body" *) ( agic_body ) );
+
+_agic_header ::=
+  (* field "keyword" *) ( agic_keyword ) ( (* field "name" *) ( runnable_name ) )? (
+  (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type )
+  )? (* field "colon" *) ( colon ) _line_end;
 
 agic_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives _messages? | _messages |
@@ -220,9 +245,12 @@ _param_name ::=
   (* alias {"value":"param_name","named":true} *) ( _identifier );
 
 flow ::=
-  (* prec.right 0 *) ( (* field "keyword" *) ( flow_keyword ) ( (* field "name" *) ( runnable_name )
-  )? ( (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) (
-  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix* (* field "body" *) ( flow_body ) );
+  (* prec.right 0 *) ( _flow_header _body_prefix* (* field "body" *) ( flow_body ) );
+
+_flow_header ::=
+  (* field "keyword" *) ( flow_keyword ) ( (* field "name" *) ( runnable_name ) )? (
+  (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type )
+  )? (* field "colon" *) ( colon ) _line_end;
 
 flow_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives ( _statements |
@@ -341,15 +369,19 @@ generate_statement ::=
   generate_keyword _required_space (* field "count" *) ( integer_literal ) _runnable_complements;
 
 reduce_statement ::=
-  reduce_keyword _named_using_complement _line_end | reduce_keyword _named_using_complement colon
-  _line_end _body_prefix* (* prec.right 0 *) ( _body_start? _indent _trivia* ( _from_complement
-  _trivia* | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) )
-  _dedent | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) |
+  reduce_keyword _named_using_complement _line_end | _reduce_named_block_header _body_prefix*
+  (* prec.right 0 *) ( _body_start? _indent _trivia* ( _from_complement _trivia* |
+  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) _dedent |
+  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) |
   (* prec.right 0 *) ( reduce_keyword (* field "target" *) (
   (* alias {"value":"inline_agic","named":true} *) ( _reduce_inline_line ) ) ) | (* prec.right 0 *)
   ( reduce_keyword (* field "target" *) ( (* alias {"value":"inline_agic","named":true} *) (
   _reduce_inline_block ) ) _from_complement? _trivia* _dedent ) | reduce_keyword
   (* field "target" *) ( (* alias {"value":"inline_agic","named":true} *) ( _reduce_empty_block ) );
+
+_reduce_named_block_header ::=
+  reduce_keyword using_keyword _required_space (* field "target" *) ( runnable_name ) colon
+  _line_end;
 
 _reduce_inline_line ::=
   ( (* field "arrow" *) ( arrow ) (* field "return" *) ( type ) )? colon (* field "content" *) (
@@ -427,8 +459,10 @@ _order_complement ::=
   (* field "order" *) ( ascending_keyword | descending_keyword );
 
 repeat_statement ::=
-  (* prec.right 0 *) ( repeat_keyword _repeat_count_complement? _window_complement? colon _line_end
-  _body_prefix* (* field "body" *) ( repeat_body ) );
+  (* prec.right 0 *) ( _repeat_header _body_prefix* (* field "body" *) ( repeat_body ) );
+
+_repeat_header ::=
+  repeat_keyword _repeat_count_complement? _window_complement? colon _line_end;
 
 repeat_body ::=
   (* prec.right 0 *) ( _body_start? _indent _trivia* ( _statements ( _until_entry _trivia*

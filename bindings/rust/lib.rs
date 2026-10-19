@@ -9,6 +9,63 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn malformed_block_colons_cannot_reopen_enclosing_headers() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for header in ["generate :", "keep in 2 lanes:", "sort ascending:"] {
+            for binding in ["", "let value = ", "let "] {
+                for nested in [false, true] {
+                    let indent = if nested { "    " } else { "  " };
+                    let prefix = if nested {
+                        "  repeat:\n    run inner\n"
+                    } else {
+                        ""
+                    };
+                    let source = format!("flow first:\n  run before\n{prefix}{indent}{binding}{header}\n{indent}  Orphaned text.\n{indent}## Following.\n{indent}run after\n## Next.\nflow next:\n  pass\n");
+                    let tree = parser.parse(&source, None).unwrap();
+                    let root = tree.root_node();
+                    assert!(root.has_error());
+                    let flow = root.named_child(0).unwrap();
+                    assert_eq!(
+                        flow.child_by_field_name("colon").unwrap().start_position(),
+                        tree_sitter::Point::new(0, 10)
+                    );
+                    let body = flow.child_by_field_name("body").unwrap();
+                    assert!(!body.named_child(0).unwrap().has_error());
+                    let body = if nested {
+                        body.named_child(1)
+                            .unwrap()
+                            .child_by_field_name("body")
+                            .unwrap()
+                    } else {
+                        body
+                    };
+                    let mut cursor = body.walk();
+                    let after = body
+                        .named_children(&mut cursor)
+                        .find(|node| {
+                            node.kind() == "run_statement"
+                                && node
+                                    .child_by_field_name("target")
+                                    .unwrap()
+                                    .utf8_text(source.as_bytes())
+                                    .unwrap()
+                                    == "after"
+                        })
+                        .unwrap();
+                    assert!(!after.has_error());
+                    let mut cursor = body.walk();
+                    assert!(body
+                        .named_children(&mut cursor)
+                        .any(|node| node.kind() == "item_doc"));
+                    assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+                    assert!(!root.named_child(2).unwrap().has_error());
+                }
+            }
+        }
+    }
+
+    #[test]
     fn rejected_first_directives_keep_the_authored_body_baseline() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

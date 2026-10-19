@@ -83,14 +83,8 @@ module.exports = grammar({
     _builtin_type: ($) => keywordLeaves(builtinTypes, $.builtin_type),
     array_suffix: () => "[]",
 
-    struct: ($) =>
-      seq(
-        field("keyword", $.struct_keyword),
-        field("name", $.type_name),
-        field("colon", $.colon),
-        $._line_end,
-        body($, $.struct_body),
-      ),
+    struct: ($) => seq($._struct_header, body($, $.struct_body)),
+    _struct_header: ($) => declarationHeader($, $.struct_keyword, $.type_name),
 
     struct_body: ($) =>
       structuralBody($, seq(field("field", $.field), repeat(choice(field("field", $.field), $._trivia))), $._item_indent),
@@ -104,37 +98,17 @@ module.exports = grammar({
         $._line_end,
       ),
 
-    psyche: ($) =>
-      seq(
-        field("keyword", $.psyche_keyword),
-        field("name", $.cap_name),
-        field("colon", $.colon),
-        $._line_end, optionalBody($, $.cap_body),
-      ),
+    psyche: ($) => seq($._psyche_header, optionalBody($, $.cap_body)),
+    _psyche_header: ($) => declarationHeader($, $.psyche_keyword, $.cap_name),
 
-    skill: ($) =>
-      seq(
-        field("keyword", $.skill_keyword),
-        field("name", $.cap_name),
-        field("colon", $.colon),
-        $._line_end, optionalBody($, $.cap_body),
-      ),
+    skill: ($) => seq($._skill_header, optionalBody($, $.cap_body)),
+    _skill_header: ($) => declarationHeader($, $.skill_keyword, $.cap_name),
 
-    service: ($) =>
-      seq(
-        field("keyword", $.service_keyword),
-        field("name", $.cap_name),
-        field("colon", $.colon),
-        $._line_end, optionalBody($, $.cap_body),
-      ),
+    service: ($) => seq($._service_header, optionalBody($, $.cap_body)),
+    _service_header: ($) => declarationHeader($, $.service_keyword, $.cap_name),
 
-    prompt: ($) =>
-      seq(
-        field("keyword", $.prompt_keyword),
-        field("name", $.cap_name),
-        field("colon", $.colon),
-        $._line_end, optionalBody($, $.cap_body),
-      ),
+    prompt: ($) => seq($._prompt_header, optionalBody($, $.cap_body)),
+    _prompt_header: ($) => declarationHeader($, $.prompt_keyword, $.cap_name),
 
     cap_body: ($) => definitionBody($),
     _cap_content: ($) => seq(
@@ -143,13 +117,8 @@ module.exports = grammar({
       $._dedent,
     ),
 
-    chore: ($) =>
-      seq(
-        field("keyword", $.chore_keyword),
-        field("name", $.chore_name),
-        field("colon", $.colon),
-        $._line_end, optionalBody($, $.chore_body),
-      ),
+    chore: ($) => seq($._chore_header, optionalBody($, $.chore_body)),
+    _chore_header: ($) => declarationHeader($, $.chore_keyword, $.chore_name),
 
     cap_name: ($) => $._snake_kebab_name,
     chore_name: ($) => $._snake_kebab_name,
@@ -165,21 +134,11 @@ module.exports = grammar({
         $._line_end,
       ),
 
-    instruct: ($) =>
-      seq(
-        field("keyword", $.instruct_keyword),
-        optional(field("name", $.identifier)),
-        field("colon", $.colon),
-        content($, "content"),
-      ),
+    instruct: ($) => seq($._instruct_header, content($, "content")),
+    _instruct_header: ($) => textHeader($, $.instruct_keyword),
 
-    context: ($) =>
-      seq(
-        field("keyword", $.context_keyword),
-        optional(field("name", $.identifier)),
-        field("colon", $.colon),
-        content($, "content"),
-      ),
+    context: ($) => seq($._context_header, content($, "content")),
+    _context_header: ($) => textHeader($, $.context_keyword),
 
     _inline_content: ($) => alias($._literal_text_line, $.text_line),
     _block_content: ($) => seq(
@@ -192,16 +151,8 @@ module.exports = grammar({
     ),
     _content_row: ($) => seq(alias($._raw_text, $.text_line), $.newline),
 
-    agic: ($) =>
-      prec.right(seq(
-        field("keyword", $.agic_keyword),
-        optional(field("name", $.runnable_name)),
-        optional(field("params", $.params)),
-        optional(seq(field("arrow", $.arrow), field("return", $.type))),
-        field("colon", $.colon),
-        $._line_end,
-        body($, $.agic_body),
-      )),
+    agic: ($) => prec.right(seq($._agic_header, body($, $.agic_body))),
+    _agic_header: ($) => runnableHeader($, $.agic_keyword),
     agic_body: ($) =>
       structuralBody($,
         choice(
@@ -226,16 +177,8 @@ module.exports = grammar({
       ),
     _param_name: ($) => choice(alias("_", $.param_name), alias($._identifier, $.param_name)),
 
-    flow: ($) =>
-      prec.right(seq(
-        field("keyword", $.flow_keyword),
-        optional(field("name", $.runnable_name)),
-        optional(field("params", $.params)),
-        optional(seq(field("arrow", $.arrow), field("return", $.type))),
-        field("colon", $.colon),
-        $._line_end,
-        body($, $.flow_body),
-      )),
+    flow: ($) => prec.right(seq($._flow_header, body($, $.flow_body))),
+    _flow_header: ($) => runnableHeader($, $.flow_keyword),
     flow_body: ($) =>
       structuralBody($,
         choice(
@@ -426,7 +369,7 @@ module.exports = grammar({
     reduce_statement: ($) =>
       choice(
         seq($.reduce_keyword, $._named_using_complement, $._line_end),
-        seq($.reduce_keyword, $._named_using_complement, $.colon, $._line_end,
+        seq($._reduce_named_block_header,
           repeat($._body_prefix), structuralBody($, seq($._from_complement, repeat($._trivia)))),
         prec.right(seq($.reduce_keyword,
           field("target", alias($._reduce_inline_line, $.inline_agic)))),
@@ -436,6 +379,9 @@ module.exports = grammar({
         seq($.reduce_keyword,
           field("target", alias($._reduce_empty_block, $.inline_agic))),
       ),
+    _reduce_named_block_header: ($) => seq(
+      $.reduce_keyword, namedUsing($), $.colon, $._line_end,
+    ),
     _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
       $.colon, field("content", alias($._inline_content, $.content)), $._text_line_end,
@@ -494,12 +440,7 @@ module.exports = grammar({
         $._order_complement,
         $._by_complements,
       )),
-    _named_using_complement: ($) =>
-      seq(
-        $.using_keyword,
-        $._required_space,
-        field("target", $.runnable_name),
-      ),
+    _named_using_complement: ($) => namedUsing($),
     _required_space: () => token.immediate(/[ \t]+/),
     _named_if_complement: ($) =>
       seq(
@@ -552,13 +493,15 @@ module.exports = grammar({
         $.descending_keyword,
       )),
     repeat_statement: ($) => prec.right(seq(
+      $._repeat_header, body($, $.repeat_body),
+    )),
+    _repeat_header: ($) => seq(
       $.repeat_keyword,
       optional($._repeat_count_complement),
       optional($._window_complement),
       $.colon,
       $._line_end,
-      body($, $.repeat_body),
-    )),
+    ),
     repeat_body: ($) => structuralBody($, choice(
       seq(
         $._statements,
@@ -705,6 +648,31 @@ module.exports = grammar({
     _diagnostic_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
   },
 });
+
+// Reduce complete headers before entering their bodies. Native recovery can
+// then discard a malformed member without reopening an enclosing header.
+// Hidden rules propagate the original public fields and leaves directly.
+function declarationHeader($, keyword, name) {
+  return seq(field("keyword", keyword), field("name", name), field("colon", $.colon), $._line_end);
+}
+
+function runnableHeader($, keyword) {
+  return seq(
+    field("keyword", keyword),
+    optional(field("name", $.runnable_name)),
+    optional(field("params", $.params)),
+    optional(seq(field("arrow", $.arrow), field("return", $.type))),
+    field("colon", $.colon), $._line_end,
+  );
+}
+
+function textHeader($, keyword) {
+  return seq(field("keyword", keyword), optional(field("name", $.identifier)), field("colon", $.colon));
+}
+
+function namedUsing($) {
+  return seq($.using_keyword, $._required_space, field("target", $.runnable_name));
+}
 
 // Content is a semantic value; spelling and line endings do not add wrappers.
 function content($, name) {

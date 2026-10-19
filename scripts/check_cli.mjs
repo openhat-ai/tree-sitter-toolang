@@ -207,6 +207,19 @@ try {
   }
   deepStrictEqual(recovery.stdout.includes("invalid_flow_statement"), true, recovery.stdout);
 
+  const blockHeaderPath = join(configDir, "malformed-block-header.too");
+  writeFileSync(blockHeaderPath, "flow first:\n  run before\n  repeat:\n    run inner\n    let value = sort ascending:\n      Orphaned text.\n    ## Following.\n    run after\n  run after_outer\n## Next.\nflow next:\n  pass\n");
+  const blockHeader = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, blockHeaderPath], {
+    cwd: REPO_ROOT, encoding: "utf8",
+  });
+  deepStrictEqual(blockHeader.status, 1, blockHeader.stdout + blockHeader.stderr);
+  for (const node of ["colon: (colon [0, 10] - [0, 11]", "(repeat_statement [2, 2] - [8, 0]",
+    "\n          (item_doc [6, 4] - [7, 0]", "(run_statement [7, 4] - [8, 0]",
+    "(run_statement [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
+    "\n  (flow [10, 0] - [12, 0]"]) {
+    deepStrictEqual(blockHeader.stdout.includes(node), true, blockHeader.stdout);
+  }
+
   const prefixRecoveryPath = join(configDir, "prefix-recovery.too");
   writeFileSync(prefixRecoveryPath, "flow first:\n#@ Wrong scope.\n# Outer.\n\n  ## First.\n  run one\n## Next.\nflow next:\n  pass\n");
   const prefixRecovery = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, prefixRecoveryPath], {

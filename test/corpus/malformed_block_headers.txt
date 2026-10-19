@@ -1,0 +1,189 @@
+==================
+Missing generate count preserves the completed flow header
+==================
+flow first:
+  run before
+  generate :
+    Orphaned text.
+  ## Following.
+  run after
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (invalid_flow_statement
+        (generate_keyword)
+        (ERROR
+          (colon))
+        (newline))
+      (ERROR)
+      (blank_line)
+      (item_doc
+        (comment_text))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Missing filter connector preserves a nested repeat header
+==================
+flow first:
+  run before
+  repeat:
+    run inner
+    keep in 2 lanes:
+      Orphaned text.
+    ## Following.
+    run after
+  run after_outer
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))
+          (invalid_flow_statement
+            (keep_keyword)
+            (ERROR
+              (in_keyword)
+              (integer_literal)
+              (lanes_keyword)
+              (colon))
+            (newline))
+          (ERROR)
+          (blank_line)
+          (item_doc
+            (comment_text))
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Malformed bound sort preserves its enclosing headers
+==================
+flow first:
+  run before
+  repeat:
+    run inner
+    let value = sort ascending:
+      Orphaned text.
+    ## Following.
+    run after
+  run after_outer
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))
+          (let_statement
+            (let_keyword)
+            (local_name)
+            (assign_operator)
+            (invalid_flow_statement
+              (sort_keyword)
+              (ERROR
+                (ascending_keyword)
+                (colon))
+              (newline)))
+          (ERROR)
+          (blank_line)
+          (item_doc
+            (comment_text))
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))

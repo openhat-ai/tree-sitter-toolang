@@ -63,12 +63,12 @@ flow last:
     (agic_keyword)
     (runnable_name)
     (colon)
-    (ERROR
-      (newline)
-      (recall_keyword)
-      (assign_operator))
     (newline)
     (agic_body
+      (ERROR
+        (recall_keyword)
+        (assign_operator)
+        (newline))
       (plain_comment)
       (directive
         (directive_key)
@@ -128,11 +128,11 @@ flow last:
     (struct_keyword)
     (type_name)
     (colon)
-    (ERROR
-      (newline)
-      (identifier))
     (newline)
     (struct_body
+      (ERROR
+        (identifier)
+        (newline))
       (invalid_missing_body)))
   (item_doc
     (comment_text))
