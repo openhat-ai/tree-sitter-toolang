@@ -1,178 +1,194 @@
 # Toolang Grammar
 
-This reference describes the current source syntax and public CST, including
-[Unreleased changes](CHANGELOG.md#unreleased) after 0.4.0-alpha.4. Published
-packages follow the reference at their matching Git tag.
+This document defines the source syntax of Toolang `.too` files through grammar
+productions, constraints, and examples. It follows the current grammar; use the
+matching Git tag when reading the reference for a published package.
 
-[grammar.js](grammar.js), [keywords.js](keywords.js), and the layout scanner
-[src/scanner.c](src/scanner.c) define parsing. [src/node-types.json](src/node-types.json)
-lists generated node/field metadata; [corpus cases](test/corpus) and
-[complete-source fixtures](tests/fixtures) exercise the contract. Documents in
-`docs/plans/` record design decisions and history.
+- [Conventions](#conventions)
+- [Lexical structure](#lexical-structure) and [block layout](#block-layout)
+- [Text](#text)
+- [Types](#types) and [runnable signatures](#runnable-signatures)
+- [Declarations](#declarations)
+- [Shared directives](#shared-directives)
+- [Agics](#agic) and [flows](#flow)
+- [Tooling notes](#cst-node-contract) and [compatibility](#compatibility)
 
-The parser identifies syntax and preserves authored text. The
-[Toolang runtime reference](https://github.com/openhat-ai/toolang/blob/main/docs/program.md)
-owns signature defaults, name resolution, semantic validation, binding effects,
-and execution. Parsing success does not establish runtime validity.
+Name resolution, type defaults, input binding, and execution are defined by the
+[Toolang language reference](https://github.com/openhat-ai/toolang/blob/main/docs/program.md).
+The productions here describe source forms; the constraints beside them are
+part of the syntax. Examples are complete source files for parsing, although
+referenced resources and runnable names may require definitions at runtime.
 
-## EBNF
+## Conventions
 
-[GRAMMAR.ebnf](GRAMMAR.ebnf) is generated from `src/grammar.json` by
-`npm run generate:ebnf`. It preserves authored rule names and order, including
-hidden and recovery rules. Annotations retain fields, aliases, precedence,
-token boundaries, and grammar-level metadata; external token productions name
-opaque scanner contracts. Regex payloads retain their original JSON-encoded
-patterns and flags. The file's header defines its notation.
+### EBNF
 
-This is an implementation reference, not a standalone valid-source grammar:
-ordinary EBNF tools do not enforce its annotations or scanner contracts.
-The lexical, layout, validity, and CST requirements below still apply.
-Helper productions do not imply public CST nodes. Do not edit the generated
-file; `npm run check:ebnf` verifies it without writing, and CI checks for stale
-committed output after regenerating the grammar.
+The following notation is used throughout:
 
-In the schematic forms below, uppercase names are placeholders, brackets mean
-optional syntax, and `|` separates alternatives. `BODY` means authored text,
-which can be same-line or indented only where the owning production permits.
-Code blocks labeled `too` are complete parser examples, not runtime programs
-with every external target resolved.
+| Notation | Meaning |
+| --- | --- |
+| `name ::= expression ;` | Defines a production |
+| `"text"` | Literal characters, with JSON string escapes |
+| `A B` | Concatenation |
+| `A \| B` | Alternative |
+| `(A)` | Grouping |
+| `A?`, `A*`, `A+` | Optional, zero or more, one or more |
+| `/pattern/` | A lexical regular expression |
+| `? description ?` | A lexical or contextual condition explained in prose |
+
+`block(P)` denotes a header line ending followed by an indented body described
+by `P`. `optional_block(P)` also permits the header without an indented body.
+Both use the [layout rules](#block-layout). Blank lines and structural comments
+may appear before and between structural entries and after the last entry.
+Literal text follows its own rules once it begins.
+
+Spaces between grammar symbols follow the [token separation rules](#tokens).
+Productions do not insert line breaks between ordinary tokens. Newlines occur
+through `newline`, `line_end`, or an explicitly defined block/text form. Names in
+these productions identify source concepts, independently of parser node names.
+
+[GRAMMAR.ebnf](GRAMMAR.ebnf) is the complete annotated implementation view,
+generated from the Tree-sitter grammar. It includes helper and recovery rules.
+This readable reference presents valid source forms and the lexical/layout
+conditions needed to interpret them.
 
 ## Lexical Structure
 
-[keywords.js](keywords.js) defines active vocabulary, recognition contexts,
-and name exclusions explicitly; the scanner header is generated from it, not
-from CST rule names. Active words are recognized only in their grammar context.
-Variable names exclude the active Flow vocabulary plus `default` and `none`;
-`far` and `near` are contextual recall values and remain valid variable names.
-No inactive words are reserved. The [removed spellings](CHANGELOG.md#unreleased)
-are neither keywords nor variable exclusions.
+### Names and Integers
 
-| Name positions | Accepted spelling |
-| --- | --- |
-| `identifier`, `runnable_name`, `agent_name` | `[a-z][a-z0-9_]*` |
-| `local_name`, `handle_name`, named `param_name` | Same lowercase pattern, excluding the variable vocabulary above |
-| `type_name` | `[A-Z][A-Za-z0-9]*` |
-| `cap_name`, `job_name` | `[a-z][a-z0-9_-]*` |
-| `runnable_ref` in route lists | `([A-Za-z_][A-Za-z0-9_-]*::)*(agic:\|flow:)?[A-Za-z_][A-Za-z0-9_-]*` |
+```ebnf
+name           ::= /[a-z][a-z0-9_]*/ ;
+type_name      ::= /[A-Z][A-Za-z0-9]*/ ;
+cap_name       ::= /[a-z][a-z0-9_-]*/ ;
+job_name       ::= /[a-z][a-z0-9_-]*/ ;
+variable_name  ::= name ;
+parameter_name ::= variable_name | "_" ;
+integer        ::= /[0-9]+/ ;
 
-`local_name`, `handle_name`, and `param_name` are leaves. Parameters additionally
-accept `_`, the explicit primary-input marker. `_` cannot be a local destination,
-await handle, implicit Flow text head, or same-line let value. Parameter docs
-and `{{_}}` remain supported. Other identifier categories keep their existing
-constraints; vocabulary membership does not globally prohibit every name.
+route_name     ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/ ;
+```
 
-Keyword matching uses Tree-sitter's
-[word extraction](https://tree-sitter.github.io/tree-sitter/creating-parsers/3-writing-the-grammar.html#keyword-extraction)
-with `/[A-Za-z_][A-Za-z0-9_]*/`. This boundary pattern is broader than valid
-authored names: `runWorker` is one word even though it is not a runnable name.
-The word rule precedes narrower name tokens so exact built-in type words are
-recognized before equal-length authored type names. Fixed-word alternatives
-use aliases of individual keyword tokens to retain leaf CST nodes; wrapping
-the entire choice in `token(...)` would bypass keyword extraction.
+`variable_name` excludes every word in `flow_keyword` below, together with
+`default` and `none`. This applies to local destinations, await handles, and
+named parameters. Other `name` positions, including declaration names and named
+call targets, do not acquire that exclusion. `far` and `near` remain valid
+variable names. `_` is accepted only in parameter-name positions; it is not a
+local destination or await handle.
 
-The generated EBNF records horizontal `extras` and required-separator rules;
-it does not insert optional spaces between every pair of tokens. Apply these
-rules to every structural production:
+Integers contain decimal digits only. Signs, fractions, exponent notation, and
+underscores are not accepted in structural numeric positions. Leading zeros
+are allowed. A numeric value of one, including `01`, requires `lane` or `time`;
+all other values require `lanes` or `times`. Numeric ranges are validated by
+the language consumer.
 
-- A token is indivisible. Adjacent keywords, names, or numbers require one or
-  more spaces or tabs; a newline cannot substitute for that separator.
-  A continuous ASCII word-character sequence (`[A-Za-z0-9_]+`) cannot be split
-  to satisfy a production: `runworker`, `job2`, and `2times` remain whole.
-  This does not broaden valid names or integers.
-- Independent grammar symbols delimit tokens and allow optional spaces or tabs
-  on either side. Examples: `flow work(input?:Text)->Text[]:`,
-  `let h=async run worker`, `generate 2->Text:Text.`, and `run worker# Note.`.
-  Delimiting tokens does not make an otherwise invalid production legal.
-- Compound symbols stay contiguous: `->`, `+=`, `-=`, and `[]` cannot become
-  `- >`, `+ =`, `- =`, or `[ ]`. `Text []` is valid. Parentheses are separate
-  tokens, so `( )` is valid. Comment markers `#@`, `##`, `##!`, and `#!` also
-  keep their spelling; separating them may introduce a different comment kind.
-- Punctuation inside a name or reference is part of that token: `my-skill` and
-  `ns::flow:work` do not allow internal whitespace. A raw `with` reference needs
-  an explicit separator after its kind: `with skill ./foo` is valid;
-  `with skill./foo` is invalid because `.` is reference text, not a delimiter.
-- Once a production selects Content, its interior remains literal. For example,
-  `let text = 2times runworker` is text. Active operation heads still select
-  syntax at the boundaries described below.
+### Keywords
 
-Tree-sitter's horizontal `extras` handle optional spacing. Required separators
-use hidden rules. The external scanner checks the complete right boundary of
-integer tokens without consuming punctuation; all counts, windows, lanes, and
-numeric directives share that check. Integer nodes remain leaves, including
-leading zeros. Numeric value one requires `lane`/`time`, including `01`; all
-other integers use `lanes`/`times`. Newlines, indentation, and raw text
-remain owned by the external scanner. No whitespace helper appears in the CST.
+Keywords are lowercase and case-sensitive. Their recognition depends on the
+source position: the following sets determine implicit-text boundaries and
+variable exclusions, rather than reserving words in every name or text position.
 
-At flow statement and named-let value boundaries, complete active operation
-words select syntax before the free-form text alternative. Thus `runworker`
-remains text, while incomplete `run` or malformed `run worker extra` is an
-error. The scanner's binding classifier is shared across bindable operations;
-`exec`, `until`, and `_` retain separate diagnostics because they cannot
-be bound. Explicit text bodies do not apply operation-head classification.
-Recovery text excludes leading horizontal whitespace so it cannot change the
-start of a competing structural token. Once a colon introduces an inline body,
-the content production handles missing content; malformed-tail recovery cannot
-reinterpret that header.
+```ebnf
+declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
+                      | "prompt" | "task" | "chore" | "context" | "instruct"
+                      | "agic" | "flow" ;
+operation_keyword   ::= "run" | "seek" | "ask" | "generate" | "map" | "reduce"
+                      | "keep" | "drop" | "sort" | "repeat" | "spawn" | "await" ;
+clause_keyword      ::= "until" | "from" | "windowing" | "using" | "if" | "by"
+                      | "in" | "lane" | "lanes" | "ascending" | "descending"
+                      | "time" | "times" | "first" | "last" ;
+query_key           ::= "models" | "tools" | "skills" | "services"
+                      | "psyches" | "prompts" ;
+route_key           ::= "hands" | "handoffs" ;
+directive_keyword   ::= query_key | route_key | "recall" | "lanes"
+                      | "context" | "instruct" ;
+role                ::= "user" | "assistant" | "tool" ;
+agic_keyword        ::= directive_keyword | role | "pass" ;
+flow_keyword        ::= declaration_keyword | operation_keyword | clause_keyword
+                      | agic_keyword | "let" | "exec" | "async" | "_" ;
+```
+
+There are no reserved inactive words. Former spellings such as `scatter`,
+`gather`, `storm`, `settle`, and `rank` follow ordinary name/text rules; they
+are not alternative operations. [CHANGELOG.md](CHANGELOG.md#unreleased) records
+removed syntax and migration guidance.
+
+### Tokens
+
+Adjacent words or numbers require at least one space or tab. A continuous
+ASCII word-character sequence (`[A-Za-z0-9_]+`) is indivisible: `runworker`,
+`runWorker`, and `2times` cannot split into smaller tokens. A newline cannot
+replace a required horizontal separator.
+
+Independent grammar symbols delimit tokens and permit surrounding spaces/tabs.
+For example, `flow work(input?:Text)->Text[]:`, `let h=async run worker`, and
+`generate 2->Text:Text.` use valid token boundaries. Compound symbols remain
+contiguous: `->`, `+=`, `-=`, `[]`, and comment markers cannot contain whitespace.
+Thus `Text []` is valid while `Text[ ]` is invalid.
+
+Punctuation inside a name or reference belongs to that token: `my-skill` and
+`ns::flow:work` do not allow internal whitespace. Raw import references require
+a separator after the kind: `with skill ./foo` is valid; `with skill./foo` is
+invalid. Once a text form is selected, its interior follows the text rules.
+
+### White Space
+
+```ebnf
+hspace         ::= /[ \t]+/ ;
+newline        ::= "\n" | "\r\n" ;
+blank_line     ::= /[ \t]*/ newline ;
+line_end       ::= inline_comment? (newline | eof) ;
+inline_comment ::= "#" comment_text ;
+comment_text   ::= /[^\r\n]*/ ;
+eof            ::= ? end of source ? ;
+```
+
+Horizontal spacing between structural tokens is otherwise optional. Indentation
+and line endings remain significant. EOF can terminate the last nonempty line
+and close its enclosing bodies; it cannot supply a missing body or text value.
 
 ### Comments and Documentation
 
-All four categories are comments; the CST has no generic comment wrapper.
-Each physical comment line produces one node. Full-line ranges start at `#`
-after indentation and include the newline when present. Inline `plain_comment`
-ranges exclude the newline. A final comment may end at EOF without a newline.
+```ebnf
+comment        ::= plain_comment | shebang_comment | module_doc | item_doc ;
+plain_comment  ::= "#" comment_text comment_end ;
+shebang_comment ::= "#!" comment_text comment_end ;
+module_doc     ::= ("#@" | "##!") hspace? doc_text? comment_end ;
+item_doc       ::= "##" hspace? (parameter_doc | doc_text)? comment_end ;
+parameter_doc  ::= "@param" hspace parameter_name hspace doc_text ;
+doc_text       ::= /[^ \t\r\n][^\r\n]*/ ;
+comment_end    ::= newline | eof ;
+trivia         ::= blank_line | comment ;
+```
 
-- `#` is a **plain comment**, including inline comments where `line_end` allows
-  them. Inline `##`, `#@`, `##!`, and `#!` remain plain comments.
-- `#!` is a **shebang comment** only at byte zero. Later or indented shebangs
-  are plain comments. The interpreter text is not validated or executed.
-  If the Tree-sitter runtime skips a leading BOM, `#!` after it is still a
-  plain comment.
-- `##` is an **item doc comment**. Consecutive lines document the immediately
-  following supported item or statement at the same indentation. Blank lines,
-  plain/module comments, other syntax, and scope endings interrupt attachment.
-  Consumers own attachment; the parser exposes individual lines.
-- `#@` is a **module doc comment** at column zero between top-level declarations
-  or before/after them. It documents the complete module, interrupts item-doc
-  attachment, and does not supply a runnable's calling description. Indented
-  structural `#@` is invalid. Prefer `#@` in new source; the old `##!` spelling
-  remains accepted, including its historical indented structural positions.
-  Consumers collect column-zero module docs; accepting indented legacy comments
-  does not add parent-documentation semantics.
-- Inside explicit text blocks, every marker remains literal text at or beyond
-  the text baseline, including the first text line.
+These forms have contextual constraints:
 
-`## @param NAME DESCRIPTION` documents one runnable parameter. Spaces/tabs after
-`##` are optional; those after `@param` and the name are required. The name uses
-`param_name`, including `_`. A description is required on the same physical
-line; Unicode, punctuation, `#`, and further `@` characters remain text. There
-is no continuation syntax. Types and optionality come from the signature.
+- At structural comment positions, a recognized longer marker takes precedence
+  over `#` or `##`, subject to the position restrictions below.
+- `#!` is a shebang only at byte zero. A later or indented `#!`, including one
+  after a leading BOM, is a plain comment. The interpreter text is unrestricted.
+- `#@` is module documentation only at column zero. Indented structural `#@` is
+  invalid. The legacy `##!` module marker also accepts its historical indented
+  positions. Module documentation never interprets parameter tags.
+- `##` introduces item documentation. Consecutive lines at the item's indentation
+  can document the following item. Blank lines, other comment kinds, intervening
+  syntax, and scope endings interrupt attachment; consumers perform attachment.
+- A leading `@param` followed by space, tab, a line ending, or EOF selects a
+  parameter tag. Both name and same-line description are required. A malformed
+  tag cannot fall back to ordinary documentation. `@parameter`, `@param:`,
+  `@return`, and `@param` later in prose remain ordinary documentation text.
+- Inline `#`, `##`, `#@`, `##!`, and `#!` all introduce plain comments where
+  `line_end` allows them. In indented explicit text, every marker is literal.
 
-Only leading `@param` followed by a space, tab, line ending, or EOF selects the
-tag: `@parameter`, `@parametric`, `@param:`, `@return`, or `@param` later in prose
-remain ordinary item-doc text. A malformed
-reserved tag is a syntax error, never plain documentation, and recovery stays
-on that physical line. Module docs never interpret tags. Unknown or duplicate
-parameter names are syntactically valid; consumers validate binding and combine
-runnable/parameter descriptions for help and calling hints.
-
-| Public node | Fields |
-| --- | --- |
-| `plain_comment`, `shebang_comment` | Leaves with full source text. |
-| `module_doc_comment` | Optional `text: comment_text`. |
-| `item_doc_comment` | Optional `text: comment_text` or `parameter: param_doc_tag`, never both. |
-| `param_doc_tag` | Required `param: param_name` and `description: comment_text`; queryable `"@param"` token. |
-
-Empty doc comments omit `text`. Field ranges exclude markers and leading
-separating whitespace, preserve trailing whitespace, and use exact UTF-8 byte
-positions. `param_doc_tag` is a child of item documentation, not a fifth
-comment category.
+Descriptions may contain Unicode, punctuation, `#`, and further `@` characters.
+There is no parameter-documentation continuation syntax. Unknown or duplicate
+parameter names remain syntactically valid.
 
 ```too
 #!/usr/bin/env too
 #@ Tools for concise summaries.
 
-## Summarize material when a short overview is needed.
-## @param _ Source material to summarize.
+## Summarize the supplied material.
+## @param _ Source material.
 ## @param style Preferred summary style.
 agic summarize(_: Text, style?: Text):
   Summarize {{_}}.
@@ -180,91 +196,141 @@ agic summarize(_: Text, style?: Text):
 
 ## Block Layout
 
-- Top-level declarations start at column zero. The first substantive entry of
-  a body must be deeper than its header and establishes that body's baseline.
-  Structural siblings share that baseline; deeper structural entries require
-  an enclosing body. Dedents must reach an existing ancestor baseline.
-- Blank lines and structural comments do not establish indentation or satisfy
-  a required body. They cannot make an empty block borrow an outer statement.
-  Cap/job bodies remain optional; `pass` is allowed only in agic/flow bodies.
-- Any positive indentation width is supported. Tabs advance to eight-column
-  stops. A structural prefix cannot mix spaces and tabs, and siblings cannot
-  interchange their spellings at the same baseline. Different nested levels
-  may use different styles; there is no whole-file style restriction.
-  Form feed is not indentation.
-- Explicit multiline text establishes its own baseline. Deeper Markdown
-  indentation, keywords, and `#`/`##` lines are literal content. Dedenting below
-  the text baseline ends the text block. Relative indentation and source bytes
-  are preserved. Same-line text ends on that physical line.
-- Structural `##` documentation attaches to an immediately following entry
-  at the same indentation; blank lines and ordinary comments detach it.
+Top-level declarations start at column zero. The first substantive body entry
+must be deeper than its header and establishes the body's baseline. Structural
+siblings share that baseline. A deeper structural entry requires an enclosing
+body; a dedent must reach an existing ancestor baseline.
 
-### Validity and Recovery
+Any positive indentation width is accepted. Tabs advance to eight-column stops.
+A structural prefix cannot mix spaces and tabs, and sibling entries cannot
+interchange their spellings at one baseline. Nested levels may use different
+styles. Form feed is not indentation.
 
-- Malformed entries remain invalid during recovery. Unexpected content is
-  contained to its physical line so it cannot borrow tokens from a later header.
-- Missing required structure emits `invalid_missing_body`; missing text emits
-  `invalid_missing_content`; an existing flow/repeat body without its required
-  statement emits `invalid_missing_statement`. Each is a zero-width leaf at the
-  next substantive boundary or EOF, consuming no source and opening no frame.
-  Empty cap/job bodies and directives-only agics remain valid. Directives alone
-  cannot satisfy flow statements; `until` alone cannot satisfy repeat statements;
-  `from` alone cannot supply inline reducer content. Indented Markdown in explicit
-  text is real content, while structural comments cannot fill a required body.
-  In malformed text bodies, outer comments before the diagnostic remain trivia
-  on the owner, outside `content`. They cannot resume a text body after a dedent.
-- EOF can finish a real line and close open bodies; it cannot supply body
-  content. Scanner state is serialized completely. Input exceeding its capacity
-  is rejected, never silently truncated. With Tree-sitter's 1024-byte buffer,
-  168 frames fit, including the root and any structural or text-mode frames;
-  this is not a uniform source-nesting limit.
+Blank lines and structural comments do not establish indentation or satisfy a
+required body. The `block(P)` notation requires the entries described by `P`;
+`optional_block(P)` allows the body to be absent. Cap and job bodies are optional.
+`pass` is accepted only as an entire agic or flow body. A directive-only agic is
+valid; a directive-only flow and a condition-only repeat are invalid.
 
-The generated EBNF retains external layout signals such as `_indent` and
-`_dedent`; their behavior is specified above, not inferred from their names.
-They do not expose CST wrapper nodes. Recovery branches also remain in the
-implementation reference and must not be mistaken for valid source alternatives.
-For example, an empty repeat retains `repeat_statement.body: repeat_body` containing
-`invalid_missing_body`; the following sibling remains outside that body. The
-generated `repeat_body.statement` field is optional only to represent this
-diagnostic state. Every valid repeat still requires an ordinary statement.
+Indented text establishes its own baseline. Deeper Markdown indentation and
+comment markers are literal text; a dedent below that baseline ends the text.
+Relative indentation and physical text bytes are retained.
 
+```too
+flow inspect:
+  repeat 2 times:
+    run:
+      Inspect the material.
+        This indentation belongs to the text.
+    until: The inspection is complete.
+  run: Summarize the result.
+```
 
-Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
-descendant before lowering, formatting, or execution. `root.has_error` alone
-is insufficient because explicit diagnostic nodes are ordinary CST nodes.
-Generated field metadata describes recovery trees too; optional metadata does
-not relax the valid-source requirements below.
+## Text
+
+Text is unquoted. The containing construct selects same-line text, an indented
+text block, or an implicit paragraph.
+
+```ebnf
+text          ::= inline_text line_end
+                | line_end blank_line* indented_text ;
+inline_text   ::= /[^#\r\n]+/ ;
+indented_text ::= ? nonempty literal text block at a deeper baseline ? ;
+paragraph(C)  ::= ? implicit text paragraph using boundary set C ? ;
+```
+
+A required `inline_text` must contain a non-space/tab character before any comment
+marker and ends on its physical line. Indented text may start after blank lines;
+all lines at or beyond its baseline, including `#` markers and keywords, are
+literal. Markdown fences have no special grammar meaning. Structural comments
+outside the text cannot be followed by a resumed text block. Reducers have the
+explicit exception described under [Reduce Initializers](#reduce-initializers).
+
+An implicit paragraph checks the first complete token of every substantive
+line, including continuations. A word in its boundary set selects structural
+syntax; a malformed structural form cannot fall back to text. Keyword prefixes
+remain literal. Adjacent text lines and one intervening blank line form one
+paragraph. Two blank lines, a structural comment, dedent, or EOF ends it.
+Relative Markdown indentation can continue the paragraph; a keyword-led line
+at an invalid structural depth is an error. Embedded `#` remains paragraph text.
+
+Agic messages use `paragraph(agic_keyword)`; flow prose uses
+`paragraph(flow_keyword)`. Explicit text does not apply those boundary sets.
+Template spellings such as `{{_}}`, `{{style}}`, and `{{_1._}}` remain literal
+source text; consumers interpret them.
+
+```too
+flow explain:
+  let note = A same-line text value.
+  let literal =
+    run is literal inside this text block.
+    # This line is text too.
+  Explain the material.
+  Continue the same paragraph.
+
+  Continue after one blank line.
+```
+
+## Types
+
+```ebnf
+type         ::= (builtin_type | type_name) "[]"* ;
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" ;
+return_type  ::= "->" type ;
+```
+
+An authored type uses `type_name`. Each `[]` adds an array suffix; `Text[][]`
+is valid. `Run` and `Future` are ordinary authored names, not built-ins. Generic
+notation such as `Run<Text>` is not accepted.
+
+## Runnable Signatures
+
+```ebnf
+signature  ::= name? parameters? return_type? ;
+parameters ::= "(" (parameter ("," parameter)*)? ")" ;
+parameter  ::= parameter_name "?"? (":" type)? ;
+```
+
+Agics and flows use the same signature. Name, parameter list, parameter types,
+and return type may each be omitted. `()` is an explicit empty list; a trailing
+comma is invalid. Parameter order, duplicates, name resolution, and defaults
+are language-level validation rather than syntax restrictions.
 
 ## Declarations
 
-`source_file` contains declarations and trivia directly, in source order. The
-accepted declaration heads are `with`, `struct`, `psyche`, `skill`, `service`,
-`prompt`, `task`, `chore`, `context`, `instruct`, `agic`, and `flow`. There is no
-public `item` wrapper. Arbitrary top-level prose is invalid.
+```ebnf
+program     ::= trivia* (declaration trivia*)* ;
+declaration ::= import | struct | cap | job | context | instruct | agic | flow ;
+```
+
+A source file is a sequence of declarations and trivia. Arbitrary top-level
+prose is invalid. Declaration order does not change their syntactic forms.
 
 ### Imports
 
-Schematic form: `with KIND REFERENCE`, where `KIND` is `psyche`, `skill`,
-`service`, or `prompt`. A reference requires nonblank text after its separator;
-it is raw text rather than a parsed path or expression. The `with` node exposes
-`kind: cap_kind` and `reference: text_line`; comments and the terminator belong
-to `line_end`.
+```ebnf
+import        ::= "with" cap_kind raw_reference line_end ;
+cap_kind      ::= "psyche" | "skill" | "service" | "prompt" ;
+raw_reference ::= /[^#\r\n]+/ ;
+```
+
+A raw reference requires horizontal separation after its kind and at least one
+non-space/tab character. Its interior is raw text, not a path or expression
+parsed by this grammar.
 
 ```too
 with skill ./skills/review
 with prompt library/summary
 ```
 
-## Types
+### Structs
 
-A `type` has `base: builtin_type | type_name` and zero or more `suffix: array_suffix`
-fields. Built-ins are exactly `Text`, `Number`, `Boolean`, `Json`, and `Part`.
-Each contiguous `[]` adds an array suffix; `Text[][]` is valid. There is no
-source-level generic notation such as `Run<Text>`.
+```ebnf
+struct ::= "struct" type_name ":" block(field+) ;
+field  ::= name "?"? ":" type line_end ;
+```
 
-A struct has `name: type_name` and `body: struct_body`. It requires at least one
-`field`; each field has `name: identifier`, optional `optional: optional_marker`
-(`?`), and required `type: type`.
+A struct requires at least one field. Fields may carry the optional marker `?`.
 
 ```too
 struct Report:
@@ -275,16 +341,18 @@ struct Report:
 
 ## Caps
 
-Schematic form: `KIND NAME:` followed by an optional indented body, with `KIND`
-from `psyche`, `skill`, `service`, or `prompt`. The public node has that kind's
-name and fields `kind`, `name: cap_name`, and `body: cap_body`.
+```ebnf
+cap             ::= cap_kind cap_name ":" optional_block(definition_body) ;
+definition_body ::= property* definition_text? ;
+property        ::= name "=" property_value line_end ;
+property_value  ::= /[^#\r\n]+/ ;
+definition_text ::= ? nonempty literal text at the definition body's baseline ? ;
+```
 
-A cap body contains repeated `property` fields followed by optional
-`content: content`. A property has `key: identifier`, `operator: assign_operator`
-(`=`), and raw `value: text_line`. Empty and property-only bodies are valid.
-A property value can contain only spaces/tabs at the parser level. Once text
-starts, later property-looking lines remain text. Same-line cap bodies are not
-accepted. Property schemas and required content are validated by the runtime.
+Properties form a leading prefix. Once definition text begins, later
+property-looking lines remain text. Empty and property-only bodies are valid;
+same-line cap bodies are not accepted. A raw property value may contain only
+spaces/tabs. Property schemas and required content are validated by consumers.
 
 ```too
 skill review:
@@ -295,10 +363,9 @@ skill review:
 
 ### Prompts
 
-Prompt declarations share the cap body grammar and have no typed parameter list.
-A leading property-looking line is still a property syntactically; the runtime
-rejects prompt properties. Placeholders such as `{{_}}` and `{{tone}}` remain
-literal bytes in `content`; extraction and substitution belong to consumers.
+`prompt` shares the cap syntax and has no typed parameter list. A leading
+property-looking line is still parsed as a property, although the Toolang
+runtime rejects prompt properties. Placeholders are part of the text.
 
 ```too
 prompt rewrite:
@@ -307,10 +374,11 @@ prompt rewrite:
 
 ## Jobs
 
-`task NAME:` and `chore NAME:` expose `name: job_name` and `body: job_body`.
-Job bodies use the same optional property-prefix/content shape as caps, with
-repeated `property` fields and optional `content`. Scheduling and property
-validation are runtime responsibilities.
+```ebnf
+job ::= ("task" | "chore") job_name ":" optional_block(definition_body) ;
+```
+
+Tasks and chores use the same property-prefix/text form as caps.
 
 ```too
 chore review_changes:
@@ -321,10 +389,13 @@ chore review_changes:
 
 ## Context And Instruct
 
-Schematic forms: `context [NAME]: BODY` and `instruct [NAME]: BODY`. Each exposes
-optional `name: identifier` and required `content: content`. Both same-line and
-indented text are accepted; omission of the name remains visible as an absent
-field. Named selection and defaults are runtime semantics.
+```ebnf
+context  ::= "context" name? ":" text ;
+instruct ::= "instruct" name? ":" text ;
+```
+
+Both forms require text and allow an omitted name. Same-line and indented text
+are accepted.
 
 ```too
 instruct: Return a concise answer.
@@ -332,76 +403,46 @@ context project:
   Use the supplied project context.
 ```
 
-## Runnable Signatures
-
-Schematic header: `agic|flow [NAME][(PARAMS)] [-> TYPE]:`. Names are optional;
-multiple unnamed declarations parse. A parameter has a required `param_name`,
-optional `?`, and optional `: TYPE`. A parameter list can be empty and has no
-trailing comma. Type annotations use the [type syntax](#types).
-
-Both declarations expose optional `name: runnable_name`, `params: params`, and
-`return: type`. A `params` node has repeated `param` fields; each `param` has
-`name`, optional `optional`, and optional `type`. Omitted lists, empty lists,
-and omitted types have distinct trees. The parser does not insert defaults or
-validate parameter order, duplicates, or declaration-name uniqueness.
-
 ## Shared Directives
 
-Agics and flows accept directives before messages/statements. Each `directive`
-exposes `key`, `operator`, and `value`. There is no separate settings wrapper.
+```ebnf
+directive     ::= query_key query_operator query_value line_end
+                | route_key "=" route_value line_end
+                | "recall" "=" recall_value line_end
+                | "lanes" "=" (integer | "default") line_end
+                | ("context" | "instruct") "=" text_reference line_end ;
+query_operator ::= "=" | "+=" | "-=" ;
+query_value   ::= /[^ \t#\r\n][^#\r\n]*/ ;
+route_value   ::= "none" | "*" | route_name ("," route_name)* ;
+recall_value  ::= "none" | "default" | "*"
+                | recall_source ("," recall_source)* ;
+recall_source ::= "far" | "near" ;
+text_reference ::= "default" | "none" | name ;
+```
 
-| Keys | Operators | Parsed value |
-| --- | --- | --- |
-| `models`, `tools`, `skills`, `services`, `psyches`, `prompts` | `=`, `+=`, `-=` | Nonblank raw `directive_value` up to a comment or line ending |
-| `hands`, `handoffs` | `=` | `route_value`: comma-separated `runnable_ref` entries, or standalone `none` / `*` |
-| `recall` | `=` | `recall_value`: comma-separated `far` / `near`, or standalone `none` / `default` / `*` |
-| `lanes` | `=` | `integer_literal` or `default` |
-| `context`, `instruct` | `=` | `text_ref`: `identifier`, `default`, or `none` |
+Directives precede agic messages or flow statements. Values are required.
+Only query directives accept `+=` and `-=`. Query values are raw text up to a
+comment or line ending; the query language is validated separately. `none`, `*`,
+and recall's `default` stand alone rather than appearing in lists.
 
-Values are required. Special list values stand alone. Route references use the
-broader spelling in [Lexical Structure](#lexical-structure); they are not ordinary
-named call targets. `recall = auto` is invalid; query-expression validation,
-duplicate directives, resource selection, and numeric ranges belong to the
-runtime. Runnable-local `context:` / `instruct:` blocks and bare selectors are
-invalid. Full examples appear [below](#shared-directives-and-flow-clauses-example).
-
-## Text
-
-Same-line text, indented text, and implicit paragraphs expose the same semantic
-`content` node. Flow and message paragraphs have different keyword boundaries.
-Cap/job text follows its property prefix. Source forms are selected by their
-owner; they are not interchangeable everywhere.
-
-Same-line content requires a non-space/tab character before any comment marker
-and ends on that physical line. A raw `with` reference also requires nonblank
-text after its separator; it is a direct `text_line`, not a `content` value.
-Indented explicit text treats all markers as literal and ends on dedent; Markdown
-fences are ordinary text. Leading blank lines may precede explicit text, but
-outer structural comments cannot be followed by a resumed text body. Reducer
-headers retain the exception described under Flow. In implicit paragraphs,
-line-initial comment markers are structural while embedded `#` remains text.
-The scanner preserves text and paragraph boundaries. The hidden recognition
-rules produce `text_line` leaves, without additional public wrapper nodes.
+Route names permit qualification and a broader spelling than ordinary named
+call targets. Recall accepts either source order; `auto` is invalid. Context
+and instruct selectors require `=`; runnable-local `context:` / `instruct:`
+blocks and bare selectors are invalid.
 
 ## Agic
 
-An agic has `body: agic_body`, containing repeated `directive` and `message`
-fields directly in source order. Directives must precede messages. A body may
-contain only directives; otherwise at least one message is required. Standalone
-`pass` is the whole-body alternative and cannot follow directives or coexist
-with messages.
+```ebnf
+agic      ::= "agic" signature ":" block(agic_body) ;
+agic_body ::= directive+ message* | message+ | "pass" line_end ;
+message   ::= role ":" text | paragraph(agic_keyword) ;
+```
 
-A `message` has optional `role: role` (`user`, `assistant`, or `tool`) and
-required `content: content` in valid source. Role headers require a colon and
-actual content, either same-line or indented. Bare paragraphs produce the same
-message node with an absent role; no default role is fabricated in the CST.
-
-At every substantive line, complete agic keywords select structural syntax
-before paragraph fallback. Malformed active heads expose
-`invalid_agic_reserved_message` or native errors. Prefixes remain text; use an
-explicit role when literal content begins with an active keyword. Adjacent bare
-lines and one intervening blank line stay in the same paragraph; two blank
-lines, a structural comment, dedent, or EOF ends it. Embedded `#` remains text.
+A body may contain directives alone, or messages optionally preceded by
+directives. `pass` is a whole-body alternative and cannot follow directives or
+coexist with messages. A role header requires a colon and actual text. A bare
+paragraph has no explicit role. When literal text begins with an agic keyword,
+use a role header or an indented text body.
 
 ```too
 agic summarize(_: Text, style?: Text) -> Text:
@@ -413,127 +454,214 @@ agic summarize(_: Text, style?: Text) -> Text:
 
 ## Flow
 
-A flow has `body: flow_body` with repeated `directive` and `statement` fields in
-source order. Directives precede statements; directives alone are insufficient.
-Standalone `pass` is the whole-body alternative and cannot follow directives or
-coexist with statements.
+```ebnf
+flow      ::= "flow" signature ":" block(flow_body) ;
+flow_body ::= directive* statement+ | "pass" line_end ;
+```
+
+A flow requires statements, optionally preceded by directives. Directives alone
+are insufficient. `pass` is the whole-body alternative and cannot coexist with
+directives or statements. The declaration name may be omitted.
 
 ### Statement Forms
 
-These are schematic forms. Named targets use bare `runnable_name`; inline
-runnables use `[-> TYPE]: BODY`. No target accepts an argument list. An inline
-body is final in its header; named headers end at `line_end` without trailing
-prose punctuation. All statement keywords are lowercase and case-sensitive.
+```ebnf
+statement ::= let | exec | bindable | implicit_run ;
+bindable  ::= run | spawn | await | seek | ask | generate | map | reduce
+            | keep | drop | sort | repeat ;
 
-| Operation | Forms | Notable CST fields |
-| --- | --- | --- |
-| `run` | `[async] run NAME` or `[async] run [-> TYPE]: BODY` | Optional `async`; `runnable: runnable_name` or `agic: inline_agic` |
-| `exec` | `exec NAME` or `exec [-> TYPE]: BODY` | `target: runnable_name \| inline_agic` |
-| `spawn` | `spawn NAME` or `spawn [-> TYPE]: BODY` | `target: runnable_name \| inline_agic` |
-| `await` | `await HANDLE` | `handle: handle_name` |
-| `seek` | `seek AGENT NAME` or `seek AGENT [-> TYPE]: BODY` | `agent: agent_name`; `runnable` or `agic` |
-| `ask` | `ask: BODY` | `content: content` |
-| `generate` | `generate N [in N lane\|lanes] using NAME` or `generate N [in N lane\|lanes] [-> TYPE]: BODY` | `count`, optional `lanes`, `runnable: runnable_name \| inline_agic` |
-| `map` | `map [in N lane\|lanes] using NAME` or `map [in N lane\|lanes] [-> TYPE]: BODY` | Optional `lanes`; `runnable: runnable_name \| inline_agic` |
-| `reduce` | `reduce using NAME` or `reduce [-> TYPE]: BODY`, optionally with an initializer below | `runnable: runnable_name \| inline_agic`, optional `from: content` |
-| `keep`, `drop` | `keep\|drop first\|last N` or `keep\|drop [in N lane\|lanes] if NAME\|INLINE` | `selection: position`, or `runnable` and optional `lanes` |
-| `sort` | `sort ascending\|descending [in N lane\|lanes] by NAME\|INLINE` | `order`, `runnable`, optional `lanes` |
-| `repeat` | `repeat [N time\|times] [windowing N]:` plus a structural body | Optional `count` / `window`, required `body: repeat_body` |
-| Bare prose | Implicit paragraph | `implicit_run_statement.content: content` |
+target          ::= name line_end | inline_runnable ;
+inline_runnable ::= return_type? ":" text ;
+lanes           ::= "in" integer ("lane" | "lanes") ;
+```
 
-For `generate`, `map`, and `reduce`, named targets require `using` and inline
-targets omit it. `if` and `by` introduce either form. Keep/drop and sort also
-allow the lane clause after a named target; generate and map allow it only
-before the target. Count/selection/order immediately follows its verb. Commas
-and `with` are not complement syntax. Integer agreement is specified under
-[Lexical Structure](#lexical-structure); positive ranges and predicate/score
-output types are runtime validation.
+Named targets are bare names and end at the line boundary. Inline targets
+accept an optional return annotation and require text. Neither form accepts
+argument lists. Inline text is final in its header; named headers do not accept
+trailing prose punctuation. Lane/count noun agreement follows the
+[integer rules](#names-and-integers).
 
-### Bindings
+### Run, Exec, Seek, and Ask
 
-- `let NAME = OPERATION` exposes `let_statement.local: local_name` and
-  `statement: OPERATION_NODE`.
-- `let OPERATION` exposes `statement` without a local name.
-- `let NAME = BODY` exposes `local` and `value: content`, with same-line or
-  indented text. Local type annotations and array literals have no dedicated
-  binding syntax.
+```ebnf
+run  ::= "async"? "run" target ;
+exec ::= "exec" target ;
+seek ::= "seek" name target ;
+ask  ::= "ask" ":" text ;
+```
 
-Every explicit operation in the table except `exec` can appear after `let`.
-`until` is a repeat clause, not a bindable operation. After `=`, complete operation heads
-select syntax before text even when malformed; `runworker` remains text.
-`until` and `_` also cannot become same-line binding text. Use an indented text
-body for these literal words. A missing `=` exposes
-`invalid_flow_reserved_statement` without borrowing later source. Binding effects
-and value types belong to the runtime.
+The name following `seek` identifies the target agent. `async` modifies only
+`run`. `exec` is a standalone statement and cannot appear in a `let` binding.
+`ask` accepts text directly, without a named target or return annotation.
+
+```too
+flow inspect:
+  run worker
+  run -> Text: Inspect {{_}}.
+  seek reviewer worker
+  ask: Which result should be kept?
+  exec finish
+```
 
 ### Launch and Await Bindings
 
-`async` modifies only `run` and adds no wrapper node. `spawn` uses its own node;
-both accept named and inline targets. Neither accepts `using`, arguments,
-lanes, counts, or another async modifier. `await` accepts exactly one
-`handle_name`, without expressions, field access, qualifiers, or a block.
+```ebnf
+spawn ::= "spawn" target ;
+await ::= "await" variable_name line_end ;
+```
 
-All four await spellings parse: `await h`, `let x = await h`, `let await h`, and
-`let h = await h`. `_` cannot be an explicit destination or handle. Nested launch
-expressions such as `await spawn worker` are invalid. Handle lookup, launch
-ownership, admission, waiting, and result bindings are runtime responsibilities.
-`Run` and `Future` are ordinary authored type names, not built-ins.
+`spawn` and `async run` accept the shared named/inline target forms. Neither
+accepts `using`, lanes, counts, or another async modifier. `await` requires one
+handle name: expressions, field access, qualifiers, and a block body are invalid.
+`await _` and nested operations such as `await spawn worker` are invalid.
 
 ```too
 flow research:
   let job = spawn -> Text[]:
     List three sources about {{_}}.
-  run: Prepare a summary outline.
+  let child = async run worker
+  await child
   let sources = await job
-  run: Summarize {{sources}} using this outline: {{_}}.
+  let await child
+  let job = await job
+```
+
+### Bindings
+
+```ebnf
+let ::= "let" variable_name "=" bindable
+      | "let" bindable
+      | "let" variable_name "=" text ;
+```
+
+A named binding requires `=`. Text bindings accept same-line or indented text;
+there is no local type annotation or dedicated array-literal form. A nameless
+`let` accepts an operation, not arbitrary prose. `exec` and the `until` clause
+cannot be bound; `_` cannot be an explicit destination.
+
+After `=`, complete operation heads select syntax before the text alternative,
+even when malformed. `until` and `_` also cannot begin same-line binding text.
+`runworker` remains text. An indented text block permits literal operation words.
+
+### Generate and Map
+
+```ebnf
+generate         ::= "generate" integer lanes? collection_target ;
+map              ::= "map" lanes? collection_target ;
+collection_target ::= "using" name line_end | inline_runnable ;
+```
+
+The count immediately follows `generate`. Named targets require `using`;
+inline targets omit it. An optional lane clause precedes the target.
+
+```too
+flow expand:
+  generate 3 in 2 lanes using worker
+  map -> Text: Summarize {{_}}.
 ```
 
 ### Reduce Initializers
 
-A named reducer uses `reduce using NAME:` followed by an indented `from: BODY`.
-Without an initializer, omit the colon. A multiline inline reducer puts `from:`
-after nonempty reducer text at that text's baseline; deeper `from:` stays
-literal. A same-line inline reducer cannot have a following initializer.
-The `runnable` field excludes the initializer; `from` contains a separate
-`content` value. Inline reducers expose `inline_agic.content` in either form.
-Unlike generic explicit text, reducer headers permit structural comments before
-the first body row. An initializer alone cannot supply reducer content.
+```ebnf
+reduce ::= "reduce" "using" name line_end
+         | "reduce" "using" name ":" block(initializer)
+         | "reduce" return_type? ":" inline_text line_end
+         | "reduce" return_type? ":" block(reducer_body) ;
+reducer_body ::= reducer_text initializer? ;
+reducer_text ::= ? nonempty literal text ending before a baseline initializer ? ;
+initializer  ::= "from" ":" text ;
+```
+
+A named reducer with an initializer requires a header colon and an indented
+`from:` clause. Omit that colon when there is no initializer. A multiline inline
+reducer puts `from:` after nonempty reducer text at the text's baseline. Deeper
+`from:` remains literal text. A same-line inline reducer cannot have a following
+initializer; an initializer alone cannot supply reducer text.
+
+Reducer headers permit structural comments before the first body row. This is
+an exception to the generic explicit-text rule about outer comments.
+
+```too
+flow combine:
+  reduce using merge:
+    from: Initial report.
+  reduce:
+    Incorporate {{_}} into the report.
+    from:
+      Initial report.
+```
+
+### Keep, Drop, and Sort
+
+```ebnf
+keep      ::= "keep" (position line_end | predicate_target) ;
+drop      ::= "drop" (position line_end | predicate_target) ;
+position  ::= ("first" | "last") integer ;
+sort      ::= "sort" ("ascending" | "descending") score_target ;
+
+predicate_target ::= lanes? "if" name line_end
+                   | "if" name lanes line_end
+                   | lanes? "if" inline_runnable ;
+score_target     ::= lanes? "by" name line_end
+                   | "by" name lanes line_end
+                   | lanes? "by" inline_runnable ;
+```
+
+Selection or sort order immediately follows its verb. `if` and `by` accept named
+or inline targets. A lane clause can precede either target form or follow a
+named target; it cannot occur in both positions. Commas and `with` are not
+complement syntax.
+
+```too
+flow select:
+  keep first 3
+  drop if duplicate in 2 lanes
+  keep in 2 lanes if -> Boolean: Is {{_}} useful?
+  sort descending by score
+```
 
 ### Repeat Conditions
 
-Count and window are independently optional; `windowing N` precedes the header
-colon. Every repeat requires at least one ordinary statement and permits zero
-or one `until` before, between, or after its statements at the same baseline.
+```ebnf
+repeat       ::= "repeat" repeat_count? window? ":" block(repeat_body) ;
+repeat_count ::= integer ("time" | "times") ;
+window       ::= "windowing" integer ;
+repeat_body  ::= statement+ (until_clause statement*)?
+               | until_clause statement+ ;
+until_clause ::= "until" (name line_end | ":" text) ;
+```
+
+Count and window are independently optional. `windowing` precedes the header
+colon. Each repeat requires at least one ordinary statement and permits at most
+one condition, before, between, or after its statements at the same baseline.
 Nested repeats own their conditions. Empty/condition-only bodies, duplicate
 conditions, and conditions outside repeats are invalid.
 
-`until NAME` accepts a bare `runnable_name`; `until: BODY` accepts same-line or
-multiline text. Qualified targets, arguments, modifiers, named colon bodies,
-output annotations, and result bindings are invalid. The body has repeated
-`statement` fields and optional `until: until_clause`; the latter has required
-`target: runnable_name | inline_agic_body`. Statements, condition, and trivia
-remain direct children in source order. Count preceding statement fields to
-obtain the condition index; nested repeats count as one, trivia as zero.
-See [flexible repeat fixtures](tests/fixtures/flexible_repeat.too).
+A condition accepts a bare named target or text directly. Qualified targets,
+arguments, modifiers, named colon bodies, output annotations, and result bindings
+are invalid. Deeper explicit text remains literal; a baseline sibling ends it.
+
+```too
+flow improve:
+  repeat 5 times windowing 3:
+    run inspect
+    until ready
+    run: Improve {{_}}.
+```
 
 ### Implicit Prose Boundaries
 
-Every substantive physical line, including continuations, checks its first
-complete token against the Flow vocabulary. Active structural keywords select
-syntax and cannot fall back to prose when malformed. For example, `run`,
-`run:`, and `run,` select keyword parsing; `runner` and `run_suffix` remain text.
-`_` selects syntax; `_suffix` remains text. Connector-only words and declaration
-or directive heads are invalid at a statement position. `from:` belongs only
-to reduce and `windowing` only to repeat headers.
+```ebnf
+implicit_run ::= paragraph(flow_keyword) ;
+```
 
-Adjacent non-keyword lines and one intervening blank line stay in the same
-implicit run. Relative Markdown indentation can continue prose; a keyword-led
-line at an invalid structural depth is an error. Two blank lines, a structural
-comment, dedent, or EOF ends the paragraph. Capitalize an active first word or
-use explicit `run:` content to keep it literal. Removed spellings such as
-`scatter`, `storm`, `rank`, and `thunk` are ordinary names/text where allowed.
-`invalid_flow_reserved_statement` is a historical diagnostic name, not evidence
-of a separate reserved legacy vocabulary.
+Flow paragraphs use the text rules with the complete Flow keyword set. Thus
+`run`, `run:`, and `run,` select structural parsing; `runner` and `run_suffix`
+remain prose. `_` selects syntax; `_suffix` remains prose. Declaration heads,
+directive heads, and connector-only words are invalid at a statement position.
+`from:` belongs only to a reduce initializer; `windowing` belongs only to a repeat
+header. To begin literal prose with an active word, capitalize it or use explicit
+`run:` text.
 
 ### Shared Directives and Flow Clauses Example
 
@@ -566,49 +694,35 @@ flow research(_):
   repeat 5 times windowing 3:
     run: Improve {{_}}.
     until: Compare {{_}} with {{_1._}} and {{_2._}} for stability.
-
-flow seeded(_):
-  run -> Text[]:
-    Expand {{_}} into items.
-  reduce:
-    Incorporate {{_}} into {{_1._}}.
-    from:
-      Initial report.
 ```
 
 ## CST Node Contract
 
-Public nodes describe authored declarations, values, calls, and structural
-bodies. Fields identify each child's role; the relevant sections above describe
-them beside their constructs. [Generated metadata](src/node-types.json) lists
-all nodes and fields, including recovery states.
+For parser integrations, [src/node-types.json](src/node-types.json) defines the
+node/field schema and [queries](queries) show its use. These representations are
+separate from the source productions above. Text preserves authored bytes and
+relative indentation; parsing does not trim or dedent it. The
+[CST migration](CHANGELOG.md#cst-migration-from-alpha4) records changed node names,
+field paths, and source ranges.
 
-Lexical names and tokens are leaves. Parser helpers, forwarding nodes, and list
-wrappers are hidden. Structural bodies remain public because they own entries,
-trivia, and scope. Repeated fields retain source order. There is no `statements`
-or `messages` wrapper and no extra node distinguishing source text forms.
+### Validity and Recovery
 
-`content` contains direct `text_line`, `newline`, and `blank_line` children.
-Same-line content has one `text_line`; its trailing `line_end` belongs to the
-owner. Indented and implicit content retain physical endings and paragraph
-boundaries. Text leaves preserve source bytes, including whitespace and relative
-indentation; parsing does not trim or dedent. Header comments and terminators
-remain outside `content`. Raw references and property values use `text_line`
-directly because they are not prompt content.
+Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
+descendant. `root.has_error` alone is insufficient. The explicit missing-body,
+missing-content, and missing-statement diagnostics are zero-width and preserve
+following source; they are recovery representations, not valid alternatives to
+required source. Generated optional-field metadata may describe recovery trees.
 
-Queries and consumers must adopt node names, field paths, and ranges together.
-The [CST migration from alpha.4](CHANGELOG.md#cst-migration-from-alpha4) records
-the complete breaking path/range changes; historical contracts remain in tags.
+Parser implementation sources are [grammar.js](grammar.js),
+[keywords.js](keywords.js), and [src/scanner.c](src/scanner.c).
+[Layout property tests](tests/test_layout_properties.py) cover incremental
+parsing and implementation resource limits.
 
 ## Compatibility
 
-`##!` remains accepted alongside `#@` as described under
-[Comments and Documentation](#comments-and-documentation). No inactive spelling
-is reserved. Active words retain contextual recognition and variable exclusions.
-Source parsing does not imply runtime support for every syntactically valid form.
-
-The following anchors preserve existing migration links; chronological records
-are maintained in `CHANGELOG.md`.
+The accepted `##!` spelling and contextual keyword rules are described above.
+Versioned changes live in [CHANGELOG.md](CHANGELOG.md). The following anchors
+preserve existing migration links.
 
 ### Unreleased
 
