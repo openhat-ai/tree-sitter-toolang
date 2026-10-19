@@ -1,23 +1,13 @@
 # Toolang Grammar
 
-This document defines the source syntax of Toolang `.too` files through grammar
-productions, constraints, and examples. It follows the current grammar; use the
-matching Git tag when reading the reference for a published package.
-
-- [Conventions](#conventions)
-- [Lexical structure](#lexical-structure) and [block layout](#block-layout)
-- [Text](#text)
-- [Types](#types) and [runnable signatures](#runnable-signatures)
-- [Declarations](#declarations)
-- [Shared directives](#shared-directives)
-- [Agics](#agic) and [flows](#flow)
-- [Tooling notes](#cst-node-contract) and [compatibility](#compatibility)
+This document describes the current source syntax of Toolang `.too` files
+through grammar productions, constraints, and examples.
 
 Name resolution, type defaults, input binding, and execution are defined by the
 [Toolang language reference](https://github.com/openhat-ai/toolang/blob/main/docs/program.md).
-The productions here describe source forms; the constraints beside them are
-part of the syntax. Examples are complete source files for parsing, although
-referenced resources and runnable names may require definitions at runtime.
+The constraints beside each production are part of the syntax. Examples are
+complete source files for parsing; referenced resources and runnable names may
+require definitions at runtime.
 
 ## Conventions
 
@@ -107,10 +97,7 @@ flow_keyword        ::= declaration_keyword | operation_keyword | clause_keyword
                       | agic_keyword | "let" | "exec" | "async" | "_" ;
 ```
 
-There are no reserved inactive words. Former spellings such as `scatter`,
-`gather`, `storm`, `settle`, and `rank` follow ordinary name/text rules; they
-are not alternative operations. [CHANGELOG.md](CHANGELOG.md#unreleased) records
-removed syntax and migration guidance.
+Words outside these sets follow the ordinary name and text rules.
 
 ### Tokens
 
@@ -167,8 +154,8 @@ These forms have contextual constraints:
 - `#!` is a shebang only at byte zero. A later or indented `#!`, including one
   after a leading BOM, is a plain comment. The interpreter text is unrestricted.
 - `#@` is module documentation only at column zero. Indented structural `#@` is
-  invalid. The legacy `##!` module marker also accepts its historical indented
-  positions. Module documentation never interprets parameter tags.
+  invalid. `##!` also introduces module documentation and is accepted in indented
+  structural positions. Module documentation never interprets parameter tags.
 - `##` introduces item documentation. Consecutive lines at the item's indentation
   can document the following item. Blank lines, other comment kinds, intervening
   syntax, and scope endings interrupt attachment; consumers perform attachment.
@@ -226,6 +213,180 @@ flow inspect:
   run: Summarize the result.
 ```
 
+## Source File
+
+```ebnf
+source_file ::= trivia* ((with | struct | psyche | skill | service | prompt
+                       | chore | context | instruct | agic | flow) trivia*)* ;
+```
+
+A source file contains these constructs and trivia in source order. Arbitrary
+top-level prose is invalid. Top-level constructs start at column zero.
+
+## With
+
+```ebnf
+with          ::= "with" cap_kind raw_reference line_end ;
+cap_kind      ::= "psyche" | "skill" | "service" | "prompt" ;
+raw_reference ::= /[^#\r\n]+/ ;
+```
+
+A raw reference requires horizontal separation after its kind and at least one
+non-space/tab character. Its interior is raw text, not a path or expression
+parsed by this grammar.
+
+```too
+with skill ./skills/review
+with prompt library/summary
+```
+
+## Types
+
+```ebnf
+type         ::= (builtin_type | type_name) "[]"* ;
+builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" ;
+```
+
+An authored type uses `type_name`. Each `[]` adds an array suffix; `Text[][]`
+is valid.
+
+## Structs
+
+```ebnf
+struct ::= "struct" type_name ":" block(field+) ;
+field  ::= name "?"? ":" type line_end ;
+```
+
+A struct requires at least one field. Fields may carry the optional marker `?`.
+
+```too
+struct Report:
+  summary: Text
+  count?: Number
+  parts: Part[]
+```
+
+## Properties
+
+```ebnf
+property       ::= name "=" property_value line_end ;
+property_value ::= /[^#\r\n]+/ ;
+body_text      ::= ? nonempty literal text at the containing body's baseline ? ;
+```
+
+Properties form a leading prefix in a psyche, skill, service, prompt, or chore
+body. Once body text begins, later property-looking lines remain text. A raw
+property value may contain only spaces/tabs. Property schemas are validated by
+consumers.
+
+## Psyches
+
+```ebnf
+psyche ::= "psyche" cap_name ":" optional_block(property* body_text?) ;
+```
+
+A psyche has a required name and an optional indented body. The body accepts
+properties followed by text. Empty and property-only bodies are valid;
+same-line bodies are not accepted.
+
+```too
+psyche reviewer:
+  Prefer concrete findings and direct language.
+```
+
+## Skills
+
+```ebnf
+skill ::= "skill" cap_name ":" optional_block(property* body_text?) ;
+```
+
+A skill has a required name and an optional indented body with a property prefix
+and text. Empty and property-only bodies are valid; same-line bodies are not
+accepted.
+
+```too
+skill review:
+  source = library/review
+
+  Review the supplied changes.
+```
+
+## Services
+
+```ebnf
+service ::= "service" cap_name ":" optional_block(property* body_text?) ;
+```
+
+A service has a required name and an optional indented body with a property
+prefix and text. Empty and property-only bodies are valid; same-line bodies
+are not accepted.
+
+```too
+service repository:
+  protocol = http
+  target = https://example.com/mcp
+
+  Use this service for repository operations.
+```
+
+## Prompts
+
+```ebnf
+prompt ::= "prompt" cap_name ":" optional_block(property* body_text?) ;
+```
+
+A prompt has a required name and an optional indented body. It has no typed
+parameter list; placeholders remain part of the text. Leading property-looking
+lines are parsed as properties, although the Toolang runtime rejects prompt
+properties. Same-line bodies are not accepted.
+
+```too
+prompt rewrite:
+  Rewrite {{_}} in the requested {{tone}} tone.
+```
+
+## Chores
+
+```ebnf
+chore ::= "chore" chore_name ":" optional_block(property* body_text?) ;
+```
+
+A chore has a required name and an optional indented body with a property prefix
+and text. Empty and property-only bodies are valid; same-line bodies are not
+accepted.
+
+```too
+chore review_changes:
+  title = Review changes
+
+  Review the latest changes.
+```
+
+## Context
+
+```ebnf
+context ::= "context" name? ":" text ;
+```
+
+A context accepts an optional name and requires same-line or indented text.
+
+```too
+context project:
+  Use the supplied project context.
+```
+
+## Instruct
+
+```ebnf
+instruct ::= "instruct" name? ":" text ;
+```
+
+An instruct accepts an optional name and requires same-line or indented text.
+
+```too
+instruct: Return a concise answer.
+```
+
 ## Text
 
 Text is unquoted. The containing construct selects same-line text, an indented
@@ -244,7 +405,7 @@ marker and ends on its physical line. Indented text may start after blank lines;
 all lines at or beyond its baseline, including `#` markers and keywords, are
 literal. Markdown fences have no special grammar meaning. Structural comments
 outside the text cannot be followed by a resumed text block. Reducers have the
-explicit exception described under [Reduce Initializers](#reduce-initializers).
+explicit exception described under [Reduce](#reduce).
 
 An implicit paragraph checks the first complete token of every substantive
 line, including continuations. A word in its boundary set selects structural
@@ -271,141 +432,7 @@ flow explain:
   Continue after one blank line.
 ```
 
-## Types
-
-```ebnf
-type         ::= (builtin_type | type_name) "[]"* ;
-builtin_type ::= "Text" | "Number" | "Boolean" | "Json" | "Part" ;
-return_type  ::= "->" type ;
-```
-
-An authored type uses `type_name`. Each `[]` adds an array suffix; `Text[][]`
-is valid. `Run` and `Future` are ordinary authored names, not built-ins. Generic
-notation such as `Run<Text>` is not accepted.
-
-## Runnable Signatures
-
-```ebnf
-signature  ::= name? parameters? return_type? ;
-parameters ::= "(" (parameter ("," parameter)*)? ")" ;
-parameter  ::= parameter_name "?"? (":" type)? ;
-```
-
-Agics and flows use the same signature. Name, parameter list, parameter types,
-and return type may each be omitted. `()` is an explicit empty list; a trailing
-comma is invalid. Parameter order, duplicates, name resolution, and defaults
-are language-level validation rather than syntax restrictions.
-
-## Declarations
-
-```ebnf
-program     ::= trivia* (declaration trivia*)* ;
-declaration ::= import | struct | cap | chore | context | instruct | agic | flow ;
-```
-
-A source file is a sequence of declarations and trivia. Arbitrary top-level
-prose is invalid. Declaration order does not change their syntactic forms.
-
-### Imports
-
-```ebnf
-import        ::= "with" cap_kind raw_reference line_end ;
-cap_kind      ::= "psyche" | "skill" | "service" | "prompt" ;
-raw_reference ::= /[^#\r\n]+/ ;
-```
-
-A raw reference requires horizontal separation after its kind and at least one
-non-space/tab character. Its interior is raw text, not a path or expression
-parsed by this grammar.
-
-```too
-with skill ./skills/review
-with prompt library/summary
-```
-
-### Structs
-
-```ebnf
-struct ::= "struct" type_name ":" block(field+) ;
-field  ::= name "?"? ":" type line_end ;
-```
-
-A struct requires at least one field. Fields may carry the optional marker `?`.
-
-```too
-struct Report:
-  summary: Text
-  count?: Number
-  parts: Part[]
-```
-
-## Caps
-
-```ebnf
-cap             ::= cap_kind cap_name ":" optional_block(definition_body) ;
-definition_body ::= property* definition_text? ;
-property        ::= name "=" property_value line_end ;
-property_value  ::= /[^#\r\n]+/ ;
-definition_text ::= ? nonempty literal text at the definition body's baseline ? ;
-```
-
-Properties form a leading prefix. Once definition text begins, later
-property-looking lines remain text. Empty and property-only bodies are valid;
-same-line cap bodies are not accepted. A raw property value may contain only
-spaces/tabs. Property schemas and required content are validated by consumers.
-
-```too
-skill review:
-  source = library/review
-
-  Review the supplied changes.
-```
-
-### Prompts
-
-`prompt` shares the cap syntax and has no typed parameter list. A leading
-property-looking line is still parsed as a property, although the Toolang
-runtime rejects prompt properties. Placeholders are part of the text.
-
-```too
-prompt rewrite:
-  Rewrite {{_}} in the requested {{tone}} tone.
-```
-
-## Chores
-
-```ebnf
-chore ::= "chore" chore_name ":" optional_block(definition_body) ;
-```
-
-Chores use the same optional property-prefix/text form as caps. The `chore`
-node exposes `name: chore_name` and `body: chore_body`; the body has repeated
-`property` fields and optional `content`.
-
-```too
-chore review_changes:
-  title = Review changes
-
-  Review the latest changes.
-```
-
-## Context And Instruct
-
-```ebnf
-context  ::= "context" name? ":" text ;
-instruct ::= "instruct" name? ":" text ;
-```
-
-Both forms require text and allow an omitted name. Same-line and indented text
-are accepted.
-
-```too
-instruct: Return a concise answer.
-context project:
-  Use the supplied project context.
-```
-
-## Shared Directives
+## Directives
 
 ```ebnf
 directive     ::= query_key query_operator query_value line_end
@@ -432,19 +459,51 @@ call targets. Recall accepts either source order; `auto` is invalid. Context
 and instruct selectors require `=`; runnable-local `context:` / `instruct:`
 blocks and bare selectors are invalid.
 
-## Agic
+## Agics
 
 ```ebnf
-agic      ::= "agic" signature ":" block(agic_body) ;
+agic ::= "agic" name? params? ("->" type)? ":" block(agic_body) ;
+```
+
+The name, parameter list, and return annotation are independently optional.
+Multiple unnamed agics are syntactically valid.
+
+### Parameters
+
+```ebnf
+params ::= "(" (param ("," param)*)? ")" ;
+param  ::= parameter_name "?"? (":" type)? ;
+```
+
+A parameter accepts an optional `?` marker and type annotation. `_` is accepted
+as a parameter name. `()` is an explicit empty list; a trailing comma is invalid.
+Parameter order, duplicates, and omitted-type defaults are language-level
+validation rather than syntax restrictions.
+
+### Return Type
+
+The optional `-> type` annotation uses the [type syntax](#types). The annotation
+belongs on the declaration header, after any parameter list and before `:`.
+
+### Body
+
+```ebnf
 agic_body ::= directive+ message* | message+ | "pass" line_end ;
-message   ::= role ":" text | paragraph(agic_keyword) ;
 ```
 
 A body may contain directives alone, or messages optionally preceded by
 directives. `pass` is a whole-body alternative and cannot follow directives or
-coexist with messages. A role header requires a colon and actual text. A bare
-paragraph has no explicit role. When literal text begins with an agic keyword,
-use a role header or an indented text body.
+coexist with messages.
+
+### Messages
+
+```ebnf
+message ::= role ":" text | paragraph(agic_keyword) ;
+```
+
+A role header requires a colon and actual text. A bare paragraph has no explicit
+role. When literal text begins with an agic keyword, use a role header or an
+indented text body.
 
 ```too
 agic summarize(_: Text, style?: Text) -> Text:
@@ -454,28 +513,44 @@ agic summarize(_: Text, style?: Text) -> Text:
   assistant: Ready.
 ```
 
-## Flow
+## Flows
 
 ```ebnf
-flow      ::= "flow" signature ":" block(flow_body) ;
-flow_body ::= directive* statement+ | "pass" line_end ;
+flow ::= "flow" name? params? ("->" type)? ":" block(flow_body) ;
 ```
 
-A flow requires statements, optionally preceded by directives. Directives alone
-are insufficient. `pass` is the whole-body alternative and cannot coexist with
-directives or statements. The declaration name may be omitted.
+The name, parameter list, and return annotation are independently optional.
+Multiple unnamed flows are syntactically valid.
 
-### Statement Forms
+### Parameters
+
+A flow uses the [parameter syntax](#parameters) defined for agics: an optional
+parenthesized list, optional `?` markers, and optional type annotations. `_` is
+accepted as a parameter name. An omitted list and `()` are distinct source forms;
+trailing commas are invalid. Order, duplicates, and defaults are validated by
+the language consumer.
+
+### Return Type
+
+The optional `-> type` annotation follows any parameter list and precedes `:`.
+It uses the [type syntax](#types).
+
+### Body
 
 ```ebnf
+flow_body ::= directive* statement+ | "pass" line_end ;
 statement ::= let | exec | bindable | implicit_run ;
 bindable  ::= run | spawn | await | seek | ask | generate | map | reduce
             | keep | drop | sort | repeat ;
 
-target          ::= name line_end | inline_runnable ;
-inline_runnable ::= return_type? ":" text ;
-lanes           ::= "in" integer ("lane" | "lanes") ;
+target      ::= name line_end | inline_agic ;
+inline_agic ::= ("->" type)? ":" text ;
+lanes       ::= "in" integer ("lane" | "lanes") ;
 ```
+
+A flow requires statements, optionally preceded by directives. Directives alone
+are insufficient. `pass` is a whole-body alternative and cannot coexist with
+directives or statements.
 
 Named targets are bare names and end at the line boundary. Inline targets
 accept an optional return annotation and require text. Neither form accepts
@@ -483,52 +558,8 @@ argument lists. Inline text is final in its header; named headers do not accept
 trailing prose punctuation. Lane/count noun agreement follows the
 [integer rules](#names-and-integers).
 
-### Run, Exec, Seek, and Ask
+### Let
 
-```ebnf
-run  ::= "async"? "run" target ;
-exec ::= "exec" target ;
-seek ::= "seek" name target ;
-ask  ::= "ask" ":" text ;
-```
-
-The name following `seek` identifies the target agent. `async` modifies only
-`run`. `exec` is a standalone statement and cannot appear in a `let` binding.
-`ask` accepts text directly, without a named target or return annotation.
-
-```too
-flow inspect:
-  run worker
-  run -> Text: Inspect {{_}}.
-  seek reviewer worker
-  ask: Which result should be kept?
-  exec finish
-```
-
-### Launch and Await Bindings
-
-```ebnf
-spawn ::= "spawn" target ;
-await ::= "await" variable_name line_end ;
-```
-
-`spawn` and `async run` accept the shared named/inline target forms. Neither
-accepts `using`, lanes, counts, or another async modifier. `await` requires one
-handle name: expressions, field access, qualifiers, and a block body are invalid.
-`await _` and nested operations such as `await spawn worker` are invalid.
-
-```too
-flow research:
-  let job = spawn -> Text[]:
-    List three sources about {{_}}.
-  let child = async run worker
-  await child
-  let sources = await job
-  let await child
-  let job = await job
-```
-
-### Bindings
 
 ```ebnf
 let ::= "let" variable_name "=" bindable
@@ -545,30 +576,139 @@ After `=`, complete operation heads select syntax before the text alternative,
 even when malformed. `until` and `_` also cannot begin same-line binding text.
 `runworker` remains text. An indented text block permits literal operation words.
 
-### Generate and Map
+### Run
 
 ```ebnf
-generate         ::= "generate" integer lanes? collection_target ;
-map              ::= "map" lanes? collection_target ;
-collection_target ::= "using" name line_end | inline_runnable ;
+run ::= "async"? "run" target ;
 ```
 
-The count immediately follows `generate`. Named targets require `using`;
-inline targets omit it. An optional lane clause precedes the target.
+`run` accepts a named target or an inline agic. `async` modifies only `run` and
+precedes its keyword. Lane and count clauses and `using` are not accepted.
+
+```too
+flow inspect:
+  run worker
+  run -> Text: Inspect {{_}}.
+  let child = async run worker
+```
+
+### Exec
+
+```ebnf
+exec ::= "exec" target ;
+```
+
+`exec` accepts a named target or an inline agic. It is a standalone statement
+and cannot appear in a `let` binding. Modifiers and argument lists are invalid.
+
+```too
+flow finish:
+  exec -> Text: Return the final report.
+```
+
+### Spawn
+
+```ebnf
+spawn ::= "spawn" target ;
+```
+
+`spawn` accepts a named target or an inline agic. It accepts no `using`, lanes,
+counts, argument lists, or async modifier. A `let` wrapper is optional.
+
+```too
+flow research:
+  let handle = spawn -> Text[]:
+    List three sources about {{_}}.
+```
+
+### Await
+
+```ebnf
+await ::= "await" variable_name line_end ;
+```
+
+`await` requires one handle name. Expressions, field access, qualifiers, and
+block bodies are invalid. `_` is not a handle name; nested operations such as
+`await spawn worker` are invalid. Both named and nameless `let` wrappers are
+accepted.
+
+```too
+flow research:
+  let handle = spawn worker
+  await handle
+  let sources = await handle
+  let await handle
+  let handle = await handle
+```
+
+### Seek
+
+```ebnf
+seek ::= "seek" name target ;
+```
+
+The first name identifies the target agent; it is followed by a bare runnable
+name or an inline agic.
+
+```too
+flow review:
+  seek reviewer worker
+  seek reviewer -> Text: Inspect the supplied changes.
+```
+
+### Ask
+
+```ebnf
+ask ::= "ask" ":" text ;
+```
+
+`ask` requires same-line or indented text. It accepts no named target or return
+annotation.
+
+```too
+flow choose:
+  ask: Which result should be kept?
+```
+
+### Generate
+
+```ebnf
+generate          ::= "generate" integer lanes? collection_target ;
+collection_target ::= "using" name line_end | inline_agic ;
+```
+
+A count immediately follows `generate`. Named targets require `using`; inline
+targets omit it. An optional lane clause precedes the target.
 
 ```too
 flow expand:
   generate 3 in 2 lanes using worker
+  generate 2 -> Text: Produce another example.
+```
+
+### Map
+
+```ebnf
+map ::= "map" lanes? collection_target ;
+```
+
+`map` accepts a named target introduced by `using` or an inline agic without
+`using`. An optional lane clause precedes the target; a count is not accepted.
+
+```too
+flow summarize:
+  map in 2 lanes using worker
   map -> Text: Summarize {{_}}.
 ```
 
-### Reduce Initializers
+### Reduce
+
 
 ```ebnf
 reduce ::= "reduce" "using" name line_end
          | "reduce" "using" name ":" block(initializer)
-         | "reduce" return_type? ":" inline_text line_end
-         | "reduce" return_type? ":" block(reducer_body) ;
+         | "reduce" ("->" type)? ":" inline_text line_end
+         | "reduce" ("->" type)? ":" block(reducer_body) ;
 reducer_body ::= reducer_text initializer? ;
 reducer_text ::= ? nonempty literal text ending before a baseline initializer ? ;
 initializer  ::= "from" ":" text ;
@@ -593,36 +733,66 @@ flow combine:
       Initial report.
 ```
 
-### Keep, Drop, and Sort
+### Keep
 
 ```ebnf
-keep      ::= "keep" (position line_end | predicate_target) ;
-drop      ::= "drop" (position line_end | predicate_target) ;
-position  ::= ("first" | "last") integer ;
-sort      ::= "sort" ("ascending" | "descending") score_target ;
-
+keep     ::= "keep" (position line_end | predicate_target) ;
+position ::= ("first" | "last") integer ;
 predicate_target ::= lanes? "if" name line_end
                    | "if" name lanes line_end
-                   | lanes? "if" inline_runnable ;
-score_target     ::= lanes? "by" name line_end
-                   | "by" name lanes line_end
-                   | lanes? "by" inline_runnable ;
+                   | lanes? "if" inline_agic ;
 ```
 
-Selection or sort order immediately follows its verb. `if` and `by` accept named
-or inline targets. A lane clause can precede either target form or follow a
-named target; it cannot occur in both positions. Commas and `with` are not
-complement syntax.
+`keep` accepts a position/count or a predicate introduced by `if`. A predicate
+may be named or inline. A lane clause can precede either predicate form or
+follow a named predicate, but cannot appear in both positions. A positional
+selection has no lane clause.
 
 ```too
 flow select:
   keep first 3
-  drop if duplicate in 2 lanes
   keep in 2 lanes if -> Boolean: Is {{_}} useful?
-  sort descending by score
 ```
 
-### Repeat Conditions
+### Drop
+
+```ebnf
+drop ::= "drop" (position line_end | predicate_target) ;
+```
+
+`drop` accepts `first N`, `last N`, or a named/inline predicate introduced by
+`if`. A lane clause can precede either predicate form or follow a named
+predicate, but cannot appear in both positions. A positional selection has no
+lane clause.
+
+```too
+flow select:
+  drop last 2
+  drop if duplicate in 2 lanes
+```
+
+### Sort
+
+```ebnf
+sort ::= "sort" ("ascending" | "descending") score_target ;
+score_target ::= lanes? "by" name line_end
+               | "by" name lanes line_end
+               | lanes? "by" inline_agic ;
+```
+
+An explicit order immediately follows `sort`. `by` introduces a named or inline
+score target. A lane clause may precede either target form or follow a named
+target, but cannot appear in both positions. Commas and `with` are not complement
+syntax.
+
+```too
+flow order:
+  sort descending by score
+  sort ascending in 2 lanes by -> Number: Score {{_}}.
+```
+
+### Repeat
+
 
 ```ebnf
 repeat       ::= "repeat" repeat_count? window? ":" block(repeat_body) ;
@@ -651,7 +821,8 @@ flow improve:
     run: Improve {{_}}.
 ```
 
-### Implicit Prose Boundaries
+### Implicit Run
+
 
 ```ebnf
 implicit_run ::= paragraph(flow_keyword) ;
@@ -665,87 +836,13 @@ directive heads, and connector-only words are invalid at a statement position.
 header. To begin literal prose with an active word, capitalize it or use explicit
 `run:` text.
 
-### Shared Directives and Flow Clauses Example
-
-```too
-instruct:
-  Follow the requested output contract.
-
-context project:
-  Use the supplied project context.
-
-agic expand(_) -> Text[]:
-  prompts = *
-  context = project
-  user: Expand {{_}} into items.
-
-agic merge(_):
-  user: Incorporate {{_}} into {{_1._}}.
-
-flow research(_):
-  tools -= *
-  hands = expand, agic:merge
-  handoffs = none
-  recall = far, near
-  lanes = 4
-  instruct = default
-  context = project
-  run expand
-  reduce using merge:
-    from: Initial report.
-  repeat 5 times windowing 3:
-    run: Improve {{_}}.
-    until: Compare {{_}} with {{_1._}} and {{_2._}} for stability.
-```
-
-## CST Node Contract
-
-For parser integrations, [src/node-types.json](src/node-types.json) defines the
-node/field schema and [queries](queries) show its use. These representations are
-separate from the source productions above. Text preserves authored bytes and
-relative indentation; parsing does not trim or dedent it. The
-[CST migration](CHANGELOG.md#cst-migration-from-alpha4) records changed node names,
-field paths, and source ranges.
-
-### Validity and Recovery
+## Validity and Recovery
 
 Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
-descendant. `root.has_error` alone is insufficient. The explicit missing-body,
-missing-content, and missing-statement diagnostics are zero-width and preserve
-following source; they are recovery representations, not valid alternatives to
-required source. Generated optional-field metadata may describe recovery trees.
+descendant. `root.has_error` alone is insufficient. Missing-body, missing-content,
+and missing-statement diagnostics are zero-width and preserve following source;
+they do not make an absent required construct valid.
 
-Parser implementation sources are [grammar.js](grammar.js),
-[keywords.js](keywords.js), and [src/scanner.c](src/scanner.c).
-[Layout property tests](tests/test_layout_properties.py) cover incremental
-parsing and implementation resource limits.
-
-## Compatibility
-
-The accepted `##!` spelling and contextual keyword rules are described above.
-Versioned changes live in [CHANGELOG.md](CHANGELOG.md). The following anchors
-preserve existing migration links.
-
-### Unreleased
-
-See [Unreleased changes and CST migration](CHANGELOG.md#unreleased).
-
-### Changes in 0.4.0-alpha.4
-
-See [0.4.0-alpha.4 changes](CHANGELOG.md#040-alpha4---2026-10-06).
-
-### Changes in 0.4.0-alpha.3
-
-See [0.4.0-alpha.3 changes](CHANGELOG.md#040-alpha3---2026-10-06).
-
-### Changes in 0.4.0-alpha.2
-
-See [0.4.0-alpha.2 changes](CHANGELOG.md#040-alpha2---2026-10-05).
-
-### Changes in 0.4.0-alpha.1
-
-See [0.4.0-alpha.1 changes](CHANGELOG.md#040-alpha1---2026-10-05).
-
-### Changes in 0.3.3
-
-See [0.3.3 changes](CHANGELOG.md#033---2026-09-24).
+[src/node-types.json](src/node-types.json) defines the current node/field schema;
+[queries](queries) show its use. Text preserves authored bytes and relative
+indentation. Parsing does not trim or dedent it.
