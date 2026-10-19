@@ -29,12 +29,17 @@ defines name resolution, type defaults, input binding, and execution.
 by blank lines and comments. Literal text follows the [text rules](#text).
 
 Spacing follows the [token rules](#tokens). Line breaks occur only through
-`newline`, `line_end`, or a block/text form. Productions use existing CST node
-names where applicable; helper productions describe source forms and constraints.
+`newline`, `line_end`, or a block/text form. Productions use CST node names where
+applicable; helper productions describe source forms and constraints.
 
 Construct names are singular. Flow statements use the `_statement` suffix;
 clauses use `_clause`. Parameter nodes use `param`, `params`, `param_name`, and
 `param_doc` consistently with the parser.
+
+Keyword token names use the `_keyword` suffix; declarations expose their
+introducer through the `keyword` field. Source helpers such as `line_end` do not
+add CST wrappers: structural line endings expose `newline` and any `plain_comment`
+directly.
 
 [GRAMMAR.ebnf](GRAMMAR.ebnf) is the generated implementation reference, including
 Tree-sitter annotations, helper rules, and recovery alternatives.
@@ -100,9 +105,9 @@ but not a local destination or await handle.
 
 Integers contain decimal digits only. Signs, fractions, exponent notation, and
 underscores are not accepted in structural numeric positions. Leading zeros
-are allowed. A numeric value of one, including `01`, requires `lane` or `time`;
-all other values require `lanes` or `times`. Numeric ranges are validated by
-the language consumer.
+are allowed. `lane` and `lanes` are interchangeable, as are `time` and `times`,
+regardless of the number: `1 lanes`, `2 lane`, and `01 times` are valid.
+Consumers validate numeric ranges.
 
 ### Keywords
 
@@ -209,6 +214,12 @@ styles. Form feed is not indentation.
 Blank lines and structural comments neither establish indentation nor satisfy
 a required body. Each construct specifies its required body entries.
 
+CST body nodes start at the first substantive entry and exclude the header's
+line ending and leading structural trivia. Leading trivia before a nonempty
+body is a direct child of the owning construct. An empty psyche, skill, service,
+prompt, or chore has no `body` field. When no body follows, outer comments remain
+in their enclosing scope.
+
 Indented text establishes its own baseline. Deeper Markdown indentation and
 comment markers are literal text; a dedent below that baseline ends the text.
 Relative indentation and physical text bytes are retained.
@@ -256,14 +267,10 @@ A text introducer followed only by spaces/tabs and a newline selects indented
 text. It cannot have an inline header comment. Indented text may follow blank
 lines; keywords, comment markers, and Markdown fences at or beyond its baseline
 are literal.
-Structural comments outside the text prevent a following text block, except
-for the reducer-header rule described under [Reduce](#reduce).
+Structural comments outside the text prevent a following text block.
 
-Move existing annotations after inline text or on text-introducer lines to
-standalone structural comment lines before the owning construct. For example,
-`run: Reply. # note` now contains `Reply. # note`. Declarations, typed fields,
-named operations, directives, properties, and `with` references retain their
-existing structural comment rules.
+Declarations, typed fields, named operations, directives, properties, and `with`
+references allow inline structural comments through `line_end`.
 
 An implicit paragraph checks the first complete token of every substantive
 line, including continuations. A word in its boundary set selects structural
@@ -302,9 +309,15 @@ body_text      ::= ? nonempty literal text at the containing body's baseline ? ;
 
 A psyche, skill, service, prompt, or chore body consists of an optional
 property prefix followed by optional text. The body is indented; empty and
-property-only bodies are valid. Once text begins, property-looking lines remain
-text. A raw property value may contain only spaces/tabs. Consumers validate
-property schemas.
+property-only bodies are valid. Blank lines and structural comments may precede
+or separate properties without ending the prefix. Any `identifier` followed by
+`=` selects a property, independently of the containing construct's schema.
+`+=` and `-=` do not select properties. The first non-property body line starts
+literal text; subsequent assignments and comment markers remain text.
+
+A raw property value may contain only spaces/tabs. Consumers validate supported
+names, duplicates, required properties, and value meanings. CST fields are
+`key: identifier`, `operator: assign_operator`, and `value: text_line`.
 
 ## Directive
 
@@ -323,15 +336,26 @@ recall_source      ::= "far" | "near" ;
 text_ref           ::= "default" | "none" | identifier ;
 ```
 
-Directives precede messages or statements and require a value. Only query
-directives accept `+=` and `-=`; their values are raw text up to a comment or
-line ending. Consumers validate query expressions. Special values `none`, `*`,
-and recall's `default` must stand alone.
+Directives form a prefix before messages or statements and require a value.
+Blank lines and structural comments leave the prefix open. While it is open,
+an `identifier` followed on the same line by `=`, `+=`, or `-=` must name a
+directive. An unknown name such as `modles` in `modles = fast` is a syntax error,
+including when its value is missing. The first message or statement ends the
+prefix permanently. Subsequent lines follow the ordinary body rules; explicit
+text treats assignment-looking lines literally.
+
+Only query directives accept `+=` and `-=`; their values are raw text up to a
+comment or line ending. Consumers validate query expressions. Special values
+`none`, `*`, and recall's `default` must stand alone.
 
 Runnable references use the qualified syntax defined in
 [Names and Integers](#names-and-integers). Recall sources may appear in either
 order. `context` and `instruct` are selectors using `=`; local text blocks and
 bare selectors are invalid.
+
+CST directives use `key: directive_key` and `operator: directive_operator`.
+The `value` field contains the corresponding value node; `context` and `instruct`
+selectors point directly to `identifier`, `default_keyword`, or `none_keyword`.
 
 ## Program
 
@@ -341,7 +365,8 @@ program ::= trivia* ((with | struct | psyche | skill | service | prompt
 ```
 
 A program contains constructs and trivia in source order. Top-level prose
-is invalid; constructs start at column zero.
+is invalid; constructs start at column zero. The CST root is `program`, with
+constructs and trivia as direct children.
 
 ## With
 
@@ -400,7 +425,7 @@ rules](#property).
 
 ```too
 skill review:
-  source = library/review
+  description = Review supplied changes.
 
   Review the supplied changes.
 ```
@@ -416,7 +441,8 @@ rules](#property).
 
 ```too
 service repository:
-  protocol = http
+  description = Access repository operations.
+  transport = http
   target = https://example.com/mcp
 
   Use this service for repository operations.
@@ -428,9 +454,9 @@ service repository:
 prompt ::= "prompt" cap_name ":" optional_block(property* body_text?) ;
 ```
 
-The name is required; the body is optional and indented. Prompts have no typed
-parameter list, and placeholders remain text. Leading property-looking lines
-are parsed as properties; the runtime rejects prompt properties.
+The name is required; the optional body follows the [property and text
+rules](#property). Prompts have no typed parameter list, and placeholders remain
+text.
 
 ```too
 prompt rewrite:
@@ -512,6 +538,9 @@ A body may contain directives alone, or messages optionally preceded by
 directives. `pass` is a whole-body alternative and cannot follow directives or
 coexist with messages.
 
+The CST `body` field points to `agic_body`, whose repeated `directive` and
+`message` fields contain its entries in source order.
+
 ### Message
 
 ```ebnf
@@ -569,10 +598,17 @@ A flow requires statements, optionally preceded by directives. Directives alone
 are insufficient. `pass` is a whole-body alternative and cannot coexist with
 directives or statements.
 
+The CST `body` field points to `flow_body`, whose repeated `directive` and
+`statement` fields contain its entries in source order.
+
 Targets are bare names followed by a line ending, or inline agics with required
-text and an optional return annotation. Argument lists and trailing prose after
-named targets are invalid. In a same-line inline agic, clause-like words after
-the colon are text. Lane/count noun agreement follows the
+text and an optional return annotation. Calls use one CST `target` field with
+either a `runnable_name` leaf or an `inline_agic` node. Argument lists and trailing
+prose after named targets are invalid. In a same-line inline agic, clause-like
+words after the colon are text.
+
+`generate`, `map`, `keep`, `drop`, and `sort` permit one lane clause before their
+target connector or inline target. Numeric spellings follow the
 [integer rules](#names-and-integers).
 
 ### Let
@@ -589,7 +625,7 @@ or a dedicated array-literal form. `_` cannot be an explicit destination.
 
 Immediately after `let`, a complete name followed by optional spaces/tabs and
 `=` on the same physical line selects a named binding, including keyword names.
-Without that assignment prefix, operation heads retain their existing meaning:
+Without that assignment prefix, operation heads select operations:
 `let run worker` is a nameless operation; `let run = Evidence.` binds text to
 the local name `run`.
 
@@ -730,7 +766,7 @@ flow summarize:
 ```ebnf
 reduce_statement ::= "reduce" "using" runnable_name line_end
                    | "reduce" "using" runnable_name ":" block(from_clause)
-                   | "reduce" ("->" type)? ":" inline_text line_end
+                   | "reduce" ("->" type)? ":" inline_text text_end
                    | "reduce" ("->" type)? ":" block(reducer_body) ;
 reducer_body     ::= reducer_text from_clause? ;
 reducer_text     ::= ? nonempty literal text ending before a baseline initializer ? ;
@@ -742,8 +778,9 @@ initializer. A multiline inline reducer places `from:` after nonempty reducer
 text at the same baseline; a deeper `from:` remains literal. A same-line inline
 reducer cannot have a following initializer.
 
-Reducer headers permit structural comments before the first text row, unlike
-other explicit-text headers.
+Reducer text follows the [text rules](#text), including literal comment markers.
+The CST `target` contains the reducer name or `inline_agic`; `from` points
+directly to the initializer's `content`.
 
 ```too
 flow combine:
@@ -761,13 +798,12 @@ flow combine:
 keep_statement   ::= "keep" (position line_end | predicate_target) ;
 position         ::= ("first" | "last") integer_literal ;
 predicate_target ::= lane_clause? "if" runnable_name line_end
-                   | "if" runnable_name lane_clause line_end
                    | lane_clause? "if" inline_agic ;
 ```
 
 `keep` accepts `first N`, `last N`, or a named/inline predicate introduced by
-`if`. A single lane clause may precede either predicate form or follow a named
-predicate. Positional selections have no lane clause.
+`if`. An optional lane clause precedes `if`; it cannot follow the target.
+Positional selections have no lane clause.
 
 ```too
 flow select:
@@ -786,7 +822,7 @@ drop_statement ::= "drop" (position line_end | predicate_target) ;
 ```too
 flow select:
   drop last 2
-  drop if duplicate in 2 lanes
+  drop in 2 lanes if duplicate
 ```
 
 ### Sort
@@ -794,13 +830,12 @@ flow select:
 ```ebnf
 sort_statement ::= "sort" ("ascending" | "descending") score_target ;
 score_target   ::= lane_clause? "by" runnable_name line_end
-                 | "by" runnable_name lane_clause line_end
                  | lane_clause? "by" inline_agic ;
 ```
 
 An explicit order immediately follows `sort`; `by` introduces a named or inline
-score target. A single lane clause may precede either target form or follow a
-named target.
+score target. An optional lane clause follows the order and precedes `by`; it
+cannot follow the target.
 
 ```too
 flow order:
@@ -828,6 +863,10 @@ The condition takes a bare name or `:` followed by text. It has no return
 annotation, argument list, or binding. Deeper explicit text remains literal;
 a baseline sibling ends it.
 
+The CST `repeat_body` exposes repeated `statement` fields and an optional
+`until: until_clause`. The clause's `target` is a `runnable_name` or `inline_agic`,
+with no return annotation.
+
 ```too
 flow improve:
   repeat 5 times windowing 3:
@@ -851,9 +890,12 @@ prose with a keyword or `_`.
 ## Validity and Recovery
 
 Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
-descendant. `root.has_error` alone is insufficient. Missing-body, missing-content,
-and missing-statement diagnostics are zero-width and preserve following source;
-they do not make an absent required construct valid.
+descendant. `root.has_error` alone is insufficient. `invalid_missing_body`,
+`invalid_missing_content`, and `invalid_missing_statement` are zero-width markers
+for absent required syntax. `invalid_flow_statement`, `invalid_agic_message`, and
+`invalid_run_target` retain malformed statements, messages, and run-target
+fragments. Recovery preserves following source without making invalid constructs
+valid.
 
 [src/node-types.json](src/node-types.json) defines the current node/field schema;
 [queries](queries) show its use. Text preserves authored bytes and relative
