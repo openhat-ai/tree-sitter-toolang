@@ -33,7 +33,7 @@ enum Token {
   EXEC_BINDING_START,
   OPERATION_BINDING_START,
   RESTRICTED_BINDING_START,
-  VARIABLE_NAME,
+  NAMED_BINDING_START,
   MISSING_REQUIRED,
   INTEGER_LITERAL,
   ONE_INTEGER_LITERAL,
@@ -223,15 +223,23 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
   lexer->mark_end(lexer);
   char word[32] = {0};
   unsigned length = 0;
-  bool variable = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
+  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
   while (word_character(lexer->lookahead)) {
     if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      variable = false;
+      identifier = false;
     }
     if (length < sizeof(word) - 1) {
       word[length++] = (char)lexer->lookahead;
     }
     advance(lexer);
+  }
+  // An explicit assignment selects a destination before operation heads. Keep
+  // the marked end at the name's start; the grammar consumes the name and '='.
+  if (valid[NAMED_BINDING_START] && identifier) {
+    skip_indentation(lexer);
+    if (lexer->lookahead == '=') {
+      return emit(scanner, lexer, NAMED_BINDING_START);
+    }
   }
   // Reserve operation heads after both let prefixes before Content can consume
   // them. The start tokens are zero-width; the grammar consumes the keyword.
@@ -247,11 +255,6 @@ static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *vali
       keyword(word, operation_binding_keywords,
               sizeof(operation_binding_keywords) / sizeof(*operation_binding_keywords))) {
     return emit(scanner, lexer, OPERATION_BINDING_START);
-  }
-  if (valid[VARIABLE_NAME] && variable &&
-      !keyword(word, variable_keywords, sizeof(variable_keywords) / sizeof(*variable_keywords))) {
-    lexer->mark_end(lexer);
-    return emit(scanner, lexer, VARIABLE_NAME);
   }
   return false;
 }
@@ -344,9 +347,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       finish_trivia_line(scanner);
       return emit(scanner, lexer, COMMENT_END);
     }
-    if (valid[VARIABLE_NAME]) {
-      return scan_inline_token(scanner, lexer, valid);
-    }
     return false;
   }
   if (valid[ERROR_LINE]) {
@@ -388,7 +388,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     }
   }
   if (!at_start && (valid[EXEC_BINDING_START] || valid[OPERATION_BINDING_START] ||
-                    valid[RESTRICTED_BINDING_START] || valid[VARIABLE_NAME])) {
+                    valid[RESTRICTED_BINDING_START] || valid[NAMED_BINDING_START])) {
     // A let value may start on the next line. Leave newline/EOF handling below
     // in control after skipping header whitespace, before inspecting a word.
     skip_indentation(lexer);

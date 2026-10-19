@@ -2133,6 +2133,10 @@
               "name": "flow_let_keyword"
             },
             {
+              "type": "SYMBOL",
+              "name": "_named_binding_start"
+            },
+            {
               "type": "FIELD",
               "name": "local",
               "content": {
@@ -2180,6 +2184,10 @@
               {
                 "type": "SYMBOL",
                 "name": "flow_let_keyword"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_named_binding_start"
               },
               {
                 "type": "FIELD",
@@ -2400,6 +2408,10 @@
               "type": "SEQ",
               "members": [
                 {
+                  "type": "SYMBOL",
+                  "name": "_named_binding_start"
+                },
+                {
                   "type": "FIELD",
                   "name": "local",
                   "content": {
@@ -2462,6 +2474,10 @@
             {
               "type": "SEQ",
               "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_named_binding_start"
+                },
                 {
                   "type": "FIELD",
                   "name": "local",
@@ -4770,7 +4786,7 @@
     },
     "local_name": {
       "type": "SYMBOL",
-      "name": "_variable_name"
+      "name": "_identifier"
     },
     "handle_name": {
       "type": "SYMBOL",
@@ -6431,7 +6447,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "_variable_name"
+      "name": "_named_binding_start"
     },
     {
       "type": "SYMBOL",

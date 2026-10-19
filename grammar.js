@@ -17,7 +17,7 @@ module.exports = grammar({
     $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
     $._raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
-    $._restricted_binding_start, $._variable_name,
+    $._restricted_binding_start, $._named_binding_start,
     $._missing_required,
     $.integer_literal, $._one_integer_literal, $._other_integer_literal,
   ],
@@ -282,6 +282,7 @@ module.exports = grammar({
       choice(
         seq(
           $.flow_let_keyword,
+          $._named_binding_start,
           field("local", $.local_name),
           $.assign_operator,
           field("statement", $._bound_operation),
@@ -292,6 +293,7 @@ module.exports = grammar({
         ),
         prec.right(seq(
           $.flow_let_keyword,
+          $._named_binding_start,
           field("local", $.local_name),
           $.assign_operator,
           content($, "value"),
@@ -323,7 +325,7 @@ module.exports = grammar({
       ),
     _invalid_exec_binding: ($) => seq(
       $.flow_let_keyword,
-      optional(seq(field("local", $.local_name), $.assign_operator)),
+      optional(seq($._named_binding_start, field("local", $.local_name), $.assign_operator)),
       $._exec_binding_start,
       $.flow_exec_keyword,
       optional(alias($._diagnostic_text, $.text_line)),
@@ -331,7 +333,7 @@ module.exports = grammar({
     ),
     _invalid_restricted_binding: ($) => seq(
       $.flow_let_keyword,
-      optional(seq(field("local", $.local_name), $.assign_operator)),
+      optional(seq($._named_binding_start, field("local", $.local_name), $.assign_operator)),
       $._restricted_binding_start,
       $._restricted_binding_word,
       optional(alias($._diagnostic_text, $.text_line)),
@@ -625,7 +627,7 @@ module.exports = grammar({
       ),
     runnable_name: ($) => $._identifier,
     agent_name: ($) => $._identifier,
-    local_name: ($) => $._variable_name,
+    local_name: ($) => $._identifier,
     handle_name: ($) => $._identifier,
 
     directive: ($) => seq($._directive_start, choice(

@@ -48,7 +48,7 @@
   {"type":"SYMBOL","name":"_exec_binding_start"},
   {"type":"SYMBOL","name":"_operation_binding_start"},
   {"type":"SYMBOL","name":"_restricted_binding_start"},
-  {"type":"SYMBOL","name":"_variable_name"},
+  {"type":"SYMBOL","name":"_named_binding_start"},
   {"type":"SYMBOL","name":"_missing_required"},
   {"type":"SYMBOL","name":"integer_literal"},
   {"type":"SYMBOL","name":"_one_integer_literal"},
@@ -257,13 +257,14 @@ _invalid_bound_operation ::=
   _diagnostic_text ) )? line_end );
 
 let_statement ::=
-  flow_let_keyword (* field "local" *) ( local_name ) assign_operator (* field "statement" *) (
-  _bound_operation ) | flow_let_keyword (* field "statement" *) ( _flow_operation ) |
-  (* prec.right 0 *) ( flow_let_keyword (* field "local" *) ( local_name ) assign_operator (
-  (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end
-  | (* prec.right 0 *) ( line_end ( (* field "value" *) (
-  (* alias {"value":"content","named":true} *) ( _block_content ) ) | blank_line* _comment _trivia*
-  (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _empty_content ) ) ) ) ) );
+  flow_let_keyword _named_binding_start (* field "local" *) ( local_name ) assign_operator
+  (* field "statement" *) ( _bound_operation ) | flow_let_keyword (* field "statement" *) (
+  _flow_operation ) | (* prec.right 0 *) ( flow_let_keyword _named_binding_start (* field "local" *)
+  ( local_name ) assign_operator ( (* field "value" *) (
+  (* alias {"value":"content","named":true} *) ( _inline_content ) ) line_end | (* prec.right 0 *) (
+  line_end ( (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _block_content ) )
+  | blank_line* _comment _trivia* (* field "value" *) ( (* alias {"value":"content","named":true} *)
+  ( _empty_content ) ) ) ) ) );
 
 exec_statement ::=
   flow_exec_keyword (* field "target" *) ( runnable_name ) line_end | (* prec.right 0 *) (
@@ -274,14 +275,14 @@ spawn_statement ::=
   flow_spawn_keyword (* field "target" *) ( inline_agic ) );
 
 _invalid_exec_binding ::=
-  flow_let_keyword ( (* field "local" *) ( local_name ) assign_operator )? _exec_binding_start
-  flow_exec_keyword ( (* alias {"value":"text_line","named":true} *) ( _diagnostic_text ) )?
-  line_end;
+  flow_let_keyword ( _named_binding_start (* field "local" *) ( local_name ) assign_operator )?
+  _exec_binding_start flow_exec_keyword ( (* alias {"value":"text_line","named":true} *) (
+  _diagnostic_text ) )? line_end;
 
 _invalid_restricted_binding ::=
-  flow_let_keyword ( (* field "local" *) ( local_name ) assign_operator )? _restricted_binding_start
-  _restricted_binding_word ( (* alias {"value":"text_line","named":true} *) ( _diagnostic_text ) )?
-  line_end;
+  flow_let_keyword ( _named_binding_start (* field "local" *) ( local_name ) assign_operator )?
+  _restricted_binding_start _restricted_binding_word (
+  (* alias {"value":"text_line","named":true} *) ( _diagnostic_text ) )? line_end;
 
 _invalid_named_binding ::=
   (* prec.dynamic -2 *) ( flow_let_keyword (* field "local" *) ( local_name ) (
@@ -487,7 +488,7 @@ agent_name ::=
   _identifier;
 
 local_name ::=
-  _variable_name;
+  _identifier;
 
 handle_name ::=
   _identifier;
@@ -880,8 +881,8 @@ _operation_binding_start ::=
 _restricted_binding_start ::=
   ? external scanner token "_restricted_binding_start" ?;
 
-_variable_name ::=
-  ? external scanner token "_variable_name" ?;
+_named_binding_start ::=
+  ? external scanner token "_named_binding_start" ?;
 
 _missing_required ::=
   ? external scanner token "_missing_required" ?;

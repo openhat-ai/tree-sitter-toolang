@@ -29,8 +29,11 @@ It changes the public CST and requires a coordinated consumer migration from
 - `let_statement.local: local_name`, `await_statement.handle: handle_name`, and
   `param_doc_tag.param: param_name` identify bindings and references precisely.
 - Accept active keywords, `default`, and `none` as named parameters,
-  parameter-documentation names, and await handles. Their existing name leaves
-  and source ranges are unchanged; `_` retains its primary-input meaning.
+  parameter-documentation names, local destinations, and await handles. A name
+  followed by `=` on the same line selects a named `let` binding, so
+  `let run = Evidence.` is valid while `let run worker` remains an anonymous
+  operation. Existing name leaves, source ranges, and RHS operation diagnostics
+  are unchanged; `_` retains its primary-input meaning.
 - Remove obsolete keyword restrictions for `scatter`, `gather`, `storm`,
   `settle`, `rank`, `par`, `top`, `bottom`, `think`, `use`, `thunk`, `call`, `do`,
   `unfold`, `each`, `fold`, `head`, and `tail`. These words are ordinary names

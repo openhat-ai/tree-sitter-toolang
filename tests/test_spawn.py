@@ -15,10 +15,12 @@ BINDINGS = ["", "let job = ", "let "]
     "Hello.", "\n    spawn remains literal.", "run worker", "spawn worker",
 ])
 @pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
-def test_spawn_keyword_cannot_be_a_local_name(value, ending):
+def test_spawn_keyword_can_be_a_local_name(value, ending):
     source = f"flow launch:\n  let spawn = {value}".replace("\n", ending or "\n") + ending
     root = parse(source)
-    assert not valid(root), root
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    assert binding.child_by_field_name("local").text == b"spawn"
 
 
 @pytest.mark.parametrize("value", ["spawn", "spawn a process", "spawn using: Research."])

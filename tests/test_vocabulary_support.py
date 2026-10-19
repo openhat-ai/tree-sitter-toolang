@@ -7,7 +7,7 @@ DIRECTIVES = set("models tools skills services psyches prompts hands handoffs re
 ROLES = {"user", "assistant", "tool"}
 AGIC_KEYWORDS = ROLES | DIRECTIVES | {"pass"}
 FLOW_KEYWORDS = DECLARATIONS | OPERATIONS | CLAUSES | AGIC_KEYWORDS | {"let", "exec", "async", "_"}
-VARIABLE_KEYWORDS = (FLOW_KEYWORDS - {"_"}) | {"default", "none"}
+KEYWORD_NAMES = (FLOW_KEYWORDS - {"_"}) | {"default", "none"}
 REMOVED_WORDS = set("task scatter gather storm settle rank par top bottom think use thunk call do unfold each fold head tail".split())
 TABLES = {
     "flow": FLOW_KEYWORDS,
@@ -15,5 +15,4 @@ TABLES = {
     "directive": DIRECTIVES,
     "operation_binding": OPERATIONS | {"async"},
     "restricted_binding": {"until", "_"},
-    "variable": VARIABLE_KEYWORDS,
 }

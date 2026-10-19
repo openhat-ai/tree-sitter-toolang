@@ -256,9 +256,11 @@ def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
     "Hello.", "\n    async run and await are literal text.",
     "run research", "async run research", "await h", "spawn research",
 ])
-def test_new_keywords_cannot_be_local_names_before_assignment(name, value):
+def test_keyword_local_names_accept_text_and_operation_results(name, value):
     root = parse(f"flow launch:\n  let {name} = {value}\n")
-    assert not valid(root), root
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    assert binding.child_by_field_name("local").text == name.encode()
 
 
 @pytest.mark.parametrize("name", ["async", "await"])

@@ -85,8 +85,7 @@ cap_name        ::= /[a-z][a-z0-9_-]*/ ;
 chore_name      ::= /[a-z][a-z0-9_-]*/ ;
 runnable_name   ::= identifier ;
 agent_name      ::= identifier ;
-variable_name   ::= identifier ;
-local_name      ::= variable_name ;
+local_name      ::= identifier ;
 handle_name     ::= identifier ;
 param_name      ::= identifier | "_" ;
 integer_literal ::= /[0-9]+/ ;
@@ -94,12 +93,10 @@ integer_literal ::= /[0-9]+/ ;
 runnable_ref    ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/ ;
 ```
 
-Named parameters and await handles accept any `identifier`, including keywords,
-`default`, and `none`. Local destinations currently use `variable_name`:
-`identifier` excluding `flow_keyword`, `default`, and `none`. Other `identifier`
-positions, including declarations and call targets, have no such exclusion.
-`far` and `near` are valid local names. `_` may name a parameter, but not a local
-destination or await handle.
+Named parameters, local destinations, and await handles accept any `identifier`,
+including keywords, `default`, and `none`. Keywords are recognized by syntactic
+context rather than globally excluded from names. `_` may name a parameter,
+but not a local destination or await handle.
 
 Integers contain decimal digits only. Signs, fractions, exponent notation, and
 underscores are not accepted in structural numeric positions. Leading zeros
@@ -110,7 +107,7 @@ the language consumer.
 ### Keywords
 
 Keywords are lowercase and case-sensitive. These context-dependent sets govern
-implicit-text boundaries and local-name restrictions:
+implicit-text boundaries and operation recognition:
 
 ```ebnf
 declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
@@ -561,9 +558,22 @@ Named bindings require `=`; nameless `let` requires a bindable operation.
 Text bindings accept same-line or indented text, without local type annotations
 or a dedicated array-literal form. `_` cannot be an explicit destination.
 
+Immediately after `let`, a complete name followed by optional spaces/tabs and
+`=` on the same physical line selects a named binding, including keyword names.
+Without that assignment prefix, operation heads retain their existing meaning:
+`let run worker` is a nameless operation; `let run = Evidence.` binds text to
+the local name `run`.
+
 After `=`, a complete operation head selects operation syntax even when
 malformed. `exec`, `until`, and `_` cannot begin a same-line text value.
 `runworker` remains text. Use an indented text block for literal keyword-led text.
+
+```too
+flow keyword_names(sort: Text):
+  let run = {{sort}}
+  let spawn = spawn worker
+  await spawn
+```
 
 ### Run
 

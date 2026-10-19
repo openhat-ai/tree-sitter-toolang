@@ -11,10 +11,10 @@ import tree_sitter_toolang
 from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
 
 
-from test_vocabulary_support import VARIABLE_KEYWORDS
+from test_vocabulary_support import KEYWORD_NAMES
 
 
-KEYWORDS = sorted(VARIABLE_KEYWORDS)
+KEYWORDS = sorted(KEYWORD_NAMES)
 LOCAL_CONTEXTS = [
     ("flow work:\n  let {name} = Evidence.\n", "local_name"),
     ("flow work:\n  let {name} = run worker\n", "local_name"),
@@ -39,15 +39,9 @@ def highlights():
 
 
 @pytest.mark.parametrize("name", KEYWORDS)
-@pytest.mark.parametrize("source, kind", LOCAL_CONTEXTS)
-def test_keywords_remain_rejected_as_local_destinations(name, source, kind):
-    assert not valid(parse(source.format(name=name))), (name, source)
-
-
-@pytest.mark.parametrize("name", KEYWORDS)
-@pytest.mark.parametrize("source, kind", NAME_CONTEXTS)
+@pytest.mark.parametrize("source, kind", CONTEXTS)
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_keywords_are_names_in_parameter_and_handle_contexts(name, source, kind, newline, highlights):
+def test_keywords_are_names_in_explicit_name_contexts(name, source, kind, newline, highlights):
     source = source.format(name=name).replace("\n", newline)
     root = parse(source)
     assert valid(root), root
@@ -103,3 +97,91 @@ def test_incremental_name_edits_match_fresh_validation_and_ranges(newline):
             tree = parser.parse(current, tree)
             assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node), current
             previous = current
+
+
+@pytest.mark.parametrize("name", KEYWORDS)
+@pytest.mark.parametrize("assignment", ["=", " = ", "\t=\t"])
+@pytest.mark.parametrize("ending", ["\n", "\r\n", ""])
+def test_assignment_selects_keyword_destination_without_changing_ranges(name, assignment, ending):
+    source = f"flow work:\n  let {name}{assignment}spawn worker # Result.".replace("\n", ending or "\n") + ending
+    root = parse(source)
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    local = binding.child_by_field_name("local")
+    assert local.type == "local_name" and local.text == name.encode()
+    assert local.child_count == 0
+    assert local.end_byte - local.start_byte == len(name)
+    assert binding.child_by_field_name("statement").type == "spawn_statement"
+    operator, = descendants(binding, "assign_operator")
+    assert operator.text == b"=" and operator.end_byte == operator.start_byte + 1
+    assert source.encode()[local.end_byte:operator.start_byte] == assignment.split("=")[0].encode()
+    comment, = descendants(root, "plain_comment")
+    assert comment.text == b"# Result."
+
+
+@pytest.mark.parametrize("name", KEYWORDS)
+def test_keyword_destinations_accept_indented_literal_values(name):
+    source = f"flow work:\n  let {name} =\n    run is literal here.\n    # Literal comment.\n  await {name}\n"
+    root = parse(source)
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    value = binding.child_by_field_name("value")
+    assert value.type == "content"
+    assert [node.text for node in descendants(value, "text_line")] == [
+        b"    run is literal here.", b"    # Literal comment.",
+    ]
+    handle, = descendants(root, "handle_name")
+    assert handle.text == name.encode()
+    assert not descendants(root, "run_statement")
+
+
+@pytest.mark.parametrize("statement, kind", [
+    ("run worker", "run_statement"),
+    ("async run worker", "run_statement"),
+    ("spawn worker", "spawn_statement"),
+    ("await sort", "await_statement"),
+    ("sort ascending by score", "sort_statement"),
+])
+def test_anonymous_let_operations_keep_their_meaning(statement, kind):
+    root = parse(f"flow work:\n  let {statement}\n")
+    assert valid(root), root
+    binding, = descendants(root, "let_statement")
+    assert binding.child_by_field_name("local") is None
+    assert binding.child_by_field_name("statement").type == kind
+    assert binding.child_by_field_name("value") is None
+
+
+@pytest.mark.parametrize("head", [
+    "run", "run =", "run = run", "run = until check", "exec worker",
+    "exec = exec worker", "until check", "sort broken", "_ = Evidence.",
+    "run\n  = Evidence.", "run # No assignment.\n  = Evidence.",
+])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_keyword_binding_errors_preserve_following_source(head, newline):
+    source = f"flow work:\n  let {head}\n  run after\nflow next:\n  pass\n".replace("\n", newline)
+    root = parse(source)
+    assert not valid(root), root
+    assert len([node for node in root.named_children if node.type == "flow"]) == 2
+    assert any(node.child_by_field_name("runnable") is not None
+               and node.child_by_field_name("runnable").text == b"after"
+               for node in descendants(root, "run_statement"))
+
+
+@pytest.mark.parametrize("name", KEYWORDS)
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_incremental_keyword_assignments_match_fresh_parses(name, newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for head in [f"let {name}", f"let {name} = Evidence.", f"let {name}=run worker",
+                 f"let {name}\t=\tspawn worker", f"let {name} =",
+                 f"let {name} = run", f"let {name} = until check", f"let {name} = Evidence."]:
+        current = f"flow work:\n  {head}\n  run after\nflow next:\n  pass\n".replace("\n", newline).encode()
+        edit_tree(tree, previous, current)
+        tree = parser.parse(current, tree)
+        assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node), current
+        assert len([node for node in tree.root_node.named_children if node.type == "flow"]) == 2
+        assert any(node.child_by_field_name("runnable") is not None
+                   and node.child_by_field_name("runnable").text == b"after"
+                   for node in descendants(tree.root_node, "run_statement"))
+        previous = current

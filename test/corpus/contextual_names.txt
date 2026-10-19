@@ -65,3 +65,95 @@ agic describe(until?: Text):
       (pass_keyword)
       (line_end
         (newline)))))
+
+================================================================================
+Contextual keyword destinations and anonymous operations
+================================================================================
+flow work:
+  let run = Evidence.
+  let sort=sort ascending by score
+  let until =
+    run remains literal.
+  let exec = spawn worker
+  let await = await exec
+  await await
+  let run worker
+  let sort ascending by score
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (line_end
+      (newline))
+    (flow_body
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (content
+          (text_line))
+        (line_end
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (sort_statement
+          (flow_sort_keyword)
+          (flow_ascending_keyword)
+          (flow_by_keyword)
+          (runnable_name)
+          (line_end
+            (newline))))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (line_end
+          (newline))
+        (content
+          (text_line)
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (spawn_statement
+          (flow_spawn_keyword)
+          (runnable_name)
+          (line_end
+            (newline))))
+      (let_statement
+        (flow_let_keyword)
+        (local_name)
+        (assign_operator)
+        (await_statement
+          (flow_await_keyword)
+          (handle_name)
+          (line_end
+            (newline))))
+      (await_statement
+        (flow_await_keyword)
+        (handle_name)
+        (line_end
+          (newline)))
+      (let_statement
+        (flow_let_keyword)
+        (run_statement
+          (flow_run_keyword)
+          (runnable_name)
+          (line_end
+            (newline))))
+      (let_statement
+        (flow_let_keyword)
+        (sort_statement
+          (flow_sort_keyword)
+          (flow_ascending_keyword)
+          (flow_by_keyword)
+          (runnable_name)
+          (line_end
+            (newline)))))))

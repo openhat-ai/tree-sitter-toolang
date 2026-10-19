@@ -27,7 +27,7 @@ const recallSources = ["far", "near"];
 const capKinds = ["psyche", "skill", "service", "prompt"];
 
 // No inactive spelling is reserved. Future reservations need an explicit reason
-// and a decision about each recognition context and variable-name exclusion.
+// and a decision about each recognition context.
 const reservedWords = [];
 const wordNodes = {
   ...declarations, ...operations, ...clauses,
@@ -45,8 +45,6 @@ const tables = {
   flow, agic, directive,
   operation_binding: [...Object.keys(operations), "async"],
   restricted_binding: ["until", "_", ...reservedWords],
-  // Recall sources are contextual values, not variable-name exclusions.
-  variable: [...flow.filter(word => word !== "_"), "default", "none"],
 };
 
 module.exports = {
