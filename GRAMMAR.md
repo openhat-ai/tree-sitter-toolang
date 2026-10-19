@@ -1,9 +1,7 @@
 # Toolang Grammar
 
 This reference describes valid Toolang `.too` source and its concrete syntax
-tree (CST). [grammar.js](grammar.js) defines the grammar; the [scanner](src/scanner.c) supplies
-contextual text and layout boundaries. [GRAMMAR.ebnf](GRAMMAR.ebnf) contains the
-generated implementation reference, including recovery alternatives.
+tree (CST), including lexical rules, block layout, and error diagnostics.
 
 Name resolution, property schemas, query interpretation, type defaults, input
 binding, formatting, and execution belong to consumers. Examples below are
@@ -27,17 +25,16 @@ complete programs; referenced names and resources need not be defined to parse.
 | `alias(P, node)` | Emits the specified public node. |
 
 The EBNF shows valid forms; prose supplies lexical and layout constraints.
-Recovery forms are described under [Validity and Recovery](#validity-and-recovery).
+Recovery forms are described under Validity and Recovery.
 Hidden productions start with `_` and add no CST wrapper. Field annotations
-highlight relevant structure; the complete schema is
-[src/node-types.json](src/node-types.json).
+highlight relevant CST structure.
 
-Three parameterized abbreviations correspond to helpers in `grammar.js`:
+Three parameterized abbreviations are used:
 
 - `_body(P)` is an indented structural scope containing `P`, with structural
   trivia allowed before, between, and after entries. Its first substantive entry
   establishes the baseline. `_body_prefix` is a nonempty segment of preceding
-  trivia that stays outside the body under the [layout rules](#block-layout).
+  trivia that stays outside the body under the block layout rules.
 - `_content(F)` selects same-line or indented text and assigns its `content`
   node to field `F`.
 - `_paragraph(L)` groups implicit text lines using line production `L`.
@@ -83,7 +80,7 @@ Spaces and tabs between structural tokens are optional except where needed to
 separate adjacent words or numbers. Such separators cannot contain a newline.
 Indentation and physical line endings are significant; a bare CR is invalid.
 EOF can terminate the last nonempty line and close bodies, but cannot supply
-missing body entries or text. The scanner emits a zero-width `newline` when
+missing body entries or text. The parser emits a zero-width `newline` when
 terminating a nonempty final structural or text line at EOF.
 
 A complete ASCII word-character sequence (`[A-Za-z0-9_]+`) is indivisible:
@@ -249,8 +246,6 @@ flow inspect:
   run: Summarize the result.
 ```
 
-<a id="text"></a>
-
 ## Content
 
 Quotation marks and backslashes are ordinary characters. There is no quoted
@@ -270,7 +265,7 @@ _raw_text        ::= ? physical text at or beyond the text baseline ? ;
 _paragraph(L)    ::= L (L | blank_line L)* blank_line? ;
 ```
 
-`_text_indent` and `_dedent` are hidden scanner boundaries. Same-line content
+`_text_indent` and `_dedent` are hidden layout boundaries. Same-line content
 requires a non-space/tab character and consumes the rest of its physical line,
 including every `#`. It has no inline comments: `run: # Heading` and
 `let note = "a#b"` retain the hash and quotes.
@@ -565,7 +560,7 @@ that line is content, including clause-like words and `#`.
 
 `generate`, `map`, `keep`, `drop`, and `sort` permit one lane clause before their
 connector (`using`, `if`, or `by`) or inline target. Each operation below defines
-its remaining order. Unit spellings follow the [integer rules](#names-and-integers).
+its remaining order.
 
 ### Let
 
@@ -806,7 +801,7 @@ _implicit_content      ::= _paragraph(_implicit_run_line) ;
 _implicit_run_line     ::= alias(_flow_raw_text, text) newline ;
 ```
 
-Flow prose uses the [paragraph rules](#content) with `_flow_keyword` boundaries.
+Flow prose follows the implicit paragraph rules with `_flow_keyword` boundaries.
 `run`, `run:`, and `run,` select syntax; `runner` and `run_suffix` remain text.
 Likewise, `_` selects syntax while `_suffix` remains text. A keyword without a
 valid statement form is an error. Use `run:` for unrestricted keyword-led prose.
@@ -836,9 +831,7 @@ named leaves. A directive word's node type depends on its role: `lanes` is a
 `directive_key` in a directive and an anonymous unit in a lane clause.
 
 Hidden `_line_end` exposes its inline `plain_comment` and `newline` directly.
-Highlighting depends on parent nodes and fields, not on `text` alone. See
-[src/node-types.json](src/node-types.json) for all fields and [queries](queries)
-for their use.
+Highlighting depends on parent nodes and fields, not on `text` alone.
 
 ## Validity and Recovery
 
@@ -874,5 +867,4 @@ native syntax errors.
 real comma or `)` on the same physical line and cannot borrow one from a header
 comment. `invalid_directive` includes indentation and its line ending, like a
 normal directive. `invalid_agic_message` starts at the malformed keyword;
-normal messages retain their leading indentation. The generated reference
-contains the full recovery productions.
+normal messages retain their leading indentation.
