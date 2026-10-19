@@ -1,153 +1,19 @@
 # Toolang Grammar
 
-This document describes the current public Toolang grammar, including unreleased
-changes since version 0.4.0-alpha.4.
-The source of truth is [grammar.js](grammar.js), together with the layout scanner in
-[src/scanner.c](src/scanner.c). Runtime defaults and validation are identified
-separately from parsing rules. Documents under `docs/plans/` record historical
-feature definitions rather than the current syntax reference.
+This reference describes the current source syntax and public CST, including
+[Unreleased changes](CHANGELOG.md#unreleased) after 0.4.0-alpha.4. Published
+packages follow the reference at their matching Git tag.
 
-## Unreleased
+[grammar.js](grammar.js), [keywords.js](keywords.js), and the layout scanner
+[src/scanner.c](src/scanner.c) define parsing. [src/node-types.json](src/node-types.json)
+lists generated node/field metadata; [corpus cases](test/corpus) and
+[complete-source fixtures](tests/fixtures) exercise the contract. Documents in
+`docs/plans/` record design decisions and history.
 
-This update implements the [unified grammar definition](docs/plans/grammar-contract-cleanup.md).
-It changes the public CST and requires a coordinated consumer migration from
-0.4.0-alpha.4; package versions and runtime execution are unchanged.
-
-- Use leaf names/tokens and direct semantic fields. Text values are `content`
-  containing `text_line` fragments; `message.role` is optional, and structural
-  bodies own their entries directly. Migrate using the [CST contract](#cst-node-contract).
-- `let_statement.local: local_name`, `await_statement.handle: handle_name`, and
-  `param_doc_tag.param: param_name` identify bindings and references precisely.
-- Remove obsolete keyword restrictions for `scatter`, `gather`, `storm`,
-  `settle`, `rank`, `par`, `top`, `bottom`, `think`, `use`, `thunk`, `call`, `do`,
-  `unfold`, `each`, `fold`, `head`, and `tail`. These words are ordinary names
-  or text where allowed. Old operation-looking lines can become implicit prose;
-  migrate intended calls to current operations. No inactive words are reserved.
-- Match complete words and integers. `let note = runworker` is text; write
-  `2 times`, `2 using worker`, and `with skill ./foo` with separators. Grammar
-  symbols still permit `let h=async run worker` and `generate 2->Text:Text.`.
-  Structural tokens and raw `with` references exclude separating whitespace;
-  literal text bytes remain unchanged.
-- Missing requirements expose zero-width `invalid_missing_body`,
-  `invalid_missing_content`, or `invalid_missing_statement` without consuming
-  following source or opening a synthetic indentation frame. Reject all
-  `invalid_*` diagnostics even when native `has_error` is false.
-  Outer comments before a missing text value stay outside `content`; recovery
-  retains the text owner even when those comments end at EOF.
-
-## Changes in 0.4.0-alpha.4
-
-- Add `async run` with the existing named and inline run targets, and `await h`
-  for a single local handle from either `async run` or `spawn`. Both support
-  named and nameless `let`.
-  This implements the grammar scope of the
-  [async run and handle await definition](https://github.com/openhat-ai/toolang/pull/685).
-  Await blocks are excluded.
-- `run_statement` gains an optional `async: flow_async_keyword` field; existing
-  `runnable` and `agic` fields are unchanged. `await_statement.handle` reuses
-  `local_name` for a non-keyword variable name. Await requires an explicitly
-  retained named handle; `await _` is invalid in every binding form.
-- `local_name` is a leaf containing the identifier text. Queries that previously
-  captured its nested `snake_name` must capture `local_name` directly; existing
-  `name` and `handle` fields and their source ranges are unchanged.
-- Complete lowercase `async` and `await` now select syntax at flow statement
-  and same-line let-value boundaries. Malformed uses cannot become prose.
-  Move affected literal text into an explicit text body or capitalize its first
-  word. Keyword prefixes, agic messages, and explicit text remain literal.
-  These new keywords are also excluded from variable names.
-- Reserve `_` at flow statement and same-line let-value boundaries. Bare `_`
-  and `let x = _` are invalid; move literal `_` into an explicit text body.
-  Primary-input parameters, parameter documentation, and `{{_}}` templates
-  remain supported. `_` is not an explicit let binding destination.
-- Execution, handle validation, binding effects, and formatting require matching
-  Toolang support. No built-in handle type or generic type syntax is added.
-
-## Changes in 0.4.0-alpha.3
-
-- Implement [flexible repeat conditions](docs/plans/flexible-repeat-conditions.md):
-  zero or one `until NAME` or `until: BODY` at any body position, with optional
-  count and window. Every repeat still requires an ordinary Flow statement.
-- **CST migration:** read `repeat_statement.body: repeat_body`, its repeated
-  `statement` fields, and optional `until: until_clause` with a required `target`.
-  The old root-level `until` field is removed; consumers must adopt these paths
-  with the matching grammar package. Nodes retain source order.
-- **Source migration:** rename keyword-named variables and parameters together
-  with their references. Move same-line let text starting with `until` into an
-  indented text body. Variable naming follows [Lexical Structure](#lexical-structure).
-
-## Changes in 0.4.0-alpha.2
-
-- Add `spawn R`, `spawn: BODY`, and `spawn -> T: BODY` in flow and repeat
-  bodies, with optional `let job =` or nameless `let` wrappers. The public
-  `spawn_statement.target` field is a required `runnable | inline_agic` union;
-  `flow_spawn_keyword` identifies the keyword.
-- Reserve complete lowercase `spawn` at statement boundaries and after let
-  prefixes. Existing prose such as `let text = spawn a process` now reports a
-  syntax error instead of becoming Content. Existing explicit text bodies and
-  keyword prefixes such as `spawned` remain literal.
-- This implements the [approved spawn syntax](docs/plans/flow-spawn.md).
-  Execution, handle binding, and canonical formatting require downstream Toolang
-  support. This release introduces no async/await syntax.
-
-## Changes in 0.4.0-alpha.1
-
-This breaking syntax change implements the grammar portion of the approved
-[Flow array definition](https://github.com/openhat-ai/toolang/blob/main/docs/plans/flow-array-semantics.md).
-A matching Toolang runtime is required; parser support alone does not change
-execution or stored values.
-
-- Use `run` for a single call, including array-producing and array-consuming
-  calls. `scatter` and `gather` are removed. Inline `run` defaults to Text, so a
-  former implicit array-producing `scatter:` needs `run -> Text[]:`.
-- Rename `storm` to `generate` and `settle` to `reduce`. Their public statement
-  nodes become `generate_statement` and `reduce_statement`; count, lanes,
-  runnable, and initializer fields retain their existing meanings.
-- For `generate`, `map`, and `reduce`, a named runnable requires `using` and an
-  inline runnable must omit it. `generate` and `map` put an optional lane clause
-  before the target. Let binding and discard wrappers use the same rules.
-- Removed statement nodes are no longer emitted. Their keyword nodes remain
-  reserved for migration diagnostics. Removed or malformed collection heads
-  cannot become implicit runs or same-line `let name = BODY` text. Explicit
-  `run:` bodies and indented Content bindings can still contain literal text.
-- `run`, `exec`, `seek`, `keep`/`drop` predicates, `sort`, and `repeat` retain
-  their target and clause syntax. The collection migration added no async,
-  await, or spawn syntax and no `produce` or `gen` alias.
-
-| Previous source | Replacement |
-| --- | --- |
-| `scatter using expand` | `run expand` |
-| `scatter [using]: BODY` | `run -> Text[]: BODY` |
-| `scatter [using] -> T[]: BODY` | `run -> T[]: BODY` |
-| `gather using merge` | `run merge` |
-| `gather using [-> T]: BODY` | `run [-> T]: BODY` |
-| `storm N [in P lanes] using worker` | `generate N [in P lanes] using worker` |
-| `storm N [in P lanes] using [-> T]: BODY` | `generate N [in P lanes] [-> T]: BODY` |
-| `settle using merge` | `reduce using merge` |
-| `settle [using] [-> T]: BODY` | `reduce [-> T]: BODY` |
-| `map [in P lanes] using [-> T]: BODY` | `map [in P lanes] [-> T]: BODY` |
-
-Move a trailing lane clause before the target in `generate` and `map`. Preserve
-bindings, explicit return types, counts, and `from:` initializers. Array behavior
-and the removal of runtime shape/dim are owned by the Toolang definition, not by
-the grammar. The following 0.3.3 notes describe that historical release;
-this section supersedes its collection statement syntax.
-
-## Changes in 0.3.3
-
-- Agics and flows share query directives (`models`, `tools`, `skills`,
-  `services`, `psyches`, `prompts`), route lists (`hands`, `handoffs`), `recall`,
-  `lanes`, and named `instruct`/`context` selectors. Selectors use `=`; local
-  `instruct:`/`context:` blocks and bare selector references are invalid.
-- Replace `recall = auto` with `recall = far, near`. Query directives accept
-  `=`, `+=`, and `-=`; all other directives accept only `=`.
-- `scatter` no longer takes a count. Use `scatter using name` or `scatter:`
-  for list generation; use `storm N using name` for a counted expansion.
-- `settle` accepts a trailing `from:` initializer. `repeat` accepts
-  `windowing N` before its header colon. See [Flow](#flow) for clause ownership
-  and examples.
-- CST consumers should read shared `directive` nodes (`key`, `operator`,
-  `value`), the separate `settle_statement.from` field, and
-  `repeat_statement.window`. Prompt selectors have no `settings` subtree.
+The parser identifies syntax and preserves authored text. The
+[Toolang runtime reference](https://github.com/openhat-ai/toolang/blob/main/docs/program.md)
+owns signature defaults, name resolution, semantic validation, binding effects,
+and execution. Parsing success does not establish runtime validity.
 
 ## EBNF
 
@@ -160,92 +26,16 @@ patterns and flags. The file's header defines its notation.
 
 This is an implementation reference, not a standalone valid-source grammar:
 ordinary EBNF tools do not enforce its annotations or scanner contracts.
-The lexical, layout, validity, CST, and runtime requirements below still apply.
+The lexical, layout, validity, and CST requirements below still apply.
 Helper productions do not imply public CST nodes. Do not edit the generated
 file; `npm run check:ebnf` verifies it without writing, and CI checks for stale
 committed output after regenerating the grammar.
 
-## CST Node Contract
-
-Public nodes describe authored values, declarations, calls, and structural
-bodies. Fields identify their role in the parent. Lexical helpers, forwarding
-rules, and list wrappers are hidden; names and lexical tokens are leaves.
-
-| Public node | Meaning |
-| --- | --- |
-| `identifier` | Ordinary lowercase field/property/context/instruct name or text reference. |
-| `runnable_name`, `type_name` | Named runnable or authored type; distinct from inline agics and built-in types. |
-| `local_name`, `handle_name`, `param_name` | Binding destination, await reference, and parameter name; only parameters additionally accept `_`. |
-| `cap_name`, `job_name`, `agent_name` | Names with their existing context-specific lexical constraints. |
-| `content` | One text value in same-line, indented, or implicit paragraph form. |
-| `text_line` | A physical text fragment without its newline; also used directly for raw references and property values. |
-| `directive_operator`, `assign_operator` | Query operators (`=`, `+=`, `-=`) and assignment (`=`). |
-| `array_suffix` | One `[]` suffix; a type can have several. |
-
-`content` contains direct `text_line`, `newline`, and `blank_line` children.
-Same-line content has one `text_line`; its trailing `line_end` belongs to the
-owner. Indented and implicit content retain their physical line endings and
-paragraph boundaries. Text leaves preserve existing source bytes, including
-leading/trailing whitespace and relative indentation; parsing does not trim or
-dedent. Header comments and line terminators are outside `content`.
-
-| Owner | Fields |
-| --- | --- |
-| `context`, `instruct`, `inline_agic`, `inline_agic_body`, `ask_statement`, `implicit_run_statement` | `content: content` |
-| `message` | Optional `role: role`, required `content: content` in valid syntax |
-| Text `let_statement` | `local: local_name`, `value: content` |
-| `reduce_statement` | Optional initializer `from: content`; inline `runnable` exposes `content: content` |
-| `flow_body` | Repeated `directive` and `statement` |
-| `agic_body` | Repeated `directive` and `message` |
-| `repeat_body` | Repeated `statement`, optional `until: until_clause` |
-| `struct_body` | Repeated `field` |
-| `cap_body`, `job_body` | Repeated `property`, optional `content`; includes the header line terminator |
-
-Structural bodies own their entries and trivia in source order. Optional cap/job
-entries and directives-only agics remain valid. An absent message role is an
-absent field, never an empty or default `user` token. Comments retain their
-existing node kinds and attachment rules; directives retain `key`, `operator`,
-and `value`. Markers in explicit content remain literal text.
-
-Declarations keep `agic.name` / `flow.name: runnable_name` and
-`param.name: param_name`. Bindings use `let_statement.local: local_name`, await
-uses `await_statement.handle: handle_name`, and documentation uses
-`param_doc_tag.param: param_name`. Calls retain their existing `runnable`,
-`agic`, or `target` fields. `runnable_ref` remains distinct because route lists
-allow qualified references. Type/value alternatives such as `type`, `text_ref`,
-`route_value`, and `recall_value` retain their meaningful structure.
-
-CST migration directly from 0.4.0-alpha.4:
-
-| Previous shape | Current shape |
-| --- | --- |
-| `item → declaration` | Declaration directly under `source_file`. |
-| `agic_name / flow_name / runnable → snake_name` | `runnable_name` leaf. |
-| `field_name / property_key / context_name / instruct_name → snake_name` | `identifier` leaf. |
-| `struct_name / user_type → type_name → pascal_name` | `type_name` leaf. |
-| `param_name → snake_name` | `param_name` leaf, also for `_`; `local_name` was already a leaf in alpha.4. |
-| `let_statement.name` | `let_statement.local`, including binding diagnostics. |
-| `await_statement.handle: local_name` | `await_statement.handle: handle_name`. |
-| `param_doc_tag.name` | `param_doc_tag.param`; declarations retain `param.name`. |
-| `agent`, `directive_op` | `agent_name`, `directive_operator`. |
-| Named lexical wrappers around anonymous tokens | Leaf `builtin_type`, `role`, `directive_key`, `recall_source`, `assign_operator`, and `flow_lanes_keyword`. |
-| `base_type → builtin_type / user_type`, `type_suffix → array_suffix` | Direct `type.base` and repeated `type.suffix` leaves. |
-| `cap_ref / property_value → text_line` | Direct `reference` / `value: text_line`. |
-| Cap properties on declaration, text-only `body: cap_body → text_body` | Structural `body: cap_body` with `property` and optional `content` fields. |
-| Job text nested under `job_body` | Direct `job_body.content: content`; properties use repeated `property` fields. |
-| `context_body / instruct_body → text_inline` | Direct declaration `content: content`. |
-| Other text-valued `body: text_inline` | `content: content`; let retains `value`, reduce initializer retains `from`. |
-| `text_inline → text_block → text_body` | One `content` value boundary. |
-| `text_body_line → indented_raw_text, newline` | Direct `text_line` leaf followed by `newline` under `content`. |
-| `unroled_message`, bare implicit-run text children | `message.content` / `implicit_run_statement.content`. |
-| `statements`, `messages` wrappers | Direct repeated `statement` / `message` fields on the owning body. |
-
-Update field paths and queries together. New semantic content ranges omit the
-header newline/comment formerly included by forwarding wrappers. Physical text
-leaf ranges remain unchanged; removed line wrappers no longer contribute a
-newline to a text leaf. Body ownership changes for caps are explicit above.
-Consumers must reject native missing tokens, `ERROR`, and `invalid_*` diagnostics
-before lowering, formatting, or execution. No runtime binding effect changes.
+In the schematic forms below, uppercase names are placeholders, brackets mean
+optional syntax, and `|` separates alternatives. `BODY` means authored text,
+which can be same-line or indented only where the owning production permits.
+Code blocks labeled `too` are complete parser examples, not runtime programs
+with every external target resolved.
 
 ## Lexical Structure
 
@@ -254,8 +44,16 @@ and name exclusions explicitly; the scanner header is generated from it, not
 from CST rule names. Active words are recognized only in their grammar context.
 Variable names exclude the active Flow vocabulary plus `default` and `none`;
 `far` and `near` are contextual recall values and remain valid variable names.
-No inactive words are reserved. The removed spellings listed under Unreleased
+No inactive words are reserved. The [removed spellings](CHANGELOG.md#unreleased)
 are neither keywords nor variable exclusions.
+
+| Name positions | Accepted spelling |
+| --- | --- |
+| `identifier`, `runnable_name`, `agent_name` | `[a-z][a-z0-9_]*` |
+| `local_name`, `handle_name`, named `param_name` | Same lowercase pattern, excluding the variable vocabulary above |
+| `type_name` | `[A-Z][A-Za-z0-9]*` |
+| `cap_name`, `job_name` | `[a-z][a-z0-9_-]*` |
+| `runnable_ref` in route lists | `([A-Za-z_][A-Za-z0-9_-]*::)*(agic:\|flow:)?[A-Za-z_][A-Za-z0-9_-]*` |
 
 `local_name`, `handle_name`, and `param_name` are leaves. Parameters additionally
 accept `_`, the explicit primary-input marker. `_` cannot be a local destination,
@@ -366,8 +164,7 @@ runnable/parameter descriptions for help and calling hints.
 
 Empty doc comments omit `text`. Field ranges exclude markers and leading
 separating whitespace, preserve trailing whitespace, and use exact UTF-8 byte
-positions. Consumers trim contributions and join nonempty module-doc text in
-source order. `param_doc_tag` is a child of item documentation, not a fifth
+positions. `param_doc_tag` is a child of item documentation, not a fifth
 comment category.
 
 ```too
@@ -380,12 +177,6 @@ comment category.
 agic summarize(_: Text, style?: Text):
   Summarize {{_}}.
 ```
-
-Version 0.3.2 changes public CST names: `comment_line` and `inline_comment`
-become `plain_comment`, first-line shebangs become `shebang_comment`, `doc_line`
-becomes `item_doc_comment`, and `parent_doc_line` becomes `module_doc_comment`.
-Update queries and node consumers together. Existing `##!` source remains
-valid; do not replace marker-like strings inside literal prompts or history.
 
 ## Block Layout
 
@@ -407,6 +198,9 @@ valid; do not replace marker-like strings inside literal prompts or history.
   are preserved. Same-line text ends on that physical line.
 - Structural `##` documentation attaches to an immediately following entry
   at the same indentation; blank lines and ordinary comments detach it.
+
+### Validity and Recovery
+
 - Malformed entries remain invalid during recovery. Unexpected content is
   contained to its physical line so it cannot borrow tokens from a later header.
 - Missing required structure emits `invalid_missing_body`; missing text emits
@@ -434,51 +228,142 @@ For example, an empty repeat retains `repeat_statement.body: repeat_body` contai
 generated `repeat_body.statement` field is optional only to represent this
 diagnostic state. Every valid repeat still requires an ordinary statement.
 
+
+Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
+descendant before lowering, formatting, or execution. `root.has_error` alone
+is insufficient because explicit diagnostic nodes are ordinary CST nodes.
+Generated field metadata describes recovery trees too; optional metadata does
+not relax the valid-source requirements below.
+
+## Declarations
+
+`source_file` contains declarations and trivia directly, in source order. The
+accepted declaration heads are `with`, `struct`, `psyche`, `skill`, `service`,
+`prompt`, `task`, `chore`, `context`, `instruct`, `agic`, and `flow`. There is no
+public `item` wrapper. Arbitrary top-level prose is invalid.
+
+### Imports
+
+Schematic form: `with KIND REFERENCE`, where `KIND` is `psyche`, `skill`,
+`service`, or `prompt`. A reference requires nonblank text after its separator;
+it is raw text rather than a parsed path or expression. The `with` node exposes
+`kind: cap_kind` and `reference: text_line`; comments and the terminator belong
+to `line_end`.
+
+```too
+with skill ./skills/review
+with prompt library/summary
+```
+
 ## Types
 
-Rules:
+A `type` has `base: builtin_type | type_name` and zero or more `suffix: array_suffix`
+fields. Built-ins are exactly `Text`, `Number`, `Boolean`, `Json`, and `Part`.
+Each contiguous `[]` adds an array suffix; `Text[][]` is valid. There is no
+source-level generic notation such as `Run<Text>`.
 
-- `Text`, `Number`, and `Boolean` are scalar types.
-- `Json` is a dynamic JSON-compatible value.
-- `Part` is a model-visible content part.
-- A `struct` declaration defines a user Record type. `Record` is a semantic
-  category, not a builtin type name.
-- Runtime `Message` values are Records, but Toolang source does not use
-  `Message` as a normal agic or flow type.
+A struct has `name: type_name` and `body: struct_body`. It requires at least one
+`field`; each field has `name: identifier`, optional `optional: optional_marker`
+(`?`), and required `type: type`.
+
+```too
+struct Report:
+  summary: Text
+  count?: Number
+  parts: Part[]
+```
 
 ## Caps
 
-Rules:
+Schematic form: `KIND NAME:` followed by an optional indented body, with `KIND`
+from `psyche`, `skill`, `service`, or `prompt`. The public node has that kind's
+name and fields `kind`, `name: cap_name`, and `body: cap_body`.
 
-- The public CST exposes `psyche`, `skill`, `service`, and `prompt` directly.
-- All four cap declarations expose `kind`, `name`, and `body: cap_body`.
-  The body has repeated `property` fields and optional `content: content`.
-- Properties form a leading prefix before the text body. Once the text body
-  starts, later property-looking lines remain text.
-- Empty and property-only bodies are valid. A raw property value can consist
-  only of spaces/tabs at the parser level; required prompt content cannot.
-- Runtime validates property keys and cap-specific constraints after parsing.
-  A prompt permits no properties; the other cap kinds each define their own
-  property schema.
+A cap body contains repeated `property` fields followed by optional
+`content: content`. A property has `key: identifier`, `operator: assign_operator`
+(`=`), and raw `value: text_line`. Empty and property-only bodies are valid.
+A property value can contain only spaces/tabs at the parser level. Once text
+starts, later property-looking lines remain text. Same-line cap bodies are not
+accepted. Property schemas and required content are validated by the runtime.
+
+```too
+skill review:
+  source = library/review
+
+  Review the supplied changes.
+```
 
 ### Prompts
 
-Rules:
+Prompt declarations share the cap body grammar and have no typed parameter list.
+A leading property-looking line is still a property syntactically; the runtime
+rejects prompt properties. Placeholders such as `{{_}}` and `{{tone}}` remain
+literal bytes in `content`; extraction and substitution belong to consumers.
 
-- A leading property-looking line is parsed as a property and rejected by
-  prompt semantic validation.
-- `{{name}}` placeholders implicitly declare named inputs. `{{_}}` is the
-  primary-input placeholder. Prompt declarations have no parameter directive or
-  typed signature.
-- Placeholder extraction and substitution are language semantics; placeholders
-  remain part of raw `content` text in the CST.
+```too
+prompt rewrite:
+  Rewrite {{_}} in the requested {{tone}} tone.
+```
 
 ## Jobs
 
-Rules:
+`task NAME:` and `chore NAME:` expose `name: job_name` and `body: job_body`.
+Job bodies use the same optional property-prefix/content shape as caps, with
+repeated `property` fields and optional `content`. Scheduling and property
+validation are runtime responsibilities.
 
-- `task` and `chore` use the same property and text body shape as caps.
-- The public CST exposes `task` and `chore` directly.
+```too
+chore review_changes:
+  title = Review changes
+
+  Review the latest changes.
+```
+
+## Context And Instruct
+
+Schematic forms: `context [NAME]: BODY` and `instruct [NAME]: BODY`. Each exposes
+optional `name: identifier` and required `content: content`. Both same-line and
+indented text are accepted; omission of the name remains visible as an absent
+field. Named selection and defaults are runtime semantics.
+
+```too
+instruct: Return a concise answer.
+context project:
+  Use the supplied project context.
+```
+
+## Runnable Signatures
+
+Schematic header: `agic|flow [NAME][(PARAMS)] [-> TYPE]:`. Names are optional;
+multiple unnamed declarations parse. A parameter has a required `param_name`,
+optional `?`, and optional `: TYPE`. A parameter list can be empty and has no
+trailing comma. Type annotations use the [type syntax](#types).
+
+Both declarations expose optional `name: runnable_name`, `params: params`, and
+`return: type`. A `params` node has repeated `param` fields; each `param` has
+`name`, optional `optional`, and optional `type`. Omitted lists, empty lists,
+and omitted types have distinct trees. The parser does not insert defaults or
+validate parameter order, duplicates, or declaration-name uniqueness.
+
+## Shared Directives
+
+Agics and flows accept directives before messages/statements. Each `directive`
+exposes `key`, `operator`, and `value`. There is no separate settings wrapper.
+
+| Keys | Operators | Parsed value |
+| --- | --- | --- |
+| `models`, `tools`, `skills`, `services`, `psyches`, `prompts` | `=`, `+=`, `-=` | Nonblank raw `directive_value` up to a comment or line ending |
+| `hands`, `handoffs` | `=` | `route_value`: comma-separated `runnable_ref` entries, or standalone `none` / `*` |
+| `recall` | `=` | `recall_value`: comma-separated `far` / `near`, or standalone `none` / `default` / `*` |
+| `lanes` | `=` | `integer_literal` or `default` |
+| `context`, `instruct` | `=` | `text_ref`: `identifier`, `default`, or `none` |
+
+Values are required. Special list values stand alone. Route references use the
+broader spelling in [Lexical Structure](#lexical-structure); they are not ordinary
+named call targets. `recall = auto` is invalid; query-expression validation,
+duplicate directives, resource selection, and numeric ranges belong to the
+runtime. Runnable-local `context:` / `instruct:` blocks and bare selectors are
+invalid. Full examples appear [below](#shared-directives-and-flow-clauses-example).
 
 ## Text
 
@@ -498,231 +383,101 @@ line-initial comment markers are structural while embedded `#` remains text.
 The scanner preserves text and paragraph boundaries. The hidden recognition
 rules produce `text_line` leaves, without additional public wrapper nodes.
 
-## Context And Instruct
-
-Defaults:
-
-- An omitted name defaults semantically to `default`.
-
 ## Agic
 
-Rules:
+An agic has `body: agic_body`, containing repeated `directive` and `message`
+fields directly in source order. Directives must precede messages. A body may
+contain only directives; otherwise at least one message is required. Standalone
+`pass` is the whole-body alternative and cannot follow directives or coexist
+with messages.
 
-- `_` is the primary invocation input parameter. If present, it must be first.
-- Omitting the complete parameter list implies `_ : Part[]`; writing `()`
-  declares no primary input.
-- An explicit `_` without a type also defaults to `Part[]`.
-- An untyped named parameter defaults to `Text`.
-- An omitted declaration return type defaults to `Text`. Adhoc operation defaults
-  and signature validation belong to the consumer.
-- Agic and flow share directives, which precede messages or statements.
-  An agic may contain only directives; a flow with directives still requires
-  at least one statement. `pass` is a standalone body alternative and cannot
-  follow directives.
-- Query directives support `=`, `+=`, and `-=`. List and value directives only
-  support `=`. Every directive requires a nonempty value; list special values
-  stand alone. The consumer rejects duplicate `hands`, `handoffs`, `recall`,
-  `lanes`, `instruct`, and `context` directives; query directives may repeat.
-  Positive counts and query-expression semantics are validated after parsing.
-- `instruct = name` and `context = name` select explicit top-level declarations.
-  `none` disables the selected layer. `default` selects the module's unnamed
-  declaration, with a system fallback when absent. An unknown explicit name
-  is an error. Omission inherits the parent's resolved selection, or defaults
-  at a root; inherited selections retain their declaring module.
-- Runnable-local `instruct:`/`context:` bodies and bare selector references are
-  not supported.
-- Hands/handoffs are CSV references, not match queries. Recall supports either
-  source order; `auto` is not a special value. Root recall defaults to far/near.
-- Route references accept portable exported flow names, including uppercase
-  letters, leading underscores, and hyphens; authored declaration names still
-  use snake_case.
-- All directives expose `key`, `operator`, and `value` fields. Prompt selectors
-  are directives rather than a separate `settings` subtree.
-- Bare text in an agic body is an unroled message. Runtime treats it as a user
-  message.
-- Unroled messages are fallback messages. A line starting with an agic keyword
-  parses as `invalid_agic_reserved_message` unless it matches an explicit
-  agic body form. Explicit agic body forms are tried before fallback, including
-  after an unroled message has started.
-- Adjacent unroled message text lines are merged into one message. One blank
-  line between unroled text lines is preserved inside the same message. Two or
-  more blank lines, or any comment/doc-comment line, split unroled messages.
-- Use an explicit role when message content itself starts with an agic keyword.
-- `pass` declares an empty body and cannot be followed by other body entries.
-- Runtime validates referenced names and resource-directive semantics. Recall
-  operators and values are fixed by the grammar.
+A `message` has optional `role: role` (`user`, `assistant`, or `tool`) and
+required `content: content` in valid source. Role headers require a colon and
+actual content, either same-line or indented. Bare paragraphs produce the same
+message node with an absent role; no default role is fabricated in the CST.
+
+At every substantive line, complete agic keywords select structural syntax
+before paragraph fallback. Malformed active heads expose
+`invalid_agic_reserved_message` or native errors. Prefixes remain text; use an
+explicit role when literal content begins with an active keyword. Adjacent bare
+lines and one intervening blank line stay in the same paragraph; two blank
+lines, a structural comment, dedent, or EOF ends it. Embedded `#` remains text.
+
+```too
+agic summarize(_: Text, style?: Text) -> Text:
+  models = *
+  user:
+    Summarize {{_}} in the requested style.
+  assistant: Ready.
+```
 
 ## Flow
 
-Rules:
+A flow has `body: flow_body` with repeated `directive` and `statement` fields in
+source order. Directives precede statements; directives alone are insufficient.
+Standalone `pass` is the whole-body alternative and cannot follow directives or
+coexist with statements.
 
-- A `flow` describes a workflow as an ordered tree of executable statements.
-- A flow name may be omitted. The grammar permits multiple unnamed agics and
-  flows in one source file. Default naming and runnable-name uniqueness are
-  semantic validation after parsing.
-- Flow signatures reuse agic parameter and return type syntax and defaults.
-  Flow directives reuse agic directive syntax and must appear before statements.
-- `let name = statement` writes the result to a named local. `let statement`
-  discards the result and does not update `_`. `let name = BODY` evaluates
-  authored Content and creates or replaces a named local with a complete
-  `Part[]` value, without starting a child run. The `Part[]` type is implicit
-  and omitted from source. Local type annotations and array literals are not
-  binding syntax; a future extension must preserve `let name = BODY` as the
-  compatible shorthand. A statement binding instead infers its value type
-  from the operation result. Content permits BODY on the
-  same line or in an indented block. An explicit flow operation after `=` takes
-  precedence over the BODY form only when its whole keyword matches; for
-  example, `runworker` remains Content. Complete operation heads, including
-  malformed operations, cannot fall back to
-  same-line Content. `_` and `until` also cannot become same-line Content. For
-  literal text beginning with these words, use an indented Content block.
-  A named binding missing `=` produces `invalid_flow_reserved_statement`,
-  keeping its diagnostic local during both fresh and incremental parsing.
-- `exec` replaces the current runnable with a named agic/flow or an inline agic;
-  the outgoing runnable does not resume. Its `target` field is a `runnable_name` or
-  `inline_agic`, using the same target forms as `run` in Flow and repeat bodies.
-  Exec is not bindable and accepts no argument lists or modifiers. Named targets
-  end at the line boundary. Inline bodies retain normal text/template syntax
-  and optional return types. Invalid bindings expose
-  `invalid_flow_reserved_statement`. Keyword prefixes and explicit text remain
-  literal. Target resolution and branch-local recursion checks belong to
-  runtime, not the grammar.
-- `run` resolves a named agic or flow, or defines an inline agic. `seek` targets
-  another agent with a named runnable or inline agic. `ask` requests input from
-  the human owner.
-- `async` is a prefix modifier attached to a statement, currently supported only
-  by `run`. It adds the optional `async: flow_async_keyword` field to
-  `run_statement`, preserving its `runnable` or `agic` target field. There is no
-  separate async statement or wrapper node. All three run targets work:
-  `async run R`, `async run: BODY`, and `async run -> T: BODY`. The return type
-  describes eventual output. A named target requires a space or tab after `run`;
-  `async runworker` cannot split into two tokens. No argument lists, `using`,
-  lanes, or other async operators are introduced. The downstream contract starts
-  a child owned by the current run; only `let h = async run ...` retains its
-  handle. Bare async run and nameless `let async run ...` preserve `_`.
-  Malformed target tails can appear as `invalid_flow_reserved_statement` inside
-  `run_statement`, keeping following statements and declarations intact.
-  Consumers must reject these diagnostic descendants before executing the run.
-- `await h` exposes `await_statement` with a required `handle: handle_name`
-  and `flow_await_keyword`. The handle name follows the same non-keyword variable
-  naming rule as a let binding; `_` is invalid. Local lookup and
-  handle validation belong to runtime. It accepts no expressions,
-  field access, calls, timeouts, `all` qualifier, lane clauses, or block body.
-  `let_statement.local: local_name` identifies the binding destination;
-  `await_statement.handle: handle_name` identifies the handle inside `statement`.
-  Both name nodes directly contain the identifier text without child nodes.
-  The same node represents async and spawn handles
-  because their launch origin is resolved by runtime, not by await syntax.
-- `spawn` uses the same named and inline target forms as `run`, exposing a single
-  required `target` field (`runnable_name` or `inline_agic`). Named targets are bare
-  runnable names and end at the line boundary; no `using`, argument lists, lane/count
-  clauses, or async modifiers are accepted. Inline targets reuse text bodies,
-  templates, and optional return types; the return type describes the target's
-  eventual output, not its launch handle.
-  The downstream runtime contract starts an independent root run: bare spawn and
-  `let spawn ...` preserve `_`, while `let job = spawn ...` retains the handle.
-  Both unbound forms retain their distinct CST; canonical formatting and handle
-  semantics belong to Toolang. The grammar does not resolve targets, choose
-  threads, execute work, or add handle types. Handle awaiting uses the separate
-  `await_statement` syntax.
-- `generate`, `map`, and `reduce` require `using` before a named runnable,
-  separated from its name by at least one space or tab. `usingworker` is a
-  complete name, not a connector followed by `worker`. Inline runnables must
-  omit `using`. Inline targets may declare a return type; their default is Text.
-  `if` and `by` still introduce
-  either named or inline runnables. Predicate and score type validation is semantic.
-- `generate N` calls the same runnable N times; `map` transforms each outer array
-  item; `reduce` combines outer items sequentially. Complete array-valued results
-  remain nested. These are runtime contracts. `keep` and `drop` select by
-  `first N`, `last N`, or a Boolean runnable. `sort` orders outer items by an
-  explicit ascending or descending numeric score.
-- `in N lane|lanes` limits independent child-run concurrency without changing
-  result order. Literal `1`, including a leading-zero spelling, requires
-  `lane`; every other integer requires `lanes`. The same agreement applies to
-  `repeat N time|times:`.
-- A positional count, selection, or order immediately follows its verb.
-  Generate and map require the lane clause before the named or inline target.
-  Keep/drop and sort still allow lanes before or after a named target. An inline
-  runnable is final. Commas and `with` are not complement syntax.
-- Reduce's optional trailing `from:` supplies initializer Content. A named reducer
-  uses `reduce using name:` with an indented `from:`. An inline multiline reducer
-  uses `reduce:`; `from:` is at the reducer text's baseline,
-  after nonempty reducer text. Deeper `from:` text stays literal. The `runnable`
-  field excludes the initializer; the sibling `from` field contains `content`.
-  Without `from`, runtime seeds from the first source element. Reduce retains one
-  previous frame and has no window clause. Unlike generic explicit text bodies,
-  reducer headers currently allow structural comments before the first body row;
-  the EBNF retains this existing distinction.
-- `windowing N` precedes the repeat header colon and exposes the `window` integer
-  field. Count and condition are independently optional, including `repeat:`.
-  Runtime owns count/window values, Boolean output, name resolution, condition
-  execution at its source position, and history behavior.
-- A repeat body requires at least one ordinary Flow statement and permits zero
-  or one `until` before, between, or after its statements at the same indentation.
-  Nested repeats own their conditions. Empty/condition-only bodies, duplicate
-  conditions, and conditions outside repeats are invalid.
-- `until NAME` accepts an unresolved bare `runnable_name`; `until: BODY` accepts
-  ordinary inline or multiline text and templates. Qualified targets, arguments,
-  modifiers, named colon bodies, output annotations, and result bindings are
-  invalid. Deeper explicit text remains literal; a baseline sibling ends it.
-- Bare flow text is shorthand for inline `run`. Every substantive physical
-  line, including a continuation, checks its first complete token. An active
-  structural keyword selects structural parsing; malformed syntax
-  cannot fall back to prose. Capitalize the word, avoid it, or use explicit
-  `run:` text when it is intended as prose.
-- Adjacent non-keyword lines and one intervening blank line stay in the same
-  implicit run. Relative Markdown indentation may continue that prose; a
-  keyword-led line at an invalid structural depth is an error. Two blank lines,
-  a structural comment, the end of the flow body, or EOF ends the implicit run.
-- `until` is an active boundary keyword. At a statement boundary it begins a
-  repeat condition or a diagnostic, and cannot become implicit run text.
-- `from` and `windowing` are active clause words. `from:` is valid only as a reduce
-  initializer; `windowing N` is valid only in a repeat header. Use explicit
-  `run:` text when these words begin prose.
-- Explicit statement keywords are lowercase and case-sensitive. Named and
-  positional statement headers end at `line_end` and do not accept trailing
-  prose punctuation.
-- Matching uses a complete lexical token: `run`, `run:`, and `run,` select
-  keyword parsing, while `runner` and `run_suffix` remain prose. `_` also selects
-  syntax, while `_suffix` remains prose. Connector-only words and declaration/directive heads are invalid at a Flow statement position.
-- Removed words such as `scatter`, `storm`, `rank`, and `thunk` are ordinary
-  prose or names where allowed. A malformed active structural head still emits
-  a syntax error or `invalid_flow_reserved_statement`; the historical diagnostic
-  name does not imply a separate set of reserved legacy words.
+### Statement Forms
+
+These are schematic forms. Named targets use bare `runnable_name`; inline
+runnables use `[-> TYPE]: BODY`. No target accepts an argument list. An inline
+body is final in its header; named headers end at `line_end` without trailing
+prose punctuation. All statement keywords are lowercase and case-sensitive.
+
+| Operation | Forms | Notable CST fields |
+| --- | --- | --- |
+| `run` | `[async] run NAME` or `[async] run [-> TYPE]: BODY` | Optional `async`; `runnable: runnable_name` or `agic: inline_agic` |
+| `exec` | `exec NAME` or `exec [-> TYPE]: BODY` | `target: runnable_name \| inline_agic` |
+| `spawn` | `spawn NAME` or `spawn [-> TYPE]: BODY` | `target: runnable_name \| inline_agic` |
+| `await` | `await HANDLE` | `handle: handle_name` |
+| `seek` | `seek AGENT NAME` or `seek AGENT [-> TYPE]: BODY` | `agent: agent_name`; `runnable` or `agic` |
+| `ask` | `ask: BODY` | `content: content` |
+| `generate` | `generate N [in N lane\|lanes] using NAME` or `generate N [in N lane\|lanes] [-> TYPE]: BODY` | `count`, optional `lanes`, `runnable: runnable_name \| inline_agic` |
+| `map` | `map [in N lane\|lanes] using NAME` or `map [in N lane\|lanes] [-> TYPE]: BODY` | Optional `lanes`; `runnable: runnable_name \| inline_agic` |
+| `reduce` | `reduce using NAME` or `reduce [-> TYPE]: BODY`, optionally with an initializer below | `runnable: runnable_name \| inline_agic`, optional `from: content` |
+| `keep`, `drop` | `keep\|drop first\|last N` or `keep\|drop [in N lane\|lanes] if NAME\|INLINE` | `selection: position`, or `runnable` and optional `lanes` |
+| `sort` | `sort ascending\|descending [in N lane\|lanes] by NAME\|INLINE` | `order`, `runnable`, optional `lanes` |
+| `repeat` | `repeat [N time\|times] [windowing N]:` plus a structural body | Optional `count` / `window`, required `body: repeat_body` |
+| Bare prose | Implicit paragraph | `implicit_run_statement.content: content` |
+
+For `generate`, `map`, and `reduce`, named targets require `using` and inline
+targets omit it. `if` and `by` introduce either form. Keep/drop and sort also
+allow the lane clause after a named target; generate and map allow it only
+before the target. Count/selection/order immediately follows its verb. Commas
+and `with` are not complement syntax. Integer agreement is specified under
+[Lexical Structure](#lexical-structure); positive ranges and predicate/score
+output types are runtime validation.
+
+### Bindings
+
+- `let NAME = OPERATION` exposes `let_statement.local: local_name` and
+  `statement: OPERATION_NODE`.
+- `let OPERATION` exposes `statement` without a local name.
+- `let NAME = BODY` exposes `local` and `value: content`, with same-line or
+  indented text. Local type annotations and array literals have no dedicated
+  binding syntax.
+
+Every explicit operation in the table except `exec` can appear after `let`.
+`until` is a repeat clause, not a bindable operation. After `=`, complete operation heads
+select syntax before text even when malformed; `runworker` remains text.
+`until` and `_` also cannot become same-line binding text. Use an indented text
+body for these literal words. A missing `=` exposes
+`invalid_flow_reserved_statement` without borrowing later source. Binding effects
+and value types belong to the runtime.
 
 ### Launch and Await Bindings
 
-These are downstream runtime effects; the parser only represents their distinct
-syntax. Only successful statements write destinations; failures preserve existing
-bindings. For async run and spawn, success means admission.
+`async` modifies only `run` and adds no wrapper node. `spawn` uses its own node;
+both accept named and inline targets. Neither accepts `using`, arguments,
+lanes, counts, or another async modifier. `await` accepts exactly one
+`handle_name`, without expressions, field access, qualifiers, or a block.
 
-| Source | Successful binding effect |
-| --- | --- |
-| `async run R` or `let async run R` | Launch without retaining a handle; preserve `_`. |
-| `let h = async run R` | Store the handle in `h`; preserve `_`. |
-| `spawn R` or `let spawn R` | Launch an independent root without retaining a handle; preserve every local. |
-| `let h = spawn R` | Store the root's handle in `h`; preserve `_`. |
-| `await h` | Write the complete result to `_`; preserve `h`. |
-| `let x = await h` | Write the result to `x`; preserve `_`, and also `h` if `x` differs from `h`. |
-| `let await h` | Wait and discard the result; preserve every binding. |
-| `let h = await h` | Replace `h` with its result explicitly; preserve `_`. |
-
-Await requires a named handle explicitly retained with `let`. A launch without
-a named binding cannot subsequently be awaited. `await _`, `let x = await _`,
-`let await _`, and explicit `let _ = ...` are invalid. `_` remains the implicit
-input/result slot; it is neither a handle name nor a discard placeholder.
-The same await forms and binding effects apply to async-child and spawned-root
-handles. Await reads the complete result, including arrays, and retained handles
-can be awaited repeatedly. Awaiting a spawned root does not make it a child or
-transfer lifetime ownership. Unknown or non-handle locals are syntactically valid
-and require runtime validation. `Run` and `Future` are not
-built-in or reserved type names; an authored `struct Run` remains valid, and
-generic notation such as `Run<Text>` is not source syntax.
-
-Bind a launch before awaiting its handle; `await spawn R` and
-`let result = await spawn R` are invalid nested operations. Bare spawn does not
-put a handle into `_`. For example, this flow starts independent work, prepares
-an outline, and then reads the spawned run's array result into `sources`:
+All four await spellings parse: `await h`, `let x = await h`, `let await h`, and
+`let h = await h`. `_` cannot be an explicit destination or handle. Nested launch
+expressions such as `await spawn worker` are invalid. Handle lookup, launch
+ownership, admission, waiting, and result bindings are runtime responsibilities.
+`Run` and `Future` are ordinary authored type names, not built-ins.
 
 ```too
 flow research:
@@ -732,6 +487,53 @@ flow research:
   let sources = await job
   run: Summarize {{sources}} using this outline: {{_}}.
 ```
+
+### Reduce Initializers
+
+A named reducer uses `reduce using NAME:` followed by an indented `from: BODY`.
+Without an initializer, omit the colon. A multiline inline reducer puts `from:`
+after nonempty reducer text at that text's baseline; deeper `from:` stays
+literal. A same-line inline reducer cannot have a following initializer.
+The `runnable` field excludes the initializer; `from` contains a separate
+`content` value. Inline reducers expose `inline_agic.content` in either form.
+Unlike generic explicit text, reducer headers permit structural comments before
+the first body row. An initializer alone cannot supply reducer content.
+
+### Repeat Conditions
+
+Count and window are independently optional; `windowing N` precedes the header
+colon. Every repeat requires at least one ordinary statement and permits zero
+or one `until` before, between, or after its statements at the same baseline.
+Nested repeats own their conditions. Empty/condition-only bodies, duplicate
+conditions, and conditions outside repeats are invalid.
+
+`until NAME` accepts a bare `runnable_name`; `until: BODY` accepts same-line or
+multiline text. Qualified targets, arguments, modifiers, named colon bodies,
+output annotations, and result bindings are invalid. The body has repeated
+`statement` fields and optional `until: until_clause`; the latter has required
+`target: runnable_name | inline_agic_body`. Statements, condition, and trivia
+remain direct children in source order. Count preceding statement fields to
+obtain the condition index; nested repeats count as one, trivia as zero.
+See [flexible repeat fixtures](tests/fixtures/flexible_repeat.too).
+
+### Implicit Prose Boundaries
+
+Every substantive physical line, including continuations, checks its first
+complete token against the Flow vocabulary. Active structural keywords select
+syntax and cannot fall back to prose when malformed. For example, `run`,
+`run:`, and `run,` select keyword parsing; `runner` and `run_suffix` remain text.
+`_` selects syntax; `_suffix` remains text. Connector-only words and declaration
+or directive heads are invalid at a statement position. `from:` belongs only
+to reduce and `windowing` only to repeat headers.
+
+Adjacent non-keyword lines and one intervening blank line stay in the same
+implicit run. Relative Markdown indentation can continue prose; a keyword-led
+line at an invalid structural depth is an error. Two blank lines, a structural
+comment, dedent, or EOF ends the paragraph. Capitalize an active first word or
+use explicit `run:` content to keep it literal. Removed spellings such as
+`scatter`, `storm`, `rank`, and `thunk` are ordinary names/text where allowed.
+`invalid_flow_reserved_statement` is a historical diagnostic name, not evidence
+of a separate reserved legacy vocabulary.
 
 ### Shared Directives and Flow Clauses Example
 
@@ -774,35 +576,60 @@ flow seeded(_):
       Initial report.
 ```
 
-For named reduce reducers, a header colon requires an indented `from:` clause.
-For multiline inline reducers, `from:` follows the reducer text at the same
-baseline. An inline reducer written entirely on the header line cannot have a
-following initializer. Reduce's `runnable` field is a `runnable_name` or `inline_agic`;
-its optional `from` field is `content`. An inline reducer exposes
-`content: content` for both same-line and multiline text.
+## CST Node Contract
 
-Repeat exposes required `body: repeat_body` and optional `count: integer_literal`
-and `window: integer_literal`. The body's ordinary nodes have repeated `statement`
-fields; its optional `until: until_clause` has required `target: runnable_name | inline_agic_body`
-and a named `flow_until_keyword` child. Statements, condition, and trivia are direct
-children in source order, without a `statements` wrapper. Count preceding statement
-fields to obtain the condition index; a nested repeat counts as one and trivia as
-zero. [tests/fixtures/flexible_repeat.too](tests/fixtures/flexible_repeat.too)
-contains complete-source examples.
+Public nodes describe authored declarations, values, calls, and structural
+bodies. Fields identify each child's role; the relevant sections above describe
+them beside their constructs. [Generated metadata](src/node-types.json) lists
+all nodes and fields, including recovery states.
 
-## Model Call Assembly
+Lexical names and tokens are leaves. Parser helpers, forwarding nodes, and list
+wrappers are hidden. Structural bodies remain public because they own entries,
+trivia, and scope. Repeated fields retain source order. There is no `statements`
+or `messages` wrapper and no extra node distinguishing source text forms.
 
-The runtime assembles an agic call into tools, instructions, and messages for
-the model adapter. Runtime messages are not Toolang source-level types; they are
-Records with a role and `Part[]`.
+`content` contains direct `text_line`, `newline`, and `blank_line` children.
+Same-line content has one `text_line`; its trailing `line_end` belongs to the
+owner. Indented and implicit content retain physical endings and paragraph
+boundaries. Text leaves preserve source bytes, including whitespace and relative
+indentation; parsing does not trim or dedent. Header comments and terminators
+remain outside `content`. Raw references and property values use `text_line`
+directly because they are not prompt content.
 
-- Values referenced by message bodies are promoted to parts according to their
-  type: `Text` to a text part; `Number`, `Boolean`, `Json`, and user Records to
-  JSON parts; and `Part` values to parts directly.
-- Runtime part values use short `kind` names such as `text`, `json`, `image`,
-  `audio`, `video`, `file`, `tool_call`, and `tool_result`.
-- `recall` is shared by agic and flow. It selects `far`/`near` sources and the
-  runtime variables `_far`, `_near`, and `_past`. `none` selects no sources;
-  `default` uses the system default; `*` selects all available sources.
-- `hands` authorizes runnable targets for `_toolang/run`; `handoffs` authorizes
-  runnable targets for `_toolang/exec`.
+Queries and consumers must adopt node names, field paths, and ranges together.
+The [CST migration from alpha.4](CHANGELOG.md#cst-migration-from-alpha4) records
+the complete breaking path/range changes; historical contracts remain in tags.
+
+## Compatibility
+
+`##!` remains accepted alongside `#@` as described under
+[Comments and Documentation](#comments-and-documentation). No inactive spelling
+is reserved. Active words retain contextual recognition and variable exclusions.
+Source parsing does not imply runtime support for every syntactically valid form.
+
+The following anchors preserve existing migration links; chronological records
+are maintained in `CHANGELOG.md`.
+
+### Unreleased
+
+See [Unreleased changes and CST migration](CHANGELOG.md#unreleased).
+
+### Changes in 0.4.0-alpha.4
+
+See [0.4.0-alpha.4 changes](CHANGELOG.md#040-alpha4---2026-10-06).
+
+### Changes in 0.4.0-alpha.3
+
+See [0.4.0-alpha.3 changes](CHANGELOG.md#040-alpha3---2026-10-06).
+
+### Changes in 0.4.0-alpha.2
+
+See [0.4.0-alpha.2 changes](CHANGELOG.md#040-alpha2---2026-10-05).
+
+### Changes in 0.4.0-alpha.1
+
+See [0.4.0-alpha.1 changes](CHANGELOG.md#040-alpha1---2026-10-05).
+
+### Changes in 0.3.3
+
+See [0.3.3 changes](CHANGELOG.md#033---2026-09-24).

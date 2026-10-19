@@ -1,55 +1,67 @@
 # tree-sitter-toolang
 
-Tree-sitter grammar for Toolang.
+Tree-sitter grammar for Toolang `.too` source files, with Python and Rust
+bindings and queries for highlighting, indentation, outlines, tags, and injections.
+The npm package supplies grammar source for Tree-sitter tooling; it does not
+provide a JavaScript parser binding.
 
-This repository publishes:
+- [Grammar and CST reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
+- [Generated grammar implementation reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.ebnf)
+- [Changelog and migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/CHANGELOG.md)
+- [Publishing guide](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/docs/publishing.md)
 
-- the npm grammar package `tree-sitter-toolang`
-- the Python extension package `tree-sitter-toolang`
-- the Rust crate `tree-sitter-toolang`
+The repository reference includes unreleased changes. Use the matching Git tag
+when integrating a published package. Execution, validation, and formatting
+belong to the [Toolang runtime](https://github.com/openhat-ai/toolang).
 
 ## Install
 
 ### Python
 
-Building from this branch requires Python 3.11 or newer. The published
-`0.4.0a1` release still supports Python 3.10.
+Current source requires Python 3.11 or newer. Install the grammar and its
+optional Tree-sitter parser dependency together:
 
 ```bash
-python -m pip install tree-sitter-toolang tree-sitter
+python -m pip install 'tree-sitter-toolang[core]'
 ```
 
 ```python
-import tree_sitter_toolang
 from tree_sitter import Language, Parser
+import tree_sitter_toolang
 
-language = Language(tree_sitter_toolang.language())
-parser = Parser(language)
-tree = parser.parse(b"with skill a/b\n")
+parser = Parser(Language(tree_sitter_toolang.language()))
+tree = parser.parse(b"flow hello:\n  run: Hello.\n")
 ```
 
-The Python package also exposes packaged query strings:
-`HIGHLIGHTS_QUERY`, `INJECTIONS_QUERY`, `INDENTS_QUERY`, `OUTLINE_QUERY`, and
-`TAGS_QUERY`.
+The package exposes `HIGHLIGHTS_QUERY`, `INJECTIONS_QUERY`, `INDENTS_QUERY`,
+`OUTLINE_QUERY`, and `TAGS_QUERY` as query strings. Before lowering or executing
+source, check both native errors and diagnostic nodes as described in the
+[validity contract](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#validity-and-recovery).
+
+The latest tagged prerelease is `0.4.0-alpha.4`. Select it explicitly with
+`python -m pip install 'tree-sitter-toolang[core]==0.4.0a4'` or
+`npm install tree-sitter-toolang@0.4.0-alpha.4`.
 
 ### Tree-sitter CLI
 
-Install `tree-sitter-toolang` or clone this repository, then make sure the
-directory that contains `tree-sitter-toolang` is listed in your Tree-sitter
-`parser-directories`.
+Clone this repository or install the npm grammar package:
 
 ```bash
+npm install tree-sitter-toolang
 tree-sitter init-config
+```
+
+Add the **parent directory** containing `tree-sitter-toolang` to the generated
+configuration's `parser-directories` list. Installing the npm package alone
+does not register the language. With Tree-sitter CLI installed, verify discovery
+and parse a source file:
+
+```bash
 tree-sitter dump-languages
 tree-sitter parse path/to/file.too
 tree-sitter highlight path/to/file.too
 tree-sitter tags path/to/file.too
 ```
-
-Installing the npm package alone does not make `tree-sitter dump-languages`
-discover Toolang automatically. The package must still live under one of the
-configured `parser-directories`, or the grammar path must be provided
-explicitly.
 
 ### Rust
 
@@ -60,75 +72,15 @@ tree-sitter-toolang = "0.4.0-alpha.4"
 ```
 
 ```rust
-let language = tree_sitter::Language::new(tree_sitter_toolang::LANGUAGE);
+let mut parser = tree_sitter::Parser::new();
+parser.set_language(&tree_sitter_toolang::LANGUAGE.into())?;
+let tree = parser.parse("flow hello:\n  run: Hello.\n", None).unwrap();
 ```
-
-## Grammar
-
-[GRAMMAR.md](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md)
-documents the public Toolang syntax and CST contract.
-[GRAMMAR.ebnf](GRAMMAR.ebnf) is an annotated implementation reference generated
-from `src/grammar.json`, including helper and recovery rules. Scanner behavior
-and valid-source requirements are explained in `GRAMMAR.md`.
-`grammar.js`, `keywords.js`, and `src/scanner.c` define the grammar; generated
-artifacts live under `src/`.
-
-Unreleased changes unify content/body fields, remove obsolete keyword
-restrictions, and tighten token boundaries and missing-body recovery. CST
-consumers should follow the [migration contract](GRAMMAR.md#cst-node-contract)
-when upgrading from alpha.4.
-
-Version 0.4.0-alpha.4 adds `async run` and single-handle `await` for handles
-from async runs or spawn, including named and nameless let bindings.
-`local_name` is now a leaf, and `await _` is invalid. See the
-[migration notes](GRAMMAR.md#changes-in-040-alpha4); execution and binding effects
-require matching Toolang runtime support.
-
-Version 0.4.0-alpha.3 allows an optional `until` at any position in a repeat,
-including a named runnable condition. It changes the repeat CST and rejects
-keyword-named variables. See the [migration notes](GRAMMAR.md#changes-in-040-alpha3);
-Toolang consumers need the matching CST update.
-
-Version 0.4.0-alpha.2 adds named and inline `spawn` targets, including typed
-inline targets and optional let bindings. See the
-[spawn syntax notes](GRAMMAR.md#changes-in-040-alpha2). Execution and handle
-semantics require matching Toolang runtime support.
-
-Version 0.4.0-alpha.1 uses `run` in place of `scatter`/`gather`, renames
-`storm`/`settle` to `generate`/`reduce`, and requires `using` only for named
-collection targets. See the [migration notes](GRAMMAR.md#changes-in-040-alpha1).
-These forms require a matching Toolang runtime release.
-
-Install this prerelease explicitly with
-`python -m pip install tree-sitter-toolang==0.4.0a4` or
-`npm install tree-sitter-toolang@0.4.0-alpha.4`.
-
-Version 0.3.4 adds named and inline `exec` statements in flows and repeats.
-See the [Flow reference](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#flow)
-for syntax and CST fields.
-
-Version 0.3.3 shares configuration directives between agics and flows, removes
-the count from `scatter`, adds optional `from:` initializers to `settle`, and
-adds `windowing N` to `repeat`. See the
-[0.3.3 migration notes](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#changes-in-033).
-
-Documentation comments use `#@` for modules and `##` for items, including
-`## @param NAME DESCRIPTION`. The legacy `##!` module marker remains accepted.
-See [comments and documentation](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#comments-and-documentation)
-for syntax, CST fields, and the 0.3.2 node-name migration.
 
 ## Development
 
-Edit:
-
-- `GRAMMAR.md`
-- `grammar.js`
-- `queries/*.scm`
-- `test/corpus/*.txt`
-- `tests/fixtures/*.too`
-- `tests/*.py`
-
-Regenerate and test:
+From a repository checkout, install Node.js tooling, a C compiler, Python 3.11+
+and Rust, then run:
 
 ```bash
 npm ci
@@ -141,60 +93,16 @@ npm run check
 cargo test
 ```
 
-`npm run generate` also refreshes `GRAMMAR.ebnf`; do not edit that file manually.
-To regenerate only this reference from the existing `src/grammar.json`, use
-`npm run generate:ebnf`. `npm run check:ebnf` checks for stale or missing output
-without writing, and `npm run test:ebnf` runs the converter's offline tests.
-These checks also run through `npm run check` and CI.
+Edit `grammar.js`, `keywords.js`, and `src/scanner.c`; keep queries, corpus
+cases, fixtures, binding tests, and `GRAMMAR.md` aligned. `npm run generate`
+refreshes parser artifacts, keyword tables, and `GRAMMAR.ebnf`. Commit those
+generated files; do not edit them manually. `npm run check` runs generation,
+EBNF converter tests, corpus tests, and CLI/query checks. CI also checks for
+stale generated output.
 
-## Publishing
-
-Trusted publishers are configured in GitHub Actions with
-[release.yml](.github/workflows/release.yml).
-
-Python wheels use the `cp311-abi3` tag for compatibility with Python 3.11 and
-later. Both wheel and release workflows build Linux x86_64 and ARM64 wheels
-on separate native runners, covering manylinux and musllinux. macOS universal2
-and Windows AMD64 builds are also retained. Every wheel build runs the full
-Python test suite.
-
-To publish the Rust crate automatically, add the repository secret
-`CRATES_IO_TOKEN`.
-
-Verify the npm package locally:
-
-```bash
-npm publish --dry-run
-```
-
-Verify the Python distributions locally:
-
-```bash
-python -m pip install --upgrade pip build twine
-python -m build
-python -m twine check dist/*
-```
-
-Verify the Rust crate:
-
-```bash
-cargo publish --dry-run
-```
-
-Release checklist:
-
-1. Bump the version in `package.json`, `package-lock.json`, `pyproject.toml`,
-   `Cargo.toml`, `Cargo.lock`, and `tree-sitter.json`.
-2. Confirm CI is green.
-3. Merge the version bump PR into `main`.
-4. Create and push a matching tag such as `v0.4.0-alpha.1`.
-5. GitHub Actions publishes npm and PyPI automatically.
-6. GitHub Actions also publishes the Rust crate when `CRATES_IO_TOKEN` is set.
-
-The release workflow skips npm, PyPI, or crates.io if that version already
-exists on the registry. The git tag must match the package version.
-
-Prereleases use `X.Y.Z-alpha.N`, `X.Y.Z-beta.N`, or `X.Y.Z-rc.N` consistently
-in source metadata and tags. Python packaging normalizes these to `X.Y.ZaN`,
-`X.Y.ZbN`, or `X.Y.ZrcN`; for example, `0.4.0-alpha.1` is published on PyPI as
-`0.4.0a1`. npm prereleases use the `next` dist-tag; stable releases use `latest`.
+Use `npm run generate:ebnf` to regenerate only the annotated reference from
+`src/grammar.json`, or `npm run check:ebnf` to check it without writing.
+Historical definitions are under `docs/plans/`; the grammar reference describes
+the current contract. Follow the
+[publishing guide](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/docs/publishing.md)
+when preparing a release.
