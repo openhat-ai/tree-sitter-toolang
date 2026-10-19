@@ -9,6 +9,39 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn rejected_outer_prefix_docs_preserve_the_next_member_documentation() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for (header, member, body_kind) in [
+            ("flow first:", "run one", "flow_body"),
+            ("agic first:", "user: One.", "agic_body"),
+            ("struct First:", "one: Text", "struct_body"),
+            ("prompt first:", "one = Value", "cap_body"),
+            ("chore first:", "one = Value", "chore_body"),
+        ] {
+            let source = format!("{header}\n#@ Wrong scope.\n# Outer.\n\n  ## First.\n  {member}\n## Next.\nflow next:\n  pass\n");
+            let tree = parser.parse(&source, None).unwrap();
+            let root = tree.root_node();
+            assert!(root.has_error());
+            let body = root
+                .named_child(0)
+                .unwrap()
+                .child_by_field_name("body")
+                .unwrap();
+            assert_eq!(body.kind(), body_kind);
+            assert_eq!(body.start_byte(), source.find("  ## First.").unwrap());
+            let doc = body.named_child(0).unwrap();
+            assert_eq!(doc.kind(), "item_doc");
+            assert!(!doc.has_error());
+            assert_eq!(doc.utf8_text(source.as_bytes()).unwrap(), "## First.\n");
+            assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+            let next = root.named_child(2).unwrap();
+            assert!(!next.has_error());
+            assert_eq!(next.kind(), "flow");
+        }
+    }
+
+    #[test]
     fn leading_member_docs_use_the_body_baseline_and_preserve_empty_boundaries() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

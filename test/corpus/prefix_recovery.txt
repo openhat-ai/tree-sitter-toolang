@@ -1,0 +1,137 @@
+==================
+Rejected outer prefix keeps leading member documentation
+==================
+flow first:
+#@ Wrong scope.
+# Outer.
+
+  ## First.
+  run one
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (ERROR
+      (plain_comment))
+    (blank_line)
+    (plain_comment)
+    (blank_line)
+    (flow_body
+      (item_doc
+        (comment_text))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Rejected repeat prefix keeps parameter documentation
+==================
+flow first:
+  repeat:
+  #@ Wrong scope.
+  # Outer.
+
+    ## @param topic First.
+    run one
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (ERROR
+          (plain_comment))
+        (blank_line)
+        (plain_comment)
+        (blank_line)
+        (repeat_body
+          (param_doc
+            (param_name)
+            (comment_text))
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Rejected property prefix keeps leading documentation
+==================
+prompt first:
+#@ Wrong scope.
+  ## First.
+  one = Value
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (prompt
+    (prompt_keyword)
+    (cap_name)
+    (colon)
+    (newline)
+    (ERROR
+      (plain_comment))
+    (blank_line)
+    (cap_body
+      (item_doc
+        (comment_text))
+      (property
+        (identifier)
+        (assign_operator)
+        (text_line)
+        (newline))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))

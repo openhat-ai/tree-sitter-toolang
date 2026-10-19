@@ -97,7 +97,7 @@ _trivia ::=
   _comment | blank_line;
 
 _body_prefix ::=
-  _body_start _trivia*;
+  _body_start _trivia+;
 
 with ::=
   (* field "keyword" *) ( with_keyword ) (* field "kind" *) ( _cap_kind ) _required_space
@@ -121,13 +121,13 @@ array_suffix ::=
 
 struct ::=
   (* field "keyword" *) ( struct_keyword ) (* field "name" *) ( type_name ) (* field "colon" *) (
-  colon ) _line_end _body_prefix? (* field "body" *) ( struct_body );
+  colon ) _line_end _body_prefix* (* field "body" *) ( struct_body );
 
 struct_body ::=
-  (* prec.right 0 *) ( _item_indent _trivia* ( (* field "field" *) ( field ) ( (* field "field" *) (
-  field ) | _trivia )* | (* alias {"value":"invalid_missing_body","named":true} *) (
-  _missing_required ) ) _dedent | (* alias {"value":"invalid_missing_body","named":true} *) (
-  _missing_required ) );
+  (* prec.right 0 *) ( _body_start? _item_indent _trivia* ( (* field "field" *) ( field ) (
+  (* field "field" *) ( field ) | _trivia )* |
+  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) _dedent |
+  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );
 
 field ::=
   _line_start (* field "name" *) ( identifier ) ( (* field "optional" *) ( optional_marker ) )?
@@ -135,30 +135,30 @@ field ::=
 
 psyche ::=
   (* field "keyword" *) ( psyche_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix? (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 skill ::=
   (* field "keyword" *) ( skill_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix? (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 service ::=
   (* field "keyword" *) ( service_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix? (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 prompt ::=
   (* field "keyword" *) ( prompt_keyword ) (* field "name" *) ( cap_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix? (* field "body" *) ( cap_body ) | _empty_body );
+  colon ) _line_end ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 cap_body ::=
-  _item_indent ( (* field "property" *) ( property ) | _trivia )* ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _cap_content ) ) )? _dedent;
+  _body_start? _item_indent ( (* field "property" *) ( property ) | _trivia )* (
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _cap_content ) ) )? _dedent;
 
 _cap_content ::=
   _cap_text_start ( _content_row | blank_line )+ _dedent;
 
 chore ::=
   (* field "keyword" *) ( chore_keyword ) (* field "name" *) ( chore_name ) (* field "colon" *) (
-  colon ) _line_end ( _body_prefix? (* field "body" *) ( chore_body ) | _empty_body );
+  colon ) _line_end ( _body_prefix* (* field "body" *) ( chore_body ) | _empty_body );
 
 cap_name ::=
   _snake_kebab_name;
@@ -167,8 +167,8 @@ chore_name ::=
   _snake_kebab_name;
 
 chore_body ::=
-  _item_indent ( (* field "property" *) ( property ) | _trivia )* ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _cap_content ) ) )? _dedent;
+  _body_start? _item_indent ( (* field "property" *) ( property ) | _trivia )* (
+  (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _cap_content ) ) )? _dedent;
 
 property ::=
   _line_start (* field "key" *) ( identifier ) (* field "operator" *) ( assign_operator )
@@ -201,10 +201,10 @@ _content_row ::=
 agic ::=
   (* prec.right 0 *) ( (* field "keyword" *) ( agic_keyword ) ( (* field "name" *) ( runnable_name )
   )? ( (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) (
-  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix? (* field "body" *) ( agic_body ) );
+  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix* (* field "body" *) ( agic_body ) );
 
 agic_body ::=
-  (* prec.right 0 *) ( _runnable_indent _trivia* ( _directives _messages? | _messages |
+  (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives _messages? | _messages |
   _pass_statement | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required )
   ) _dedent | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );
 
@@ -222,10 +222,10 @@ _param_name ::=
 flow ::=
   (* prec.right 0 *) ( (* field "keyword" *) ( flow_keyword ) ( (* field "name" *) ( runnable_name )
   )? ( (* field "params" *) ( params ) )? ( (* field "arrow" *) ( arrow ) (* field "return" *) (
-  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix? (* field "body" *) ( flow_body ) );
+  type ) )? (* field "colon" *) ( colon ) _line_end _body_prefix* (* field "body" *) ( flow_body ) );
 
 flow_body ::=
-  (* prec.right 0 *) ( _runnable_indent _trivia* ( _directives ( _statements |
+  (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives ( _statements |
   (* alias {"value":"invalid_missing_statement","named":true} *) ( _missing_required ) ) |
   _statements | _pass_statement | (* alias {"value":"invalid_missing_body","named":true} *) (
   _missing_required ) ) _dedent | (* alias {"value":"invalid_missing_body","named":true} *) (
@@ -342,9 +342,9 @@ generate_statement ::=
 
 reduce_statement ::=
   reduce_keyword _named_using_complement _line_end | reduce_keyword _named_using_complement colon
-  _line_end _body_prefix? (* prec.right 0 *) ( _indent _trivia* ( _from_complement _trivia* |
-  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) _dedent |
-  (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) |
+  _line_end _body_prefix* (* prec.right 0 *) ( _body_start? _indent _trivia* ( _from_complement
+  _trivia* | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) )
+  _dedent | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) |
   (* prec.right 0 *) ( reduce_keyword (* field "target" *) (
   (* alias {"value":"inline_agic","named":true} *) ( _reduce_inline_line ) ) ) | (* prec.right 0 *)
   ( reduce_keyword (* field "target" *) ( (* alias {"value":"inline_agic","named":true} *) (
@@ -428,11 +428,11 @@ _order_complement ::=
 
 repeat_statement ::=
   (* prec.right 0 *) ( repeat_keyword _repeat_count_complement? _window_complement? colon _line_end
-  _body_prefix? (* field "body" *) ( repeat_body ) );
+  _body_prefix* (* field "body" *) ( repeat_body ) );
 
 repeat_body ::=
-  (* prec.right 0 *) ( _indent _trivia* ( _statements ( _until_entry _trivia* _statements? )? |
-  _until_entry _trivia* ( _statements |
+  (* prec.right 0 *) ( _body_start? _indent _trivia* ( _statements ( _until_entry _trivia*
+  _statements? )? | _until_entry _trivia* ( _statements |
   (* alias {"value":"invalid_missing_statement","named":true} *) ( _missing_required ) ) |
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) _dedent |
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );

@@ -59,7 +59,10 @@ module.exports = grammar({
       $.program_doc, $.item_doc, $.param_doc, $.plain_comment, $.shebang_comment,
     )),
     _trivia: ($) => choice($._comment, $.blank_line),
-    _body_prefix: ($) => seq($._body_start, repeat($._trivia)),
+    // Every prefix segment consumes trivia, so recovery can establish another
+    // boundary without repeating a zero-width token at the same source point.
+    // The body has its own boundary when member documentation follows directly.
+    _body_prefix: ($) => seq($._body_start, repeat1($._trivia)),
 
     with: ($) =>
       seq(
@@ -424,7 +427,7 @@ module.exports = grammar({
       choice(
         seq($.reduce_keyword, $._named_using_complement, $._line_end),
         seq($.reduce_keyword, $._named_using_complement, $.colon, $._line_end,
-          optional($._body_prefix), structuralBody($, seq($._from_complement, repeat($._trivia)))),
+          repeat($._body_prefix), structuralBody($, seq($._from_complement, repeat($._trivia)))),
         prec.right(seq($.reduce_keyword,
           field("target", alias($._reduce_inline_line, $.inline_agic)))),
         prec.right(seq($.reduce_keyword,
@@ -712,7 +715,7 @@ function content($, name) {
 }
 
 function body($, node) {
-  return seq(optional($._body_prefix), field("body", node));
+  return seq(repeat($._body_prefix), field("body", node));
 }
 
 function optionalBody($, node) {
@@ -721,6 +724,7 @@ function optionalBody($, node) {
 
 function definitionBody($) {
   return seq(
+    optional($._body_start),
     $._item_indent,
     repeat(choice(field("property", $.property), $._trivia)),
     optional(field("content", alias($._cap_content, $.content))),
@@ -738,7 +742,7 @@ function structuralBody($, content, indent = $._indent) {
   // documentation enters with the body's frame, using the first real member's
   // baseline. Trivia also synchronizes recovery before that required member.
   return prec.right(choice(
-    seq(indent, repeat($._trivia), choice(content, missing($, "body")), $._dedent),
+    seq(optional($._body_start), indent, repeat($._trivia), choice(content, missing($, "body")), $._dedent),
     missing($, "body"),
   ));
 }

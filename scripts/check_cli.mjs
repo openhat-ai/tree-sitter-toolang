@@ -207,6 +207,18 @@ try {
   }
   deepStrictEqual(recovery.stdout.includes("invalid_flow_statement"), true, recovery.stdout);
 
+  const prefixRecoveryPath = join(configDir, "prefix-recovery.too");
+  writeFileSync(prefixRecoveryPath, "flow first:\n#@ Wrong scope.\n# Outer.\n\n  ## First.\n  run one\n## Next.\nflow next:\n  pass\n");
+  const prefixRecovery = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, prefixRecoveryPath], {
+    cwd: REPO_ROOT, encoding: "utf8",
+  });
+  deepStrictEqual(prefixRecovery.status, 1, prefixRecovery.stdout + prefixRecovery.stderr);
+  for (const node of ["body: (flow_body [4, 0] - [6, 0]",
+    "\n      (item_doc [4, 2] - [5, 0]", "\n  (item_doc [6, 0] - [7, 0]",
+    "\n  (flow [7, 0] - [9, 0]"]) {
+    deepStrictEqual(prefixRecovery.stdout.includes(node), true, prefixRecovery.stdout);
+  }
+
   for (const kind of ["agic", "flow"]) {
     const path = join(configDir, `${kind}-unknown-directive.too`);
     const body = kind === "agic" ? "user: Continue." : "run after";
