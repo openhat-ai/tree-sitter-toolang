@@ -141,8 +141,9 @@ flow next:
     (runnable_name)
     (newline)
     (agic_body
-      (ERROR
+      (invalid_directive
         (directive_key)
+        (ERROR)
         (newline))
       (message
         (role)

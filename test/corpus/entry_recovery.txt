@@ -1,0 +1,119 @@
+==================
+Malformed parameter annotations retain signatures and bodies
+==================
+flow first(: Text, topic:, payload: Text?, next: Text) -> Text:
+  ## First member.
+  run after
+## Next item.
+agic next(?: Text[], input: Text[ ]):
+  user: After.
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (params
+      (invalid_param
+        (type
+          (builtin_type)))
+      (invalid_param
+        (param_name))
+      (invalid_param
+        (param_name)
+        (type
+          (builtin_type))
+        (text))
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (type
+      (builtin_type))
+    (newline)
+    (flow_body
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (agic
+    (runnable_name)
+    (params
+      (invalid_param
+        (type
+          (builtin_type)))
+      (invalid_param
+        (param_name)
+        (type
+          (builtin_type))
+        (text)))
+    (newline)
+    (agic_body
+      (message
+        (role)
+        (content
+          (text))
+        (newline)))))
+
+==================
+Malformed known directives keep the prefix and its owner
+==================
+flow first:
+  models = fast
+  models after
+  tools = fast
+## Next item.
+agic next:
+  recall += wrong
+  tools = fast
+  user: After.
+flow last:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (invalid_directive
+        (directive_key)
+        (text)
+        (newline))
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (invalid_missing_statement)))
+  (item_doc
+    (text))
+  (agic
+    (runnable_name)
+    (newline)
+    (agic_body
+      (invalid_directive
+        (directive_key)
+        (text)
+        (newline))
+      (directive
+        (directive_key)
+        (query_value)
+        (newline))
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

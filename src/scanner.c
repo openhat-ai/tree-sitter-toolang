@@ -41,6 +41,7 @@ enum Token {
   NAMED_BINDING_START,
   MISSING_REQUIRED,
   INTEGER_LITERAL,
+  PARAM_ERROR,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -307,6 +308,31 @@ static bool scan_integer(Scanner *scanner, TSLexer *lexer) {
   return emit(scanner, lexer, INTEGER_LITERAL);
 }
 
+// Recovery inside a parameter entry requires a real delimiter on this line.
+// Leave complete array suffixes to the type grammar and missing ')' to native
+// recovery, so an error fragment cannot consume the return annotation or body.
+static bool scan_param_error(TSLexer *lexer) {
+  skip_indentation(lexer);
+  if (lexer->eof(lexer) || lexer->lookahead == ',' || lexer->lookahead == ')' ||
+      lexer->lookahead == '\r' || lexer->lookahead == '\n') {
+    return false;
+  }
+  if (lexer->lookahead == '[') {
+    advance(lexer);
+    if (lexer->lookahead == ']') {
+      return false;
+    }
+  }
+  while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    if (lexer->lookahead == ',' || lexer->lookahead == ')') {
+      lexer->mark_end(lexer);
+      return true;
+    }
+    advance(lexer);
+  }
+  return false;
+}
+
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   skip_indentation(lexer);
   lexer->mark_end(lexer);
@@ -470,6 +496,12 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (scanner->comment_started) {
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
+  }
+  if (!at_start && valid[PARAM_ERROR]) {
+    if (scan_param_error(lexer)) {
+      return emit(scanner, lexer, PARAM_ERROR);
+    }
+    return false;
   }
   if (!at_start && valid[INTEGER_LITERAL]) {
     skip_indentation(lexer);

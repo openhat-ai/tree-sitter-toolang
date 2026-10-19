@@ -125,6 +125,10 @@
           {
             "type": "directive",
             "named": true
+          },
+          {
+            "type": "invalid_directive",
+            "named": true
           }
         ]
       },
@@ -874,6 +878,10 @@
           {
             "type": "directive",
             "named": true
+          },
+          {
+            "type": "invalid_directive",
+            "named": true
           }
         ]
       },
@@ -1205,6 +1213,58 @@
     }
   },
   {
+    "type": "invalid_directive",
+    "named": true,
+    "fields": {
+      "key": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "directive_key",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "+=",
+            "named": false
+          },
+          {
+            "type": "-=",
+            "named": false
+          },
+          {
+            "type": "=",
+            "named": false
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "plain_comment",
+          "named": true
+        },
+        {
+          "type": "text",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "invalid_flow_statement",
     "named": true,
     "fields": {
@@ -1239,6 +1299,52 @@
           "type": "role",
           "named": true
         },
+        {
+          "type": "text",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "invalid_param",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "param_name",
+            "named": true
+          }
+        ]
+      },
+      "optional": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "?",
+            "named": false
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "type",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
         {
           "type": "text",
           "named": true
@@ -1606,6 +1712,10 @@
         "multiple": true,
         "required": false,
         "types": [
+          {
+            "type": "invalid_param",
+            "named": true
+          },
           {
             "type": "param",
             "named": true

@@ -8,6 +8,15 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 
 #[cfg(test)]
 mod tests {
+    fn is_valid(node: tree_sitter::Node<'_>) -> bool {
+        if node.has_error() || node.is_missing() || node.kind().starts_with("invalid_") {
+            return false;
+        }
+        let mut cursor = node.walk();
+        let valid = node.children(&mut cursor).all(is_valid);
+        valid
+    }
+
     #[test]
     fn text_leaves_and_reducer_ranges_share_the_public_contract() {
         let mut parser = tree_sitter::Parser::new();
@@ -297,7 +306,7 @@ mod tests {
             let source = format!("{prefix}flow next:\n  pass\n");
             let tree = parser.parse(&source, None).unwrap();
             let root = tree.root_node();
-            assert!(root.has_error());
+            assert!(!is_valid(root));
             let next = root.named_child(root.named_child_count() - 1).unwrap();
             assert_eq!(next.kind(), "flow");
             assert!(!next.has_error());
@@ -788,6 +797,51 @@ mod tests {
                 .unwrap(),
             "next"
         );
+    }
+
+    #[test]
+    fn invalid_parameter_annotations_and_directives_keep_their_owners() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for kind in ["agic", "flow"] {
+            for parameter in [": Text", "?: Text[]", "topic:", "topic?:"] {
+                let source = format!("{kind} work({parameter}, next: Text) -> Text:\n  models = fast\n  models after\n  tools = fast\n## Next.\nflow next:\n  pass\n");
+                let tree = parser.parse(&source, None).unwrap();
+                let root = tree.root_node();
+                assert!(!is_valid(root));
+                let owner = root.named_child(0).unwrap();
+                assert_eq!(owner.kind(), kind);
+                let params = owner.child_by_field_name("params").unwrap();
+                let bad = params.child_by_field_name("param").unwrap();
+                assert_eq!(bad.kind(), "invalid_param");
+                assert_eq!(bad.utf8_text(source.as_bytes()).unwrap(), parameter);
+                let body = owner.child_by_field_name("body").unwrap();
+                let mut cursor = body.walk();
+                let entries: Vec<_> = body
+                    .children_by_field_name("directive", &mut cursor)
+                    .collect();
+                assert_eq!(
+                    entries.iter().map(|node| node.kind()).collect::<Vec<_>>(),
+                    ["directive", "invalid_directive", "directive"]
+                );
+                assert_eq!(
+                    entries[1].utf8_text(source.as_bytes()).unwrap(),
+                    "  models after\n"
+                );
+                assert_eq!(entries[1].parent().unwrap(), body);
+                assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+                let next = root.named_child(2).unwrap();
+                assert_eq!(next.kind(), "flow");
+                assert_eq!(
+                    next.child_by_field_name("name")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    "next"
+                );
+                assert!(!next.has_error());
+            }
+        }
     }
 
     #[test]

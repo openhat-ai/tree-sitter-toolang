@@ -19,7 +19,7 @@ const DOCUMENTATION_FIXTURE = join(
 );
 
 const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
-deepStrictEqual(nodeTypes.filter(node => node.named).length, 77);
+deepStrictEqual(nodeTypes.filter(node => node.named).length, 79);
 for (const [owner, field, literal] of [
   ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
   ["param", "optional", "?"], ["property", "operator", "="],
@@ -125,11 +125,21 @@ const messageFields = nodeTypes.find(node => node.type === "message").fields;
 deepStrictEqual(messageFields.role, {
   multiple: false, required: false, types: [{ type: "role", named: true }],
 });
-// Keyword-led invalid messages can omit content during recovery only.
+// Invalid messages are separate body entries; normal messages require content.
 deepStrictEqual(messageFields.content, textField);
 deepStrictEqual(nodeTypes.find(node => node.type === "agic_body").fields.message.types, [
   { type: "invalid_agic_message", named: true }, { type: "message", named: true },
 ]);
+deepStrictEqual(nodeTypes.find(node => node.type === "params").fields.param.types, [
+  { type: "invalid_param", named: true }, { type: "param", named: true },
+]);
+for (const body of ["agic_body", "flow_body"]) {
+  deepStrictEqual(nodeTypes.find(node => node.type === body).fields.directive.types, [
+    { type: "directive", named: true }, { type: "invalid_directive", named: true },
+  ]);
+}
+deepStrictEqual(nodeTypes.find(node => node.type === "param").fields.name.required, true);
+deepStrictEqual(nodeTypes.find(node => node.type === "directive").fields.value.required, true);
 for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
   ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);

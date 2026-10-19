@@ -55,7 +55,8 @@
   {"type":"SYMBOL","name":"_restricted_binding_start"},
   {"type":"SYMBOL","name":"_named_binding_start"},
   {"type":"SYMBOL","name":"_missing_required"},
-  {"type":"SYMBOL","name":"integer_literal"}
+  {"type":"SYMBOL","name":"integer_literal"},
+  {"type":"SYMBOL","name":"_param_error"}
 ] *)
 
 program ::=
@@ -231,7 +232,16 @@ agic_body ::=
   ) _dedent | (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );
 
 params ::=
-  "(" ( (* field "param" *) ( param ) ( "," (* field "param" *) ( param ) )* )? ")";
+  "(" ( (* field "param" *) ( _param_entry ) ( "," (* field "param" *) ( _param_entry ) )* )? ")";
+
+_param_entry ::=
+  param | invalid_param;
+
+invalid_param ::=
+  ( (* field "optional" *) ( "?" ) )? ":" ( (* field "type" *) ( type ) )? | (* field "name" *) (
+  _param_name ) ( (* field "optional" *) ( "?" ) )? ":" | (* field "name" *) ( _param_name ) (
+  (* field "optional" *) ( "?" ) )? ":" (* field "type" *) ( type )
+  (* alias {"value":"text","named":true} *) ( _param_error );
 
 param ::=
   (* field "name" *) ( _param_name ) ( (* field "optional" *) ( "?" ) )? ( (* field "colon" *) ( ":"
@@ -499,6 +509,18 @@ local_name ::=
 handle_name ::=
   _identifier;
 
+_directive_entry ::=
+  directive | invalid_directive;
+
+invalid_directive ::=
+  (* prec.dynamic -2 *) ( _directive_start (* field "key" *) ( _query_directive_key |
+  _route_directive_key | (* alias {"value":"directive_key","named":true} *) ( "recall" ) |
+  (* alias {"value":"directive_key","named":true} *) ( "lanes" ) |
+  (* alias {"value":"directive_key","named":true} *) ( "context" ) |
+  (* alias {"value":"directive_key","named":true} *) ( "instruct" ) ) ( (* field "operator" *) (
+  _directive_operator ) )? ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )?
+  _line_end );
+
 directive ::=
   _directive_start ( (* field "key" *) ( _query_directive_key ) (* field "operator" *) (
   _directive_operator ) (* field "value" *) ( query_value ) | (* field "key" *) (
@@ -527,7 +549,7 @@ _directive_operator ::=
   "=" | "+=" | "-=";
 
 query_value ::=
-  (* token *) ( (* prec -1 *) ( ? regex "[^ \\t#\\r\\n][^#\\r\\n]*" ? ) );
+  (* prec 1 *) ( (* token *) ( (* prec -1 *) ( ? regex "[^ \\t#\\r\\n][^#\\r\\n]*" ? ) ) );
 
 route_value ::=
   "none" | "*" | runnable_ref ( "," runnable_ref )*;
@@ -543,8 +565,8 @@ _recall_source ::=
   (* alias {"value":"recall_source","named":true} *) ( "near" );
 
 _directives ::=
-  (* prec.right 0 *) ( (* field "directive" *) ( directive ) ( (* field "directive" *) ( directive )
-  | _trivia )* );
+  (* prec.right 0 *) ( (* field "directive" *) ( _directive_entry ) ( (* field "directive" *) (
+  _directive_entry ) | _trivia )* );
 
 _text_ref ::=
   "default" | "none" | identifier;
@@ -746,3 +768,6 @@ _missing_required ::=
 
 integer_literal ::=
   ? external scanner token "integer_literal" ?;
+
+_param_error ::=
+  ? external scanner token "_param_error" ?;

@@ -574,9 +574,7 @@ def test_recall_directive_rejects_noncanonical_forms():
         b"agic bad:\n  recall += far\n",
     ):
         tree = parser.parse(source)
-        assert tree.root_node.has_error or _nodes(
-            tree.root_node, "invalid_agic_message"
-        ), source
+        assert not valid(tree.root_node), source
 
 
 def test_flow_pass_is_required_for_empty_body_and_must_be_last():
@@ -668,7 +666,7 @@ def test_agic_settings_reject_inline_bodies():
     for key in ("instruct", "context"):
         source = f"agic search:\n  {key}:\n    hello world\n".encode()
         root = _parser().parse(source).root_node
-        assert root.has_error or _nodes(root, "invalid_agic_message")
+        assert not valid(root)
 
 
 def test_agic_instruction_blocks_must_precede_messages():
@@ -703,7 +701,7 @@ def test_unroled_messages_do_not_fallback_from_reserved_words():
 
     for source in invalid_sources:
         tree = parser.parse(source)
-        assert tree.root_node.has_error is True or _nodes(tree.root_node, "invalid_agic_message"), source
+        assert not valid(tree.root_node), source
 
     assert parser.parse(valid_setting).root_node.has_error is False
     assert parser.parse(explicit_message).root_node.has_error is False

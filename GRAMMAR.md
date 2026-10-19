@@ -293,10 +293,10 @@ blank lines alone cannot satisfy required content.
 | `content` | Text value containing direct `text`, `newline`, and `blank_line` children. |
 | `text` | A leaf fragment without CR/LF; its lexical context determines whitespace and comment boundaries. |
 
-`_inline_text`, `_doc_text`, `_structural_text`, `_recovery_text`, and the raw
-scanner tokens remain separate lexical rules, all aliased to `text` where
-appropriate. Documentation fields use `text` directly, as do `property.value`
-and `with.reference`. `let_statement.value` and `reduce_statement.from` use
+`_inline_text`, `_doc_text`, `_structural_text`, `_recovery_text`, the bounded
+`_param_error`, and the raw scanner tokens remain separate lexical rules, all
+aliased to `text` where appropriate. Documentation fields use `text` directly,
+as do `property.value` and `with.reference`. `let_statement.value` and `reduce_statement.from` use
 `content`. Highlighting uses these parents and fields; `text` alone does not
 determine a highlight.
 
@@ -571,13 +571,21 @@ Name, parameter list, and return annotation are independently optional.
 ### Parameters
 
 ```ebnf
-params ::= "(" (param ("," param)*)? ")" ;
-param  ::= param_name "?"? (":" type)? ;
+params       ::= "(" (param:_param_entry ("," param:_param_entry)*)? ")" ;
+_param_entry ::= param ;
+param        ::= param_name "?"? (":" type)? ;
 ```
 
 Parameters accept an optional `?` marker and type annotation; `_` is a valid
 parameter name. An omitted list differs from `()`; trailing commas are invalid.
 Consumers validate parameter order and uniqueness and apply type defaults.
+
+During recovery, `_param_entry` can emit `invalid_param` in the same `param`
+field. An annotation colon anchors recovery for a missing name or type. After a
+complete type, `_param_error` retains malformed trailing text only when a comma
+or `)` occurs on the same physical line; it leaves that delimiter outside the
+entry. Complete `[]` suffixes still belong to `type`, and a missing `)` remains
+a native missing token. Normal `param.name` stays required.
 
 ### Return Type
 
@@ -588,7 +596,8 @@ list, before the header colon.
 
 ```ebnf
 agic_body   ::= _body(_directives _messages? | _messages | "pass" _line_end) ;
-_directives ::= directive:directive (directive:directive | _trivia)* ;
+_directives ::= directive:_directive_entry (directive:_directive_entry | _trivia)* ;
+_directive_entry ::= directive ;
 _messages   ::= message:_message_entry (message:_message_entry | _trivia)* ;
 _message_entry ::= message ;
 ```
@@ -975,7 +984,16 @@ descendant. `root.has_error` alone is insufficient. `invalid_missing_body`,
 `invalid_missing_content`, and `invalid_missing_statement` are zero-width markers
 for absent required syntax. `invalid_flow_statement`, `invalid_agic_message`, and
 `invalid_run_target` retain malformed statements, messages, and run-target
-fragments. `invalid_agic_message` occupies the body's `message` field directly,
+fragments. Hidden `_param_entry` and `_directive_entry` also expose
+`invalid_param` and `invalid_directive` as peers of normal entries. Known malformed
+directives stay in the prefix, including before any required flow statement;
+unknown assignment heads remain native syntax errors. Normal `directive.key`,
+`directive.operator`, and `directive.value` stay required. An `invalid_directive`
+includes its leading indentation and line ending, like a normal directive;
+`invalid_param` excludes list separators. These diagnostics preserve surrounding
+signatures, bodies, documentation, and following declarations.
+
+`invalid_agic_message` occupies the body's `message` field directly,
 without an outer `message` wrapper. Its range starts at the malformed keyword;
 normal messages retain their leading indentation. Recovery preserves following
 source without making invalid constructs valid.

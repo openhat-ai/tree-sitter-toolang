@@ -89,6 +89,8 @@
 
 (content (text) @string)
 (property value: (text) @string)
+(invalid_param (text) @string)
+(invalid_directive (text) @string)
 (invalid_flow_statement (text) @string)
 (invalid_agic_message (text) @string)
 (invalid_run_target (text) @string)
@@ -126,7 +128,10 @@
 (param
   name: (param_name) @property)
 
+(invalid_param
+  name: (param_name) @property)
+
 (field
   name: (identifier) @property)
 
-(type base: (type_name) @type)
+(type base: [(type_name) (builtin_type)] @type)

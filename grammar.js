@@ -19,7 +19,7 @@ module.exports = grammar({
     $._exec_binding_start, $._operation_binding_start,
     $._restricted_binding_start, $._named_binding_start,
     $._missing_required,
-    $.integer_literal,
+    $.integer_literal, $._param_error,
   ],
   rules: {
     program: ($) =>
@@ -164,9 +164,17 @@ module.exports = grammar({
     params: ($) =>
       seq(
         "(",
-        optional(seq(field("param", $.param), repeat(seq(",", field("param", $.param))))),
+        optional(seq(field("param", $._param_entry), repeat(seq(",", field("param", $._param_entry))))),
         ")",
       ),
+    _param_entry: ($) => choice($.param, $.invalid_param),
+    // A colon commits to an annotation; recover its missing operands locally.
+    invalid_param: ($) => choice(
+      seq(optional(field("optional", "?")), ":", optional(field("type", $.type))),
+      seq(field("name", $._param_name), optional(field("optional", "?")), ":"),
+      seq(field("name", $._param_name), optional(field("optional", "?")),
+        ":", field("type", $.type), alias($._param_error, $.text)),
+    ),
     param: ($) =>
       seq(
         field("name", $._param_name),
@@ -504,6 +512,15 @@ module.exports = grammar({
     local_name: ($) => $._identifier,
     handle_name: ($) => $._identifier,
 
+    _directive_entry: ($) => choice($.directive, $.invalid_directive),
+    invalid_directive: ($) => prec.dynamic(-2, seq(
+      $._directive_start,
+      field("key", choice($._query_directive_key, $._route_directive_key,
+        ...["recall", "lanes", "context", "instruct"].map(word => alias(word, $.directive_key)))),
+      optional(field("operator", $._directive_operator)),
+      optional(alias($._recovery_text, $.text)),
+      $._line_end,
+    )),
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_directive_key),
         field("operator", $._directive_operator), field("value", $.query_value)),
@@ -520,7 +537,8 @@ module.exports = grammar({
     _query_directive_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
     _route_directive_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
     _directive_operator: () => choice("=", "+=", "-="),
-    query_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
+    // Prefer a valid raw query value over the overlapping recovery fragment.
+    query_value: () => prec(1, token(prec(-1, /[^ \t#\r\n][^#\r\n]*/))),
     route_value: ($) => choice("none", "*",
       seq($.runnable_ref, repeat(seq(",", $.runnable_ref)))),
     runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
@@ -528,7 +546,7 @@ module.exports = grammar({
       seq($._recall_source, repeat(seq(",", $._recall_source)))),
     _recall_source: ($) => keywordLeaves(recallSources, $.recall_source),
     _directives: ($) => prec.right(seq(
-      field("directive", $.directive), repeat(choice(field("directive", $.directive), $._trivia)),
+      field("directive", $._directive_entry), repeat(choice(field("directive", $._directive_entry), $._trivia)),
     )),
     _text_ref: ($) => choice("default", "none", $.identifier),
     _messages: ($) => prec.right(seq(

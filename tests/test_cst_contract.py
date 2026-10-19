@@ -297,7 +297,7 @@ def test_anonymous_terminals_preserve_role_fields_and_byte_ranges(newline):
 def test_fixed_terminals_are_anonymous_in_generated_metadata():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
     named = {node["type"] for node in nodes if node["named"]}
-    assert len(named) == 77
+    assert len(named) == 79
     assert not any(name.endswith("_keyword") for name in named)
     assert not {"position", "arrow", "assign_operator", "directive_operator", "colon",
                 "comma", "lparen", "rparen", "optional_marker", "array_suffix"} & named
@@ -316,7 +316,7 @@ def test_rejected_route_operators_remain_local_and_highlighted(operator, newline
     source = (f"flow work:\n  hands {operator} worker\n  run after\n"
               "flow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
-    assert root.has_error and not valid(root)
+    assert not valid(root)
     assert declarations(root)[1].child_by_field_name("name").text == b"next"
     run, = descendants(root, "run_statement")
     assert run.child_by_field_name("target").text == b"after"
@@ -326,7 +326,7 @@ def test_rejected_route_operators_remain_local_and_highlighted(operator, newline
     assert capture.type == operator and not capture.is_named
     start = source.encode().index(operator.encode())
     assert (capture.start_byte, capture.end_byte) == (start, start + 2)
-    assert capture.parent.type == "ERROR"
+    assert capture.parent.type == "invalid_directive"
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
