@@ -19,7 +19,7 @@ module.exports = grammar({
     $._exec_binding_start, $._operation_binding_start,
     $._restricted_binding_start, $._named_binding_start,
     $._missing_required,
-    $.integer_literal, $._param_error,
+    $.integer_literal, $._param_error, $._missing_type,
   ],
   rules: {
     program: ($) =>
@@ -170,7 +170,8 @@ module.exports = grammar({
     _param_entry: ($) => choice($.param, $.invalid_param),
     // A colon commits to an annotation; recover its missing operands locally.
     invalid_param: ($) => choice(
-      seq(optional(field("optional", "?")), ":", optional(field("type", $.type))),
+      seq(optional(field("optional", "?")), ":",
+        optional(seq(field("type", $.type), optional(alias($._param_error, $.text))))),
       seq(field("name", $._param_name), optional(field("optional", "?")), ":"),
       seq(field("name", $._param_name), optional(field("optional", "?")),
         ":", field("type", $.type), alias($._param_error, $.text)),
@@ -352,11 +353,11 @@ module.exports = grammar({
       "reduce", usingClause($), ":", $._line_end,
     ),
     _reduce_inline_line: ($) => seq(
-      optional(seq(field("arrow", "->"), field("return", $.type))),
+      optional($._return_clause),
       ":", field("content", alias($._inline_content, $.content)), $._text_end,
     ),
     _reduce_block_header: ($) => seq(
-      optional(seq(field("arrow", "->"), field("return", $.type))),
+      optional($._return_clause),
       ":", $._text_end,
     ),
     _reduce_inline_block: ($) => seq(
@@ -492,7 +493,7 @@ module.exports = grammar({
       )),
     inline_agic: ($) =>
       seq(
-        optional(seq(field("arrow", "->"), field("return", $.type))),
+        optional($._return_clause),
         ":",
         content($, "content"),
       ),
@@ -501,6 +502,10 @@ module.exports = grammar({
         ":",
         content($, "content"),
       ),
+    _return_clause: ($) => seq(
+      field("arrow", "->"),
+      choice(field("return", $.type), alias($._missing_type, $.invalid_missing_type)),
+    ),
     selection: ($) =>
       seq(
         field("side", choice("first", "last")),
@@ -605,7 +610,7 @@ function runnableHeader($, keyword) {
     field("keyword", keyword),
     optional(field("name", $.runnable_name)),
     optional(field("params", $.params)),
-    optional(seq(field("arrow", "->"), field("return", $.type))),
+    optional($._return_clause),
     field("colon", ":"), $._line_end,
   );
 }

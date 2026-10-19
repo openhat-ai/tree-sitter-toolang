@@ -42,6 +42,7 @@ enum Token {
   MISSING_REQUIRED,
   INTEGER_LITERAL,
   PARAM_ERROR,
+  MISSING_TYPE,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -328,6 +329,19 @@ static bool scan_param_error(TSLexer *lexer) {
       lexer->mark_end(lexer);
       return true;
     }
+    // A colon introducing a header comment ends this scope before any
+    // delimiter inside that comment. Other colons and arrows are still part
+    // of the malformed parameter until its own comma or ')' is reached.
+    if (lexer->lookahead == ':') {
+      advance(lexer);
+      while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+      }
+      if (lexer->lookahead == '#') {
+        return false;
+      }
+      continue;
+    }
     advance(lexer);
   }
   return false;
@@ -496,6 +510,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (scanner->comment_started) {
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
+  }
+  // An explicit body/header colon commits a return annotation even when its
+  // type is absent. Leave the colon to the grammar and stay on this line.
+  if (!at_start && valid[MISSING_TYPE]) {
+    skip_indentation(lexer);
+    lexer->mark_end(lexer);
+    if (lexer->lookahead == ':') {
+      return emit(scanner, lexer, MISSING_TYPE);
+    }
+    return false;
   }
   if (!at_start && valid[PARAM_ERROR]) {
     if (scan_param_error(lexer)) {

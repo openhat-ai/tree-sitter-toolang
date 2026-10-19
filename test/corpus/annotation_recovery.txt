@@ -1,0 +1,110 @@
+==================
+Header comments cannot close an incomplete parameter list
+==================
+flow first(topic: Text -> Text: # Contains ) ,
+  ## First member.
+  run after
+## Next item.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type)))
+      (MISSING ")"))
+    (type
+      (builtin_type))
+    (plain_comment)
+    (newline)
+    (flow_body
+      (item_doc
+        (text))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Parameter and return annotation diagnostics retain an anonymous declaration
+==================
+agic(: Text?) -> :
+  user: After.
+flow next:
+  pass
+
+---
+
+(program
+  (agic
+    (params
+      (invalid_param
+        (type
+          (builtin_type))
+        (text)))
+    (invalid_missing_type)
+    (newline)
+    (agic_body
+      (message
+        (role)
+        (content
+          (text))
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+Missing reducer return types retain content and initializer ownership
+==================
+flow first:
+  let result = reduce -> :
+
+    Merge # literal.
+    from: Initial # literal.
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (let_statement
+        (local_name)
+        (reduce_statement
+          (inline_agic
+            (invalid_missing_type)
+            (newline)
+            (content
+              (blank_line)
+              (text)
+              (newline)))
+          (content
+            (text))
+          (newline)))
+      (run_statement
+        (runnable_name)
+        (newline))))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

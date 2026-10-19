@@ -563,7 +563,7 @@ instruct: Return a concise answer.
 
 ```ebnf
 agic         ::= _agic_header _body_prefix* body:agic_body ;
-_agic_header ::= "agic" runnable_name? params? ("->" type)? ":" _line_end ;
+_agic_header ::= "agic" runnable_name? params? _return_clause? ":" _line_end ;
 ```
 
 Name, parameter list, and return annotation are independently optional.
@@ -584,13 +584,23 @@ During recovery, `_param_entry` can emit `invalid_param` in the same `param`
 field. An annotation colon anchors recovery for a missing name or type. After a
 complete type, `_param_error` retains malformed trailing text only when a comma
 or `)` occurs on the same physical line; it leaves that delimiter outside the
-entry. Complete `[]` suffixes still belong to `type`, and a missing `)` remains
-a native missing token. Normal `param.name` stays required.
+entry. A colon introducing a header comment ends this search before any delimiter
+in that comment. Other colons and arrows inside a malformed entry remain recovery
+text until its own separator is reached. Complete `[]` suffixes belong to `type`,
+and a missing `)` remains a native missing token. Missing parameter names and malformed type
+suffixes can coexist in one `invalid_param`. Normal `param.name` stays required.
 
 ### Return Type
 
+```ebnf
+_return_clause ::= arrow:"->" return:type ;
+```
+
 The optional `-> type` uses the [type syntax](#type) and follows any parameter
-list, before the header colon.
+list, before the header colon. Declarations and inline agics, including reducers,
+share `_return_clause`. If the type is absent before an explicit colon, recovery
+emits a zero-width `invalid_missing_type` child and leaves the `return` field
+absent. `until` retains its separate, return-free target grammar.
 
 ### Body
 
@@ -636,7 +646,7 @@ agic summarize(_: Text, style?: Text) -> Text:
 
 ```ebnf
 flow         ::= _flow_header _body_prefix* body:flow_body ;
-_flow_header ::= "flow" runnable_name? params? ("->" type)? ":" _line_end ;
+_flow_header ::= "flow" runnable_name? params? _return_clause? ":" _line_end ;
 ```
 
 Name, parameter list, and return annotation are independently optional.
@@ -664,7 +674,7 @@ _flow_operation ::= run_statement | spawn_statement | await_statement
                      | drop_statement | sort_statement | repeat_statement ;
 
 _target         ::= target:runnable_name _line_end | target:inline_agic ;
-inline_agic     ::= ("->" type)? ":" _content(content) ;
+inline_agic     ::= _return_clause? ":" _content(content) ;
 _lanes_clause   ::= "in" lanes:integer_literal ("lane" | "lanes") ;
 ```
 
@@ -845,8 +855,8 @@ reduce_statement           ::= "reduce" _using_clause _line_end
                    | "reduce" target:alias(_reduce_inline_block, inline_agic)
                      _from_clause? _trivia* _dedent ;
 _reduce_named_block_header ::= "reduce" _using_clause ":" _line_end ;
-_reduce_inline_line        ::= ("->" type)? ":" content:alias(_inline_content, content) _text_end ;
-_reduce_block_header       ::= ("->" type)? ":" _text_end ;
+_reduce_inline_line        ::= _return_clause? ":" content:alias(_inline_content, content) _text_end ;
+_reduce_block_header       ::= _return_clause? ":" _text_end ;
 _reduce_inline_block       ::= _reduce_block_header content:alias(_reduce_content, content) ;
 _reduce_content            ::= blank_line* _reduce_indent _reduce_text_start
                          (_content_row | blank_line)+ _dedent ;
@@ -981,9 +991,10 @@ prose with a keyword or `_`.
 
 Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
 descendant. `root.has_error` alone is insufficient. `invalid_missing_body`,
-`invalid_missing_content`, and `invalid_missing_statement` are zero-width markers
-for absent required syntax. `invalid_flow_statement`, `invalid_agic_message`, and
-`invalid_run_target` retain malformed statements, messages, and run-target
+`invalid_missing_content`, `invalid_missing_statement`, and `invalid_missing_type`
+are zero-width markers for absent required syntax. `invalid_flow_statement`,
+`invalid_agic_message`, and `invalid_run_target` retain malformed statements,
+messages, and run-target
 fragments. Hidden `_param_entry` and `_directive_entry` also expose
 `invalid_param` and `invalid_directive` as peers of normal entries. Known malformed
 directives stay in the prefix, including before any required flow statement;

@@ -19,7 +19,7 @@ const DOCUMENTATION_FIXTURE = join(
 );
 
 const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
-deepStrictEqual(nodeTypes.filter(node => node.named).length, 79);
+deepStrictEqual(nodeTypes.filter(node => node.named).length, 80);
 for (const [owner, field, literal] of [
   ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
   ["param", "optional", "?"], ["property", "operator", "="],
@@ -151,7 +151,7 @@ for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", 
   "source_file", "module_doc_comment", "module_doc"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
 }
-for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement"]) {
+for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement", "invalid_missing_type"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind), { type: kind, named: true });
 }
 

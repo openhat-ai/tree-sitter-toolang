@@ -845,6 +845,54 @@ mod tests {
     }
 
     #[test]
+    fn return_annotation_recovery_keeps_headers_and_inline_content() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for (header, missing_type) in [
+            ("flow work(topic: Text -> Text: # ) ,", false),
+            ("flow work(: Text?) -> : # Header.", true),
+        ] {
+            let source = format!("{header}\n  ## First.\n  reduce -> :\n\n    Merge.\n    from: Initial.\n  run after\n## Next.\nflow next:\n  pass\n");
+            let tree = parser.parse(&source, None).unwrap();
+            let root = tree.root_node();
+            assert!(!is_valid(root));
+            let flow = root.named_child(0).unwrap();
+            assert_eq!(flow.kind(), "flow");
+            assert_eq!(flow.child_by_field_name("return").is_none(), missing_type);
+            let body = flow.child_by_field_name("body").unwrap();
+            assert_eq!(body.named_child(0).unwrap().kind(), "item_doc");
+            let reducer = body.child_by_field_name("statement").unwrap();
+            let inline = reducer.child_by_field_name("target").unwrap();
+            let mut cursor = inline.walk();
+            let diagnostic = inline
+                .named_children(&mut cursor)
+                .find(|node| node.kind() == "invalid_missing_type")
+                .unwrap();
+            assert_eq!(diagnostic.start_byte(), diagnostic.end_byte());
+            assert_eq!(diagnostic.child_count(), 0);
+            assert!(inline.child_by_field_name("return").is_none());
+            assert_eq!(
+                inline
+                    .child_by_field_name("content")
+                    .unwrap()
+                    .utf8_text(source.as_bytes())
+                    .unwrap(),
+                "\n    Merge.\n"
+            );
+            assert_eq!(
+                reducer
+                    .child_by_field_name("from")
+                    .unwrap()
+                    .utf8_text(source.as_bytes())
+                    .unwrap(),
+                " Initial."
+            );
+            assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+            assert!(is_valid(root.named_child(2).unwrap()));
+        }
+    }
+
+    #[test]
     fn can_load_language() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

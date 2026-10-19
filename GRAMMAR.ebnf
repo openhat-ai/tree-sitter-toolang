@@ -56,7 +56,8 @@
   {"type":"SYMBOL","name":"_named_binding_start"},
   {"type":"SYMBOL","name":"_missing_required"},
   {"type":"SYMBOL","name":"integer_literal"},
-  {"type":"SYMBOL","name":"_param_error"}
+  {"type":"SYMBOL","name":"_param_error"},
+  {"type":"SYMBOL","name":"_missing_type"}
 ] *)
 
 program ::=
@@ -223,8 +224,7 @@ agic ::=
 
 _agic_header ::=
   (* field "keyword" *) ( "agic" ) ( (* field "name" *) ( runnable_name ) )? ( (* field "params" *)
-  ( params ) )? ( (* field "arrow" *) ( "->" ) (* field "return" *) ( type ) )? (* field "colon" *)
-  ( ":" ) _line_end;
+  ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
 
 agic_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives _messages? | _messages |
@@ -238,7 +238,8 @@ _param_entry ::=
   param | invalid_param;
 
 invalid_param ::=
-  ( (* field "optional" *) ( "?" ) )? ":" ( (* field "type" *) ( type ) )? | (* field "name" *) (
+  ( (* field "optional" *) ( "?" ) )? ":" ( (* field "type" *) ( type ) (
+  (* alias {"value":"text","named":true} *) ( _param_error ) )? )? | (* field "name" *) (
   _param_name ) ( (* field "optional" *) ( "?" ) )? ":" | (* field "name" *) ( _param_name ) (
   (* field "optional" *) ( "?" ) )? ":" (* field "type" *) ( type )
   (* alias {"value":"text","named":true} *) ( _param_error );
@@ -256,8 +257,7 @@ flow ::=
 
 _flow_header ::=
   (* field "keyword" *) ( "flow" ) ( (* field "name" *) ( runnable_name ) )? ( (* field "params" *)
-  ( params ) )? ( (* field "arrow" *) ( "->" ) (* field "return" *) ( type ) )? (* field "colon" *)
-  ( ":" ) _line_end;
+  ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
 
 flow_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives ( _statements |
@@ -383,11 +383,11 @@ _reduce_named_block_header ::=
   "reduce" "using" _required_space (* field "target" *) ( runnable_name ) ":" _line_end;
 
 _reduce_inline_line ::=
-  ( (* field "arrow" *) ( "->" ) (* field "return" *) ( type ) )? ":" (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_end;
+  _return_clause? ":" (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _inline_content ) ) _text_end;
 
 _reduce_block_header ::=
-  ( (* field "arrow" *) ( "->" ) (* field "return" *) ( type ) )? ":" _text_end;
+  _return_clause? ":" _text_end;
 
 _reduce_inline_block ::=
   _reduce_block_header (* field "content" *) ( (* alias {"value":"content","named":true} *) (
@@ -484,15 +484,18 @@ invalid_flow_statement ::=
   ) )? _line_end );
 
 inline_agic ::=
-  ( (* field "arrow" *) ( "->" ) (* field "return" *) ( type ) )? ":" ( (* field "content" *) (
-  (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_end | (* prec.right 0 *)
-  ( _text_end (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _block_content
-  ) ) ) );
+  _return_clause? ":" ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _inline_content ) ) _text_end | (* prec.right 0 *) ( _text_end (* field "content" *) (
+  (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
 _until_agic ::=
   ":" ( (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _inline_content ) )
   _text_end | (* prec.right 0 *) ( _text_end (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
+
+_return_clause ::=
+  (* field "arrow" *) ( "->" ) ( (* field "return" *) ( type ) |
+  (* alias {"value":"invalid_missing_type","named":true} *) ( _missing_type ) );
 
 selection ::=
   (* field "side" *) ( "first" | "last" ) _required_space (* field "count" *) ( integer_literal );
@@ -771,3 +774,6 @@ integer_literal ::=
 
 _param_error ::=
   ? external scanner token "_param_error" ?;
+
+_missing_type ::=
+  ? external scanner token "_missing_type" ?;

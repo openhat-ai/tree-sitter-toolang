@@ -88,6 +88,10 @@
           "named": true
         },
         {
+          "type": "invalid_missing_type",
+          "named": true
+        },
+        {
           "type": "item_doc",
           "named": true
         },
@@ -841,6 +845,10 @@
           "named": true
         },
         {
+          "type": "invalid_missing_type",
+          "named": true
+        },
+        {
           "type": "item_doc",
           "named": true
         },
@@ -1115,9 +1123,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "invalid_missing_type",
+          "named": true
+        },
         {
           "type": "newline",
           "named": true
@@ -3113,6 +3125,10 @@
   },
   {
     "type": "invalid_missing_statement",
+    "named": true
+  },
+  {
+    "type": "invalid_missing_type",
     "named": true
   },
   {

@@ -297,7 +297,7 @@ def test_anonymous_terminals_preserve_role_fields_and_byte_ranges(newline):
 def test_fixed_terminals_are_anonymous_in_generated_metadata():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
     named = {node["type"] for node in nodes if node["named"]}
-    assert len(named) == 79
+    assert len(named) == 80
     assert not any(name.endswith("_keyword") for name in named)
     assert not {"position", "arrow", "assign_operator", "directive_operator", "colon",
                 "comma", "lparen", "rparen", "optional_marker", "array_suffix"} & named
