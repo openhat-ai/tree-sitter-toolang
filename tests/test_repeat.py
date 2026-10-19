@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 @pytest.mark.parametrize("position", [None, 0, 1, 2])
@@ -36,7 +36,7 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
     if conditions:
         clause, = conditions
         assert clause.type == "until_clause" and clause.parent == body
-        keyword, = descendants(clause, "until_keyword")
+        keyword, = tokens(clause, "until")
         assert keyword.text == b"until"
         target, = clause.children_by_field_name("target")
         assert target.type == ("runnable_name" if condition == "until is_done" else "inline_agic")

@@ -55,253 +55,179 @@ flow seeded(_):
 (program
   (blank_line)
   (instruct
-    (instruct_keyword)
-    (colon)
     (newline)
     (content
       (text)
       (newline)
       (blank_line)))
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (newline)
     (content
       (text)
       (newline)
       (blank_line)))
   (agic
-    (agic_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (arrow)
+        (param_name)))
     (type
-      (builtin_type)
-      (array_suffix))
-    (colon)
+      (builtin_type))
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (recall_value
           (recall_source)
-          (comma)
           (recall_source))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (identifier)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (route_value
-          (none_keyword))
+        (route_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (route_value
-          (all_keyword))
+        (route_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
       (blank_line)))
   (agic
-    (agic_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (colon)
+        (param_name)))
     (newline)
     (agic_body
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (colon)
+        (param_name)))
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (integer_literal)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (recall_value
           (recall_source)
-          (comma)
           (recall_source))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (identifier)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (route_value
           (runnable_ref)
-          (comma)
           (runnable_ref))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (route_value
-          (none_keyword))
+        (route_value)
         (newline))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (reduce_statement
-        (reduce_keyword)
-        (using_keyword)
         (runnable_name)
-        (colon)
         (newline)
-        (from_keyword)
-        (colon)
         (newline)
         (content
           (text)
           (newline)))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (windowing_keyword)
         (integer_literal)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (blank_line)))))
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (colon)
+        (param_name)))
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (inline_agic
-          (arrow)
           (type
-            (builtin_type)
-            (array_suffix))
-          (colon)
+            (builtin_type))
           (newline)
           (content
             (text)
             (newline))))
       (reduce_statement
-        (reduce_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (text)
             (newline)))
-        (from_keyword)
-        (colon)
         (newline)
         (content
           (text)

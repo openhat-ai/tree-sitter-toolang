@@ -207,7 +207,7 @@ def test_readable_flow_complements_have_flat_public_fields():
     order = statements[7].child_by_field_name("order")
     assert _text(source, order).strip() == "descending"
     selection = statements[8].child_by_field_name("selection")
-    assert selection is not None and selection.type == "position"
+    assert selection is not None and selection.type == "selection"
     assert _text(source, selection.child_by_field_name("side")).strip() == "first"
     assert _text(source, selection.child_by_field_name("count")).strip() == "3"
 

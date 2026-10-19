@@ -14,39 +14,29 @@ agic last:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (ERROR
         (plain_comment))
       (blank_line)
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline)))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline)))))
@@ -68,14 +58,11 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (invalid_missing_statement)))
@@ -83,20 +70,14 @@ flow next:
     (param_name)
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
@@ -104,12 +85,9 @@ flow next:
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -128,37 +106,26 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (invalid_flow_statement
-            (until_keyword)
             (text)
             (newline))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

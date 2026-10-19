@@ -40,10 +40,15 @@ Construct names are singular. Flow statements use the `_statement` suffix;
 complete modifier phrases use `_clause`. Parameter nodes use `param`, `params`,
 `param_name`, and `param_doc` consistently with the parser.
 
-Keyword token names use the `_keyword` suffix; declarations expose their
-introducer through the `keyword` field. Source helpers such as `_line_end` do not
-add CST wrappers: structural line endings expose `newline` and any `plain_comment`
-directly.
+Fixed keywords, operators, and punctuation are anonymous literal terminals,
+such as `"run"`, `"="`, and `"[]"`. Fields remain available through all-child and
+field-based APIs; `named_children` excludes these terminals. Declarations expose
+their introducer through `keyword`; `optional`, `suffix`, `side`, `order`, and
+`async` likewise point to literal terminals. Semantic aliases such as
+`directive_key`, `role`, `cap_kind`, and `builtin_type` remain named leaves.
+
+Source helpers such as `_line_end` add no CST wrapper: structural line endings
+expose `newline` and any `plain_comment` directly.
 
 [GRAMMAR.ebnf](GRAMMAR.ebnf) is the generated implementation reference, including
 Tree-sitter annotations, helper rules, and recovery alternatives.
@@ -291,8 +296,9 @@ blank lines alone cannot satisfy required content.
 `_inline_text`, `_doc_text`, `_structural_text`, `_recovery_text`, and the raw
 scanner tokens remain separate lexical rules, all aliased to `text` where
 appropriate. Documentation fields use `text` directly, as do `property.value`
-and `with.reference`. `let.value` and `reduce.from` use `content`. Highlighting
-uses these parents and fields; `text` alone does not determine a highlight.
+and `with.reference`. `let_statement.value` and `reduce_statement.from` use
+`content`. Highlighting uses these parents and fields; `text` alone does not
+determine a highlight.
 
 Same-line text requires a non-space/tab character and consumes the rest of its
 physical line, including every `#`. It has no inline comments: `run: # Heading`
@@ -351,19 +357,19 @@ literal text; subsequent assignments and comment markers remain text.
 
 A raw property value may contain only spaces/tabs. Consumers validate supported
 names, duplicates, required properties, and value meanings. CST fields are
-`key: identifier`, `operator: assign_operator`, and `value: text`.
+`key: identifier`, `operator: "="`, and `value: text`.
 `_cap_content` aliases to `content` when the first substantive non-property line
 starts the literal part; the property prefix never resumes afterward.
 
 ## Directive
 
 ```ebnf
-directive          ::= _query_directive_key directive_operator query_value _line_end
+directive          ::= _query_directive_key _directive_operator query_value _line_end
                      | _route_directive_key "=" route_value _line_end
                      | "recall" "=" recall_value _line_end
                      | "lanes" "=" (integer_literal | "default") _line_end
                      | ("context" | "instruct") "=" _text_ref _line_end ;
-directive_operator ::= "=" | "+=" | "-=" ;
+_directive_operator ::= "=" | "+=" | "-=" ;
 query_value        ::= /[^ \t#\r\n][^#\r\n]*/ ;
 route_value        ::= "none" | "*" | runnable_ref ("," runnable_ref)* ;
 recall_value       ::= "none" | "default" | "*"
@@ -389,13 +395,14 @@ Runnable references use the qualified syntax defined in
 order. `context` and `instruct` are selectors using `=`; local text blocks and
 bare selectors are invalid.
 
-CST directives use `key: directive_key` and `operator: directive_operator`.
-The `value` field contains the corresponding value node; `context` and `instruct`
-selectors point directly to `identifier`, `default_keyword`, or `none_keyword`.
-Query values use the `query_value` leaf; route and recall selections retain
-`route_value` and `recall_value`. Directive-only words also emit `directive_key`
-in incomplete or invalid forms. `context`, `instruct`, and `lanes` keep their
-keyword leaves in declaration and unit positions.
+CST directives use `key: directive_key`; `operator` points directly to the
+anonymous `"="`, `"+="`, or `"-="` terminal. The `value` field contains the
+corresponding value node; `context` and `instruct` selectors point directly to
+`identifier` or the anonymous `"default"` / `"none"` terminal. Query values use
+the `query_value` leaf; route and recall selections retain `route_value` and
+`recall_value`. Directive-only words also emit `directive_key` in incomplete or
+invalid forms. `context`, `instruct`, and `lanes` use anonymous terminals in
+declaration and unit positions.
 
 ## Program
 
@@ -582,7 +589,8 @@ list, before the header colon.
 ```ebnf
 agic_body   ::= _body(_directives _messages? | _messages | "pass" _line_end) ;
 _directives ::= directive:directive (directive:directive | _trivia)* ;
-_messages   ::= message:message (message:message | _trivia)* ;
+_messages   ::= message:_message_entry (message:_message_entry | _trivia)* ;
+_message_entry ::= message ;
 ```
 
 A body may contain directives alone, or messages optionally preceded by
@@ -590,7 +598,9 @@ directives. `pass` is a whole-body alternative and cannot follow directives or
 coexist with messages.
 
 The CST `body` field points to `agic_body`, whose repeated `directive` and
-`message` fields contain its entries in source order.
+`message` fields contain its entries in source order. The hidden `_message_entry`
+chooses a normal `message` or an `invalid_agic_message` during recovery; both are
+direct body children. A normal `message` always has a `content` field.
 
 ### Message
 
@@ -863,8 +873,8 @@ flow combine:
 ### Keep
 
 ```ebnf
-keep_statement ::= "keep" (selection:position _line_end | _lanes_clause? _if_target) ;
-position       ::= ("first" | "last") count:integer_literal ;
+keep_statement ::= "keep" (selection:selection _line_end | _lanes_clause? _if_target) ;
+selection      ::= side:("first" | "last") count:integer_literal ;
 _if_target     ::= "if" _target ;
 ```
 
@@ -881,10 +891,10 @@ flow select:
 ### Drop
 
 ```ebnf
-drop_statement ::= "drop" (selection:position _line_end | _lanes_clause? _if_target) ;
+drop_statement ::= "drop" (selection:selection _line_end | _lanes_clause? _if_target) ;
 ```
 
-`drop` uses the [position, predicate, and lane forms](#keep) defined for `keep`.
+`drop` uses the [selection, predicate, and lane forms](#keep) defined for `keep`.
 
 ```too
 flow select:
@@ -965,8 +975,10 @@ descendant. `root.has_error` alone is insufficient. `invalid_missing_body`,
 `invalid_missing_content`, and `invalid_missing_statement` are zero-width markers
 for absent required syntax. `invalid_flow_statement`, `invalid_agic_message`, and
 `invalid_run_target` retain malformed statements, messages, and run-target
-fragments. Recovery preserves following source without making invalid constructs
-valid.
+fragments. `invalid_agic_message` occupies the body's `message` field directly,
+without an outer `message` wrapper. Its range starts at the malformed keyword;
+normal messages retain their leading indentation. Recovery preserves following
+source without making invalid constructs valid.
 
 [src/node-types.json](src/node-types.json) defines the current node/field schema;
 [queries](queries) show its use. Text preserves authored bytes and relative

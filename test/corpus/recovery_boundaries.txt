@@ -13,32 +13,23 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (ERROR
-        (map_keyword)
-        (in_keyword)
-        (integer_literal)
-        (lanes_keyword))
+        (integer_literal))
       (blank_line)
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -60,31 +51,24 @@ flow last:
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (ERROR
         (directive_key)
-        (assign_operator)
         (newline))
       (plain_comment)
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (ERROR
@@ -92,21 +76,15 @@ flow last:
       (blank_line)
       (directive
         (directive_key)
-        (directive_operator)
-        (recall_value
-          (none_keyword))
+        (recall_value)
         (newline))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -125,9 +103,7 @@ flow last:
 
 (program
   (struct
-    (struct_keyword)
     (type_name)
-    (colon)
     (newline)
     (struct_body
       (ERROR
@@ -137,29 +113,21 @@ flow last:
   (item_doc
     (text))
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (content
       (text))
     (newline))
   (ERROR
-    (flow_keyword)
     (runnable_name)
-    (lparen)
     (newline))
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -179,44 +147,30 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (ERROR
-            (keep_keyword)
-            (in_keyword)
-            (integer_literal)
-            (lanes_keyword))
+            (integer_literal))
           (blank_line)
           (item_doc
             (text))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

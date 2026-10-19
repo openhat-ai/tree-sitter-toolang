@@ -23,6 +23,17 @@ def walk(node):
         yield from walk(child)
 
 
+def walk_all(node):
+    yield node
+    for child in node.children:
+        yield from walk_all(child)
+
+
+def tokens(node, literal):
+    return [child for child in walk_all(node)
+            if not child.is_named and child.type == literal]
+
+
 def valid(root):
     return not root.has_error and not any(
         node.type.startswith("invalid_") for node in walk(root)

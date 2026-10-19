@@ -16,42 +16,31 @@ agic chat:
 
 (program
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (newline)
     (content
       (invalid_missing_content)))
   (plain_comment)
   (blank_line)
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (async_keyword)
-        (run_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (invalid_missing_content))))
       (plain_comment)
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (message
         (role)
-        (colon)
         (newline)
         (content
           (invalid_missing_content)))))

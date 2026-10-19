@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -45,7 +45,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
     assert valid(root), root
     statement, = descendants(root, "run_statement")
     modifier = statement.child_by_field_name("async")
-    assert modifier.type == "async_keyword"
+    assert modifier.type == "async" and not modifier.is_named
     assert modifier.text.strip() == b"async"
     node = statement.child_by_field_name("target")
     if target.startswith(" research"):
@@ -242,8 +242,8 @@ def test_incremental_async_header_repair_preserves_following_code(binding, newli
 def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
     root = parse(f"flow launch:\n  {binding}{prefix} is ordinary text.\n")
     assert valid(root), root
-    assert not descendants(root, "async_keyword")
-    assert not descendants(root, "await_keyword")
+    assert not tokens(root, "async")
+    assert not tokens(root, "await")
     if binding:
         wrapper, = descendants(root, "let_statement")
         assert prefix.encode() in wrapper.child_by_field_name("value").text
@@ -337,11 +337,11 @@ def test_async_await_fixture_keeps_text_literal_and_run_as_an_authored_type(newl
     source = Path(__file__).with_name("fixtures").joinpath("async_await.too").read_text()
     root = parse(source.replace("\n", newline))
     assert valid(root), root
-    assert len(descendants(root, "async_keyword")) == 4
-    assert len(descendants(root, "await_keyword")) == 4
+    assert len(tokens(root, "async")) == 4
+    assert len(tokens(root, "await")) == 4
     for agic in descendants(root, "agic"):
-        assert not descendants(agic, "async_keyword")
-        assert not descendants(agic, "await_keyword")
+        assert not tokens(agic, "async")
+        assert not tokens(agic, "await")
     assert any(node.text == b"Run" for node in descendants(root, "type_name"))
     assert not any(node.text == b"Run" for node in descendants(root, "builtin_type"))
 

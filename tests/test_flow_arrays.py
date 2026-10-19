@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 OPERATIONS = [
@@ -40,13 +40,13 @@ def test_collection_targets_and_bindings(head, kind, count, lanes, binding, targ
     if output is None and target.startswith(" using"):
         assert runnable.type == "runnable_name"
         assert runnable.text == b"worker"
-        assert len(descendants(operation, "using_keyword")) == 1
+        assert len(tokens(operation, "using")) == 1
     else:
         assert runnable.type == "inline_agic"
         result = runnable.child_by_field_name("return")
         assert (result.text.decode() if result else None) == output
         assert runnable.child_by_field_name("content").text.strip() == b"Complete {{_}}."
-        assert not descendants(operation, "using_keyword")
+        assert not tokens(operation, "using")
     for name, expected in [("count", count), ("lanes", lanes)]:
         value = operation.child_by_field_name(name)
         assert (value.text.decode().strip() if value else None) == expected

@@ -19,6 +19,15 @@ const DOCUMENTATION_FIXTURE = join(
 );
 
 const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
+deepStrictEqual(nodeTypes.filter(node => node.named).length, 77);
+for (const [owner, field, literal] of [
+  ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
+  ["param", "optional", "?"], ["property", "operator", "="],
+  ["selection", "side", "first"], ["sort_statement", "order", "ascending"],
+]) {
+  const types = nodeTypes.find(node => node.type === owner && node.named).fields[field].types;
+  deepStrictEqual(types.some(type => type.type === literal && !type.named), true);
+}
 deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, {
   target: {
     multiple: false,
@@ -31,7 +40,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
 });
 deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
   async: {
-    multiple: false, required: false, types: [{ type: "async_keyword", named: true }],
+    multiple: false, required: false, types: [{ type: "async", named: false }],
   },
   target: {
     multiple: false, required: false,
@@ -70,8 +79,8 @@ deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
 
 for (const name of [
   "identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
-  "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
-  "text", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
+  "agent_name", "cap_name", "chore_name", "builtin_type",
+  "text", "role", "directive_key", "recall_source",
 ]) {
   const node = nodeTypes.find(node => node.type === name);
   deepStrictEqual(node.named, true, name);
@@ -84,7 +93,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "type").fields, {
     types: [{ type: "builtin_type", named: true }, { type: "type_name", named: true }],
   },
   suffix: {
-    multiple: true, required: false, types: [{ type: "array_suffix", named: true }],
+    multiple: true, required: false, types: [{ type: "[]", named: false }],
   },
 });
 
@@ -117,7 +126,10 @@ deepStrictEqual(messageFields.role, {
   multiple: false, required: false, types: [{ type: "role", named: true }],
 });
 // Keyword-led invalid messages can omit content during recovery only.
-deepStrictEqual(messageFields.content, { ...textField, required: false });
+deepStrictEqual(messageFields.content, textField);
+deepStrictEqual(nodeTypes.find(node => node.type === "agic_body").fields.message.types, [
+  { type: "invalid_agic_message", named: true }, { type: "message", named: true },
+]);
 for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
   ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
@@ -234,7 +246,7 @@ try {
     cwd: REPO_ROOT, encoding: "utf8",
   });
   deepStrictEqual(blockHeader.status, 1, blockHeader.stdout + blockHeader.stderr);
-  for (const node of ["colon: (colon [0, 10] - [0, 11]", "(repeat_statement [2, 2] - [8, 0]",
+  for (const node of ["(repeat_statement [2, 2] - [8, 0]",
     "\n          (item_doc [6, 4] - [7, 0]", "(run_statement [7, 4] - [8, 0]",
     "(run_statement [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
     "\n  (flow [10, 0] - [12, 0]"]) {

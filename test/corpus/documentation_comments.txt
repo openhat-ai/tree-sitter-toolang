@@ -29,26 +29,17 @@ agic(_: Text, style?: Text):
     (param_name)
     (text))
   (agic
-    (agic_keyword)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
         (type
           (builtin_type)))
-      (comma)
       (param
         (param_name)
-        (optional_marker)
-        (colon)
         (type
-          (builtin_type)))
-      (rparen))
-    (colon)
+          (builtin_type))))
     (newline)
     (agic_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -77,11 +68,8 @@ flow:
   (program_doc
     (text))
   (flow
-    (flow_keyword)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -101,18 +89,14 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (plain_comment)
     (newline)
     (flow_body
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (text)
@@ -124,12 +108,9 @@ flow next:
   (program_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -146,10 +127,7 @@ flow next:
     (param_name))
   (blank_line)
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

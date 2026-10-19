@@ -15,34 +15,26 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (ERROR
-        (repeat_keyword))
+      (ERROR)
       (blank_line)
-      (ERROR
-        (run_keyword))
+      (ERROR)
       (blank_line)
       (ERROR)
       (blank_line)
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -61,9 +53,7 @@ flow next:
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (ERROR)
@@ -74,17 +64,13 @@ flow next:
         (text))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

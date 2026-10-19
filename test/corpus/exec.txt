@@ -10,35 +10,24 @@ flow grow(next: Text):
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
         (type
-          (builtin_type)))
-      (rparen))
-    (colon)
+          (builtin_type))))
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (exec_statement
-            (exec_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))))
       (exec_statement
-        (exec_keyword)
         (runnable_name)
         (plain_comment)
         (newline)))))
@@ -58,41 +47,29 @@ flow grow:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (exec_statement
-            (exec_keyword)
             (inline_agic
-              (arrow)
               (type
                 (builtin_type))
-              (colon)
               (newline)
               (content
                 (text)
                 (newline))))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))))
       (exec_statement
-        (exec_keyword)
         (runnable_name)
         (newline)))))

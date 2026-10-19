@@ -17,49 +17,36 @@ flow research:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (item_doc
             (text))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (item_doc
             (text))
           (repeat_statement
-            (repeat_keyword)
-            (colon)
             (newline)
             (repeat_body
               (plain_comment)
               (item_doc
                 (text))
               (run_statement
-                (run_keyword)
                 (runnable_name)
                 (newline))
               (until_clause
-                (until_keyword)
                 (inline_agic
-                  (colon)
                   (content
                     (text))
                   (newline)))))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline))))))))

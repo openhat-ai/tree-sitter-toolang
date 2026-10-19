@@ -27,29 +27,20 @@ flow summarize:
 (program
   (blank_line)
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (item_doc
             (text))
           (repeat_statement
-            (repeat_keyword)
             (integer_literal)
-            (times_keyword)
-            (colon)
             (newline)
             (repeat_body
               (run_statement
-                (run_keyword)
                 (inline_agic
-                  (colon)
                   (newline)
                   (content
                     (text)
@@ -59,26 +50,20 @@ flow summarize:
                     (text)
                     (newline))))
               (run_statement
-                (run_keyword)
                 (runnable_name)
                 (newline))))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (newline)
               (content
                 (text)
                 (newline))))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (implicit_run_statement
@@ -91,8 +76,6 @@ flow summarize:
           (newline)
           (blank_line)))
       (keep_statement
-        (keep_keyword)
-        (position
-          (first_keyword)
+        (selection
           (integer_literal))
         (newline)))))

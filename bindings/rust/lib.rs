@@ -348,7 +348,7 @@ mod tests {
         let directive = body.child_by_field_name("directive").unwrap();
         for (field, kind) in [
             ("key", "directive_key"),
-            ("operator", "directive_operator"),
+            ("operator", "="),
             ("value", "identifier"),
         ] {
             assert_eq!(directive.child_by_field_name(field).unwrap().kind(), kind);
@@ -685,7 +685,7 @@ mod tests {
                     .child_by_field_name("async")
                     .map(|node| node.kind()),
                 if operation == "async run" {
-                    Some("async_keyword")
+                    Some("async")
                 } else {
                     None
                 }
@@ -715,6 +715,79 @@ mod tests {
                 assert_eq!(handle.utf8_text(source.as_bytes()).unwrap().trim(), "h");
             }
         }
+    }
+
+    #[test]
+    fn anonymous_terminals_keep_fields_and_invalid_messages_are_body_entries() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "flow work(input?: Text[]) -> Text:\n  models += fast\n  async run worker\n  keep last 2\nagic messages:\n  user missing colon\n  user: After.\nflow next:\n  pass\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(!root.has_error()); // The public invalid_* node carries the error.
+        let flow = root.named_child(0).unwrap();
+        let parameter = flow
+            .child_by_field_name("params")
+            .unwrap()
+            .child_by_field_name("param")
+            .unwrap();
+        let body = flow.child_by_field_name("body").unwrap();
+        let directive = body.child_by_field_name("directive").unwrap();
+        let run = body.child_by_field_name("statement").unwrap();
+        let mut cursor = body.walk();
+        let keep = body
+            .named_children(&mut cursor)
+            .find(|node| node.kind() == "keep_statement")
+            .unwrap();
+        let selection = keep.child_by_field_name("selection").unwrap();
+        assert_eq!(selection.kind(), "selection");
+        let ty = parameter.child_by_field_name("type").unwrap();
+        for (owner, field, literal) in [
+            (flow, "keyword", "flow"),
+            (flow, "arrow", "->"),
+            (parameter, "optional", "?"),
+            (ty, "suffix", "[]"),
+            (directive, "operator", "+="),
+            (run, "async", "async"),
+            (selection, "side", "last"),
+        ] {
+            let token = owner.child_by_field_name(field).unwrap();
+            assert_eq!(token.kind(), literal);
+            assert!(!token.is_named());
+            assert_eq!(&source[token.byte_range()], literal);
+        }
+        let body = root
+            .named_child(1)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap();
+        let mut cursor = body.walk();
+        let entries: Vec<_> = body
+            .children_by_field_name("message", &mut cursor)
+            .collect();
+        assert_eq!(
+            entries.iter().map(|node| node.kind()).collect::<Vec<_>>(),
+            ["invalid_agic_message", "message"]
+        );
+        assert_eq!(entries[0].parent().unwrap(), body);
+        assert_eq!(
+            entries[0].start_byte(),
+            source.find("user missing colon").unwrap()
+        );
+        assert_eq!(
+            entries[0].utf8_text(source.as_bytes()).unwrap(),
+            "user missing colon\n"
+        );
+        assert!(entries[1].child_by_field_name("content").is_some());
+        assert_eq!(
+            root.named_child(2)
+                .unwrap()
+                .child_by_field_name("name")
+                .unwrap()
+                .utf8_text(source.as_bytes())
+                .unwrap(),
+            "next"
+        );
     }
 
     #[test]

@@ -47,16 +47,12 @@ flow example:
 
 (program
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (content
       (text))
     (newline))
   (instruct
-    (instruct_keyword)
     (identifier)
-    (colon)
     (newline)
     (content
       (text)
@@ -67,14 +63,11 @@ flow example:
       (newline)
       (blank_line)))
   (skill
-    (skill_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (content
@@ -84,14 +77,11 @@ flow example:
         (newline)
         (blank_line))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (content
@@ -99,38 +89,30 @@ flow example:
         (newline)
         (blank_line))))
   (struct
-    (struct_keyword)
     (type_name)
-    (colon)
     (newline)
     (struct_body
       (field
         (identifier)
-        (colon)
         (type
           (builtin_type))
         (newline))
       (blank_line)))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
       (message
         (role)
-        (colon)
         (newline)
         (content
           (text)
@@ -145,73 +127,51 @@ flow example:
           (newline)
           (blank_line)))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (newline)
         (content
           (text)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (inline_agic
-            (colon)
             (newline)
             (content
               (text)
               (newline)))))
       (await_statement
-        (await_keyword)
         (handle_name)
         (newline))
       (ask_statement
-        (ask_keyword)
-        (colon)
         (content
           (text))
         (newline))
       (reduce_statement
-        (reduce_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (text)
             (newline)))
-        (from_keyword)
-        (colon)
         (content
           (text))
         (newline))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline)))))))

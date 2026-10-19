@@ -13,42 +13,31 @@ flow work: # Structural.
 
 (program
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (content
       (text))
     (newline))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (plain_comment)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (inline_agic
-          (colon)
           (content
             (text))
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (plain_comment)
         (newline))
       (run_statement
-        (run_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (text)

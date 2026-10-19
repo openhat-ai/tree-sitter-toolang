@@ -16,38 +16,29 @@ flow next:
 
 (program
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (ERROR
         (identifier)
-        (assign_operator)
         (newline))
       (blank_line)
       (content
         (text)
         (newline))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (ERROR
-        (identifier)
-        (assign_operator))
+        (identifier))
       (blank_line)
       (blank_line)
       (content
         (text)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

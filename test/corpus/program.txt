@@ -10,22 +10,18 @@ with prompt https://toolang.ai/review
 
 (program
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline))
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline))
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline))
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline)))
@@ -60,19 +56,15 @@ chore stale-prs:
 
 (program
   (service
-    (service_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -81,9 +73,7 @@ chore stale-prs:
         (newline)
         (blank_line))))
   (psyche
-    (psyche_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (content
@@ -91,9 +81,7 @@ chore stale-prs:
         (newline)
         (blank_line))))
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (content
@@ -101,14 +89,11 @@ chore stale-prs:
         (newline)
         (blank_line))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -117,19 +102,15 @@ chore stale-prs:
         (newline)
         (blank_line))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -154,36 +135,27 @@ context:
 
 (program
   (struct
-    (struct_keyword)
     (type_name)
-    (colon)
     (newline)
     (struct_body
       (field
         (identifier)
-        (colon)
         (type
           (builtin_type))
         (newline))
       (field
         (identifier)
-        (colon)
         (type
-          (type_name)
-          (array_suffix))
+          (type_name))
         (newline))
       (blank_line)))
   (instruct
-    (instruct_keyword)
-    (colon)
     (newline)
     (content
       (text)
       (newline)
       (blank_line)))
   (context
-    (context_keyword)
-    (colon)
     (newline)
     (content
       (text)
@@ -209,75 +181,53 @@ agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
-        (type
-          (builtin_type)
-          (array_suffix)))
-      (comma)
-      (param
-        (param_name)
-        (colon)
         (type
           (builtin_type)))
-      (comma)
       (param
         (param_name)
-        (optional_marker)
-        (colon)
         (type
           (builtin_type)))
-      (rparen))
-    (arrow)
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
     (type
       (type_name))
-    (colon)
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (route_value
           (runnable_ref))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (recall_value
           (recall_source)
-          (comma)
           (recall_source))
         (newline))
       (blank_line)
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (blank_line)
       (message
         (role)
-        (colon)
         (newline)
         (content
           (text)
@@ -315,142 +265,93 @@ flow research(input: Part[]) -> Answer:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
         (type
-          (builtin_type)
-          (array_suffix)))
-      (rparen))
-    (arrow)
+          (builtin_type))))
     (type
       (type_name))
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (blank_line)
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (seek_statement
-        (seek_keyword)
         (agent_name)
         (runnable_name)
         (newline))
       (ask_statement
-        (ask_keyword)
-        (colon)
         (content
           (text))
         (newline))
       (run_statement
-        (run_keyword)
         (inline_agic
-          (arrow)
           (type
-            (type_name)
-            (array_suffix))
-          (colon)
+            (type_name))
           (newline)
           (content
             (text)
             (newline))))
       (generate_statement
-        (generate_keyword)
         (integer_literal)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
-        (using_keyword)
         (runnable_name)
         (newline))
       (keep_statement
-        (keep_keyword)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
-        (if_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (text)
             (newline))))
       (drop_statement
-        (drop_keyword)
-        (position
-          (last_keyword)
+        (selection
           (integer_literal))
         (newline))
       (sort_statement
-        (sort_keyword)
-        (descending_keyword)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
-        (by_keyword)
         (runnable_name)
         (newline))
       (map_statement
-        (map_keyword)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
         (inline_agic
-          (arrow)
           (type
             (type_name))
-          (colon)
           (newline)
           (content
             (text)
             (newline))))
       (run_statement
-        (run_keyword)
         (inline_agic
-          (arrow)
           (type
             (type_name))
-          (colon)
           (newline)
           (content
             (text)
             (newline))))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (run_keyword)
           (runnable_name)
           (newline)))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline))))))))
@@ -471,31 +372,23 @@ agic raw:
 (program
   (plain_comment)
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (plain_comment)
     (newline))
   (blank_line)
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
-        (none_keyword)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (none_keyword)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline)))))
@@ -510,16 +403,12 @@ agic recall:
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
         (recall_value
           (recall_source)
-          (comma)
           (recall_source))
         (newline)))))

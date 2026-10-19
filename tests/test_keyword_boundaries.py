@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid, walk
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid, walk_all
 
 
 HEADS = [
@@ -105,11 +105,14 @@ def test_keyword_aliases_preserve_named_leaf_nodes():
                  "agic worker -> Text:\n  recall = far, near\n  user: Text.\n"
                  "flow work:\n  lanes = 2\n  map in 2 lanes using worker\n")
     assert valid(root), root
-    for kind in ["cap_kind", "skill_keyword", "builtin_type", "recall_source",
-                 "role", "directive_key", "lanes_keyword"]:
+    for kind in ["cap_kind", "builtin_type", "recall_source",
+                 "role", "directive_key"]:
         nodes = descendants(root, kind)
         assert nodes, kind
         assert all(node.child_count == 0 for node in nodes), nodes
+
+    for literal in ["skill", "lanes"]:
+        assert tokens(root, literal)
 
 
 @pytest.mark.parametrize("space", ["", " ", "\t", "  \t"])
@@ -117,8 +120,8 @@ def test_bound_run_range_starts_at_its_keyword(space):
     root = parse(f"flow work:\n  let result ={space}run worker\n")
     assert valid(root), root
     operation, = descendants(root, "run_statement")
-    keyword = operation.named_children[0]
-    assert keyword.type == "run_keyword"
+    keyword, = tokens(operation, "run")
+    assert not keyword.is_named
     assert operation.start_byte == keyword.start_byte
     assert operation.text == b"run worker\n"
 
@@ -133,8 +136,8 @@ def test_bound_run_range_starts_at_its_keyword(space):
 def test_structural_keyword_and_name_ranges_exclude_extras(binding, statement, separator):
     root = parse("flow work:\n  " + (binding + statement).replace(" ", separator) + "\n")
     assert valid(root), root
-    for node in walk(root):
-        if node.type.endswith(("_keyword", "_name")):
+    for node in walk_all(root):
+        if not node.is_named or node.type.endswith("_name"):
             assert node.text == node.text.strip(b" \t"), (node.type, node.text)
 
 

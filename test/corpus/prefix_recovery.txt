@@ -15,9 +15,7 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (ERROR
       (plain_comment))
@@ -28,18 +26,14 @@ flow next:
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -60,14 +54,10 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (ERROR
           (plain_comment))
@@ -79,20 +69,15 @@ flow next:
             (param_name)
             (text))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -110,9 +95,7 @@ flow next:
 
 (program
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline)
     (ERROR
       (plain_comment))
@@ -122,16 +105,12 @@ flow next:
         (text))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

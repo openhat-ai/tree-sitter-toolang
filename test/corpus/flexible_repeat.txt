@@ -32,59 +32,41 @@ flow improve(_):
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (arrow)
+        (param_name)))
     (type
       (builtin_type))
-    (colon)
     (newline)
     (agic_body
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
-        (param_name))
-      (rparen))
-    (colon)
+        (param_name)))
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (item_doc
             (text))
           (until_clause
-            (until_keyword)
             (runnable_name)
             (newline))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (windowing_keyword)
         (integer_literal)
-        (colon)
         (newline)
         (repeat_body
           (implicit_run_statement
@@ -92,32 +74,22 @@ flow improve(_):
               (text)
               (newline)))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (time_keyword)
-        (colon)
         (newline)
         (repeat_body
           (repeat_statement
-            (repeat_keyword)
-            (colon)
             (newline)
             (repeat_body
               (until_clause
-                (until_keyword)
                 (inline_agic
-                  (colon)
                   (newline)
                   (content
                     (text)
@@ -125,44 +97,31 @@ flow improve(_):
                     (text)
                     (newline))))
               (run_statement
-                (run_keyword)
                 (runnable_name)
                 (newline))))
           (until_clause
-            (until_keyword)
             (runnable_name)
             (newline))))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (repeat_statement
-        (repeat_keyword)
-        (windowing_keyword)
         (integer_literal)
-        (colon)
         (newline)
         (repeat_body
           (let_statement
-            (let_keyword)
             (local_name)
-            (assign_operator)
             (newline)
             (content
               (text)
               (newline)))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline)))))

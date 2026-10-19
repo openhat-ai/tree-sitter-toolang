@@ -12,35 +12,25 @@ flow next(topic: Text):
 
 (program
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline))
   (item_doc
     (text))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline))
   (param_doc
     (param_name)
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
         (type
-          (builtin_type)))
-      (rparen))
-    (colon)
+          (builtin_type))))
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -60,37 +50,29 @@ flow work:
 
 (program
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (plain_comment)
     (newline)
     (plain_comment)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (content
         (text)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (item_doc
       (text))
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (plain_comment)
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline)))))))
 
@@ -114,68 +96,49 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (route_value
           (runnable_ref))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (recall_value
-          (none_keyword))
+        (recall_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (identifier)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
-        (default_keyword)
         (newline))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (seek_statement
-        (seek_keyword)
         (agent_name)
         (inline_agic
-          (colon)
           (content
             (text))
           (newline)))
       (map_statement
-        (map_keyword)
-        (using_keyword)
         (runnable_name)
         (newline))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline))))))))
@@ -195,41 +158,31 @@ agic work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (invalid_flow_statement
-        (let_keyword)
         (local_name)
         (text)
         (newline))
       (run_statement
-        (async_keyword)
-        (run_keyword)
         (invalid_run_target
           (runnable_name)
           (text)
           (newline)))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
-      (message
-        (invalid_agic_message
-          (role)
-          (text)
-          (newline)))
+      (invalid_agic_message
+        (role)
+        (text)
+        (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline)))))
@@ -251,43 +204,32 @@ flow last:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (invalid_missing_body)))
   (item_doc
     (text))
   (context
-    (context_keyword)
     (identifier)
-    (colon)
     (newline)
     (content
       (invalid_missing_content)))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (invalid_missing_content))))))
   (program_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

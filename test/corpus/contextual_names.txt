@@ -15,50 +15,33 @@ agic describe(until?: Text):
     (param_name)
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (colon)
         (type
           (builtin_type)))
-      (comma)
-      (param
-        (param_name)
-        (optional_marker))
-      (comma)
       (param
         (param_name))
-      (comma)
       (param
         (param_name))
-      (rparen))
-    (colon)
+      (param
+        (param_name)))
     (newline)
     (flow_body
       (await_statement
-        (await_keyword)
         (handle_name)
         (newline))
       (blank_line)))
   (agic
-    (agic_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (optional_marker)
-        (colon)
         (type
-          (builtin_type)))
-      (rparen))
-    (colon)
+          (builtin_type))))
     (newline)
     (agic_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -79,67 +62,43 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (sort_statement
-          (sort_keyword)
-          (ascending_keyword)
-          (by_keyword)
           (runnable_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (newline)
         (content
           (text)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (spawn_statement
-          (spawn_keyword)
           (runnable_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (await_statement
-        (await_keyword)
         (handle_name)
         (newline))
       (let_statement
-        (let_keyword)
         (run_statement
-          (run_keyword)
           (runnable_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (sort_statement
-          (sort_keyword)
-          (ascending_keyword)
-          (by_keyword)
           (runnable_name)
           (newline))))))

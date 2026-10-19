@@ -15,37 +15,28 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (invalid_flow_statement
-        (generate_keyword)
-        (ERROR
-          (colon))
+        (ERROR)
         (newline))
       (ERROR)
       (blank_line)
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -68,53 +59,38 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (invalid_flow_statement
-            (keep_keyword)
             (ERROR
-              (in_keyword)
-              (integer_literal)
-              (lanes_keyword)
-              (colon))
+              (integer_literal))
             (newline))
           (ERROR)
           (blank_line)
           (item_doc
             (text))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ==================
@@ -137,53 +113,37 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (let_statement
-            (let_keyword)
             (local_name)
-            (assign_operator)
             (invalid_flow_statement
-              (sort_keyword)
-              (ERROR
-                (ascending_keyword)
-                (colon))
+              (ERROR)
               (newline)))
           (ERROR)
           (blank_line)
           (item_doc
             (text))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

@@ -23,129 +23,86 @@ flow empty( )->Text []:
 
 (program
   (with
-    (with_keyword)
     (cap_kind)
     (text)
     (newline))
   (blank_line)
   (flow
-    (flow_keyword)
     (runnable_name)
     (params
-      (lparen)
       (param
         (param_name)
-        (optional_marker)
-        (colon)
         (type
           (builtin_type)))
-      (comma)
       (param
         (param_name)
-        (colon)
         (type
-          (builtin_type)))
-      (rparen))
-    (arrow)
+          (builtin_type))))
     (type
-      (builtin_type)
-      (array_suffix))
-    (colon)
+      (builtin_type))
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (route_value
           (runnable_ref))
         (newline))
       (directive
         (directive_key)
-        (directive_operator)
         (integer_literal)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (runnable_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (generate_statement
-        (generate_keyword)
         (integer_literal)
         (inline_agic
-          (arrow)
           (type
             (builtin_type))
-          (colon)
           (content
             (text))
           (newline)))
       (map_statement
-        (map_keyword)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
-        (using_keyword)
         (runnable_name)
         (newline))
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (windowing_keyword)
         (integer_literal)
-        (colon)
         (newline)
         (repeat_body
           (run_statement
-            (run_keyword)
             (runnable_name)
             (plain_comment)
             (newline))))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (params
-      (lparen)
-      (rparen))
-    (arrow)
+    (params)
     (type
-      (builtin_type)
-      (array_suffix))
-    (colon)
+      (builtin_type))
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ============================================================
@@ -166,50 +123,36 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (invalid_missing_body)))
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (newline)
         (content
           (invalid_missing_content)))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (reduce_statement
-        (reduce_keyword)
         (inline_agic
-          (colon)
           (newline)
           (content
             (invalid_missing_content))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

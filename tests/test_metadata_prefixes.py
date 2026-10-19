@@ -84,7 +84,7 @@ def test_property_names_are_schema_independent_with_unchanged_fields(kind, key, 
     operator = prop.child_by_field_name("operator")
     value = prop.child_by_field_name("value")
     assert name.type == "identifier" and name.text == key.encode() and name.child_count == 0
-    assert operator.type == "assign_operator" and operator.text == b"="
+    assert operator.type == "=" and not operator.is_named and operator.text == b"="
     assert value.type == "text" and value.text == line.partition("=")[2].encode()
     assert prop.text == line.encode() + newline.encode()
     assert body.child_by_field_name("content") is None

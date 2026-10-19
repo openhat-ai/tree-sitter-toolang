@@ -14,8 +14,8 @@ from test_layout_support import declarations, descendants, edit_tree, fingerprin
 ROOT = Path(__file__).parents[1]
 FIXTURES = sorted((ROOT / "tests/fixtures").glob("*.too"))
 LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
-          "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
-          "text", "role", "directive_operator", "assign_operator", "directive_key", "recall_source"}
+          "agent_name", "cap_name", "chore_name", "builtin_type",
+          "text", "role", "directive_key", "recall_source"}
 REMOVED = {"text_line", "comment_text", "directive_value", "recall_keyword",
            "item_doc_comment", "param_doc_tag", "task", "task_keyword", "job_name", "job_body", "item", "base_type", "user_type", "struct_name", "type_suffix",
            "snake_name", "pascal_name", "agic_name", "flow_name", "field_name",
@@ -90,8 +90,9 @@ def test_type_fields_point_directly_to_base_and_array_suffixes(type_name, kind):
     assert base.type == kind and base.text == type_name.encode() and base.child_count == 0
     assert [(node.type, node.text, node.child_count)
             for node in value.children_by_field_name("suffix")] == [
-        ("array_suffix", b"[]", 0), ("array_suffix", b"[]", 0),
+        ("[]", b"[]", 0), ("[]", b"[]", 0),
     ]
+    assert all(not node.is_named for node in value.children_by_field_name("suffix"))
 
 
 @pytest.mark.parametrize("filename", ["tags.scm", "outline.scm"])

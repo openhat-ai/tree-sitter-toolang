@@ -15,57 +15,39 @@ flow second:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (async_keyword)
-        (run_keyword)
         (invalid_run_target
           (newline)))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (invalid_run_target
             (runnable_name)
             (text)
             (newline))))
       (let_statement
-        (let_keyword)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (inline_agic
-            (arrow)
             (type
               (builtin_type))
-            (colon)
             (newline)
             (content
               (invalid_missing_content)))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline)))))
 
@@ -88,80 +70,51 @@ flow launch:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (run_statement
-        (async_keyword)
-        (run_keyword)
         (runnable_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (runnable_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (runnable_name)
           (newline)))
       (run_statement
-        (async_keyword)
-        (run_keyword)
         (inline_agic
-          (colon)
           (content
             (text))
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (inline_agic
-            (arrow)
             (type
               (builtin_type))
-            (colon)
             (content
               (text))
             (newline))))
       (let_statement
-        (let_keyword)
         (run_statement
-          (async_keyword)
-          (run_keyword)
           (inline_agic
-            (colon)
             (newline)
             (content
               (text)
@@ -181,43 +134,29 @@ flow launch:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (await_statement
-        (await_keyword)
         (handle_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline))))))
 
@@ -237,31 +176,19 @@ flow launch:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (repeat_statement
-        (repeat_keyword)
         (integer_literal)
-        (times_keyword)
-        (colon)
         (newline)
         (repeat_body
           (let_statement
-            (let_keyword)
             (local_name)
-            (assign_operator)
             (run_statement
-              (async_keyword)
-              (run_keyword)
               (inline_agic
-                (arrow)
                 (type
-                  (type_name)
-                  (array_suffix))
-                (colon)
+                  (type_name))
                 (newline)
                 (content
                   (text)
@@ -269,19 +196,15 @@ flow launch:
                   (text)
                   (newline)))))
           (await_statement
-            (await_keyword)
             (handle_name)
             (plain_comment)
             (newline))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline)))))
 
@@ -299,43 +222,29 @@ flow launch:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (spawn_statement
-          (spawn_keyword)
           (runnable_name)
           (newline)))
       (await_statement
-        (await_keyword)
         (handle_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (await_statement
-          (await_keyword)
           (handle_name)
           (newline))))))
 
@@ -353,31 +262,22 @@ flow launch:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (invalid_flow_statement
         (newline))
       (invalid_flow_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (newline))
       (invalid_flow_statement
-        (await_keyword)
         (text)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (invalid_flow_statement
-          (await_keyword)
           (text)
           (newline)))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline)))))

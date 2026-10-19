@@ -54,14 +54,11 @@ flow work:
 
 (program
   (psyche
-    (psyche_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -72,19 +69,15 @@ flow work:
         (newline)
         (blank_line))))
   (skill
-    (skill_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -95,24 +88,19 @@ flow work:
         (newline)
         (blank_line))))
   (service
-    (service_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -123,14 +111,11 @@ flow work:
         (newline)
         (blank_line))))
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -141,19 +126,15 @@ flow work:
         (newline)
         (blank_line))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (blank_line)
@@ -164,27 +145,21 @@ flow work:
         (newline)
         (blank_line))))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (blank_line)
       (plain_comment)
       (directive
         (directive_key)
-        (directive_operator)
-        (recall_value
-          (none_keyword))
+        (recall_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
@@ -194,20 +169,15 @@ flow work:
           (newline)
           (blank_line)))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (run_statement
-        (run_keyword)
         (inline_agic
-          (colon)
           (content
             (text))
           (newline)))
@@ -216,8 +186,6 @@ flow work:
           (text)
           (newline)))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (implicit_run_statement
@@ -239,31 +207,24 @@ flow next:
 
 (program
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (ERROR)
       (blank_line)
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -282,14 +243,11 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (blank_line)
@@ -298,16 +256,12 @@ flow next:
       (ERROR)
       (blank_line)
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -325,9 +279,7 @@ flow next:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (blank_line)
     (flow_body
@@ -335,16 +287,12 @@ flow next:
       (ERROR)
       (blank_line)
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))
 
 ================================================================================
@@ -356,7 +304,5 @@ agic work:
 
 (program
   (ERROR
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)))

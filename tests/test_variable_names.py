@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 from test_vocabulary_support import KEYWORD_NAMES
@@ -112,7 +112,7 @@ def test_assignment_selects_keyword_destination_without_changing_ranges(name, as
     assert local.child_count == 0
     assert local.end_byte - local.start_byte == len(name)
     assert binding.child_by_field_name("statement").type == "spawn_statement"
-    operator, = descendants(binding, "assign_operator")
+    operator, = tokens(binding, "=")
     assert operator.text == b"=" and operator.end_byte == operator.start_byte + 1
     assert source.encode()[local.end_byte:operator.start_byte] == assignment.split("=")[0].encode()
     comment, = descendants(root, "plain_comment")

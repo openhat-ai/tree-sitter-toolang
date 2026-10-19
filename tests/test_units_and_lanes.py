@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, point, valid
+from test_layout_support import tokens, descendants, edit_tree, fingerprint, parse, point, valid
 
 
 OPERATIONS = [
@@ -56,7 +56,7 @@ def test_lane_spellings_preserve_direct_fields_ranges_and_highlights(
     assert source[lanes.start_byte:lanes.end_byte] == number.encode()
     assert tuple(lanes.start_point) == point(source, lanes.start_byte)
     assert tuple(lanes.end_point) == point(source, lanes.end_byte)
-    keyword, = descendants(operation, f"{unit}_keyword")
+    keyword, = tokens(operation, unit)
     assert keyword.child_count == 0 and keyword.text == unit.encode()
     assert keyword.start_byte == lanes.end_byte + 1
     captures = QueryCursor(highlights).captures(root)
@@ -65,7 +65,7 @@ def test_lane_spellings_preserve_direct_fields_ranges_and_highlights(
     runnable = operation.child_by_field_name("target")
     if form == "named":
         assert runnable.type == "runnable_name" and runnable.text == b"worker"
-        assert keyword.end_byte < descendants(operation, f"{connector}_keyword")[0].start_byte
+        assert keyword.end_byte < tokens(operation, connector)[0].start_byte
     else:
         assert runnable.type == "inline_agic"
         content = runnable.child_by_field_name("content")
@@ -97,7 +97,7 @@ def test_repeat_units_do_not_classify_numeric_value(number, unit, binding, newli
     assert count.type == window.type == "integer_literal"
     assert count.text == number.encode() and window.text == b"01"
     assert count.child_count == window.child_count == 0
-    keyword, = descendants(repeat, f"{unit}_keyword")
+    keyword, = tokens(repeat, unit)
     captures = QueryCursor(highlights).captures(root)
     assert keyword in captures["keyword"] and count in captures["number"]
     assert count.end_byte + 1 == keyword.start_byte

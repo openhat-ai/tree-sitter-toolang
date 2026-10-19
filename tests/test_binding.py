@@ -4,7 +4,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations, valid
+from test_layout_support import declarations, tokens, valid
 
 
 FIXTURES_DIR = Path(__file__).with_name("fixtures")
@@ -136,8 +136,8 @@ def test_script_agics_fixture_covers_signature_variations():
         "Part[]",
     ]
     assert param_counts == [None, 1, 1, 2, 1, 2, 3]
-    assert "pass_keyword" in str(agics[0].child_by_field_name("body"))
-    assert "array_suffix" in str(agics[3].child_by_field_name("params"))
+    assert tokens(agics[0].child_by_field_name("body"), "pass")
+    assert tokens(agics[3].child_by_field_name("params"), "[]")
     assert "content" in str(agics[-1].child_by_field_name("body"))
     echo_body = agics[1].child_by_field_name("body")
     assert echo_body is not None
@@ -349,7 +349,7 @@ def test_syntax_variants_fixture_covers_indented_caps_docs_and_text_blocks():
         "findings",
     ]
     assert fields[1].child_by_field_name("optional") is not None
-    assert "array_suffix" in str(fields[4].child_by_field_name("type"))
+    assert tokens(fields[4].child_by_field_name("type"), "[]")
     assert "type_name" in str(fields[5].child_by_field_name("type"))
 
     instruct = items[5]
@@ -542,7 +542,7 @@ def test_recall_directive_uses_canonical_keyword_values():
         for directive in directives
     )
     assert all(
-        directive.child_by_field_name("operator").type == "directive_operator"
+        directive.child_by_field_name("operator").type == "="
         for directive in directives
     )
     assert [_text(source, value).strip() for value in values] == [
@@ -553,14 +553,14 @@ def test_recall_directive_uses_canonical_keyword_values():
         "far, near",
     ]
     assert [
-        [child.type for child in value.named_children]
+        [child.type for child in value.children]
         for value in values
     ] == [
-        ["default_keyword"],
-        ["none_keyword"],
+        ["default"],
+        ["none"],
         ["recall_source"],
         ["recall_source"],
-        ["recall_source", "comma", "recall_source"],
+        ["recall_source", ",", "recall_source"],
     ]
 
 
@@ -865,22 +865,22 @@ def test_queries_are_packaged():
     assert "(" in tree_sitter_toolang.OUTLINE_QUERY
     assert "@definition" in tree_sitter_toolang.TAGS_QUERY
     for keyword in (
-        "exec_keyword",
-        "spawn_keyword",
-        "async_keyword",
-        "await_keyword",
-        "generate_keyword",
-        "reduce_keyword",
-        "sort_keyword",
-        "using_keyword",
-        "if_keyword",
-        "by_keyword",
-        "in_keyword",
-        "lane_keyword",
-        "lanes_keyword",
-        "ascending_keyword",
-        "descending_keyword",
-        "time_keyword",
-        "times_keyword",
+        "exec",
+        "spawn",
+        "async",
+        "await",
+        "generate",
+        "reduce",
+        "sort",
+        "using",
+        "if",
+        "by",
+        "in",
+        "lane",
+        "lanes",
+        "ascending",
+        "descending",
+        "time",
+        "times",
     ):
-        assert f"({keyword}) @keyword" in tree_sitter_toolang.HIGHLIGHTS_QUERY
+        assert f'"{keyword}"' in tree_sitter_toolang.HIGHLIGHTS_QUERY

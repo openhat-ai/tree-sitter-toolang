@@ -44,31 +44,25 @@ flow next:
   (program_doc
     (text))
   (struct
-    (struct_keyword)
     (type_name)
-    (colon)
     (newline)
     (struct_body
       (item_doc
         (text))
       (field
         (identifier)
-        (colon)
         (type
           (builtin_type))
         (newline))
       (blank_line)))
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline)
     (cap_body
       (item_doc
         (text))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (content
@@ -76,16 +70,13 @@ flow next:
         (newline)
         (blank_line))))
   (chore
-    (chore_keyword)
     (chore_name)
-    (colon)
     (newline)
     (chore_body
       (item_doc
         (text))
       (property
         (identifier)
-        (assign_operator)
         (text)
         (newline))
       (content
@@ -93,29 +84,23 @@ flow next:
         (newline)
         (blank_line))))
   (agic
-    (agic_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (agic_body
       (item_doc
         (text))
       (directive
         (directive_key)
-        (directive_operator)
         (query_value)
         (newline))
       (message
         (role)
-        (colon)
         (content
           (text))
         (newline))
       (blank_line)))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (item_doc
       (text))
@@ -127,40 +112,29 @@ flow next:
       (item_doc
         (text))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline))
       (repeat_statement
-        (repeat_keyword)
-        (colon)
         (newline)
         (repeat_body
           (item_doc
             (text))
           (run_statement
-            (run_keyword)
             (runnable_name)
             (newline))
           (until_clause
-            (until_keyword)
             (inline_agic
-              (colon)
               (content
                 (text))
               (newline)))
           (blank_line)))))
   (prompt
-    (prompt_keyword)
     (cap_name)
-    (colon)
     (newline))
   (item_doc
     (text))
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
-      (pass_keyword)
       (newline))))

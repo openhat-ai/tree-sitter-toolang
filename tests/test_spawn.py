@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -50,7 +50,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     root = parse(source)
     assert valid(root), root
     statement, = descendants(root, "spawn_statement")
-    keyword, = descendants(statement, "spawn_keyword")
+    keyword, = tokens(statement, "spawn")
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
     if target.startswith(" missing_name"):
@@ -171,8 +171,8 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     assert len(descendants(outer, "spawn_statement")) == 3
     assert len(descendants(inner, "spawn_statement")) == 1
     assert b"spawn remains literal inside inline text." in targets[2].text
-    assert not descendants(descendants(root, "agic")[0], "spawn_keyword")
-    assert len(descendants(root, "spawn_keyword")) == 5
+    assert not tokens(descendants(root, "agic")[0], "spawn")
+    assert len(tokens(root, "spawn")) == 5
     assert any(b"{{description}}" in node.text for node in descendants(root, "content"))
 
 

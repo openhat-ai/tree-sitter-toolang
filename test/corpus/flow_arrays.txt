@@ -13,68 +13,41 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (generate_statement
-        (generate_keyword)
         (integer_literal)
-        (using_keyword)
         (runnable_name)
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (generate_statement
-          (generate_keyword)
           (integer_literal)
-          (in_keyword)
           (integer_literal)
-          (lane_keyword)
           (inline_agic
-            (arrow)
             (type
-              (builtin_type)
-              (array_suffix))
-            (colon)
+              (builtin_type))
             (content
               (text))
             (newline))))
       (map_statement
-        (map_keyword)
-        (in_keyword)
         (integer_literal)
-        (lanes_keyword)
-        (using_keyword)
         (runnable_name)
         (newline))
       (let_statement
-        (let_keyword)
         (map_statement
-          (map_keyword)
           (inline_agic
-            (arrow)
             (type
               (builtin_type))
-            (colon)
             (content
               (text))
             (newline))))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (reduce_statement
-          (reduce_keyword)
-          (using_keyword)
           (runnable_name)
-          (colon)
           (newline)
-          (from_keyword)
-          (colon)
           (content
             (text))
           (newline))))))
@@ -92,33 +65,23 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (reduce_statement
-          (reduce_keyword)
           (inline_agic
-            (arrow)
             (type
               (builtin_type))
-            (colon)
             (newline)
             (content
               (text)
               (newline)))
-          (from_keyword)
-          (colon)
           (content
             (text))
           (newline)))
       (run_statement
-        (run_keyword)
         (runnable_name)
         (newline)))))
 
@@ -139,9 +102,7 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (implicit_run_statement
@@ -155,30 +116,22 @@ flow work:
           (text)
           (newline)))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline)))))
@@ -193,21 +146,14 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (map_statement
-          (map_keyword)
-          (ERROR
-            (using_keyword))
+          (ERROR)
           (inline_agic
-            (colon)
             (content
               (text))
             (newline)))))))

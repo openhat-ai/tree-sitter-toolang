@@ -10,30 +10,21 @@ flow work:
 
 (program
   (flow
-    (flow_keyword)
     (runnable_name)
-    (colon)
     (newline)
     (flow_body
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (content
           (text))
         (newline))
       (let_statement
-        (let_keyword)
         (local_name)
-        (assign_operator)
         (run_statement
-          (run_keyword)
           (runnable_name)
           (newline))))))
