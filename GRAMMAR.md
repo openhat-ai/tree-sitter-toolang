@@ -372,8 +372,8 @@ instruct: Return a concise answer.
 
 ## Text
 
-Text is unquoted. The containing construct selects same-line text, an indented
-text block, or an implicit paragraph.
+Quotation marks are literal characters. The containing construct selects
+same-line text, an indented block, or an implicit paragraph.
 
 ```ebnf
 text          ::= inline_text line_end
@@ -480,9 +480,10 @@ coexist with messages.
 message ::= role ":" text | paragraph(agic_keyword) ;
 ```
 
-A role header requires a colon and actual text. A bare paragraph has no explicit
-role. When literal text begins with an agic keyword, use a role header or an
-indented text body.
+A role header requires a colon and nonempty text, either on the same line or
+in an indented body. A bare paragraph has no explicit role. Use a role header
+when the text begins with an agic keyword; indentation alone does not make it
+literal.
 
 ```too
 agic summarize(_: Text, style?: Text) -> Text:
@@ -529,8 +530,9 @@ directives or statements.
 
 Targets are bare names followed by a line ending, or inline agics with required
 text and an optional return annotation. Argument lists and trailing prose after
-named targets are invalid. Inline text is final in its header. Lane/count noun
-agreement follows the [integer rules](#names-and-integers).
+named targets are invalid. In a same-line inline agic, clause-like words after
+the colon are text. Lane/count noun agreement follows the
+[integer rules](#names-and-integers).
 
 ### Let
 
@@ -744,7 +746,7 @@ score_target ::= lanes? "by" name line_end
 
 An explicit order immediately follows `sort`; `by` introduces a named or inline
 score target. A single lane clause may precede either target form or follow a
-named target. Commas and `with` are not complement syntax.
+named target.
 
 ```too
 flow order:
@@ -789,8 +791,8 @@ implicit_run ::= paragraph(flow_keyword) ;
 Flow prose follows the [paragraph rules](#text) with `flow_keyword` boundaries.
 `run`, `run:`, and `run,` select syntax; `runner` and `run_suffix` remain text.
 Likewise, `_` selects syntax while `_suffix` remains text. A keyword without a
-valid statement form is an error. Capitalize its first letter or use explicit
-`run:` text to begin literal prose with that word.
+valid statement form is an error. Use explicit `run:` text to begin literal
+prose with a keyword or `_`.
 
 ## Validity and Recovery
 
