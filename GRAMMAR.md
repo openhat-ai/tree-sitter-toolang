@@ -1,8 +1,9 @@
 # Toolang Grammar
 
-This reference specifies the syntax of Toolang `.too` files. Productions and
-their accompanying constraints define valid source forms. Examples are complete
-parseable files; referenced names and resources may require runtime definitions.
+This reference specifies the syntax of Toolang programs written in `.too`
+files. Productions and their accompanying constraints define valid source
+forms. Examples are complete, parseable programs; referenced names and resources
+may require runtime definitions.
 
 The [Toolang language reference](https://github.com/openhat-ai/toolang/blob/main/docs/program.md)
 defines name resolution, type defaults, input binding, and execution.
@@ -127,10 +128,10 @@ and close its enclosing bodies; it cannot supply a missing body or text value.
 ### Comments and Documentation
 
 ```ebnf
-comment        ::= plain_comment | shebang_comment | module_doc | item_doc ;
+comment        ::= plain_comment | shebang_comment | program_doc | item_doc ;
 plain_comment  ::= "#" comment_text comment_end ;
 shebang_comment ::= "#!" comment_text comment_end ;
-module_doc     ::= ("#@" | "##!") hspace? doc_text? comment_end ;
+program_doc    ::= ("#@" | "##!") hspace? doc_text? comment_end ;
 item_doc       ::= "##" hspace? (parameter_doc | doc_text)? comment_end ;
 parameter_doc  ::= "@param" hspace parameter_name hspace doc_text ;
 doc_text       ::= /[^ \t\r\n][^\r\n]*/ ;
@@ -144,9 +145,9 @@ These forms have contextual constraints:
   over `#` or `##`, subject to the position restrictions below.
 - `#!` is a shebang only at byte zero. A later or indented `#!`, including one
   after a leading BOM, is a plain comment. The interpreter text is unrestricted.
-- `#@` is module documentation only at column zero. Indented structural `#@` is
-  invalid. `##!` also introduces module documentation and is accepted in indented
-  structural positions. Module documentation never interprets parameter tags.
+- `#@` is program documentation only at column zero. Indented structural `#@` is
+  invalid. `##!` also introduces program documentation and is accepted in indented
+  structural positions. Program documentation never interprets parameter tags.
 - `##` introduces item documentation. Consecutive lines at the item's indentation
   can document the following item. Blank lines, other comment kinds, intervening
   syntax, and scope endings interrupt attachment; consumers perform attachment.
@@ -201,14 +202,14 @@ flow inspect:
   run: Summarize the result.
 ```
 
-## Source File
+## Program
 
 ```ebnf
-source_file ::= trivia* ((with | struct | psyche | skill | service | prompt
-                       | chore | context | instruct | agic | flow) trivia*)* ;
+program ::= trivia* ((with | struct | psyche | skill | service | prompt
+                   | chore | context | instruct | agic | flow) trivia*)* ;
 ```
 
-A source file contains constructs and trivia in source order. Top-level prose
+A program contains constructs and trivia in source order. Top-level prose
 is invalid; constructs start at column zero.
 
 ## With
