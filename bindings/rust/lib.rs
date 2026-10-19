@@ -9,6 +9,44 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn rejected_first_directives_keep_the_authored_body_baseline() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for (kind, following, entry) in [
+            ("flow", "run after", "run_statement"),
+            ("agic", "user: Following.", "message"),
+        ] {
+            let source = format!("{kind} first:\n  modles = fast\n    Orphaned content.\n  ## Following.\n  {following}\n## Next.\nflow next:\n  pass\n");
+            let tree = parser.parse(&source, None).unwrap();
+            let root = tree.root_node();
+            assert!(root.has_error());
+            let owner = root.named_child(0).unwrap();
+            assert_eq!(owner.kind(), kind);
+            let body = owner.child_by_field_name("body").unwrap();
+            assert_eq!(body.start_position(), tree_sitter::Point::new(1, 0));
+            let mut cursor = body.walk();
+            let after = body
+                .named_children(&mut cursor)
+                .find(|node| {
+                    node.kind() == entry
+                        && node.utf8_text(source.as_bytes()).unwrap().trim() == following
+                })
+                .unwrap();
+            assert!(!after.has_error());
+            let mut cursor = body.walk();
+            let doc = body
+                .named_children(&mut cursor)
+                .find(|node| node.kind() == "item_doc")
+                .unwrap();
+            assert_eq!(doc.utf8_text(source.as_bytes()).unwrap(), "## Following.\n");
+            assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
+            let next = root.named_child(2).unwrap();
+            assert_eq!(next.kind(), "flow");
+            assert!(!next.has_error());
+        }
+    }
+
+    #[test]
     fn rejected_outer_prefix_docs_preserve_the_next_member_documentation() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

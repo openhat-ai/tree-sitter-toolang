@@ -243,9 +243,9 @@ flow next:
     (runnable_name)
     (colon)
     (newline)
-    (ERROR)
-    (blank_line)
     (agic_body
+      (ERROR)
+      (blank_line)
       (directive
         (directive_key)
         (directive_operator)

@@ -155,13 +155,6 @@ static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
   return identifier;
 }
 
-static bool unknown_directive_head(TSLexer *lexer) {
-  char word[32];
-  return read_word(lexer, word, sizeof(word)) &&
-         !keyword(word, directive_keywords, sizeof(directive_keywords) / sizeof(*directive_keywords)) &&
-         assignment_operator(lexer);
-}
-
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
   if (token != COMMENT_START) {
@@ -663,12 +656,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return push(scanner, lexer, indent, STRUCTURAL, REDUCE_INDENT);
   }
   if (!scanner->line_started && valid[RUNNABLE_INDENT] && indent.column > frame.column) {
-    // Reject an unknown header before opening a layout frame that recovery
-    // could abandon. Commit the pending prefix so native recovery keeps the
-    // declaration header and can resume at a later directive or body entry.
-    if (unknown_directive_head(lexer)) {
-      return valid[BODY_START] && emit(scanner, lexer, BODY_START);
-    }
+    // Establish layout before validating the first entry. Rejecting a header
+    // first would let an orphaned nested line take over the body's baseline.
     return push(scanner, lexer, indent, STRUCTURAL, RUNNABLE_INDENT);
   }
   if (!scanner->line_started && valid[INDENT] && indent.column > frame.column) {

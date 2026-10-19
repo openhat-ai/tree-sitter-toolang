@@ -229,6 +229,17 @@ try {
     deepStrictEqual(result.status, 1, result.stdout + result.stderr);
     deepStrictEqual(result.stdout.includes("ERROR"), true, result.stdout);
     deepStrictEqual(result.stdout.includes("[3, 0] - [5, 0]"), true, result.stdout);
+
+    writeFileSync(path, `${kind} work:\n  modles = fast\n    Orphaned content.\n  ## Following.\n  ${body}\n## Next.\nflow next:\n  pass\n`);
+    const nestedResult = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(nestedResult.status, 1, nestedResult.stdout + nestedResult.stderr);
+    for (const node of [`body: (${kind}_body [1, 0] - [5, 0]`,
+      "\n      (item_doc [3, 2] - [4, 0]", "\n  (item_doc [5, 0] - [6, 0]",
+      "\n  (flow [6, 0] - [8, 0]"]) {
+      deepStrictEqual(nestedResult.stdout.includes(node), true, nestedResult.stdout);
+    }
   }
 
   for (const [index, statement] of [
