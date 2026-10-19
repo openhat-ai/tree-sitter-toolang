@@ -14,16 +14,13 @@ The repository reference includes unreleased changes. Use the matching Git tag
 when integrating a published package. Execution, validation, and formatting
 belong to the [Toolang runtime](https://github.com/openhat-ai/toolang).
 
-## Install
+## Usage
 
 ### Python
 
-Current source requires Python 3.11 or newer. Install the grammar and its
-optional Tree-sitter parser dependency together:
-
-```bash
-python -m pip install 'tree-sitter-toolang[core]'
-```
+Use the grammar with the `tree-sitter` Python package. Requirements and optional
+dependencies are declared in
+[pyproject.toml](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/pyproject.toml).
 
 ```python
 from tree_sitter import Language, Parser
@@ -38,23 +35,17 @@ The package exposes `HIGHLIGHTS_QUERY`, `INJECTIONS_QUERY`, `INDENTS_QUERY`,
 source, check both native errors and diagnostic nodes as described in the
 [validity contract](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/GRAMMAR.md#validity-and-recovery).
 
-The latest tagged prerelease is `0.4.0-alpha.4`. Select it explicitly with
-`python -m pip install 'tree-sitter-toolang[core]==0.4.0a4'` or
-`npm install tree-sitter-toolang@0.4.0-alpha.4`.
-
 ### Tree-sitter CLI
 
-Clone this repository or install the npm grammar package:
+With the grammar available locally, configure Tree-sitter CLI discovery:
 
 ```bash
-npm install tree-sitter-toolang
 tree-sitter init-config
 ```
 
 Add the **parent directory** containing `tree-sitter-toolang` to the generated
-configuration's `parser-directories` list. Installing the npm package alone
-does not register the language. With Tree-sitter CLI installed, verify discovery
-and parse a source file:
+configuration's `parser-directories` list, then verify discovery and parse a
+source file:
 
 ```bash
 tree-sitter dump-languages
@@ -65,11 +56,8 @@ tree-sitter tags path/to/file.too
 
 ### Rust
 
-```toml
-[dependencies]
-tree-sitter = "0.25"
-tree-sitter-toolang = "0.4.0-alpha.4"
-```
+Use the grammar with the `tree-sitter` crate. Dependencies are declared in
+[Cargo.toml](https://github.com/openhat-ai/tree-sitter-toolang/blob/main/Cargo.toml).
 
 ```rust
 let mut parser = tree_sitter::Parser::new();
@@ -79,8 +67,8 @@ let tree = parser.parse("flow hello:\n  run: Hello.\n", None).unwrap();
 
 ## Development
 
-From a repository checkout, install Node.js tooling, a C compiler, Python 3.11+
-and Rust, then run:
+From a repository checkout with Node.js, a C compiler, Python, and Rust available,
+run:
 
 ```bash
 npm ci
