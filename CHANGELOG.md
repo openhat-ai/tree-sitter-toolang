@@ -8,109 +8,147 @@ backfills the verified notes from 0.3.2 onward.
 
 ## [Unreleased]
 
+### Added
+
+- Generate `GRAMMAR.ebnf` as an annotated implementation reference, including
+  hidden productions, aliases, recovery alternatives, and external tokens.
+  `GRAMMAR.md` describes valid source and the public CST independently.
+
 ### Changed
 
-This update implements the [unified grammar definition](docs/plans/grammar-contract-cleanup.md).
-It changes the public CST and requires a coordinated consumer migration from
-0.4.0-alpha.4; package versions and runtime execution are unchanged.
+This is a breaking syntax and CST update from `0.4.0-alpha.4`. Migrate source,
+field paths, queries, and source-range handling together using the table below.
+Package versions and runtime execution remain unchanged.
 
-- Expose documentation as three peer nodes: `program_doc`, `item_doc`, and
-  `param_doc`. Rename ordinary `item_doc_comment` to `item_doc`; replace
-  `item_doc_comment.parameter: param_doc_tag` with a direct `param_doc` containing
-  required `param` and `description` fields. `param_doc` spans the whole comment
-  line, including `##` and its line ending, rather than just the tag text.
-  Update queries and consumer field paths; accepted source syntax and field
-  value ranges are unchanged.
-- Preserve every `#` in inline content, including URLs and quoted-looking text.
-  Inline text and text-introducer lines no longer support inline comments:
-  `run: # Heading` contains `# Heading`, and `let note = "a#b"` retains all five
-  characters. Move intended text/header annotations to standalone structural
-  comment lines before the construct. Structural comments, including those on
-  declarations, named operations, properties, and `with` references, retain
-  their rules. Quotes and backslashes remain ordinary characters; no string or
-  escape syntax is added. Existing content/text node shapes and fields remain;
-  affected text ranges now include the former comment suffix.
-- Rename the CST root from `source_file` to `program` and program-documentation
-  nodes from `module_doc_comment` to `program_doc`. Update root checks, queries,
-  and comment consumers. The fields and ranges of `#@` documentation are
-  unchanged; module organization and loading remain outside syntax.
-- Recognize program documentation only with `#@`. Lines beginning `##!` are
-  ordinary item documentation, with `!` retained in the `text` field. Use `#@`
-  for program documentation and update consumers that classified these lines
-  as `program_doc`.
-- Remove the retired `task` declaration and its keyword; `chore` is the only
-  authored work declaration. Rename `job_name` / `job_body` to `chore_name` /
-  `chore_body`. Migrate declarations to `chore` and update CST consumers and
-  queries. `task` is an ordinary word in name/text positions; at top level it
-  is unknown syntax, with no dedicated legacy diagnostic or reservation.
-- Use leaf names/tokens and direct semantic fields. Text values are `content`
-  containing `text_line` fragments; `message.role` is optional, and structural
-  bodies own their entries directly. Migrate using the [CST migration](#cst-migration-from-alpha4).
-- `let_statement.local: local_name`, `await_statement.handle: handle_name`, and
-  `param_doc.param: param_name` identify bindings and references precisely.
-- Accept active keywords, `default`, and `none` as named parameters,
-  parameter-documentation names, local destinations, and await handles. A name
-  followed by `=` on the same line selects a named `let` binding, so
-  `let run = Evidence.` is valid while `let run worker` remains an anonymous
-  operation. Existing name leaves, source ranges, and RHS operation diagnostics
-  are unchanged; `_` retains its primary-input meaning.
+- Use `program` as the complete-source root. Documentation has three peer nodes:
+  `program_doc`, `item_doc`, and `param_doc`. Their text fields use `text` leaves;
+  `param_doc` directly exposes `param` and `description` and spans the complete
+  `## @param` line, including its line ending.
+- Recognize program documentation only with `#@` at program scope and column
+  zero. It cannot separate a declaration header from its indented body or
+  interrupt a continuing body. Move program documentation before the declaration
+  or after a completed declaration. `##!` is ordinary item documentation with `!`
+  retained as text; replace its marker with `#@` when program documentation was
+  intended. Markers inside explicit text remain literal.
+- Remove the retired `task` declaration and keyword. Migrate authored work
+  declarations to `chore`; its name and body nodes are `chore_name` and
+  `chore_body`. `task` remains an ordinary word in name/text positions and is
+  unknown syntax at program level, without a dedicated legacy diagnostic.
+- Consolidate text values as `content` with direct `text`, `newline`, and
+  `blank_line` children. Documentation, property values, references, and recovery
+  fragments share the `text` leaf while retaining their own lexical boundaries.
+  Structural bodies own members directly; forwarding and list wrappers are
+  removed. Calls use one `target` field; declaration introducers use `keyword`.
+- Make fixed keywords, operators, punctuation, and modifiers anonymous literal
+  terminals. Field access and all-child traversal still expose them;
+  `named_children` no longer does. Replace queries such as `(flow_run_keyword)`
+  with `"run"`. Semantic leaves including `directive_key`, `role`, `cap_kind`,
+  `builtin_type`, and `recall_source` remain named. Query directives use the
+  `query_value` leaf; selectors expose their values without a `text_ref` wrapper.
+- Preserve every `#` in explicit same-line content, including URLs and
+  quoted-looking text. `run: # Heading` contains `# Heading`, and
+  `let note = "a#b"` retains the quotes and hash. Move intended annotations to
+  standalone structural comment lines before the construct. Declarations,
+  named operations, directives, properties, and `with` references retain inline
+  structural comments. Quotes and backslashes remain ordinary characters.
+- Accept active keywords, `default`, and `none` as parameter names, parameter
+  documentation names, local destinations, and await handles. A same-line
+  `name =` prefix selects a named binding: `let run = Evidence.` binds text,
+  while `let run worker` remains a nameless operation. `_` may name a parameter
+  but cannot be a local destination or await handle.
 - Remove obsolete keyword restrictions for `scatter`, `gather`, `storm`,
   `settle`, `rank`, `par`, `top`, `bottom`, `think`, `use`, `thunk`, `call`, `do`,
-  `unfold`, `each`, `fold`, `head`, and `tail`. These words are ordinary names
-  or text where allowed. Old operation-looking lines can become implicit prose;
-  migrate intended calls to current operations. No inactive words are reserved.
-- Match complete words and integers. `let note = runworker` is text; write
-  `2 times`, `2 using worker`, and `with skill ./foo` with separators. Grammar
-  symbols still permit `let h=async run worker` and `generate 2->Text:Text.`.
-  Structural tokens and raw `with` references exclude separating whitespace;
-  literal text bytes remain unchanged.
-- Missing requirements expose zero-width `invalid_missing_body`,
-  `invalid_missing_content`, or `invalid_missing_statement` without consuming
-  following source or opening a synthetic indentation frame. Reject all
-  `invalid_*` diagnostics even when native `has_error` is false.
-  Outer comments before a missing text value stay outside `content`; recovery
-  retains the text owner even when those comments end at EOF.
-- Generate `GRAMMAR.ebnf` from `src/grammar.json` as an annotated implementation
-  reference, including helper/recovery rules and opaque external tokens. It is
-  not a standalone valid-source grammar; see [EBNF](GRAMMAR.md#ebnf).
+  `unfold`, `each`, `fold`, `head`, and `tail`. These spellings are ordinary names
+  or text where allowed; no inactive words are reserved. Replace intended old
+  operations with current syntax so they do not become implicit prose.
+- Require complete word and integer boundaries. Write `2 times`,
+  `2 using worker`, and `with skill ./foo` with horizontal separators.
+  `let note = runworker` remains text. Symbols still permit compact forms such
+  as `let h=async run worker` and `generate 2->Text:Text.`. Structural tokens and
+  raw `with` references exclude their separating spaces/tabs.
+- Accept both `lane`/`lanes` and `time`/`times` regardless of integer value or
+  leading zeros. Numeric ranges and canonical unit spellings belong to consumers.
+  Lane clauses precede `using`, `if`, `by`, or an inline target. Move suffix
+  clauses such as `sort ascending by score in 2 lanes` to
+  `sort ascending in 2 lanes by score`; apply the same prefix order to predicates.
+- Reject unknown assignment heads in the directive prefixes of agics and flows,
+  including missing-value forms. Write intended prose explicitly as
+  `user: modles = fast` or `run: modles = fast`. Property names on psyche, skill,
+  service, prompt, and chore remain open-schema and use only `=`; consumers
+  validate supported properties. Blank lines and structural comments leave
+  either prefix open. The first message, statement, or literal body text closes
+  the corresponding prefix permanently.
+  An initial `answer = yes` in prompt/psyche is a property; after body text starts,
+  assignments and comment markers are literal text.
+- Exclude declaration-header line endings from structural bodies. The first
+  substantive member establishes the baseline, and leading member documentation
+  belongs inside that body. Outer trivia and documentation after an empty body
+  stay outside. Empty psyche, skill, service, prompt, and chore declarations have
+  no `body` field. Indented values, including reducer content, own their leading
+  blank lines. Update range-based extraction and editing accordingly.
+- Require `setuptools>=77.0.3` for Python source builds, matching the existing
+  license metadata.
 
 #### CST migration from alpha.4
 
 | Previous shape | Current shape |
 | --- | --- |
-| `source_file` | `program`, containing the complete parsed source. |
-| `item → declaration` | Declaration directly under `program`. |
-| `module_doc_comment` | `program_doc`, retaining the optional `text: comment_text` field. |
-| `agic_name / flow_name / runnable → snake_name` | `runnable_name` leaf. |
-| `field_name / property_key / context_name / instruct_name → snake_name` | `identifier` leaf. |
-| `struct_name / user_type → type_name → pascal_name` | `type_name` leaf. |
-| `param_name → snake_name` | `param_name` leaf, also for `_`; `local_name` was already a leaf in alpha.4. |
-| `let_statement.name` | `let_statement.local`, including binding diagnostics. |
+| `source_file` with `item` wrappers | `program` with direct declarations and `with` references. |
+| `module_doc_comment.text: comment_text` | `program_doc.text: text`, still optional. |
+| Ordinary `item_doc_comment.text: comment_text` | `item_doc.text: text`, still optional. |
+| `item_doc_comment.parameter: param_doc_tag` with `name` and `description` | Direct `param_doc` with required `param: param_name` and `description: text`; its range covers the complete comment line. |
+| `agic_name`, `flow_name`, `runnable` wrapping `snake_name` | `runnable_name` leaf. |
+| `field_name`, `property_key`, `context_name`, `instruct_name` wrapping `snake_name` | `identifier` leaf. |
+| `struct_name`, `user_type`, `type_name` wrapping `pascal_name` | `type_name` leaf. |
+| `param_name` wrapping `snake_name` | `param_name` leaf, also for `_`; `param.name` is retained. |
+| `let_statement.name: local_name` | `let_statement.local: local_name`; the leaf type is retained. |
 | `await_statement.handle: local_name` | `await_statement.handle: handle_name`. |
-| Ordinary `item_doc_comment` | `item_doc` with optional `text: comment_text`. |
-| `item_doc_comment.parameter: param_doc_tag` with `name` / `description` | Direct `param_doc`, covering the entire comment line, with required `param: param_name` and `description: comment_text`; declarations retain `param.name`. |
-| `agent`, `directive_op` | `agent_name`, `directive_operator`. |
-| Named lexical wrappers around anonymous tokens | Leaf `builtin_type`, `role`, `directive_key`, `recall_source`, `assign_operator`, and `flow_lanes_keyword`. |
-| `base_type → builtin_type / user_type`, `type_suffix → array_suffix` | Direct `type.base` and repeated `type.suffix` leaves. |
-| `cap_ref / property_value → text_line` | Direct `reference` / `value: text_line`. |
-| Cap properties on declaration, text-only `body: cap_body → text_body` | Structural `body: cap_body` with `property` and optional `content` fields. |
-| `task`, `task_keyword` | Removed; migrate authored work declarations to `chore`. |
-| Chore `name: job_name` | `name: chore_name` leaf. |
-| Chore text nested under `job_body` | Direct `body: chore_body` with `content: content`; properties use repeated `property` fields. |
-| `context_body / instruct_body → text_inline` | Direct declaration `content: content`. |
-| Other text-valued `body: text_inline` | `content: content`; let retains `value`, reduce initializer retains `from`. |
-| `text_inline → text_block → text_body` | One `content` value boundary. |
-| `text_body_line → indented_raw_text, newline` | Direct `text_line` leaf followed by `newline` under `content`. |
-| `unroled_message`, bare implicit-run text children | `message.content` / `implicit_run_statement.content`. |
-| `statements`, `messages` wrappers | Direct repeated `statement` / `message` fields on the owning body. |
+| `seek_statement.agent: agent` | `seek_statement.agent: agent_name` leaf. |
+| `kind` on psyche/skill/service/prompt/chore | `keyword` pointing to the anonymous declaration literal; `with.kind: cap_kind` is retained. |
+| Named fixed-token nodes such as `flow_run_keyword`, `flow_async_keyword`, `arrow`, `colon`, `assign_operator`, and `directive_op` | Anonymous literals such as `"run"`, `"async"`, `"->"`, `":"`, `"="`, `"+="`, and `"-="`; semantic fields remain accessible. |
+| `type.base: base_type`, `type.suffix: type_suffix` wrapping `array_suffix` | Direct `type.base: builtin_type` or `type_name`; repeated anonymous `"[]"` suffixes. |
+| Mixed directive-key types including `context_keyword`, `instruct_keyword`, and `recall_keyword` | Every `directive.key` is a `directive_key` leaf, including in diagnostic entries. |
+| `directive.value: directive_value` | `directive.value: query_value` leaf for query directives. |
+| `directive.value: text_ref` wrapping identifiers or named special-value tokens | Direct `identifier` or anonymous `"default"` / `"none"`; route and recall selections retain `route_value` / `recall_value` containers. |
+| `with.reference: cap_ref`, `property.value: property_value`, each wrapping `text_line` | Direct `reference: text` / `value: text` leaves. |
+| `run_statement.runnable` / `agic`, `seek_statement.runnable` / `agic` | One `target` field containing a `runnable_name` or `inline_agic`. |
+| `runnable` fields on generate/map/reduce/keep/drop/sort | `target` with the same named/inline alternatives. |
+| `exec_statement.target`, `spawn_statement.target`, `until_clause.target` | Field names retained; named targets are `runnable_name` leaves. |
+| `until_clause.target: inline_agic_body` | `inline_agic` with `content`; it still forbids a return annotation. |
+| `keep_statement.selection` / `drop_statement.selection: position` | `selection: selection`; `side` points to anonymous `"first"` / `"last"`, and `count` is retained. |
+| Cap properties on the declaration and text-only `body: cap_body` | Structural `body: cap_body` with repeated `property` and optional `content` fields. |
+| `task`, chore `name: job_name`, and `body: job_body` | `task` removed; chore has `name: chore_name` and optional `body: chore_body` with `property` / `content` fields. |
+| `context.body: context_body`, `instruct.body: instruct_body`, other text-valued `body` fields | Direct `content: content`; text bindings retain `let_statement.value`, and reducer initializers retain `reduce_statement.from`. |
+| `text_inline`, `text_block`, `text_body` forwarding layers | One semantic `content` container. |
+| `text_body_line` wrapping `indented_raw_text`, or `text_line` / `comment_text` leaves | `text` leaves without CR/LF; text-line endings remain separate `newline` children. |
+| `message` wrapping a role/text sequence or `unroled_message`; bare implicit-run text | `message.role` is optional and `message.content` is required; implicit runs expose `implicit_run_statement.content`. |
+| `statements`, `messages`, unfielded struct members | Direct repeated `statement`, `message`, `directive`, and `field` fields on their owning bodies. |
+| `line_end` | Direct inline `plain_comment` and `newline` children; no layout wrapper. |
+| `invalid_flow_reserved_statement`, nested `invalid_agic_reserved_message` | `invalid_flow_statement` and direct `agic_body.message: invalid_agic_message`; malformed modified-run targets use `invalid_run_target`. |
+| Only normal entries in `params.param` and body `directive` fields | Normal entries or direct diagnostic peers `invalid_param` / `invalid_directive`; normal required fields remain required. |
 
-Update field paths and queries together. New semantic content ranges omit the
-header newline/comment formerly included by forwarding wrappers. Physical text
-leaf ranges remain unchanged except for inline text's newly retained hash
-suffixes; removed line wrappers no longer contribute a
-newline to a text leaf. Body ownership changes for caps are explicit above.
-Consumers must reject native missing tokens, `ERROR`, and `invalid_*` diagnostics
-before lowering, formatting, or execution. No runtime binding effect changes.
+Text retains authored bytes and relative indentation; parsing does not trim or
+dedent it. Recompute parent ranges after removing wrappers: same-line content
+excludes its line ending, indented/paragraph content includes text-line endings,
+and bodies include their leading member trivia. Explicit inline text now also
+includes the former hash-comment suffix.
+
+### Fixed
+
+- Keep malformed headers, parameters, directives, operations, conditions, and
+  initializers local during recovery so they do not consume enclosing syntax or
+  following declarations. Missing parameter operands and bounded error fragments
+  retain their list entry; header-comment delimiters cannot close the list.
+- Represent absent requirements with zero-width `invalid_missing_body`,
+  `invalid_missing_content`, `invalid_missing_statement`, and
+  `invalid_missing_type` leaves. A missing return type before an explicit header
+  colon leaves the `return` field absent. Missing text does not consume outer
+  comments or open a synthetic indentation frame.
+- Preserve source order, documentation ownership, and following body entries
+  through malformed prefixes and fresh/incremental parsing. Consumers must reject
+  native `ERROR`, missing tokens, and every `invalid_*` descendant;
+  `root.has_error` alone is insufficient. Diagnostic entries are invalid source,
+  even when their enclosing declaration and body remain intact.
 
 ## [0.4.0-alpha.4] - 2026-10-06
 

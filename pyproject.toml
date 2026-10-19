@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=62.4.0", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -34,7 +34,7 @@ Issues = "https://github.com/openhat-ai/tree-sitter-toolang/issues"
 
 [project.optional-dependencies]
 core = ["tree-sitter~=0.25"]
-tests = ["pytest>=8", "tree-sitter~=0.25"]
+tests = ["pytest>=8", "tree-sitter~=0.25", "setuptools>=77.0.3", "wheel"]
 
 [tool.cibuildwheel]
 build = "cp311-*"

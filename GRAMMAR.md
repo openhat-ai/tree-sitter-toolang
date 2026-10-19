@@ -178,9 +178,15 @@ At a structural comment position, recognized longer markers take precedence:
 | --- | --- |
 | `#` | Plain comment. |
 | `#!` | Shebang only at byte zero; later, indented, or after a BOM it is plain comment text. |
-| `#@` | Program documentation, only at column zero. Indented structural `#@` is invalid. |
+| `#@` | Program documentation, only at program scope and column zero. |
 | `##` | Item documentation; `!` after the marker is ordinary text. |
 | `## @param name description` | Parameter documentation with a required name and same-line description. |
+
+Column zero alone does not establish program scope. A structural `#@` cannot
+separate a declaration header from its indented body or interrupt a continuing
+body. Place program documentation before a declaration or after a completed
+declaration. Indented structural `#@` is invalid; markers inside explicit text
+remain literal content.
 
 Spaces after `#@` and `##` are optional. Only a leading exact `@param` followed
 by space, tab, a line ending, or EOF selects parameter documentation. A malformed
