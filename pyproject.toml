@@ -40,7 +40,7 @@ tests = ["pytest>=8", "tree-sitter~=0.25", "setuptools>=77.0.3", "wheel"]
 build = "cp311-*"
 build-frontend = "build"
 test-requires = ["pytest>=8", "tree-sitter~=0.25"]
-test-command = "pytest {project}/tests"
+test-command = "pytest --durations=10 {project}/tests"
 
 [tool.cibuildwheel.linux]
 archs = ["native"]
