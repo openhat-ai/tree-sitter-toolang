@@ -30,13 +30,13 @@ flow research:
         (newline)
         (repeat_body
           (item_doc
-            (comment_text))
+            (text))
           (run_statement
             (run_keyword)
             (runnable_name)
             (newline))
           (item_doc
-            (comment_text))
+            (text))
           (repeat_statement
             (repeat_keyword)
             (colon)
@@ -44,7 +44,7 @@ flow research:
             (repeat_body
               (plain_comment)
               (item_doc
-                (comment_text))
+                (text))
               (run_statement
                 (run_keyword)
                 (runnable_name)
@@ -54,12 +54,12 @@ flow research:
                 (inline_agic
                   (colon)
                   (content
-                    (text_line))
+                    (text))
                   (newline)))))
           (until_clause
             (until_keyword)
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline))))))))

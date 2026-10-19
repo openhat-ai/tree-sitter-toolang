@@ -25,13 +25,13 @@ flow next:
         (lanes_keyword))
       (blank_line)
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -66,20 +66,20 @@ flow last:
     (newline)
     (agic_body
       (ERROR
-        (recall_keyword)
+        (directive_key)
         (assign_operator)
         (newline))
       (plain_comment)
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))))
   (flow
     (flow_keyword)
@@ -135,13 +135,13 @@ flow last:
         (newline))
       (invalid_missing_body)))
   (item_doc
-    (comment_text))
+    (text))
   (context
     (context_keyword)
     (identifier)
     (colon)
     (content
-      (text_line))
+      (text))
     (newline))
   (ERROR
     (flow_keyword)
@@ -151,7 +151,7 @@ flow last:
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline))
   (flow
     (flow_keyword)
@@ -196,13 +196,13 @@ flow next:
             (lanes_keyword))
           (blank_line)
           (item_doc
-            (comment_text))
+            (text))
           (until_clause
             (until_keyword)
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (run_statement
             (run_keyword)

@@ -25,7 +25,7 @@ flow empty( )->Text []:
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline))
   (blank_line)
   (flow
@@ -56,12 +56,12 @@ flow empty( )->Text []:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
@@ -100,7 +100,7 @@ flow empty( )->Text []:
             (builtin_type))
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (map_statement
         (map_keyword)
@@ -129,7 +129,7 @@ flow empty( )->Text []:
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (blank_line)))
   (flow
@@ -178,7 +178,7 @@ flow next:
         (repeat_body
           (invalid_missing_body)))
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (runnable_name)

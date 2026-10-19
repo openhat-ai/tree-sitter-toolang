@@ -35,7 +35,7 @@ flow grow(next: Text):
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))))
       (exec_statement
         (exec_keyword)
@@ -79,7 +79,7 @@ flow grow:
               (colon)
               (newline)
               (content
-                (text_line)
+                (text)
                 (newline))))
           (run_statement
             (run_keyword)
@@ -90,7 +90,7 @@ flow grow:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))))
       (exec_statement
         (exec_keyword)

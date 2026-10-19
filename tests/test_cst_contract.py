@@ -163,6 +163,11 @@ def test_public_metadata_exposes_roles_without_layout_or_forwarding_nodes():
     rules = json.loads((ROOT / "src/grammar.json").read_text())["rules"]
     assert "kebab_name" not in rules
     assert "_repeat_statements" not in rules
+    reduce = next(node for node in nodes if node["type"] == "reduce_statement")
+    assert reduce["fields"]["target"] == {
+        "multiple": False, "required": True,
+        "types": [{"type": "inline_agic", "named": True}, {"type": "runnable_name", "named": True}],
+    }
 
 
 @pytest.mark.parametrize("kind", ["psyche", "skill", "service", "prompt", "chore", "struct", "agic", "flow"])

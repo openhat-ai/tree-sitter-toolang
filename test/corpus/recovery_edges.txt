@@ -48,7 +48,7 @@ agic last:
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline)))))
 
 ==================
@@ -76,12 +76,12 @@ flow next:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (invalid_missing_statement)))
   (param_doc
     (param_name)
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -98,11 +98,11 @@ flow next:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (invalid_missing_statement)))))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -144,7 +144,7 @@ flow next:
             (newline))
           (invalid_flow_statement
             (until_keyword)
-            (text_line)
+            (text)
             (newline))
           (run_statement
             (run_keyword)

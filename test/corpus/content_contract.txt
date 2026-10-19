@@ -51,7 +51,7 @@ flow example:
     (identifier)
     (colon)
     (content
-      (text_line))
+      (text))
     (newline))
   (instruct
     (instruct_keyword)
@@ -59,11 +59,11 @@ flow example:
     (colon)
     (newline)
     (content
-      (text_line)
+      (text)
       (newline)
-      (text_line)
+      (text)
       (newline)
-      (text_line)
+      (text)
       (newline)
       (blank_line)))
   (skill
@@ -75,12 +75,12 @@ flow example:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (chore
@@ -92,10 +92,10 @@ flow example:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (struct
@@ -120,28 +120,28 @@ flow example:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (message
         (role)
         (colon)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)))
       (message
         (content
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)
           (blank_line)))))
   (flow
@@ -153,7 +153,7 @@ flow example:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (let_statement
         (let_keyword)
@@ -161,7 +161,7 @@ flow example:
         (assign_operator)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline)))
       (let_statement
         (let_keyword)
@@ -174,7 +174,7 @@ flow example:
             (colon)
             (newline)
             (content
-              (text_line)
+              (text)
               (newline)))))
       (await_statement
         (await_keyword)
@@ -184,7 +184,7 @@ flow example:
         (ask_keyword)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (reduce_statement
         (reduce_keyword)
@@ -192,12 +192,12 @@ flow example:
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline)))
         (from_keyword)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (repeat_statement
         (repeat_keyword)
@@ -209,7 +209,7 @@ flow example:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (run_statement
             (run_keyword)

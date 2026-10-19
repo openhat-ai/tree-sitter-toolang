@@ -38,7 +38,7 @@ flow second:
           (run_keyword)
           (invalid_run_target
             (runnable_name)
-            (text_line)
+            (text)
             (newline))))
       (let_statement
         (let_keyword)
@@ -98,14 +98,14 @@ flow launch:
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (run_statement
         (run_keyword)
@@ -138,7 +138,7 @@ flow launch:
         (inline_agic
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (let_statement
         (let_keyword)
@@ -153,7 +153,7 @@ flow launch:
               (builtin_type))
             (colon)
             (content
-              (text_line))
+              (text))
             (newline))))
       (let_statement
         (let_keyword)
@@ -164,7 +164,7 @@ flow launch:
             (colon)
             (newline)
             (content
-              (text_line)
+              (text)
               (newline))))))))
 
 ==================
@@ -264,9 +264,9 @@ flow launch:
                 (colon)
                 (newline)
                 (content
-                  (text_line)
+                  (text)
                   (newline)
-                  (text_line)
+                  (text)
                   (newline)))))
           (await_statement
             (await_keyword)
@@ -278,7 +278,7 @@ flow launch:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))))
       (run_statement
         (run_keyword)
@@ -367,7 +367,7 @@ flow launch:
         (newline))
       (invalid_flow_statement
         (await_keyword)
-        (text_line)
+        (text)
         (newline))
       (let_statement
         (let_keyword)
@@ -375,7 +375,7 @@ flow launch:
         (assign_operator)
         (invalid_flow_statement
           (await_keyword)
-          (text_line)
+          (text)
           (newline)))
       (run_statement
         (run_keyword)

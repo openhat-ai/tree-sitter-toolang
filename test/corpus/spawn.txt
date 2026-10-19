@@ -24,7 +24,7 @@ flow launch:
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (spawn_statement
         (spawn_keyword)
@@ -49,7 +49,7 @@ flow launch:
         (inline_agic
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (let_statement
         (let_keyword)
@@ -60,7 +60,7 @@ flow launch:
           (inline_agic
             (colon)
             (content
-              (text_line))
+              (text))
             (newline))))
       (let_statement
         (let_keyword)
@@ -72,7 +72,7 @@ flow launch:
               (builtin_type))
             (colon)
             (content
-              (text_line))
+              (text))
             (newline)))))))
 
 ==================
@@ -117,9 +117,9 @@ flow launch:
                 (colon)
                 (newline)
                 (content
-                  (text_line)
+                  (text)
                   (newline)
-                  (text_line)
+                  (text)
                   (newline)))))
           (spawn_statement
             (spawn_keyword)
@@ -131,7 +131,7 @@ flow launch:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))))
       (run_statement
         (run_keyword)

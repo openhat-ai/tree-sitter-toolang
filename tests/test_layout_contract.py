@@ -60,7 +60,7 @@ def test_declaration_body_optionality_at_eof_and_next_item(
         items = declarations(root)
         assert len(items) == (2 if ending else 1)
         # Empty declarations do not manufacture a body from header trivia.
-        assert not descendants(items[0], "text_line")
+        assert not descendants(items[0], "text")
         assert not descendants(items[0], "property")
         assert not descendants(items[0], "flow")
         if ending:
@@ -100,7 +100,7 @@ def test_agic_explicit_bodies_preserve_literal_bytes_and_end_before_siblings(
     assert block.end_byte == block.start_byte + len(content)
     assert tuple(block.start_point) == point(source, block.start_byte)
     assert tuple(block.end_point) == point(source, block.end_byte)
-    for line in descendants(block, "text_line"):
+    for line in descendants(block, "text"):
         value = line
         assert value.text == source[value.start_byte : value.end_byte]
         assert tuple(value.start_point) == point(source, value.start_byte)
@@ -135,7 +135,7 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
     assert [
         line.text.strip()
         for node in prose
-        for line in descendants(node, "text_line")
+        for line in descendants(node, "text")
     ] == [b"Review the evidence.", b"Summarize it."]
     assert not any(
         descendants(node, "plain_comment")
@@ -152,7 +152,7 @@ def test_flow_keywords_do_not_leak_into_other_implicit_contexts(kind, word):
     text = f"{word}, literal prose in this context."
     root = parse(f"{kind} work:\n  {text}\n")
     assert valid(root)
-    assert descendants(root, "text_line")[0].text.strip() == text.encode()
+    assert descendants(root, "text")[0].text.strip() == text.encode()
     assert not descendants(root, "implicit_run_statement")
 
 

@@ -65,8 +65,8 @@
 (optional_marker) @punctuation.special
 (array_suffix) @punctuation.special
 
-(with reference: (text_line) @constant)
-(directive_value) @constant
+(with reference: (text) @constant)
+(query_value) @constant
 (recall_value) @constant
 (route_value) @constant
 (directive value: (identifier) @constant)
@@ -75,7 +75,11 @@
 (none_keyword) @constant.builtin
 (all_keyword) @constant.builtin
 
-(text_line) @string
+(content (text) @string)
+(property value: (text) @string)
+(invalid_flow_statement (text) @string)
+(invalid_agic_message (text) @string)
+(invalid_run_target (text) @string)
 
 (struct
   name: (type_name) @type)

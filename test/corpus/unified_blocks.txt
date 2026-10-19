@@ -38,7 +38,7 @@ flow summarize:
         (newline)
         (repeat_body
           (item_doc
-            (comment_text))
+            (text))
           (repeat_statement
             (repeat_keyword)
             (integer_literal)
@@ -52,11 +52,11 @@ flow summarize:
                   (colon)
                   (newline)
                   (content
-                    (text_line)
+                    (text)
                     (newline)
-                    (text_line)
+                    (text)
                     (newline)
-                    (text_line)
+                    (text)
                     (newline))))
               (run_statement
                 (run_keyword)
@@ -68,7 +68,7 @@ flow summarize:
               (colon)
               (newline)
               (content
-                (text_line)
+                (text)
                 (newline))))))
       (run_statement
         (run_keyword)
@@ -83,11 +83,11 @@ flow summarize:
     (flow_body
       (implicit_run_statement
         (content
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)
           (blank_line)))
       (keep_statement

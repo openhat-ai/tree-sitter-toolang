@@ -13,7 +13,7 @@ agic describe(until?: Text):
 (program
   (param_doc
     (param_name)
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -89,7 +89,7 @@ flow work:
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
@@ -107,7 +107,7 @@ flow work:
         (assign_operator)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline)))
       (let_statement
         (let_keyword)

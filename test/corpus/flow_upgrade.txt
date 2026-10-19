@@ -59,7 +59,7 @@ flow seeded(_):
     (colon)
     (newline)
     (content
-      (text_line)
+      (text)
       (newline)
       (blank_line)))
   (context
@@ -68,7 +68,7 @@ flow seeded(_):
     (colon)
     (newline)
     (content
-      (text_line)
+      (text)
       (newline)
       (blank_line)))
   (agic
@@ -124,13 +124,13 @@ flow seeded(_):
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (blank_line)))
   (agic
@@ -148,7 +148,7 @@ flow seeded(_):
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (blank_line)))
   (flow
@@ -165,32 +165,32 @@ flow seeded(_):
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
@@ -243,7 +243,7 @@ flow seeded(_):
         (colon)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline)))
       (repeat_statement
         (repeat_keyword)
@@ -259,14 +259,14 @@ flow seeded(_):
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (until_clause
             (until_keyword)
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (blank_line)))))
   (flow
@@ -290,7 +290,7 @@ flow seeded(_):
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline))))
       (reduce_statement
         (reduce_keyword)
@@ -298,11 +298,11 @@ flow seeded(_):
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline)))
         (from_keyword)
         (colon)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline))))))

@@ -54,7 +54,7 @@ def test_inline_content_retains_exact_source_including_hashes(header, kind, fiel
     assert valid(root), root
     owner, = descendants(root, kind)
     content = owner.child_by_field_name(field)
-    line, = descendants(content, "text_line")
+    line, = descendants(content, "text")
     assert content.type == "content" and content.text == (" " + value).encode()
     assert line.text == content.text and line.child_count == 0
     assert not descendants(root, "plain_comment")
@@ -159,7 +159,7 @@ def test_incremental_text_and_comment_boundaries_match_fresh_parses(newline):
         root = tree.root_node
         assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
         assert valid(root) == (head != "run:")
-        assert [n.text for n in descendants(root, "text_line")] == ([] if text is None else [text])
+        assert [n.text for n in descendants(root, "text")] == ([] if text is None else [text])
         assert [n.text for n in descendants(root, "plain_comment")] == ([] if comment is None else [comment])
         assert len(descendants(root, "flow")) == 2
         assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"

@@ -100,7 +100,7 @@ def test_explicit_content_binding_keeps_literal_until_after_header_whitespace(sp
     root = parse(source)
     assert valid(root), root
     binding, = descendants(root, "let_statement")
-    assert [child.type for child in binding.child_by_field_name("value").named_children] == ["text_line", "newline"]
+    assert [child.type for child in binding.child_by_field_name("value").named_children] == ["text", "newline"]
     assert b"until dawn." in binding.child_by_field_name("value").text
     assert not descendants(root, "until_clause")
     assert not descendants(root, "implicit_run_statement")

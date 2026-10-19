@@ -41,7 +41,7 @@ flow work:
               (array_suffix))
             (colon)
             (content
-              (text_line))
+              (text))
             (newline))))
       (map_statement
         (map_keyword)
@@ -61,7 +61,7 @@ flow work:
               (builtin_type))
             (colon)
             (content
-              (text_line))
+              (text))
             (newline))))
       (let_statement
         (let_keyword)
@@ -76,7 +76,7 @@ flow work:
           (from_keyword)
           (colon)
           (content
-            (text_line))
+            (text))
           (newline))))))
 
 ==================
@@ -110,12 +110,12 @@ flow work:
             (colon)
             (newline)
             (content
-              (text_line)
+              (text)
               (newline)))
           (from_keyword)
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (run_statement
         (run_keyword)
@@ -146,41 +146,41 @@ flow work:
     (flow_body
       (implicit_run_statement
         (content
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline)))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline)))))
 
 ==================
@@ -209,5 +209,5 @@ flow work:
           (inline_agic
             (colon)
             (content
-              (text_line))
+              (text))
             (newline)))))))

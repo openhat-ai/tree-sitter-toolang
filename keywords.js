@@ -32,7 +32,7 @@ const reservedWords = [];
 const wordNodes = {
   ...declarations, ...operations, ...clauses,
   let: "let_keyword", exec: "exec_keyword", async: "async_keyword",
-  pass: "pass_keyword", recall: "recall_keyword",
+  pass: "pass_keyword",
   default: "default_keyword", none: "none_keyword",
 };
 const directive = [...queryKeys, ...routeKeys, "recall", "lanes", "context", "instruct"];

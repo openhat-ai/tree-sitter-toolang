@@ -20,14 +20,14 @@ flow work:
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)
         (local_name)
         (assign_operator)
         (content
-          (text_line))
+          (text))
         (newline))
       (let_statement
         (let_keyword)

@@ -29,7 +29,7 @@ def test_nested_text_does_not_capture_siblings():
     assert len(descendants(loop, "run_statement")) == 2
     assert loop.child_by_field_name("body").child_by_field_name("until") is not None
     assert (
-        descendants(loop, "text_line")[0].text == b"      Improve the evidence."
+        descendants(loop, "text")[0].text == b"      Improve the evidence."
     )
 
 
@@ -188,7 +188,7 @@ def test_keywords_have_case_sensitive_complete_token_boundaries(word):
     root = parse(f"flow work:\n  run:\n    {word}, literal text.\n")
     assert valid(root)
     assert (
-        descendants(root, "text_line")[0]
+        descendants(root, "text")[0]
         .text.strip()
         == f"{word}, literal text.".encode()
     )
@@ -303,7 +303,7 @@ def test_cap_text_only_recognizes_valid_property_keys(line):
     root = parse(f"prompt example:\n  {line}\n")
     assert valid(root)
     assert not descendants(root, "property")
-    assert descendants(root, "text_line")[0].text.strip() == line.encode()
+    assert descendants(root, "text")[0].text.strip() == line.encode()
 
 
 def test_dedented_comment_ends_explicit_text_before_later_deeper_prose():
@@ -374,7 +374,7 @@ def test_empty_metadata_errors_remain_inside_their_declaration(kind, newline):
     owner = descendants(root, kind)[0]
     # Both ERROR nodes and missing required tokens must stay under the owner.
     assert owner.has_error
-    assert descendants(owner.child_by_field_name("body").child_by_field_name("content"), "text_line")[0].text.strip() == b"Review."
+    assert descendants(owner.child_by_field_name("body").child_by_field_name("content"), "text")[0].text.strip() == b"Review."
 
 
 @pytest.mark.parametrize("comment", ["# Note.", "## Note.", "##! Note."])

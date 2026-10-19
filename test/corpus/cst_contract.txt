@@ -17,7 +17,7 @@ flow next(topic: Text):
     (colon)
     (newline))
   (item_doc
-    (comment_text))
+    (text))
   (chore
     (chore_keyword)
     (chore_name)
@@ -25,7 +25,7 @@ flow next(topic: Text):
     (newline))
   (param_doc
     (param_name)
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -70,10 +70,10 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (content
-        (text_line)
+        (text)
         (newline))))
   (flow
     (flow_keyword)
@@ -81,7 +81,7 @@ flow work:
     (colon)
     (newline)
     (item_doc
-      (comment_text))
+      (text))
     (flow_body
       (repeat_statement
         (repeat_keyword)
@@ -122,7 +122,7 @@ flow work:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
@@ -156,7 +156,7 @@ flow work:
         (inline_agic
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (map_statement
         (map_keyword)
@@ -177,7 +177,7 @@ flow work:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline))))))))
 
 ==================
@@ -203,14 +203,14 @@ agic work:
       (invalid_flow_statement
         (let_keyword)
         (local_name)
-        (text_line)
+        (text)
         (newline))
       (run_statement
         (async_keyword)
         (run_keyword)
         (invalid_run_target
           (runnable_name)
-          (text_line)
+          (text)
           (newline)))
       (run_statement
         (run_keyword)
@@ -225,13 +225,13 @@ agic work:
       (message
         (invalid_agic_message
           (role)
-          (text_line)
+          (text)
           (newline)))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline)))))
 
 ==================
@@ -258,7 +258,7 @@ flow last:
     (flow_body
       (invalid_missing_body)))
   (item_doc
-    (comment_text))
+    (text))
   (context
     (context_keyword)
     (identifier)
@@ -267,7 +267,7 @@ flow last:
     (content
       (invalid_missing_content)))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -282,7 +282,7 @@ flow last:
           (content
             (invalid_missing_content))))))
   (program_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)

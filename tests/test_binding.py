@@ -32,6 +32,7 @@ FIXTURE_NAMES = (
     "repeat_comments.too",
     "flexible_repeat.too",
     "unified_blocks.too",
+    "text_productions.too",
 )
 
 
@@ -504,7 +505,7 @@ def test_kitchen_sink_fixture_covers_core_program_constructs():
 
 
 
-def test_directive_value_is_trimmed_line_payload():
+def test_query_value_is_trimmed_line_payload():
     parser = _parser()
     source = (
         b"agic search:\n"

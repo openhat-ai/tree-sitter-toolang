@@ -127,7 +127,7 @@ def test_keyword_destinations_accept_indented_literal_values(name):
     binding, = descendants(root, "let_statement")
     value = binding.child_by_field_name("value")
     assert value.type == "content"
-    assert [node.text for node in descendants(value, "text_line")] == [
+    assert [node.text for node in descendants(value, "text")] == [
         b"    run is literal here.", b"    # Literal comment.",
     ]
     handle, = descendants(root, "handle_name")

@@ -49,7 +49,7 @@ flow improve(_):
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (blank_line)))
   (flow
@@ -69,7 +69,7 @@ flow improve(_):
         (newline)
         (repeat_body
           (item_doc
-            (comment_text))
+            (text))
           (until_clause
             (until_keyword)
             (runnable_name)
@@ -89,14 +89,14 @@ flow improve(_):
         (repeat_body
           (implicit_run_statement
             (content
-              (text_line)
+              (text)
               (newline)))
           (until_clause
             (until_keyword)
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (run_statement
             (run_keyword)
@@ -120,9 +120,9 @@ flow improve(_):
                   (colon)
                   (newline)
                   (content
-                    (text_line)
+                    (text)
                     (newline)
-                    (text_line)
+                    (text)
                     (newline))))
               (run_statement
                 (run_keyword)
@@ -156,7 +156,7 @@ flow improve(_):
             (assign_operator)
             (newline)
             (content
-              (text_line)
+              (text)
               (newline)))
           (run_statement
             (run_keyword)

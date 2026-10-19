@@ -104,7 +104,7 @@ def test_empty_message_body_preserves_the_next_message(role):
     root = parse(f"agic first:\n  {role}:\n  user: Continue.\nflow next:\n  pass\n")
     assert not valid(root)
     assert len(descendants(root, "message")) == 2
-    assert descendants(root, "text_line")[-1].text.strip() == b"Continue."
+    assert descendants(root, "text")[-1].text.strip() == b"Continue."
     assert descendants(root, "flow")[0].child_by_field_name("name").text == b"next"
 
 

@@ -9,6 +9,54 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn text_leaves_and_reducer_ranges_share_the_public_contract() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "#@ Program.\n## @param topic Input # details.\nflow work(topic: Text):\n  models = fast\n  reduce:\n\n    # Heading\n    Merge.\n    from: Seed.\n  run next\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(!root.has_error());
+        for (index, field) in [(0, "text"), (1, "description")] {
+            let text = root
+                .named_child(index)
+                .unwrap()
+                .child_by_field_name(field)
+                .unwrap();
+            assert_eq!(text.kind(), "text");
+            assert_eq!(text.child_count(), 0);
+        }
+        let body = root
+            .named_child(2)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap();
+        let value = body
+            .child_by_field_name("directive")
+            .unwrap()
+            .child_by_field_name("value")
+            .unwrap();
+        assert_eq!(value.kind(), "query_value");
+        let reduce = body.child_by_field_name("statement").unwrap();
+        let content = reduce
+            .child_by_field_name("target")
+            .unwrap()
+            .child_by_field_name("content")
+            .unwrap();
+        assert_eq!(
+            content.utf8_text(source.as_bytes()).unwrap(),
+            "\n    # Heading\n    Merge.\n"
+        );
+        assert_eq!(content.named_child(0).unwrap().kind(), "blank_line");
+        let text = content.named_child(1).unwrap();
+        assert_eq!(text.kind(), "text");
+        assert_eq!(text.child_count(), 0);
+        assert_eq!(
+            reduce.child_by_field_name("from").unwrap().kind(),
+            "content"
+        );
+    }
+
+    #[test]
     fn malformed_block_colons_cannot_reopen_enclosing_headers() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
@@ -503,10 +551,7 @@ mod tests {
         ] {
             let comment = root.named_child(index).unwrap();
             assert_eq!(comment.kind(), kind);
-            assert_eq!(
-                comment.child_by_field_name("text").unwrap().kind(),
-                "comment_text"
-            );
+            assert_eq!(comment.child_by_field_name("text").unwrap().kind(), "text");
             assert_eq!(
                 comment
                     .child_by_field_name("text")

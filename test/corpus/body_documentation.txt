@@ -42,7 +42,7 @@ flow next:
 
 (program
   (program_doc
-    (comment_text))
+    (text))
   (struct
     (struct_keyword)
     (type_name)
@@ -50,7 +50,7 @@ flow next:
     (newline)
     (struct_body
       (item_doc
-        (comment_text))
+        (text))
       (field
         (identifier)
         (colon)
@@ -65,14 +65,14 @@ flow next:
     (newline)
     (cap_body
       (item_doc
-        (comment_text))
+        (text))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (chore
@@ -82,14 +82,14 @@ flow next:
     (newline)
     (chore_body
       (item_doc
-        (comment_text))
+        (text))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (agic
@@ -99,17 +99,17 @@ flow next:
     (newline)
     (agic_body
       (item_doc
-        (comment_text))
+        (text))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (blank_line)))
   (flow
@@ -118,14 +118,14 @@ flow next:
     (colon)
     (newline)
     (item_doc
-      (comment_text))
+      (text))
     (plain_comment)
     (blank_line)
     (flow_body
       (item_doc
-        (comment_text))
+        (text))
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (runnable_name)
@@ -136,7 +136,7 @@ flow next:
         (newline)
         (repeat_body
           (item_doc
-            (comment_text))
+            (text))
           (run_statement
             (run_keyword)
             (runnable_name)
@@ -146,7 +146,7 @@ flow next:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline)))
           (blank_line)))))
   (prompt
@@ -155,7 +155,7 @@ flow next:
     (colon)
     (newline))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)

@@ -42,19 +42,18 @@ module.exports = grammar({
 
     _inline_comment: () => token(seq("#", /[^\r\n]*/)),
     _line_end: ($) => seq(optional(alias($._inline_comment, $.plain_comment)), $.newline),
-    _text_line_end: ($) => $.newline,
+    _text_end: ($) => $.newline,
     program_doc: ($) => seq(
-      $._program_doc_start, optional(field("text", $.comment_text)), $._comment_end,
+      $._program_doc_start, optional(field("text", alias($._doc_text, $.text))), $._comment_end,
     ),
     item_doc: ($) => seq(
-      $._item_doc_start, optional(field("text", $.comment_text)), $._comment_end,
+      $._item_doc_start, optional(field("text", alias($._doc_text, $.text))), $._comment_end,
     ),
     param_doc: ($) => seq(
-      $._param_doc_start, "@param", $._doc_space, field("param", $._param_name),
-      $._doc_space, field("description", $.comment_text), $._comment_end,
+      $._param_doc_start, "@param", $._required_space, field("param", $._param_name),
+      $._required_space, field("description", alias($._doc_text, $.text)), $._comment_end,
     ),
-    _doc_space: () => token.immediate(/[ \t]+/),
-    comment_text: () => token(/[^ \t\r\n][^\r\n]*/),
+    _doc_text: () => token(/[^ \t\r\n][^\r\n]*/),
     _comment: ($) => seq($._comment_start, choice(
       $.program_doc, $.item_doc, $.param_doc, $.plain_comment, $.shebang_comment,
     )),
@@ -69,7 +68,7 @@ module.exports = grammar({
         field("keyword", $.with_keyword),
         field("kind", $._cap_kind),
         $._required_space,
-        field("reference", $.text_line),
+        field("reference", alias($._structural_text, $.text)),
         $._line_end,
       ),
 
@@ -130,7 +129,7 @@ module.exports = grammar({
         $._line_start,
         field("key", $.identifier),
         field("operator", $.assign_operator),
-        field("value", $.text_line),
+        field("value", alias($._structural_text, $.text)),
         $._line_end,
       ),
 
@@ -140,7 +139,7 @@ module.exports = grammar({
     context: ($) => seq($._context_header, content($, "content")),
     _context_header: ($) => textHeader($, $.context_keyword),
 
-    _inline_content: ($) => alias($._literal_text_line, $.text_line),
+    _inline_content: ($) => alias($._inline_text, $.text),
     _block_content: ($) => seq(
       optional($._body_start),
       repeat($.blank_line),
@@ -149,7 +148,7 @@ module.exports = grammar({
         missing($, "content"),
       ),
     ),
-    _content_row: ($) => seq(alias($._raw_text, $.text_line), $.newline),
+    _content_row: ($) => seq(alias($._raw_text, $.text), $.newline),
 
     agic: ($) => prec.right(seq($._agic_header, body($, $.agic_body))),
     _agic_header: ($) => runnableHeader($, $.agic_keyword),
@@ -226,7 +225,7 @@ module.exports = grammar({
     ),
     _binding_operation_word: ($) => keywordChoice($, tables.operation_binding),
     _invalid_bound_operation: ($) => prec.dynamic(-2, seq(
-      $._binding_operation_word, optional(alias($._diagnostic_text, $.text_line)), $._line_end,
+      $._binding_operation_word, optional(alias($._recovery_text, $.text)), $._line_end,
     )),
     let_statement: ($) =>
       choice(
@@ -249,36 +248,14 @@ module.exports = grammar({
           content($, "value"),
         )),
       ),
-    exec_statement: ($) =>
-      choice(
-        seq(
-          $.exec_keyword,
-          field("target", $.runnable_name),
-          $._line_end,
-        ),
-        prec.right(seq(
-          $.exec_keyword,
-          field("target", $.inline_agic),
-        )),
-      ),
-    spawn_statement: ($) =>
-      choice(
-        seq(
-          $.spawn_keyword,
-          field("target", $.runnable_name),
-          $._line_end,
-        ),
-        prec.right(seq(
-          $.spawn_keyword,
-          field("target", $.inline_agic),
-        )),
-      ),
+    exec_statement: ($) => seq($.exec_keyword, $._target),
+    spawn_statement: ($) => seq($.spawn_keyword, $._target),
     _invalid_exec_binding: ($) => seq(
       $.let_keyword,
       optional(seq($._named_binding_start, field("local", $.local_name), $.assign_operator)),
       $._exec_binding_start,
       $.exec_keyword,
-      optional(alias($._diagnostic_text, $.text_line)),
+      optional(alias($._recovery_text, $.text)),
       $._line_end,
     ),
     _invalid_restricted_binding: ($) => seq(
@@ -286,14 +263,14 @@ module.exports = grammar({
       optional(seq($._named_binding_start, field("local", $.local_name), $.assign_operator)),
       $._restricted_binding_start,
       $._restricted_binding_word,
-      optional(alias($._diagnostic_text, $.text_line)),
+      optional(alias($._recovery_text, $.text)),
       $._line_end,
     ),
     // Keep a missing assignment delimiter diagnostic local and deterministic
     // instead of choosing between a dropped name and an inserted '='.
     _invalid_named_binding: ($) => prec.dynamic(-2, seq(
       $.let_keyword, field("local", $.local_name),
-      optional(alias($._diagnostic_text, $.text_line)),
+      optional(alias($._recovery_text, $.text)),
       $._line_end,
     )),
     run_statement: ($) => choice(
@@ -301,10 +278,7 @@ module.exports = grammar({
       seq($._async_modifier, $._run_after_modifier),
     ),
     _async_modifier: ($) => field("async", $.async_keyword),
-    _run: ($) => choice(
-      seq($.run_keyword, field("target", $.runnable_name), $._line_end),
-      prec.right(seq($.run_keyword, field("target", $.inline_agic))),
-    ),
+    _run: ($) => seq($.run_keyword, $._target),
     // A modifier consumes the statement-head boundary; keep runworker indivisible.
     // Preserve the unmodified run's existing target ranges above.
     _run_after_modifier: ($) => seq(
@@ -320,11 +294,11 @@ module.exports = grammar({
     _invalid_modified_run_tail: ($) => prec.dynamic(-2, prec(-1, seq(
       optional($._required_space),
       choice(
-        seq($.runnable_name, optional(alias($._diagnostic_text, $.text_line))),
+        seq($.runnable_name, optional(alias($._recovery_text, $.text))),
         // A recognized colon commits to an inline agic, including its missing
         // content recovery. Do not reinterpret that header as a malformed tail.
-        seq($.arrow, optional(seq($.type, optional(alias($._diagnostic_text, $.text_line))))),
-        optional(alias($._diagnostic_text, $.text_line)),
+        seq($.arrow, optional(seq($.type, optional(alias($._recovery_text, $.text))))),
+        optional(alias($._recovery_text, $.text)),
       ),
       $._line_end,
     ))),
@@ -336,23 +310,10 @@ module.exports = grammar({
     implicit_run_statement: ($) => field("content", alias($._implicit_content, $.content)),
     _implicit_content: ($) => paragraph($, $._implicit_run_line),
     _implicit_run_line: ($) => seq(
-      alias($._flow_raw_text, $.text_line), $.newline,
+      alias($._flow_raw_text, $.text), $.newline,
     ),
 
-    seek_statement: ($) =>
-      choice(
-        seq(
-          $.seek_keyword,
-          field("agent", $.agent_name),
-          field("target", $.runnable_name),
-          $._line_end,
-        ),
-        prec.right(seq(
-          $.seek_keyword,
-          field("agent", $.agent_name),
-          field("target", $.inline_agic),
-        )),
-      ),
+    seek_statement: ($) => seq($.seek_keyword, field("agent", $.agent_name), $._target),
     ask_statement: ($) =>
       prec.right(seq(
         $.ask_keyword,
@@ -364,51 +325,56 @@ module.exports = grammar({
         $.generate_keyword,
         $._required_space,
         field("count", $.integer_literal),
-        $._runnable_complements,
+        optional($._lanes_clause),
+        $._using_target,
       ),
     reduce_statement: ($) =>
       choice(
-        seq($.reduce_keyword, $._named_using_complement, $._line_end),
+        seq($.reduce_keyword, $._using_clause, $._line_end),
         seq($._reduce_named_block_header,
-          repeat($._body_prefix), structuralBody($, seq($._from_complement, repeat($._trivia)))),
+          repeat($._body_prefix), structuralBody($, seq($._from_clause, repeat($._trivia)))),
         prec.right(seq($.reduce_keyword,
           field("target", alias($._reduce_inline_line, $.inline_agic)))),
         prec.right(seq($.reduce_keyword,
           field("target", alias($._reduce_inline_block, $.inline_agic)),
-          optional($._from_complement), repeat($._trivia), $._dedent)),
+          optional($._from_clause), repeat($._trivia), $._dedent)),
         seq($.reduce_keyword,
           field("target", alias($._reduce_empty_block, $.inline_agic))),
       ),
     _reduce_named_block_header: ($) => seq(
-      $.reduce_keyword, namedUsing($), $.colon, $._line_end,
+      $.reduce_keyword, usingClause($), $.colon, $._line_end,
     ),
     _reduce_inline_line: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, field("content", alias($._inline_content, $.content)), $._text_line_end,
+      $.colon, field("content", alias($._inline_content, $.content)), $._text_end,
     ),
     _reduce_block_header: ($) => seq(
       optional(seq(field("arrow", $.arrow), field("return", $.type))),
-      $.colon, $._text_line_end,
+      $.colon, $._text_end,
     ),
     _reduce_inline_block: ($) => seq(
-      $._reduce_block_header, optional($._body_prefix), $._reduce_indent,
+      $._reduce_block_header,
       field("content", alias($._reduce_content, $.content)),
     ),
     _reduce_empty_block: ($) => seq(
       $._reduce_block_header, field("content", alias($._empty_content, $.content)),
     ),
     _empty_content: ($) => missing($, "content"),
-    _reduce_content: ($) => choice(
-      seq($._reduce_text_start, repeat1(choice($._content_row, $.blank_line)), $._dedent),
-      missing($, "content"),
+    _reduce_content: ($) => seq(
+      optional($._body_start), repeat($.blank_line), $._reduce_indent,
+      choice(
+        seq($._reduce_text_start, repeat1(choice($._content_row, $.blank_line)), $._dedent),
+        missing($, "content"),
+      ),
     ),
-    _from_complement: ($) => seq(
+    _from_clause: ($) => seq(
       $._from_start, $.from_keyword, $.colon, content($, "from"),
     ),
     map_statement: ($) =>
       seq(
         $.map_keyword,
-        $._runnable_complements,
+        optional($._lanes_clause),
+        $._using_target,
       ),
     keep_statement: ($) =>
       choice(
@@ -419,7 +385,7 @@ module.exports = grammar({
         ),
         prec.right(seq(
           $.keep_keyword,
-          $._if_complements,
+          optional($._lanes_clause), $._if_target,
         )),
       ),
     drop_statement: ($) =>
@@ -431,63 +397,35 @@ module.exports = grammar({
         ),
         prec.right(seq(
           $.drop_keyword,
-          $._if_complements,
+          optional($._lanes_clause), $._if_target,
         )),
       ),
     sort_statement: ($) =>
       prec.right(seq(
         $.sort_keyword,
-        $._order_complement,
-        $._by_complements,
+        $._order_clause,
+        optional($._lanes_clause), $._by_target,
       )),
-    _named_using_complement: ($) => namedUsing($),
     _required_space: () => token.immediate(/[ \t]+/),
-    _named_if_complement: ($) =>
-      seq(
-        $.if_keyword,
-        field("target", $.runnable_name),
-      ),
-    _inline_if_complement: ($) =>
-      seq(
-        $.if_keyword,
-        field("target", $.inline_agic),
-      ),
-    _named_by_complement: ($) =>
-      seq(
-        $.by_keyword,
-        field("target", $.runnable_name),
-      ),
-    _inline_by_complement: ($) =>
-      seq(
-        $.by_keyword,
-        field("target", $.inline_agic),
-      ),
-    _runnable_complements: ($) =>
-      seq(
-        optional($._lanes_complement),
-        choice(
-          seq($._named_using_complement, $._line_end),
-          field("target", $.inline_agic),
-        ),
-      ),
-    _if_complements: ($) =>
-      seq(
-        optional($._lanes_complement),
-        choice(seq($._named_if_complement, $._line_end), $._inline_if_complement),
-      ),
-    _by_complements: ($) =>
-      seq(
-        optional($._lanes_complement),
-        choice(seq($._named_by_complement, $._line_end), $._inline_by_complement),
-      ),
-    _lanes_complement: ($) =>
+    _target: ($) => choice(
+      seq(field("target", $.runnable_name), $._line_end),
+      prec.right(field("target", $.inline_agic)),
+    ),
+    _using_clause: ($) => usingClause($),
+    _using_target: ($) => choice(
+      seq($._using_clause, $._line_end),
+      field("target", $.inline_agic),
+    ),
+    _if_target: ($) => seq($.if_keyword, $._target),
+    _by_target: ($) => seq($.by_keyword, $._target),
+    _lanes_clause: ($) =>
       seq(
         $.in_keyword,
         $._required_space,
         field("lanes", $.integer_literal),
         choice($.lane_keyword, $.lanes_keyword),
       ),
-    _order_complement: ($) =>
+    _order_clause: ($) =>
       field("order", choice(
         $.ascending_keyword,
         $.descending_keyword,
@@ -497,8 +435,8 @@ module.exports = grammar({
     )),
     _repeat_header: ($) => seq(
       $.repeat_keyword,
-      optional($._repeat_count_complement),
-      optional($._window_complement),
+      optional($._times_clause),
+      optional($._window_clause),
       $.colon,
       $._line_end,
     ),
@@ -510,11 +448,11 @@ module.exports = grammar({
       seq($._until_entry, repeat($._trivia),
         choice($._statements, missing($, "statement"))),
     )),
-    _window_complement: ($) => seq(
+    _window_clause: ($) => seq(
       $.windowing_keyword,
       $._required_space, field("window", $.integer_literal),
     ),
-    _repeat_count_complement: ($) =>
+    _times_clause: ($) =>
       seq(
         field("count", $.integer_literal),
         choice($.time_keyword, $.times_keyword),
@@ -525,7 +463,7 @@ module.exports = grammar({
         $.until_keyword,
         choice(
           seq(field("target", $.runnable_name), $._line_end),
-          field("target", alias($._predicate_inline_agic, $.inline_agic)),
+          field("target", alias($._until_agic, $.inline_agic)),
         ),
       )),
     // Commit the clause entry before inspecting its target. A malformed target
@@ -537,12 +475,12 @@ module.exports = grammar({
     ),
     _invalid_until_clause: ($) => prec.dynamic(-2, seq(
       $._until_start, $.until_keyword,
-      optional(alias($._diagnostic_text, $.text_line)), $._line_end,
+      optional(alias($._recovery_text, $.text)), $._line_end,
     )),
     invalid_flow_statement: ($) =>
       prec.dynamic(-2, seq(
         $._flow_keyword,
-        optional(alias($._diagnostic_text, $.text_line)),
+        optional(alias($._recovery_text, $.text)),
         $._line_end,
       )),
     inline_agic: ($) =>
@@ -551,7 +489,7 @@ module.exports = grammar({
         $.colon,
         content($, "content"),
       ),
-    _predicate_inline_agic: ($) =>
+    _until_agic: ($) =>
       seq(
         $.colon,
         content($, "content"),
@@ -569,10 +507,10 @@ module.exports = grammar({
 
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_directive_key),
-        field("operator", $.directive_operator), field("value", $.directive_value)),
+        field("operator", $.directive_operator), field("value", $.query_value)),
       seq(field("key", $._route_directive_key),
         field("operator", alias($.assign_operator, $.directive_operator)), field("value", $.route_value)),
-      seq(field("key", alias($.recall_keyword, $.directive_key)), field("operator", alias($.assign_operator, $.directive_operator)),
+      seq(field("key", alias("recall", $.directive_key)), field("operator", alias($.assign_operator, $.directive_operator)),
         field("value", $.recall_value)),
       seq(field("key", alias($.lanes_keyword, $.directive_key)),
         field("operator", alias($.assign_operator, $.directive_operator)),
@@ -583,7 +521,7 @@ module.exports = grammar({
     _query_directive_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
     _route_directive_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
     directive_operator: () => token(choice("=", "+=", "-=")),
-    directive_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
+    query_value: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
     route_value: ($) => choice($.none_keyword, $.all_keyword,
       seq($.runnable_ref, repeat(seq($.comma, $.runnable_ref)))),
     runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
@@ -606,12 +544,12 @@ module.exports = grammar({
       )),
     _message_content: ($) => paragraph($, $._unroled_message_line),
     _unroled_message_line: ($) => seq(
-      alias($._agic_raw_text, $.text_line), $.newline,
+      alias($._agic_raw_text, $.text), $.newline,
     ),
     invalid_agic_message: ($) =>
       prec.dynamic(-2, seq(
         $._agic_keyword,
-        optional(alias($._diagnostic_text, $.text_line)),
+        optional(alias($._recovery_text, $.text)),
         $._line_end,
       )),
     _role: ($) => keywordLeaves(roles, $.role),
@@ -637,15 +575,14 @@ module.exports = grammar({
     _word: () => token(/[A-Za-z_][A-Za-z0-9_]*/),
     type_name: () => token(/[A-Z][A-Za-z0-9]*/),
     identifier: ($) => $._identifier,
-    _identifier: () => token(/[a-z][a-z0-9_]*(_[a-z0-9]+)*/),
+    _identifier: () => token(/[a-z][a-z0-9_]*/),
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     // Inline content owns its entire physical line. Structural raw values keep
     // their comment delimiter; both expose the same public text leaf.
-    text_line: ($) => $._text_line,
-    _text_line: () => token(prec(-1, /[^#\r\n]+/)),
-    _literal_text_line: () => token(prec(-1, /[ \t]*[^ \t\r\n][^\r\n]*/)),
+    _structural_text: () => token(prec(-1, /[^#\r\n]+/)),
+    _inline_text: () => token(prec(-1, /[ \t]*[^ \t\r\n][^\r\n]*/)),
     // Recovery text must not absorb extras shared with structural tokens.
-    _diagnostic_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
+    _recovery_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
   },
 });
 
@@ -670,15 +607,17 @@ function textHeader($, keyword) {
   return seq(field("keyword", keyword), optional(field("name", $.identifier)), field("colon", $.colon));
 }
 
-function namedUsing($) {
+// Expand the phrase inside complete headers so required fields remain visible
+// to Tree-sitter's schema generator, while sharing the authored syntax.
+function usingClause($) {
   return seq($.using_keyword, $._required_space, field("target", $.runnable_name));
 }
 
 // Content is a semantic value; spelling and line endings do not add wrappers.
 function content($, name) {
   return choice(
-    seq(field(name, alias($._inline_content, $.content)), $._text_line_end),
-    prec.right(seq($._text_line_end, field(name, alias($._block_content, $.content)))),
+    seq(field(name, alias($._inline_content, $.content)), $._text_end),
+    prec.right(seq($._text_end, field(name, alias($._block_content, $.content)))),
   );
 }
 
@@ -733,7 +672,7 @@ function keywordChoice($, words) {
   return choice(...[...new Set(words)].map(word => {
     if (wordNodes[word]) return $[wordNodes[word]];
     if (roles.includes(word)) return alias(word, $.role);
-    if (QUERY_DIRECTIVE_KEYS.includes(word) || ROUTE_DIRECTIVE_KEYS.includes(word)) {
+    if (tables.directive.includes(word)) {
       return alias(word, $.directive_key);
     }
     return word;

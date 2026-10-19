@@ -71,5 +71,5 @@ def test_chore_highlights_capture_leaves_without_a_declaration_wide_type(body, n
     assert captures["function"] == [chore.child_by_field_name("name")]
     assert captures["keyword"] == [chore.child_by_field_name("keyword")]
     assert not captures.get("type"), captures
-    assert set(captures.get("string", [])) == set(descendants(root, "text_line"))
+    assert set(captures.get("string", [])) == set(descendants(root, "text"))
     assert set(captures.get("comment", [])) == set(descendants(root, "plain_comment"))

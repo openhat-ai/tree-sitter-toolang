@@ -21,15 +21,13 @@ flow next:
     (colon)
     (newline)
     (cap_body
-      (property
+      (ERROR
         (identifier)
         (assign_operator)
-        (text_line
-          (MISSING _text_line))
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline))))
   (chore
     (chore_keyword)
@@ -43,7 +41,7 @@ flow next:
       (blank_line)
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline))))
   (flow
     (flow_keyword)

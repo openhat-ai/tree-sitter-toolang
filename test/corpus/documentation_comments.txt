@@ -17,17 +17,17 @@ agic(_: Text, style?: Text):
   (shebang_comment)
   (plain_comment)
   (program_doc
-    (comment_text))
+    (text))
   (item_doc
-    (comment_text))
+    (text))
   (item_doc
-    (comment_text))
+    (text))
   (param_doc
     (param_name)
-    (comment_text))
+    (text))
   (param_doc
     (param_name)
-    (comment_text))
+    (text))
   (agic
     (agic_keyword)
     (params
@@ -69,13 +69,13 @@ flow:
   (item_doc)
   (program_doc)
   (item_doc
-    (comment_text))
+    (text))
   (item_doc
-    (comment_text))
+    (text))
   (item_doc
-    (comment_text))
+    (text))
   (program_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (colon)
@@ -108,21 +108,21 @@ flow next:
     (newline)
     (flow_body
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (inline_agic
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline)
-            (text_line)
+            (text)
             (newline)
-            (text_line)
+            (text)
             (newline))))))
   (program_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)

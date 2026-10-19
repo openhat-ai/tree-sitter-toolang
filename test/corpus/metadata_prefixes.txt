@@ -62,13 +62,13 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (skill
@@ -80,18 +80,18 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (service
@@ -103,23 +103,23 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (prompt
@@ -131,13 +131,13 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (chore
@@ -149,18 +149,18 @@ flow work:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (agic
@@ -172,7 +172,7 @@ flow work:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (blank_line)
       (plain_comment)
@@ -186,11 +186,11 @@ flow work:
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (message
         (content
-          (text_line)
+          (text)
           (newline)
           (blank_line)))))
   (flow
@@ -202,18 +202,18 @@ flow work:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (run_statement
         (run_keyword)
         (inline_agic
           (colon)
           (content
-            (text_line))
+            (text))
           (newline)))
       (implicit_run_statement
         (content
-          (text_line)
+          (text)
           (newline)))
       (repeat_statement
         (repeat_keyword)
@@ -222,7 +222,7 @@ flow work:
         (repeat_body
           (implicit_run_statement
             (content
-              (text_line)
+              (text)
               (newline))))))))
 
 ================================================================================
@@ -249,13 +249,13 @@ flow next:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))))
   (flow
     (flow_keyword)
@@ -290,11 +290,11 @@ flow next:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (blank_line)
       (item_doc
-        (comment_text))
+        (text))
       (ERROR)
       (blank_line)
       (run_statement

@@ -143,7 +143,7 @@ def test_parameter_fields_use_signature_names_and_preserve_description(
     assert param.type == "param_name" and param.text == name.encode()
     assert param.child_count == 0
     body = node.child_by_field_name("description")
-    assert body.type == "comment_text" and body.text == description.encode()
+    assert body.type == "text" and body.text == description.encode()
     assert param.end_byte + len(space) == body.start_byte
 
 
@@ -225,7 +225,7 @@ def test_explicit_text_preserves_markers_at_first_line_and_deeper(indent, marker
     )
     assert valid(root)
     block = descendants(root, "content")[0]
-    assert len(descendants(block, "text_line")) == 2
+    assert len(descendants(block, "text")) == 2
     assert not any(
         descendants(block, kind)
         for kind in (
@@ -333,7 +333,7 @@ def test_documentation_nodes_are_peers_with_direct_fields(newline, ending):
     ]
     for owner in [root, body]:
         doc, = [node for node in owner.named_children if node.type == "param_doc"]
-        assert [node.type for node in doc.named_children] == ["param_name", "comment_text"]
+        assert [node.type for node in doc.named_children] == ["param_name", "text"]
         assert doc.named_children[0] == doc.child_by_field_name("param")
         assert doc.named_children[1] == doc.child_by_field_name("description")
         assert doc.text.startswith(b"## @param") and doc.text.endswith(newline.encode())

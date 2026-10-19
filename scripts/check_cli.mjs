@@ -54,11 +54,11 @@ deepStrictEqual(paramDocFields.param, {
   multiple: false, required: true, types: [{ type: "param_name", named: true }],
 });
 deepStrictEqual(paramDocFields.description, {
-  multiple: false, required: true, types: [{ type: "comment_text", named: true }],
+  multiple: false, required: true, types: [{ type: "text", named: true }],
 });
 for (const name of ["program_doc", "item_doc"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === name).fields, {
-    text: { multiple: false, required: false, types: [{ type: "comment_text", named: true }] },
+    text: { multiple: false, required: false, types: [{ type: "text", named: true }] },
   });
 }
 for (const name of ["local_reference", "item_doc_comment", "param_doc_tag"]) {
@@ -71,7 +71,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
 for (const name of [
   "identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
   "agent_name", "cap_name", "chore_name", "array_suffix", "builtin_type",
-  "text_line", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
+  "text", "role", "directive_operator", "assign_operator", "directive_key", "recall_source",
 ]) {
   const node = nodeTypes.find(node => node.type === name);
   deepStrictEqual(node.named, true, name);
@@ -165,6 +165,8 @@ try {
         string: "#556677",
         type: "#667788",
         function: "#778899",
+        constant: "#8899aa",
+        property: "#99aabb",
       },
     }),
   );
@@ -173,6 +175,25 @@ try {
   if (!dumpOutput.includes("scope: source.toolang")) {
     throw new Error(`Toolang was not discovered by dump-languages.\n${dumpOutput}`);
   }
+
+  const textProductionsPath = join(REPO_ROOT, "tests", "fixtures", "text_productions.too");
+  const textProductions = runCli("parse", "--config-path", configPath, "--rebuild", textProductionsPath);
+  for (const kind of ["text", "query_value", "content", "directive_key"]) {
+    deepStrictEqual(textProductions.includes(`(${kind} [`), true, textProductions);
+  }
+  const textHtml = runCli("highlight", "--config-path", configPath, "--html", textProductionsPath);
+  for (const expected of [
+    "<span style='color: #223344'>#@ Text fragments retain # literally.</span>",
+    "<span style='color: #8899aa'>./review</span>",
+    "<span style='color: #99aabb'>recall</span>",
+    "<span style='color: #556677'>    # Literal reducer heading.</span>",
+  ]) {
+    deepStrictEqual(textHtml.includes(expected), true, textHtml);
+  }
+  const incompleteRecallPath = join(configDir, "incomplete-recall.too");
+  writeFileSync(incompleteRecallPath, "flow work:\n  recall\n  run next\n");
+  const recallHtml = runCli("highlight", "--config-path", configPath, "--html", incompleteRecallPath);
+  deepStrictEqual(recallHtml.includes("<span style='color: #99aabb'>recall</span>"), true, recallHtml);
 
   runCli("parse", "--config-path", configPath, "--rebuild", "--quiet", FIXTURE,
     join(REPO_ROOT, "tests", "fixtures", "unified_blocks.too"),

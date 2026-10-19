@@ -13,7 +13,7 @@ OWNERS = [
     ("flow", "first", "run before", "run after", "run_statement"),
     ("agic", "first", "user: Before.", "user: After.", "message"),
     ("struct", "First", "before: Text", "after: Text", "field"),
-    *[(kind, "first", "title = Value", "After.", "text_line")
+    *[(kind, "first", "title = Value", "After.", "text")
       for kind in ["psyche", "skill", "service", "prompt", "chore"]],
 ]
 SUFFIX = "flow next:\n  pass\nagic last:\n  user: Body.\n"

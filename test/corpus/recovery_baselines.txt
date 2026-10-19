@@ -29,13 +29,13 @@ flow next:
       (ERROR)
       (blank_line)
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (runnable_name)
         (newline))))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)
@@ -71,15 +71,15 @@ flow next:
       (ERROR)
       (blank_line)
       (item_doc
-        (comment_text))
+        (text))
       (message
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))))
   (item_doc
-    (comment_text))
+    (text))
   (flow
     (flow_keyword)
     (runnable_name)

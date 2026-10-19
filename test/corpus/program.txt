@@ -12,22 +12,22 @@ with prompt https://toolang.ai/review
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline))
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline))
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline))
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (newline)))
 
 ==================
@@ -68,16 +68,16 @@ chore stale-prs:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (psyche
@@ -87,7 +87,7 @@ chore stale-prs:
     (newline)
     (cap_body
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (prompt
@@ -97,7 +97,7 @@ chore stale-prs:
     (newline)
     (cap_body
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (chore
@@ -109,11 +109,11 @@ chore stale-prs:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)
         (blank_line))))
   (chore
@@ -125,16 +125,16 @@ chore stale-prs:
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (property
         (identifier)
         (assign_operator)
-        (text_line)
+        (text)
         (newline))
       (blank_line)
       (content
-        (text_line)
+        (text)
         (newline)))))
 
 ==================
@@ -178,7 +178,7 @@ context:
     (colon)
     (newline)
     (content
-      (text_line)
+      (text)
       (newline)
       (blank_line)))
   (context
@@ -186,7 +186,7 @@ context:
     (colon)
     (newline)
     (content
-      (text_line)
+      (text)
       (newline))))
 
 ==================
@@ -242,12 +242,12 @@ agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (directive
         (directive_key)
@@ -280,9 +280,9 @@ agic review(input: Part[], path: Text, focus?: Text) -> ReviewResult:
         (colon)
         (newline)
         (content
-          (text_line)
+          (text)
           (newline)
-          (text_line)
+          (text)
           (newline))))))
 
 ==================
@@ -335,11 +335,11 @@ flow research(input: Part[]) -> Answer:
       (directive
         (directive_key)
         (directive_operator)
-        (directive_value)
+        (query_value)
         (newline))
       (blank_line)
       (item_doc
-        (comment_text))
+        (text))
       (run_statement
         (run_keyword)
         (runnable_name)
@@ -353,7 +353,7 @@ flow research(input: Part[]) -> Answer:
         (ask_keyword)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline))
       (run_statement
         (run_keyword)
@@ -365,7 +365,7 @@ flow research(input: Part[]) -> Answer:
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline))))
       (generate_statement
         (generate_keyword)
@@ -386,7 +386,7 @@ flow research(input: Part[]) -> Answer:
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline))))
       (drop_statement
         (drop_keyword)
@@ -415,7 +415,7 @@ flow research(input: Part[]) -> Answer:
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline))))
       (run_statement
         (run_keyword)
@@ -426,7 +426,7 @@ flow research(input: Part[]) -> Answer:
           (colon)
           (newline)
           (content
-            (text_line)
+            (text)
             (newline))))
       (let_statement
         (let_keyword)
@@ -452,7 +452,7 @@ flow research(input: Part[]) -> Answer:
             (inline_agic
               (colon)
               (content
-                (text_line))
+                (text))
               (newline))))))))
 
 ==================
@@ -473,7 +473,7 @@ agic raw:
   (with
     (with_keyword)
     (cap_kind)
-    (text_line)
+    (text)
     (plain_comment)
     (newline))
   (blank_line)
@@ -497,7 +497,7 @@ agic raw:
         (role)
         (colon)
         (content
-          (text_line))
+          (text))
         (newline)))))
 
 ==================

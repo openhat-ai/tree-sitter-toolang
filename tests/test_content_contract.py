@@ -42,8 +42,8 @@ def test_content_fields_do_not_include_headers_or_forwarding_nodes(header, kind,
     expected = value.replace("\n", newline) if multiline else " " + value + " # Literal detail."
     assert content.text == expected.encode()
     assert b"Header." not in content.text and b"flow next" not in content.text
-    assert {node.type for node in content.named_children} <= {"text_line", "newline", "blank_line"}
-    lines = descendants(content, "text_line")
+    assert {node.type for node in content.named_children} <= {"text", "newline", "blank_line"}
+    lines = descendants(content, "text")
     assert len(lines) == (2 if multiline else 1)
     assert all(node.child_count == 0 and b"\n" not in node.text and b"\r" not in node.text for node in lines)
     assert len(descendants(root, "plain_comment")) == 1
@@ -96,7 +96,7 @@ def test_body_fields_own_entries_directly_and_keep_source_order():
         assert entries == sorted(entries, key=lambda node: node.start_byte)
     for node in walk(root):
         if node.type == "content":
-            assert all(child.type in {"text_line", "newline", "blank_line"} for child in node.named_children)
+            assert all(child.type in {"text", "newline", "blank_line"} for child in node.named_children)
 
 
 @pytest.mark.parametrize("source", [

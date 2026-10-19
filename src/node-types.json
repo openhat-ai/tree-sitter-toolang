@@ -473,7 +473,7 @@
           "named": true
         },
         {
-          "type": "text_line",
+          "type": "text",
           "named": true
         }
       ]
@@ -568,10 +568,6 @@
             "named": true
           },
           {
-            "type": "directive_value",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -581,6 +577,10 @@
           },
           {
             "type": "none_keyword",
+            "named": true
+          },
+          {
+            "type": "query_value",
             "named": true
           },
           {
@@ -608,11 +608,6 @@
         }
       ]
     }
-  },
-  {
-    "type": "directive_value",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "drop_statement",
@@ -1168,35 +1163,11 @@
       "required": true,
       "types": [
         {
-          "type": "blank_line",
-          "named": true
-        },
-        {
           "type": "colon",
           "named": true
         },
         {
-          "type": "item_doc",
-          "named": true
-        },
-        {
           "type": "newline",
-          "named": true
-        },
-        {
-          "type": "param_doc",
-          "named": true
-        },
-        {
-          "type": "plain_comment",
-          "named": true
-        },
-        {
-          "type": "program_doc",
-          "named": true
-        },
-        {
-          "type": "shebang_comment",
           "named": true
         }
       ]
@@ -1295,15 +1266,11 @@
           "named": true
         },
         {
-          "type": "recall_keyword",
-          "named": true
-        },
-        {
           "type": "role",
           "named": true
         },
         {
-          "type": "text_line",
+          "type": "text",
           "named": true
         }
       ]
@@ -1453,10 +1420,6 @@
           "named": true
         },
         {
-          "type": "recall_keyword",
-          "named": true
-        },
-        {
           "type": "reduce_keyword",
           "named": true
         },
@@ -1497,7 +1460,7 @@
           "named": true
         },
         {
-          "type": "text_line",
+          "type": "text",
           "named": true
         },
         {
@@ -1552,7 +1515,7 @@
           "named": true
         },
         {
-          "type": "text_line",
+          "type": "text",
           "named": true
         },
         {
@@ -1571,7 +1534,7 @@
         "required": false,
         "types": [
           {
-            "type": "comment_text",
+            "type": "text",
             "named": true
           }
         ]
@@ -1922,7 +1885,7 @@
         "required": true,
         "types": [
           {
-            "type": "comment_text",
+            "type": "text",
             "named": true
           }
         ]
@@ -2092,7 +2055,7 @@
         "required": false,
         "types": [
           {
-            "type": "comment_text",
+            "type": "text",
             "named": true
           }
         ]
@@ -2208,7 +2171,7 @@
         "required": true,
         "types": [
           {
-            "type": "text_line",
+            "type": "text",
             "named": true
           }
         ]
@@ -2308,6 +2271,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "query_value",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "recall_value",
@@ -3177,7 +3145,7 @@
     }
   },
   {
-    "type": "text_line",
+    "type": "text",
     "named": true,
     "fields": {}
   },
@@ -3278,7 +3246,7 @@
         "required": true,
         "types": [
           {
-            "type": "text_line",
+            "type": "text",
             "named": true
           }
         ]
@@ -3369,10 +3337,6 @@
   },
   {
     "type": "comma",
-    "named": true
-  },
-  {
-    "type": "comment_text",
     "named": true
   },
   {
@@ -3505,10 +3469,6 @@
   },
   {
     "type": "psyche_keyword",
-    "named": true
-  },
-  {
-    "type": "recall_keyword",
     "named": true
   },
   {

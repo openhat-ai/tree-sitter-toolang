@@ -85,7 +85,7 @@ def test_property_names_are_schema_independent_with_unchanged_fields(kind, key, 
     value = prop.child_by_field_name("value")
     assert name.type == "identifier" and name.text == key.encode() and name.child_count == 0
     assert operator.type == "assign_operator" and operator.text == b"="
-    assert value.type == "text_line" and value.text == line.partition("=")[2].encode()
+    assert value.type == "text" and value.text == line.partition("=")[2].encode()
     assert prop.text == line.encode() + newline.encode()
     assert body.child_by_field_name("content") is None
     assert not descendants(root, "directive")
@@ -105,7 +105,7 @@ def test_property_prefix_trivia_and_irreversible_literal_body(kind, newline):
         b"answer", b"unknown",
     ]
     content = body.child_by_field_name("content")
-    assert [line.text.strip() for line in descendants(content, "text_line")] == [
+    assert [line.text.strip() for line in descendants(content, "text")] == [
         b"Body begins.", b"models = literal # retained", b"answer = literal", b"# Heading",
     ]
     assert not descendants(content, "property")
@@ -119,7 +119,7 @@ def test_only_plain_assignment_selects_a_property(kind, operator):
     root = parse(f"{kind} example:\n  answer {operator} yes\n  answer = literal\n")
     assert valid(root), root
     assert not descendants(root, "property")
-    assert [line.text.strip() for line in descendants(root, "text_line")] == [
+    assert [line.text.strip() for line in descendants(root, "text")] == [
         f"answer {operator} yes".encode(), b"answer = literal",
     ]
 
@@ -134,7 +134,7 @@ def test_unknown_assignments_after_body_entry_remain_text(kind, prefix, key, ope
     assert valid(root), root
     assert len(descendants(root, "directive")) == bool(prefix)
     assert any(line.text.strip() == f"{key} {operator} literal # retained".encode()
-               for line in descendants(root, "text_line"))
+               for line in descendants(root, "text"))
 
 
 @pytest.mark.parametrize("source", [
@@ -210,7 +210,7 @@ def test_only_complete_identifier_assignment_heads_are_reserved(kind, line):
     root = parse(f"{kind} work:\n  {line}\n  {following_body(kind)}\n")
     assert valid(root), root
     assert not descendants(root, "directive")
-    assert any(node.text.strip() == line.encode() for node in descendants(root, "text_line"))
+    assert any(node.text.strip() == line.encode() for node in descendants(root, "text"))
 
 
 @pytest.mark.parametrize("kind", ["agic", "flow"])
