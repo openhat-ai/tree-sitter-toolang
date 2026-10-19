@@ -4169,12 +4169,8 @@
                                 "type": "SEQ",
                                 "members": [
                                   {
-                                    "type": "FIELD",
-                                    "name": "until",
-                                    "content": {
-                                      "type": "SYMBOL",
-                                      "name": "until_clause"
-                                    }
+                                    "type": "SYMBOL",
+                                    "name": "_until_entry"
                                   },
                                   {
                                     "type": "REPEAT",
@@ -4208,12 +4204,8 @@
                         "type": "SEQ",
                         "members": [
                           {
-                            "type": "FIELD",
-                            "name": "until",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "until_clause"
-                            }
+                            "type": "SYMBOL",
+                            "name": "_until_entry"
                           },
                           {
                             "type": "REPEAT",
@@ -4368,6 +4360,70 @@
                 }
               }
             ]
+          }
+        ]
+      }
+    },
+    "_until_entry": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "until",
+          "content": {
+            "type": "SYMBOL",
+            "name": "until_clause"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "statement",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_invalid_until_clause"
+            },
+            "named": true,
+            "value": "invalid_flow_statement"
+          }
+        }
+      ]
+    },
+    "_invalid_until_clause": {
+      "type": "PREC_DYNAMIC",
+      "value": -2,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_until_start"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "until_keyword"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_diagnostic_text"
+                },
+                "named": true,
+                "value": "text_line"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_line_end"
           }
         ]
       }

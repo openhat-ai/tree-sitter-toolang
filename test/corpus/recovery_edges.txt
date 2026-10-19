@@ -1,0 +1,164 @@
+==================
+Rejected program documentation leaves later statements and items intact
+==================
+flow first:
+  run before
+  #@ Wrong scope.
+  run after
+flow next:
+  pass
+agic last:
+  user: Body.
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))
+      (ERROR
+        (plain_comment))
+      (blank_line)
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline)))
+  (agic
+    (agic_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (agic_body
+      (message
+        (role)
+        (colon)
+        (content
+          (text_line))
+        (newline)))))
+
+==================
+Pending statements finish before outer documentation
+==================
+flow missing:
+  models = fast
+## @param topic Input for the next flow.
+flow condition:
+  repeat:
+    until: Done.
+## Next flow.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (directive_operator)
+        (directive_value)
+        (newline))
+      (invalid_missing_statement)))
+  (param_doc
+    (param_name)
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (until_clause
+            (until_keyword)
+            (inline_agic
+              (colon)
+              (content
+                (text_line))
+              (newline)))
+          (invalid_missing_statement)))))
+  (item_doc
+    (comment_text))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))
+
+==================
+Malformed until stays within its repeat entry
+==================
+flow first:
+  repeat:
+    run worker
+    until 42
+    run inner_after
+  run after
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (repeat_statement
+        (repeat_keyword)
+        (colon)
+        (newline)
+        (repeat_body
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))
+          (invalid_flow_statement
+            (until_keyword)
+            (text_line)
+            (newline))
+          (run_statement
+            (run_keyword)
+            (runnable_name)
+            (newline))))
+      (run_statement
+        (run_keyword)
+        (runnable_name)
+        (newline))))
+  (flow
+    (flow_keyword)
+    (runnable_name)
+    (colon)
+    (newline)
+    (flow_body
+      (pass_keyword)
+      (newline))))

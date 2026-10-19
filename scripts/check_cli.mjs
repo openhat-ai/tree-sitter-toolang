@@ -185,6 +185,18 @@ try {
   runCli("parse", "--config-path", configPath, "--quiet",
     join(REPO_ROOT, "tests", "fixtures", "cst_contract.too"));
 
+  const recoveryPath = join(configDir, "recovery-edges.too");
+  writeFileSync(recoveryPath, "flow bad_comment:\n  run before\n  #@ Wrong scope.\n  run after\nflow missing:\n  models = fast\n## Next.\nflow bad_until:\n  repeat:\n    run worker\n    until 42\n  run after_repeat\nflow next:\n  pass\n");
+  const recovery = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, recoveryPath], {
+    cwd: REPO_ROOT, encoding: "utf8",
+  });
+  deepStrictEqual(recovery.status, 1, recovery.stdout + recovery.stderr);
+  for (const item of ["flow [0, 0] - [4, 0]", "flow [4, 0] - [6, 0]",
+    "item_doc [6, 0] - [7, 0]", "flow [7, 0] - [12, 0]", "flow [12, 0] - [14, 0]"]) {
+    deepStrictEqual(recovery.stdout.includes(`\n  (${item}`), true, recovery.stdout);
+  }
+  deepStrictEqual(recovery.stdout.includes("invalid_flow_statement"), true, recovery.stdout);
+
   for (const kind of ["agic", "flow"]) {
     const path = join(configDir, `${kind}-unknown-directive.too`);
     const body = kind === "agic" ? "user: Continue." : "run after";

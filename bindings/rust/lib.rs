@@ -9,6 +9,72 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 #[cfg(test)]
 mod tests {
     #[test]
+    fn rejected_comments_pending_statements_and_until_errors_keep_their_owners() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "flow bad_comment:\n  run before\n  #@ Wrong scope.\n  run after\nflow missing:\n  models = fast\n## Next.\nflow bad_until:\n  repeat:\n    run worker\n    until 42\n  run after_repeat\nflow next:\n  pass\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(root.has_error());
+        let mut cursor = root.walk();
+        let items: Vec<_> = root.named_children(&mut cursor).collect();
+        assert_eq!(
+            items.iter().map(|node| node.kind()).collect::<Vec<_>>(),
+            ["flow", "flow", "item_doc", "flow", "flow"]
+        );
+        for (index, name) in [
+            (0, "bad_comment"),
+            (1, "missing"),
+            (3, "bad_until"),
+            (4, "next"),
+        ] {
+            assert_eq!(
+                items[index]
+                    .child_by_field_name("name")
+                    .unwrap()
+                    .utf8_text(source.as_bytes())
+                    .unwrap(),
+                name
+            );
+        }
+        assert!(items[1].end_byte() <= items[2].start_byte());
+        assert_eq!(items[2].utf8_text(source.as_bytes()).unwrap(), "## Next.\n");
+        assert!(!items[4].has_error());
+        for (index, expected) in [(0, vec!["before", "after"]), (3, vec!["after_repeat"])] {
+            let body = items[index].child_by_field_name("body").unwrap();
+            let mut cursor = body.walk();
+            let targets: Vec<_> = body
+                .named_children(&mut cursor)
+                .filter(|node| node.kind() == "run_statement")
+                .map(|node| {
+                    assert!(!node.has_error());
+                    node.child_by_field_name("target")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap()
+                })
+                .collect();
+            assert_eq!(targets, expected);
+        }
+        let repeat = items[3]
+            .child_by_field_name("body")
+            .unwrap()
+            .child_by_field_name("statement")
+            .unwrap();
+        let body = repeat.child_by_field_name("body").unwrap();
+        let worker = body.child_by_field_name("statement").unwrap();
+        assert_eq!(worker.kind(), "run_statement");
+        assert_eq!(
+            worker.utf8_text(source.as_bytes()).unwrap().trim(),
+            "run worker"
+        );
+        assert_eq!(
+            body.named_child(1).unwrap().kind(),
+            "invalid_flow_statement"
+        );
+    }
+
+    #[test]
     fn native_recovery_synchronizes_at_statements_and_program_items() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

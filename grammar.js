@@ -559,9 +559,9 @@ module.exports = grammar({
     repeat_body: ($) => structuralBody($, choice(
       seq(
         $._statements,
-        optional(seq(field("until", $.until_clause), repeat($._trivia), optional($._statements))),
+        optional(seq($._until_entry, repeat($._trivia), optional($._statements))),
       ),
-      seq(field("until", $.until_clause), repeat($._trivia),
+      seq($._until_entry, repeat($._trivia),
         choice($._statements, missing($, "statement"))),
     )),
     _window_complement: ($) => seq(
@@ -582,6 +582,17 @@ module.exports = grammar({
           field("target", alias($._predicate_inline_agic, $.inline_agic)),
         ),
       )),
+    // Commit the clause entry before inspecting its target. A malformed target
+    // stays in this repeat instead of rolling recovery back through its header.
+    // Both alternatives expose existing public nodes directly in the body.
+    _until_entry: ($) => choice(
+      field("until", $.until_clause),
+      field("statement", alias($._invalid_until_clause, $.invalid_flow_statement)),
+    ),
+    _invalid_until_clause: ($) => prec.dynamic(-2, seq(
+      $._until_start, $.until_keyword,
+      optional(alias($._diagnostic_text, $.text_line)), $._line_end,
+    )),
     invalid_flow_statement: ($) =>
       prec.dynamic(-2, seq(
         $._flow_keyword,

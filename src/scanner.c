@@ -227,6 +227,28 @@ static void finish_trivia_line(Scanner *scanner) {
   }
 }
 
+// Recovery always makes progress on the current physical line and releases any
+// rejected comment entry before the next line can establish a layout boundary.
+static bool scan_error_line(Scanner *scanner, TSLexer *lexer) {
+  if (line_end(lexer)) {
+    lexer->mark_end(lexer);
+    enum Token newline = scanner->line_started ? NEWLINE : BLANK_LINE;
+    finish_trivia_line(scanner);
+    scanner->trivia = (Trivia){0};
+    return emit(scanner, lexer, newline);
+  }
+  if (lexer->eof(lexer)) {
+    return false;
+  }
+  while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    advance(lexer);
+  }
+  lexer->mark_end(lexer);
+  scanner->line_started = scanner->comment_started = false;
+  scanner->trivia = (Trivia){0};
+  return emit(scanner, lexer, ERROR_LINE);
+}
+
 static void skip_indentation(TSLexer *lexer) {
   while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
     lexer->advance(lexer, true);
@@ -362,11 +384,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
         finish_trivia_line(scanner);
         return emit(scanner, lexer, BLANK_LINE);
       }
-      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
-        advance(lexer);
-      }
-      lexer->mark_end(lexer);
-      return emit(scanner, lexer, ERROR_LINE);
+      return scan_error_line(scanner, lexer);
     }
     if (valid[COMMENT_END] && (lexer->eof(lexer) || line_end(lexer))) {
       lexer->mark_end(lexer);
@@ -381,7 +399,10 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     // ERROR_LINE is never accepted by a normal grammar production.
     if (scanner->comment_started) {
       skip_indentation(lexer);
-      return scan_comment(scanner, lexer, valid);
+      if (scan_comment(scanner, lexer, valid)) {
+        return true;
+      }
+      return scan_error_line(scanner, lexer);
     }
     lexer->mark_end(lexer);
     Indentation indent = indentation(lexer);
@@ -409,23 +430,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       scanner->comment_started = true;
       return emit(scanner, lexer, COMMENT_START);
     }
-    if (!line_end(lexer)) {
-      if (lexer->eof(lexer)) {
-        return false;
-      }
-      while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
-        advance(lexer);
-      }
-      lexer->mark_end(lexer);
-      scanner->line_started = scanner->comment_started = false;
-      scanner->trivia = (Trivia){0};
-      return emit(scanner, lexer, ERROR_LINE);
-    }
-    lexer->mark_end(lexer);
-    enum Token newline = scanner->line_started ? NEWLINE : BLANK_LINE;
-    finish_trivia_line(scanner);
-    scanner->trivia = (Trivia){0};
-    return emit(scanner, lexer, newline);
+    return scan_error_line(scanner, lexer);
   }
   if (scanner->comment_started) {
     skip_indentation(lexer);
@@ -461,16 +466,35 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   // sibling's first word. No layout frame is opened for a missing body.
   bool opening_body = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT] ||
                       valid[TEXT_INDENT] || valid[REDUCE_INDENT];
-  // Only commit leading structural trivia to a declaration when a real body
-  // follows it. Otherwise finish the empty owner before the outer comments.
+  bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
+                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
+  bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
+  bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
+  bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
+  // Reduce opens a structural clause scope, then a literal reducer at the same
+  // baseline. Both transitions preserve leading Markdown as literal content.
+  bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
+  bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
+                             indent.prefix == frame.prefix;
+  // Resolve every pending requirement before outer comments, including an
+  // already-open body that still needs a statement. Existing same-level entries
+  // keep the prefix open; new bodies and values require deeper indentation.
+  // Without a body-start signal, blank lines can be consumed normally before
+  // inspecting the next comment, substantive line, or EOF.
   if (at_start && !scanner->line_started && !scanner->trivia.lines &&
-      (valid[BODY_START] || valid[EMPTY_BODY] || (valid[MISSING_REQUIRED] && opening_body)) &&
-      !((valid[TEXT_INDENT] || valid[REDUCE_INDENT]) && lexer->lookahead == '#' && indent.column > frame.column) &&
+      (valid[BODY_START] || valid[EMPTY_BODY] ||
+       (valid[MISSING_REQUIRED] && (opening_body || lexer->lookahead == '#'))) &&
+      !(lexer->lookahead == '#' && (literal || opening_text || opening_reduce || starting_reduce_text)) &&
       (lexer->lookahead == '#' || lexer->lookahead == '\r' || lexer->lookahead == '\n')) {
     bool comment = lexer->lookahead == '#';
     Trivia trivia = {0};
     if (!lookahead_trivia(lexer, indent, &trivia, valid[TEXT_INDENT] || valid[REDUCE_INDENT])) {
       return false;
+    }
+    bool outside_requirement = trivia.column < frame.column ||
+                               (awaiting_body && trivia.column == frame.column);
+    if (valid[MISSING_REQUIRED] && outside_requirement) {
+      return emit(scanner, lexer, MISSING_REQUIRED);
     }
     if (trivia.column > frame.column) {
       if (valid[BODY_START] && trivia.lines) {
@@ -479,8 +503,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       }
     } else if (valid[EMPTY_BODY]) {
       return emit(scanner, lexer, EMPTY_BODY);
-    } else if (valid[MISSING_REQUIRED] && opening_body) {
-      return emit(scanner, lexer, MISSING_REQUIRED);
     } else if (comment && valid[COMMENT_START]) {
       scanner->trivia = trivia;
       scanner->comment_started = true;
@@ -490,11 +512,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     // start signal is the only branch that can continue from that position.
     return false;
   }
-  // Existing flow/repeat/reducer bodies can take same-level entries; pending
-  // body and content values require a deeper indentation level.
-  bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
-                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
-  bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
   if (valid[EMPTY_BODY] && !scanner->line_started &&
       (lexer->eof(lexer) || (at_start && indent.column <= frame.column))) {
     return emit(scanner, lexer, EMPTY_BODY);
@@ -546,13 +563,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return false;
   }
 
-  bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
-  bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
-  // Reduce opens a structural clause scope, then a literal reducer at the same
-  // baseline. Preserve leading Markdown through both transitions.
-  bool opening_reduce = valid[REDUCE_INDENT] && indent.column > frame.column;
-  bool starting_reduce_text = valid[REDUCE_TEXT_START] && indent.column == frame.column &&
-                             indent.prefix == frame.prefix;
   if (frame.mode != STRUCTURAL && !literal && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }

@@ -431,8 +431,8 @@ repeat_statement ::=
   _body_prefix? (* field "body" *) ( repeat_body ) );
 
 repeat_body ::=
-  (* prec.right 0 *) ( _indent _trivia* ( _statements ( (* field "until" *) ( until_clause )
-  _trivia* _statements? )? | (* field "until" *) ( until_clause ) _trivia* ( _statements |
+  (* prec.right 0 *) ( _indent _trivia* ( _statements ( _until_entry _trivia* _statements? )? |
+  _until_entry _trivia* ( _statements |
   (* alias {"value":"invalid_missing_statement","named":true} *) ( _missing_required ) ) |
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) ) _dedent |
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );
@@ -447,6 +447,14 @@ until_clause ::=
   (* prec.dynamic 2 *) ( _until_start until_keyword ( (* field "target" *) ( runnable_name )
   _line_end | (* field "target" *) ( (* alias {"value":"inline_agic","named":true} *) (
   _predicate_inline_agic ) ) ) );
+
+_until_entry ::=
+  (* field "until" *) ( until_clause ) | (* field "statement" *) (
+  (* alias {"value":"invalid_flow_statement","named":true} *) ( _invalid_until_clause ) );
+
+_invalid_until_clause ::=
+  (* prec.dynamic -2 *) ( _until_start until_keyword (
+  (* alias {"value":"text_line","named":true} *) ( _diagnostic_text ) )? _line_end );
 
 invalid_flow_statement ::=
   (* prec.dynamic -2 *) ( _flow_keyword ( (* alias {"value":"text_line","named":true} *) (
