@@ -144,7 +144,7 @@ flow work:
               (newline))))))))
 
 ==================
-Diagnostic names distinguish statements and run targets
+Native errors preserve statement and target boundaries
 ==================
 flow work:
   let result run worker
@@ -161,15 +161,12 @@ agic work:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_flow_stmt
-        (local_name)
-        (text)
-        (newline))
+      (ERROR)
+      (blank_line)
       (run_stmt
-        (invalid_run_target
-          (runnable_name)
-          (text)
-          (newline)))
+        (runnable_name)
+        (ERROR)
+        (newline))
       (run_stmt
         (runnable_name)
         (newline))))
@@ -177,10 +174,9 @@ agic work:
     (runnable_name)
     (newline)
     (agic_body
-      (invalid_agic_message
-        (role)
-        (text)
-        (newline))
+      (ERROR
+        (role))
+      (blank_line)
       (message
         (role)
         (content

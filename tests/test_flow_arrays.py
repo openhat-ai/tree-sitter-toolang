@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 OPERATIONS = [
@@ -67,8 +67,7 @@ def test_invalid_collection_targets_never_become_binding_text(head, kind, count,
     root = parse(f"flow bad:\n  {binding}{head}{target}\n")
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt"), root
-    for statement in descendants(root, "let_stmt"):
-        assert statement.child_by_field_name("value") is None, root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", [
@@ -84,8 +83,7 @@ def test_malformed_active_forms_are_rejected(statement, binding, nested):
         body = "repeat 2 times:\n    " + body.replace("\n", "\n  ")
     root = parse(f"flow bad:\n  {body}\n")
     assert not valid(root), root
-    for statement in descendants(root, "let_stmt"):
-        assert statement.child_by_field_name("value") is None, root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -157,8 +155,7 @@ def test_collection_fixture_exposes_collection_statements():
 def test_using_prefix_is_not_a_named_target_connector(head, binding):
     root = parse(f"flow bad:\n  {binding}{head} usingworker\n")
     assert not valid(root), root
-    for statement in descendants(root, "let_stmt"):
-        assert statement.child_by_field_name("value") is None, root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)

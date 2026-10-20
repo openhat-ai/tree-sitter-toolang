@@ -19,7 +19,7 @@ module.exports = grammar({
     $._exec_binding_start, $._operation_binding_start,
     $._restricted_binding_start, $._named_binding_start,
     $._missing_required,
-    $.integer_literal, $._param_error, $._missing_type,
+    $.integer_literal, $._param_error,
   ],
   rules: {
     program: ($) =>
@@ -89,7 +89,7 @@ module.exports = grammar({
     field: ($) =>
       seq(
         $._line_start,
-        field("name", $.identifier),
+        field("name", $._name),
         optional(field("optional", "?")),
         field("colon", ":"),
         field("type", $.type),
@@ -97,16 +97,16 @@ module.exports = grammar({
       ),
 
     psyche: ($) => seq($._psyche_header, optionalBody($, $.cap_body)),
-    _psyche_header: ($) => declarationHeader($, "psyche", $.cap_name),
+    _psyche_header: ($) => declarationHeader($, "psyche", $._cap_name),
 
     skill: ($) => seq($._skill_header, optionalBody($, $.cap_body)),
-    _skill_header: ($) => declarationHeader($, "skill", $.cap_name),
+    _skill_header: ($) => declarationHeader($, "skill", $._cap_name),
 
     service: ($) => seq($._service_header, optionalBody($, $.cap_body)),
-    _service_header: ($) => declarationHeader($, "service", $.cap_name),
+    _service_header: ($) => declarationHeader($, "service", $._cap_name),
 
     prompt: ($) => seq($._prompt_header, optionalBody($, $.cap_body)),
-    _prompt_header: ($) => declarationHeader($, "prompt", $.cap_name),
+    _prompt_header: ($) => declarationHeader($, "prompt", $._cap_name),
 
     cap_body: ($) => definitionBody($),
     _definition_content: ($) => seq(
@@ -116,17 +116,17 @@ module.exports = grammar({
     ),
 
     chore: ($) => seq($._chore_header, optionalBody($, $.chore_body)),
-    _chore_header: ($) => declarationHeader($, "chore", $.chore_name),
+    _chore_header: ($) => declarationHeader($, "chore", $._chore_name),
 
-    cap_name: ($) => $._snake_kebab_name,
-    chore_name: ($) => $._snake_kebab_name,
+    _cap_name: ($) => alias($._snake_kebab_name, $.cap_name),
+    _chore_name: ($) => alias($._snake_kebab_name, $.chore_name),
 
     chore_body: ($) => definitionBody($),
 
     property: ($) =>
       seq(
         $._line_start,
-        field("key", $.identifier),
+        field("key", $._name),
         field("operator", "="),
         field("value", alias($._structural_text, $.text)),
         $._line_end,
@@ -168,11 +168,11 @@ module.exports = grammar({
         ")",
       ),
     _param_entry: ($) => choice($.param, $.invalid_param),
-    // A colon commits to an annotation; recover its missing operands locally.
+    // Keep malformed suffixes and unnamed entries local to their real list
+    // delimiter. A missing type after an authored name uses native recovery.
     invalid_param: ($) => choice(
       seq(optional(field("optional", "?")), ":",
         optional(seq(field("type", $.type), optional(alias($._param_error, $.text))))),
-      seq(field("name", $._param_name), optional(field("optional", "?")), ":"),
       seq(field("name", $._param_name), optional(field("optional", "?")),
         ":", field("type", $.type), alias($._param_error, $.text)),
     ),
@@ -203,11 +203,8 @@ module.exports = grammar({
       seq($._line_start, choice(
         $.let_stmt,
         $.exec_stmt,
-        alias($._invalid_exec_binding, $.invalid_flow_stmt),
-        alias($._invalid_restricted_binding, $.invalid_flow_stmt),
-        alias($._invalid_named_binding, $.invalid_flow_stmt),
+        alias($._invalid_binding, $.invalid_flow_stmt),
         $._flow_operation,
-        $.invalid_flow_stmt,
         $.implicit_run_stmt,
       )),
     _flow_operation: ($) =>
@@ -229,90 +226,37 @@ module.exports = grammar({
     _bound_operation: ($) => seq(
       // Select operations before the free-form text alternative can consume them.
       $._operation_binding_start,
-      choice($._flow_operation, alias($._invalid_bound_operation, $.invalid_flow_stmt)),
+      $._flow_operation,
     ),
-    _binding_operation_keyword: ($) => keywordChoice($, tables.operation_binding),
-    _invalid_bound_operation: ($) => prec.dynamic(-2, seq(
-      $._binding_operation_keyword, optional(alias($._recovery_text, $.text)), $._line_end,
-    )),
-    let_stmt: ($) =>
-      choice(
-        seq(
-          "let",
-          $._named_binding_start,
-          field("local", $.local_name),
-          "=",
-          field("stmt", $._bound_operation),
-        ),
-        seq(
-          "let",
-          field("stmt", $._flow_operation),
-        ),
-        prec.right(seq(
-          "let",
-          $._named_binding_start,
-          field("local", $.local_name),
-          "=",
-          content($, "value"),
-        )),
-      ),
+    _let_header: ($) => seq("let", $._named_binding_start, field("local", $._local_name), "="),
+    let_stmt: ($) => choice(
+      seq($._let_header, field("stmt", $._bound_operation)),
+      seq("let", field("stmt", $._flow_operation)),
+      prec.right(seq($._let_header, content($, "value"))),
+    ),
     exec_stmt: ($) => seq("exec", $._target_tail),
     spawn_stmt: ($) => seq("spawn", $._target_tail),
-    _invalid_exec_binding: ($) => seq(
-      "let",
-      optional(seq($._named_binding_start, field("local", $.local_name), "=")),
-      $._exec_binding_start,
-      "exec",
+    // These heads cannot be operations or literal values in a binding. Retain
+    // one bounded diagnostic instead of letting text recovery accept them.
+    _invalid_binding: ($) => seq(
+      choice($._let_header, "let"),
+      choice(
+        seq($._exec_binding_start, "exec"),
+        seq($._restricted_binding_start, $._restricted_binding_keyword),
+      ),
       optional(alias($._recovery_text, $.text)),
       $._line_end,
     ),
-    _invalid_restricted_binding: ($) => seq(
-      "let",
-      optional(seq($._named_binding_start, field("local", $.local_name), "=")),
-      $._restricted_binding_start,
-      $._restricted_binding_keyword,
-      optional(alias($._recovery_text, $.text)),
-      $._line_end,
-    ),
-    // Keep a missing assignment delimiter diagnostic local and deterministic
-    // instead of choosing between a dropped name and an inserted '='.
-    _invalid_named_binding: ($) => prec.dynamic(-2, seq(
-      "let", field("local", $.local_name),
-      optional(alias($._recovery_text, $.text)),
-      $._line_end,
-    )),
     run_stmt: ($) => choice(
-      $._run,
-      seq($._async_modifier, $._run_after_async),
+      seq($._named_run_header, $._line_end),
+      seq($._run_header, prec.right(seq(optional($._required_space), $._inline_target))),
     ),
+    _run_header: ($) => seq(optional($._async_modifier), "run"),
+    _named_run_header: ($) => seq($._run_header, $._required_space, $._named_target),
     _async_modifier: ($) => field("async", "async"),
-    _run: ($) => seq("run", $._target_tail),
-    // A modifier consumes the statement-head boundary; keep runworker indivisible.
-    // Preserve the unmodified run's existing target ranges above.
-    _run_after_async: ($) => seq(
-      "run",
-      choice(
-        seq($._required_space, field("target", $.runnable_name), $._line_end),
-        prec.right(seq(optional($._required_space), field("target", $.inline_agic))),
-        alias($._invalid_async_target, $.invalid_run_target),
-      ),
-    ),
-    // Keep a malformed modified run on its own line even after its target
-    // tokens have committed the lexer to structural parsing.
-    _invalid_async_target: ($) => prec.dynamic(-2, prec(-1, seq(
-      optional($._required_space),
-      choice(
-        seq($.runnable_name, optional(alias($._recovery_text, $.text))),
-        // A recognized colon commits to an inline agic, including its missing
-        // content recovery. Do not reinterpret that header as a malformed tail.
-        seq("->", optional(seq($.type, optional(alias($._recovery_text, $.text))))),
-        optional(alias($._recovery_text, $.text)),
-      ),
-      $._line_end,
-    ))),
     await_stmt: ($) => seq(
       "await",
-      field("handle", $.handle_name),
+      field("handle", $._handle_name),
       $._line_end,
     ),
     implicit_run_stmt: ($) => field("content", alias($._implicit_content, $.content)),
@@ -321,7 +265,7 @@ module.exports = grammar({
       alias($._flow_raw_text, $.text), $.newline,
     ),
 
-    seek_stmt: ($) => seq("seek", field("agent", $.agent_name), $._target_tail),
+    seek_stmt: ($) => seq("seek", field("agent", $._agent_name), $._target_tail),
     ask_stmt: ($) =>
       prec.right(seq(
         "ask",
@@ -415,7 +359,7 @@ module.exports = grammar({
         optional($._lanes_clause), $._by_tail,
       )),
     _required_space: () => token.immediate(/[ \t]+/),
-    _named_target: ($) => field("target", $.runnable_name),
+    _named_target: ($) => field("target", $._runnable_name),
     _inline_target: ($) => field("target", $.inline_agic),
     // Target forms expose only their value. Tails complete the surrounding
     // statement; inline content already owns its physical line ending.
@@ -474,7 +418,7 @@ module.exports = grammar({
         $._until_start,
         "until",
         choice(
-          seq(field("target", $.runnable_name), $._line_end),
+          seq(field("target", $._runnable_name), $._line_end),
           field("target", alias($._until_agic, $.inline_agic)),
         ),
       )),
@@ -487,14 +431,11 @@ module.exports = grammar({
     ),
     _invalid_until_clause: ($) => prec.dynamic(-2, seq(
       $._until_start, "until",
-      optional(alias($._recovery_text, $.text)), $._line_end,
-    )),
-    invalid_flow_stmt: ($) =>
-      prec.dynamic(-2, seq(
-        $._flow_keyword,
+      choice(
+        seq($._runnable_name, alias($._recovery_text, $.text)),
         optional(alias($._recovery_text, $.text)),
-        $._line_end,
-      )),
+      ), $._line_end,
+    )),
     inline_agic: ($) =>
       seq(
         optional($._return_clause),
@@ -508,7 +449,7 @@ module.exports = grammar({
       ),
     _return_clause: ($) => seq(
       field("arrow", "->"),
-      choice(field("return", $.type), alias($._missing_type, $.invalid_missing_type)),
+      field("return", $.type),
     ),
     selection: ($) =>
       seq(
@@ -516,23 +457,16 @@ module.exports = grammar({
         $._required_space,
         field("count", $.integer_literal),
       ),
-    runnable_name: ($) => $._identifier,
-    agent_name: ($) => $._identifier,
-    local_name: ($) => $._identifier,
-    handle_name: ($) => $._identifier,
+    // Alias lexical leaves directly so native missing tokens stay visible
+    // under their public role instead of inside forwarding nodes.
+    _runnable_name: ($) => alias($._identifier, $.runnable_name),
+    _agent_name: ($) => alias($._identifier, $.agent_name),
+    _local_name: ($) => alias($._identifier, $.local_name),
+    _handle_name: ($) => alias($._identifier, $.handle_name),
 
-    _directive_entry: ($) => choice($.directive, $.invalid_directive),
-    invalid_directive: ($) => prec.dynamic(-2, seq(
-      $._directive_start,
-      field("key", choice($._query_key, $._route_key,
-        ...["recall", "lanes", "context", "instruct"].map(word => alias(word, $.directive_key)))),
-      optional(field("operator", $._directive_operator)),
-      optional(alias($._recovery_text, $.text)),
-      $._line_end,
-    )),
     directive: ($) => seq($._directive_start, choice(
       seq(field("key", $._query_key),
-        field("operator", $._directive_operator), field("value", $.query_value)),
+        field("operator", $._directive_operator), field("value", $._query_value)),
       seq(field("key", $._route_key),
         field("operator", "="), field("value", $.route_value)),
       seq(field("key", alias("recall", $.directive_key)), field("operator", "="),
@@ -546,8 +480,7 @@ module.exports = grammar({
     _query_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
     _route_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
     _directive_operator: () => choice("=", "+=", "-="),
-    // Prefer a valid raw query value over the overlapping recovery fragment.
-    query_value: () => prec(1, token(prec(-1, /[^ \t#\r\n][^#\r\n]*/))),
+    _query_value: ($) => alias(token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)), $.query_value),
     route_value: ($) => choice("none", "*",
       seq($.runnable_ref, repeat(seq(",", $.runnable_ref)))),
     runnable_ref: () => token(/([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0-9_-]*/),
@@ -555,13 +488,12 @@ module.exports = grammar({
       seq($._recall_source, repeat(seq(",", $._recall_source)))),
     _recall_source: ($) => keywordLeaves(recallSources, $.recall_source),
     _directives: ($) => prec.right(seq(
-      field("directive", $._directive_entry), repeat(choice(field("directive", $._directive_entry), $._trivia)),
+      field("directive", $.directive), repeat(choice(field("directive", $.directive), $._trivia)),
     )),
-    _text_ref: ($) => choice("default", "none", $.identifier),
+    _text_ref: ($) => choice("default", "none", $._name),
     _messages: ($) => prec.right(seq(
-      field("message", $._message_entry), repeat(choice(field("message", $._message_entry), $._trivia)),
+      field("message", $.message), repeat(choice(field("message", $.message), $._trivia)),
     )),
-    _message_entry: ($) => choice($.message, seq($._line_start, $.invalid_agic_message)),
     message: ($) =>
       seq($._line_start, choice(
         seq(field("role", $._role), ":", content($, "content")),
@@ -571,18 +503,10 @@ module.exports = grammar({
     _implicit_message_line: ($) => seq(
       alias($._agic_raw_text, $.text), $.newline,
     ),
-    invalid_agic_message: ($) =>
-      prec.dynamic(-2, seq(
-        $._agic_keyword,
-        optional(alias($._recovery_text, $.text)),
-        $._line_end,
-      )),
     _role: ($) => keywordLeaves(roles, $.role),
     _pass_stmt: ($) =>
       prec(1, seq($._line_start, "pass", $._line_end, repeat($._trivia))),
-    _flow_keyword: ($) => keywordChoice($, tables.flow),
-    _agic_keyword: ($) => keywordChoice($, tables.agic),
-    _restricted_binding_keyword: ($) => keywordChoice($, tables.restricted_binding),
+    _restricted_binding_keyword: () => choice(...tables.restricted_binding),
 
     _cap_kind: ($) => keywordLeaves(capKinds, $.cap_kind),
 
@@ -590,14 +514,14 @@ module.exports = grammar({
     // this rule before the narrower name tokens to win equal-length matches.
     _word: () => token(/[A-Za-z_][A-Za-z0-9_]*/),
     type_name: () => token(/[A-Z][A-Za-z0-9]*/),
-    identifier: ($) => $._identifier,
+    _name: ($) => alias($._identifier, $.identifier),
     _identifier: () => token(/[a-z][a-z0-9_]*/),
     _snake_kebab_name: () => token(/[a-z][a-z0-9_-]*/),
     // Inline content owns its entire physical line. Structural raw values keep
     // their comment delimiter; both expose the same public text leaf.
     _structural_text: () => token(prec(-1, /[^#\r\n]+/)),
     _inline_text: () => token(prec(-1, /[ \t]*[^ \t\r\n][^\r\n]*/)),
-    // Recovery text must not absorb extras shared with structural tokens.
+    // Recovery fragments must not absorb extras shared with structural tokens.
     _recovery_text: () => token(prec(-1, /[^ \t#\r\n][^#\r\n]*/)),
   },
 });
@@ -612,7 +536,7 @@ function declarationHeader($, keyword, name) {
 function runnableHeader($, keyword) {
   return seq(
     field("keyword", keyword),
-    optional(field("name", $.runnable_name)),
+    optional(field("name", $._runnable_name)),
     optional(field("params", $.params)),
     optional($._return_clause),
     field("colon", ":"), $._line_end,
@@ -620,13 +544,13 @@ function runnableHeader($, keyword) {
 }
 
 function textHeader($, keyword) {
-  return seq(field("keyword", keyword), optional(field("name", $.identifier)), field("colon", ":"));
+  return seq(field("keyword", keyword), optional(field("name", $._name)), field("colon", ":"));
 }
 
 // Expand the phrase inside complete headers so required fields remain visible
 // to Tree-sitter's schema generator, while sharing the authored syntax.
 function usingClause($) {
-  return seq("using", $._required_space, field("target", $.runnable_name));
+  return seq("using", $._required_space, field("target", $._runnable_name));
 }
 
 // Content is a semantic value; spelling and line endings do not add wrappers.
@@ -681,15 +605,4 @@ function paragraph($, line) {
 // Keep each word eligible for keyword extraction without adding CST wrappers.
 function keywordLeaves(words, node) {
   return choice(...words.map(word => alias(word, node)));
-}
-
-// Recognition context comes from the vocabulary; public leaves retain their roles.
-function keywordChoice($, words) {
-  return choice(...[...new Set(words)].map(word => {
-    if (roles.includes(word)) return alias(word, $.role);
-    if ([...QUERY_DIRECTIVE_KEYS, ...ROUTE_DIRECTIVE_KEYS, "recall"].includes(word)) {
-      return alias(word, $.directive_key);
-    }
-    return word;
-  }));
 }

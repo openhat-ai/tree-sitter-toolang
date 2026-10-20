@@ -675,8 +675,8 @@ def test_agic_instruction_blocks_must_precede_messages():
 
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error is False
-    assert _nodes(tree.root_node, "invalid_agic_message")
+    assert tree.root_node.has_error
+    assert _nodes(tree.root_node, "ERROR")
 
 
 def test_implicit_messages_do_not_fallback_from_reserved_words():

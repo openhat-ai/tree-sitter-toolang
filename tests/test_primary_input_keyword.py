@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, valid
 
 
 @pytest.mark.parametrize("statement", [
@@ -22,8 +22,7 @@ def test_primary_input_cannot_be_an_operation_or_await_handle(statement, ending,
     root = parse((prefix + indent + statement).replace("\n", ending or "\n") + ending)
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt"), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", ["_", "let x = _", "await _", "let await _"])

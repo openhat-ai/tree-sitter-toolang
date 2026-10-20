@@ -27,7 +27,7 @@ const DOCUMENTATION_FIXTURE = join(
 );
 
 const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
-deepStrictEqual(nodeTypes.filter(node => node.named).length, 80);
+deepStrictEqual(nodeTypes.filter(node => node.named).length, 76);
 for (const [owner, field, literal] of [
   ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
   ["param", "optional", "?"], ["property", "operator", "="],
@@ -51,7 +51,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "run_stmt").fields, {
     multiple: false, required: false, types: [{ type: "async", named: false }],
   },
   target: {
-    multiple: false, required: false,
+    multiple: false, required: true,
     types: [{ type: "inline_agic", named: true }, { type: "runnable_name", named: true }],
   },
 });
@@ -82,7 +82,7 @@ for (const name of ["local_reference", "item_doc_comment", "param_doc_tag"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === name), false);
 }
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
-  type: "local_name", named: true, fields: {},
+  type: "local_name", named: true,
 });
 
 for (const name of [
@@ -133,17 +133,17 @@ const messageFields = nodeTypes.find(node => node.type === "message").fields;
 deepStrictEqual(messageFields.role, {
   multiple: false, required: false, types: [{ type: "role", named: true }],
 });
-// Invalid messages are separate body entries; normal messages require content.
+// Native errors are not ordinary message entries; normal messages require content.
 deepStrictEqual(messageFields.content, textField);
 deepStrictEqual(nodeTypes.find(node => node.type === "agic_body").fields.message.types, [
-  { type: "invalid_agic_message", named: true }, { type: "message", named: true },
+  { type: "message", named: true },
 ]);
 deepStrictEqual(nodeTypes.find(node => node.type === "params").fields.param.types, [
   { type: "invalid_param", named: true }, { type: "param", named: true },
 ]);
 for (const body of ["agic_body", "flow_body"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === body).fields.directive.types, [
-    { type: "directive", named: true }, { type: "invalid_directive", named: true },
+    { type: "directive", named: true },
   ]);
 }
 deepStrictEqual(nodeTypes.find(node => node.type === "param").fields.name.required, true);
@@ -152,7 +152,7 @@ for (const [kind, field] of [["flow_body", "stmt"], ["agic_body", "message"],
   ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
 }
-for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_stmt", "invalid_missing_type"]) {
+for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_stmt"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind), { type: kind, named: true });
 }
 
@@ -190,6 +190,7 @@ try {
         function: "#778899",
         constant: "#8899aa",
         property: "#99aabb",
+        error: "#aa2233",
       },
     }),
   );
@@ -197,6 +198,32 @@ try {
   const dumpOutput = runCli("dump-languages", "--config-path", configPath);
   if (!dumpOutput.includes("scope: source.toolang")) {
     throw new Error(`Toolang was not discovered by dump-languages.\n${dumpOutput}`);
+  }
+
+  const nativeErrors = [
+    "flow first:\n  run worker extra\n  run after\n",
+    "flow first:\n  async run worker extra\n  run after\n",
+    "flow first(topic:):\n  run after\n",
+    "flow first -> :\n  run after\n",
+    "flow first:\n  models =\n  run after\n",
+    "flow first:\n  context =\n  run after\n",
+    "flow first:\n  hands += worker\n  run after\n",
+    "agic first:\n  user missing colon\n  user: After.\n",
+  ];
+  for (const [index, prefix] of nativeErrors.entries()) {
+    const path = join(configDir, `native-error-${index}.too`);
+    writeFileSync(path, prefix + "flow next:\n  pass\n");
+    const result = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(result.status, 1, result.stdout + result.stderr);
+    deepStrictEqual(/\((ERROR|MISSING)\b/.test(result.stdout), true, result.stdout);
+    deepStrictEqual((result.stdout.match(/\n  \(flow\b/g) ?? []).length,
+      prefix.startsWith("flow") ? 2 : 1, result.stdout);
+    if (index === 1) {
+      const html = runCli("highlight", "--config-path", configPath, "--html", path);
+      deepStrictEqual(html.includes("<span style='color: #aa2233'>extra</span>"), true, html);
+    }
   }
 
   const textProductionsPath = join(REPO_ROOT, "tests", "fixtures", "text_productions.too");

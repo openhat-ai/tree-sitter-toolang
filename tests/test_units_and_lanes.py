@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import tokens, descendants, edit_tree, fingerprint, parse, point, valid
+from test_layout_support import assert_no_literal_binding_fallback, tokens, descendants, edit_tree, fingerprint, parse, point, valid
 
 
 OPERATIONS = [
@@ -130,7 +130,7 @@ def test_suffix_and_duplicate_lanes_are_invalid_and_preserve_following_source(
     root = parse((f"flow work:\n  run before\n  {binding}{statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline))
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt"), root
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt"))
+    assert_no_literal_binding_fallback(root)
     assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
@@ -153,7 +153,7 @@ def test_suffix_and_duplicate_lanes_are_invalid_and_preserve_following_source(
 def test_unit_relaxation_does_not_relax_tokens_or_operation_support(statement, binding):
     root = parse(f"flow work:\n  run before\n  {binding}{statement}\n  run after\nflow next:\n  pass\n")
     assert not valid(root), root
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt"))
+    assert_no_literal_binding_fallback(root)
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
 

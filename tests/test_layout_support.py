@@ -29,6 +29,21 @@ def walk_all(node):
         yield from walk_all(child)
 
 
+def native_errors(node):
+    return [child for child in walk_all(node) if child.is_error or child.is_missing]
+
+
+def assert_no_literal_binding_fallback(root):
+    for node in descendants(root, "let_stmt"):
+        value = node.child_by_field_name("value")
+        # Native recovery can retain a partial assignment, but the rejected
+        # operation head must never become a valid literal value.
+        if value is not None:
+            assert node.has_error, root
+            assert all(text.start_point.row > node.start_point.row
+                       for text in descendants(value, "text")), root
+
+
 def tokens(node, literal):
     return [child for child in walk_all(node)
             if not child.is_named and child.type == literal]

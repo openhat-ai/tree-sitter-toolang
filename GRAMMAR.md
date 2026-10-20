@@ -111,9 +111,10 @@ runnable_ref    ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0
 ```
 
 The role-specific names above are distinct public leaves, even where their
-spellings match `identifier`. Keywords are recognized by context, not globally
-excluded from names. Parameters, local destinations, and await handles may use
-names such as `sort`, `until`, `default`, or `none`. `_` may name a parameter,
+spellings match `identifier`; they do not contain nested name nodes. Keywords
+are recognized by context, not globally excluded from names. Parameters, local
+destinations, and await handles may use names such as `sort`, `until`, `default`,
+or `none`. `_` may name a parameter,
 but not a local destination or handle. Qualified `runnable_ref` forms are used
 in route directives; call targets use the narrower `runnable_name`.
 
@@ -461,8 +462,7 @@ restricted inline target of `until` has no return annotation.
 ### Directive
 
 ```ebnf
-_directives         ::= directive:_directive_entry (directive:_directive_entry | _trivia)* ;
-_directive_entry    ::= directive ;
+_directives         ::= directive:directive (directive:directive | _trivia)* ;
 directive           ::= _query_key _directive_operator query_value _line_end
                         | _route_key "=" route_value _line_end
                         | "recall" "=" recall_value _line_end
@@ -499,8 +499,7 @@ terminal, and `lanes` points to `integer_literal` or anonymous `default`.
 
 ```ebnf
 agic_body              ::= _body(_directives _messages? | _messages | "pass" _line_end) ;
-_messages              ::= message:_message_entry (message:_message_entry | _trivia)* ;
-_message_entry         ::= message ;
+_messages              ::= message:message (message:message | _trivia)* ;
 message                ::= role:role ":" _content(content)
                            | content:alias(_message_content, content) ;
 _message_content       ::= _paragraph(_implicit_message_line) ;
@@ -543,7 +542,7 @@ A bound operation is available through `let_stmt.stmt`.
 A flow requires statements, optionally preceded by directives. Directives alone
 are insufficient. `pass` is a whole-body alternative and cannot coexist with
 directives or statements. The `flow_body` exposes repeated `directive` and
-`statement` fields in source order.
+`stmt` fields in source order.
 
 ```too
 flow summarize(_: Text) -> Text:
@@ -579,9 +578,10 @@ its remaining order.
 ### Let
 
 ```ebnf
-let_stmt ::= "let" local:local_name "=" stmt:_flow_operation
-             | "let" stmt:_flow_operation
-             | "let" local:local_name "=" _content(value) ;
+let_stmt    ::= _let_header stmt:_flow_operation
+               | "let" stmt:_flow_operation
+               | _let_header _content(value) ;
+_let_header ::= "let" local:local_name "=" ;
 ```
 
 Named bindings require `=`; nameless `let` requires an operation. Text bindings
@@ -612,9 +612,11 @@ flow keyword_names(sort: Text):
 ### Run, Exec, and Spawn
 
 ```ebnf
-run_stmt   ::= async:"async"? "run" _target_tail ;
-exec_stmt  ::= "exec" _target_tail ;
-spawn_stmt ::= "spawn" _target_tail ;
+run_stmt          ::= _named_run_header _line_end | _run_header _required_space? _inline_target ;
+_run_header       ::= async:"async"? "run" ;
+_named_run_header ::= _run_header _required_space _named_target ;
+exec_stmt         ::= "exec" _target_tail ;
+spawn_stmt        ::= "spawn" _target_tail ;
 ```
 
 All three take a named target or inline agic. Only `run` accepts `async`, placed
@@ -849,36 +851,42 @@ Highlighting depends on parent nodes and fields, not on `text` alone.
 
 ## Validity and Recovery
 
-Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
-descendant. `root.has_error` alone is insufficient. Diagnostic alternatives
-retain surrounding structure; they do not make malformed source valid.
+Most malformed source uses native `ERROR` nodes or missing tokens. Check
+`root.has_error` before consuming a tree; inspect `is_error` and `is_missing`
+for local diagnostics. Native missing name and query-value tokens remain visible
+leaves with their public node types. Error nodes may occur between fielded
+members or inside an incomplete construct, so a recovered tree does not imply
+validity.
+
+Five public diagnostic types additionally preserve boundaries that native
+recovery cannot reliably retain. Consumers must also reject every `invalid_*`
+descendant, even when `root.has_error` is false.
 
 | Diagnostic | Meaning |
 | --- | --- |
 | `invalid_missing_body` | Required structural body is absent. |
 | `invalid_missing_content` | Required text is absent. |
 | `invalid_missing_stmt` | A flow or repeat still requires a statement. |
-| `invalid_missing_type` | A return arrow lacks a type before an explicit header colon. |
-| `invalid_param` | A parameter annotation has missing operands or malformed trailing text. |
-| `invalid_directive` | A known directive is incomplete or malformed. |
-| `invalid_flow_stmt` | A malformed or misplaced flow statement. |
-| `invalid_agic_message` | A malformed keyword-led message entry. |
-| `invalid_run_target` | A malformed target fragment after `async run`. |
+| `invalid_param` | An unnamed parameter or malformed annotation suffix needs delimiter-bounded recovery. |
+| `invalid_flow_stmt` | A forbidden binding or malformed repeat `until` needs local recovery. |
 
-The four `invalid_missing_*` nodes are zero-width leaves. With a missing return
-type, the owning declaration or inline agic has an `invalid_missing_type` child
-and no `return` field. A missing closing `)` remains a native missing token.
+The three `invalid_missing_*` nodes are zero-width leaves. They keep an empty
+required construct from borrowing content or documentation from the next
+member or declaration. Missing parameter types and return annotations use
+native recovery; a missing return annotation has no usable `return` field.
+A missing closing `)` remains a native missing token.
 
-Hidden entry rules keep diagnostic entries alongside normal ones:
-`params.param` accepts `param` or `invalid_param`, body `directive` accepts
-`directive` or `invalid_directive`, and `agic_body.message` accepts `message` or
-`invalid_agic_message`. There is no normal-node wrapper around an invalid entry.
-Normal required fields remain required in the schema. While a directive prefix
-is open, known malformed directives stay in it; unknown assignment heads remain
+`params.param` accepts `param` or `invalid_param`. Directive and message fields
+contain normal entries only; native errors can be their siblings. Required
+fields remain required in the normal schema, including `run_stmt.target`.
+Both `run` and `async run` share target rules and native recovery; simple
+trailing-text errors retain the recognized target. While a directive prefix is
+open, recovery preserves subsequent directives; unknown assignment heads remain
 native syntax errors.
 
 `invalid_param` excludes list separators. Its trailing recovery text requires a
 real comma or `)` on the same physical line and cannot borrow one from a header
-comment. `invalid_directive` includes indentation and its line ending, like a
-normal directive. `invalid_agic_message` starts at the malformed keyword;
-normal messages retain their leading indentation.
+comment. Structural recovery leaves delimiters and operators to the native
+parser and synchronizes at physical line, indentation, and declaration
+boundaries. Incremental edits preserve the same ownership and ranges as a
+fresh parse.

@@ -21,10 +21,8 @@ flow next:
       (run_stmt
         (runnable_name)
         (newline))
-      (invalid_flow_stmt
-        (ERROR)
+      (ERROR
         (newline))
-      (ERROR)
       (blank_line)
       (item_doc
         (text))
@@ -71,11 +69,9 @@ flow next:
           (run_stmt
             (runnable_name)
             (newline))
-          (invalid_flow_stmt
-            (ERROR
-              (integer_literal))
+          (ERROR
+            (integer_literal)
             (newline))
-          (ERROR)
           (blank_line)
           (item_doc
             (text))
@@ -127,11 +123,11 @@ flow next:
             (newline))
           (let_stmt
             (local_name)
-            (invalid_flow_stmt
-              (ERROR)
+            (ERROR)
+            (newline)
+            (content
+              (text)
               (newline)))
-          (ERROR)
-          (blank_line)
           (item_doc
             (text))
           (run_stmt

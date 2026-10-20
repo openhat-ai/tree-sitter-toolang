@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations, descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import declarations, descendants, edit_tree, fingerprint, native_errors, parse, valid
 
 
 @pytest.mark.parametrize("kind,entry", [("flow", "run after"), ("agic", "user: After.")])
@@ -48,7 +48,7 @@ def test_missing_parameter_names_compose_with_invalid_annotation_suffixes(kind, 
     params = owner.child_by_field_name("params")
     entries = params.children_by_field_name("param")
     assert [entry.type for entry in entries] == ["param", "invalid_param", "param"]
-    assert entries[1].text == parameter.encode()
+    assert entries[1].text.lstrip(b" \t") == parameter.encode()
     assert entries[1].child_by_field_name("name") is None
     assert entries[2].child_by_field_name("name").text == b"after"
     assert owner.child_by_field_name("body") is not None
@@ -68,9 +68,9 @@ def test_missing_declared_return_types_keep_signatures_bodies_and_documentation(
     actual_name = owner.child_by_field_name("name")
     assert (actual_name.text if actual_name else None) == (b"work" if name else None)
     assert owner.child_by_field_name("return") is None
-    diagnostic, = descendants(owner, "invalid_missing_type")
-    assert diagnostic.start_byte == diagnostic.end_byte == source.encode().index(b": # Header.")
-    assert diagnostic.parent == owner
+    assert owner.has_error
+    arrow = source.encode().index(b"->")
+    assert any(node.start_byte == arrow and node.text == b"->" for node in native_errors(owner))
     assert owner.child_by_field_name("body").named_children[0].type == "item_doc"
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
@@ -90,8 +90,8 @@ def test_missing_inline_return_types_keep_content_and_following_statements(head,
     assert not valid(root)
     owner, following = declarations(root)
     inline, = descendants(owner, "inline_agic")
-    diagnostic, = descendants(inline, "invalid_missing_type")
-    assert diagnostic.parent == inline and diagnostic.start_byte == diagnostic.end_byte
+    assert root.has_error
+    assert any(node.text == b"->" for node in native_errors(owner))
     assert inline.child_by_field_name("return") is None
     assert inline.child_by_field_name("content").text.strip() == b"Text # literal."
     assert descendants(owner, "run_stmt")[-1].child_by_field_name("target").text == b"after"
@@ -121,15 +121,15 @@ def test_annotation_repairs_match_fresh_parses_and_retain_unchanged_items(newlin
 
 @pytest.mark.parametrize("statement", ["async run ->", "async run -> Text", "let h = async run ->"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_missing_inline_colons_keep_modified_run_target_diagnostics(statement, newline):
+def test_missing_inline_colons_keep_native_errors_local(statement, newline):
     source = (f"flow work:\n  {statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
     assert not valid(root)
     owner, following = declarations(root)
-    diagnostic, = descendants(owner, "invalid_run_target")
-    assert diagnostic.parent.type == "run_stmt"
-    assert diagnostic.parent.child_by_field_name("async").text == b"async"
-    assert not descendants(root, "invalid_missing_type")
+    assert root.has_error
+    boundary = source.encode().index(b"  run after")
+    assert native_errors(owner)
+    assert all(node.end_byte <= boundary for node in native_errors(owner))
     assert descendants(owner, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
@@ -142,7 +142,6 @@ def test_until_keeps_its_restricted_target_grammar(annotation, newline):
     root = parse(source)
     assert not valid(root)
     owner, following = declarations(root)
-    assert not descendants(root, "invalid_missing_type")
     assert not descendants(owner, "until_clause")
     assert [n.child_by_field_name("target").text for n in descendants(owner, "run_stmt")] == [b"worker", b"after", b"after_outer"]
     assert following.child_by_field_name("name").text == b"next" and valid(following)
@@ -178,7 +177,8 @@ def test_reducer_return_annotations_preserve_content_initializers_and_bindings(b
     assert target.type == "inline_agic"
     assert target.child_by_field_name("content").text == (newline + "    Merge # literal." + newline).encode()
     assert reducer.child_by_field_name("initial").text == b" Initial # literal."
-    assert bool(descendants(target, "invalid_missing_type")) == (not type_name)
+    assert root.has_error == (not type_name)
+    assert bool(native_errors(target.parent)) == (not type_name)
     if binding:
         wrapper, = descendants(owner, "let_stmt")
         assert wrapper.child_by_field_name("stmt") == reducer
@@ -212,7 +212,7 @@ def test_shared_return_clauses_preserve_existing_field_schemas_and_hide_their_ru
     nodes = json.loads((Path(__file__).parents[1] / "src/node-types.json").read_text())
     named = {node["type"]: node for node in nodes if node["named"]}
     assert "_return_clause" not in named
-    assert named["invalid_missing_type"] == {"type": "invalid_missing_type", "named": True}
+    assert "invalid_missing_type" not in named
     for owner in ["agic", "flow", "inline_agic"]:
         assert named[owner]["fields"]["return"] == {
             "multiple": False, "required": False, "types": [{"type": "type", "named": True}],

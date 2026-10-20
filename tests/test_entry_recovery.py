@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations, descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import declarations, descendants, edit_tree, fingerprint, native_errors, parse, valid
 
 
 BAD_PARAMS = [": Text", "?: Text[]", "topic:", "topic?:", "topic: Text?", "topic: Text[ ]", "topic: Text extra", "topic: Text résumé"]
@@ -30,14 +30,21 @@ def test_invalid_parameter_entries_preserve_the_signature_body_and_next_item(kin
     assert owner.type == kind and owner.child_by_field_name("name").text == b"work"
     assert owner.child_by_field_name("return").text == b"Text"
     params = owner.child_by_field_name("params")
-    diagnostic, = descendants(params, "invalid_param")
-    assert diagnostic in params.children_by_field_name("param")
     start = len(f"{kind} work(") + len(position.split("{bad}")[0])
-    assert (diagnostic.start_byte, diagnostic.end_byte) == (start, start + len(parameter.encode()))
-    assert diagnostic.parent == params
+    if parameter in {"topic:", "topic?:"}:
+        assert root.has_error and native_errors(params)
+        assert not descendants(params, "invalid_param")
+        assert all(start - 1 <= node.start_byte <= node.end_byte <= start + len(parameter.encode())
+                   for node in native_errors(params))
+    else:
+        diagnostic, = descendants(params, "invalid_param")
+        assert diagnostic in params.children_by_field_name("param")
+        assert (diagnostic.start_byte, diagnostic.end_byte) == (start, start + len(parameter.encode()))
+        assert diagnostic.parent == params
     expected = [word for word in ["before", "next"] if word + ": Text" in signature]
     assert [node.child_by_field_name("name").text.decode()
-            for node in params.children_by_field_name("param") if node.type == "param"] == expected
+            for node in params.children_by_field_name("param")
+            if node.type == "param" and node.child_by_field_name("name").text in {b"before", b"next"}] == expected
     body = owner.child_by_field_name("body")
     assert body.children_by_field_name("stmt" if kind == "flow" else "message")[-1].text.strip() == entry.encode()
     assert descendants(body, "item_doc")[0].text == ("## First." + newline).encode()
@@ -58,11 +65,12 @@ def test_invalid_directives_preserve_the_prefix_and_owner_without_a_following_st
     owner, following = declarations(root)
     assert owner.type == kind and owner.child_by_field_name("name").text == b"work"
     body = owner.child_by_field_name("body")
-    diagnostic, = descendants(body, "invalid_directive")
-    assert diagnostic in body.children_by_field_name("directive")
-    assert diagnostic.child_by_field_name("key").type == "directive_key"
-    assert diagnostic.child_by_field_name("key").text == key.encode()
-    assert diagnostic.text == ("  " + key + tail + newline).encode()
+    assert body.has_error
+    errors = native_errors(body)
+    assert errors
+    start = source.encode().index(("  " + key + tail + newline).encode(), len((f"{kind} work:" + newline + prefix.replace("\n", newline)).encode()))
+    boundary = source.encode().index(b"  tools = fast", start + len(("  " + key + tail + newline).encode()))
+    assert all(start <= node.start_byte <= node.end_byte <= boundary for node in errors)
     assert body.children_by_field_name("directive")[-1].child_by_field_name("key").text == b"tools"
     assert bool(descendants(body, "invalid_missing_stmt")) == (kind == "flow")
     assert following.child_by_field_name("name").text == b"next" and valid(following)
@@ -120,7 +128,7 @@ def test_entry_metadata_keeps_normal_required_fields_and_exposes_diagnostic_peer
     ]
     for body in ["agic_body", "flow_body"]:
         assert nodes[body]["fields"]["directive"]["types"] == [
-            {"type": "directive", "named": True}, {"type": "invalid_directive", "named": True},
+            {"type": "directive", "named": True},
         ]
 
 
@@ -131,7 +139,6 @@ def test_invalid_entry_highlights_keep_key_operator_name_and_recovery_text_roles
     captures = QueryCursor(query).captures(root)
     assert {node.text for node in captures["property"]} == {b"topic", b"recall"}
     assert b"+=" in {node.text for node in captures["operator"]}
-    assert b"wrong" in {node.text for node in captures["string"]}
     assert b"Text" in {node.text for node in captures["type"]}
 
 
@@ -143,7 +150,7 @@ def test_unknown_assignments_remain_native_errors_after_diagnostic_prefix_entrie
     root = parse(source)
     assert root.has_error and not valid(root)
     owner, following = declarations(root)
-    assert descendants(owner, "invalid_directive")
+    assert native_errors(owner)
     assert all(node.child_by_field_name("key").text != b"modles"
-               for kind in ["directive", "invalid_directive"] for node in descendants(owner, kind))
+               for node in descendants(owner, "directive"))
     assert following.child_by_field_name("name").text == b"next" and valid(following)

@@ -54,7 +54,7 @@ flow next:
         (type
           (builtin_type))
         (text)))
-    (invalid_missing_type)
+    (ERROR)
     (newline)
     (agic_body
       (message
@@ -90,8 +90,8 @@ flow next:
       (let_stmt
         (local_name)
         (reduce_stmt
+          (ERROR)
           (inline_agic
-            (invalid_missing_type)
             (newline)
             (content
               (blank_line)

@@ -7,7 +7,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, native_errors, parse, valid
 
 
 def make_program(rng, depth=0):
@@ -213,7 +213,9 @@ def test_missing_binding_assignment_recovers_identically_during_edits(newline, o
         assert valid(root) == expected_valid
         assert len(descendants(root, "repeat_stmt")) == 1
         if not expected_valid:
-            assert len(descendants(root, "invalid_flow_stmt")) == 1
+            assert root.has_error
+            following, = descendants(root, "repeat_stmt")
+            assert all(error.end_byte <= following.start_byte for error in native_errors(root))
         previous = current
 
 

@@ -7,7 +7,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, point, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, point, valid
 
 
 CONTENT_CONTEXTS = [
@@ -133,7 +133,7 @@ def test_former_text_header_comments_cannot_select_an_indented_body(header, newl
 def test_literal_hashes_do_not_hide_malformed_bound_operations(head, newline):
     root = parse(f"flow work:\n  {head}\n  run after\nflow next:\n  pass\n".replace("\n", newline))
     assert not valid(root), root
-    assert not any(node.child_by_field_name("value") for node in descendants(root, "let_stmt"))
+    assert_no_literal_binding_fallback(root)
     assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert len(descendants(root, "flow")) == 2
 

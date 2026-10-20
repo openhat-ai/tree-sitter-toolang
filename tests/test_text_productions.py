@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid
+from test_layout_support import descendants, edit_tree, fingerprint, native_errors, parse, valid
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -13,11 +13,10 @@ def test_text_leaves_preserve_each_lexical_context_and_highlight(newline):
     source = ("#@ Program # details.\n## Item # details.\n"
               "## @param topic Input # details.\nwith skill ./review# Structural.\n"
               "prompt review:\n  answer = yes # Structural.\n  Body # literal.\n"
-              "flow work(topic: Text):\n  let note = \"a#b\"\n  run worker\n"
-              "  until wrong # Structural.\nflow next:\n  pass\n").replace("\n", newline)
+              "flow work(topic: Text):\n  let note = \"a#b\"\n  run worker # Structural.\n"
+              "flow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
-    assert not root.has_error
-    assert not valid(root)
+    assert valid(root), root
     contexts = [
         ("program_doc", "text", b"Program # details.", "comment.documentation"),
         ("item_doc", "text", b"Item # details.", "comment.documentation"),
@@ -68,14 +67,23 @@ def test_reducer_content_owns_leading_blank_lines(newline, indent, prefix, text)
 @pytest.mark.parametrize("kind", ["flow", "agic"])
 @pytest.mark.parametrize("head", ["recall", "recall =", "recall = auto", "recall += near"])
 @pytest.mark.parametrize("prefix", ["", "  models = fast\n", "  run worker\n"])
-def test_incomplete_recall_keys_keep_the_directive_role(kind, head, prefix):
+def test_incomplete_recall_uses_directive_roles_in_the_prefix_and_errors_after_it(kind, head, prefix):
     prefix = prefix.replace("run worker", "user: Ready.") if kind == "agic" else prefix
     following = "run next" if kind == "flow" else "user: Next."
     root = parse(f"{kind} work:\n{prefix}  {head}\n  {following}\nflow next:\n  pass\n")
     assert not valid(root), root
-    key, = [node for node in descendants(root, "directive_key") if node.text == b"recall"]
     query = Query(Language(tree_sitter_toolang.language()), tree_sitter_toolang.HIGHLIGHTS_QUERY)
-    assert key in QueryCursor(query).captures(root)["property"]
+    captures = QueryCursor(query).captures(root)
+    if "run worker" in prefix or "user:" in prefix:
+        assert root.has_error
+        start = root.text.index(head.encode())
+        assert any(error.start_byte <= start and error.end_byte >= start + len("recall")
+                   for error in native_errors(root))
+        assert any(error.start_byte <= start and error.end_byte >= start + len("recall")
+                   for error in captures["error"])
+    else:
+        key, = [node for node in descendants(root, "directive_key") if node.text == b"recall"]
+        assert key in captures["property"]
     assert not descendants(root, "recall_keyword")
     assert root.named_children[-1].child_by_field_name("name").text == b"next"
 

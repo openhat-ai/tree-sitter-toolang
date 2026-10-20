@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -28,8 +28,7 @@ def test_spawn_local_name_does_not_hide_a_malformed_spawn_value(value):
     root = parse(f"flow launch:\n  let spawn = {value}\n")
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt")
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -89,8 +88,7 @@ def test_invalid_spawn_never_falls_back_to_text(binding, statement, ending):
     root = parse(source)
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt"), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", [

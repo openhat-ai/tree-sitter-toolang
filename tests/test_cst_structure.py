@@ -20,9 +20,9 @@ PUBLIC_NODES = set("""
 agent_name agic agic_body ask_stmt await_stmt blank_line builtin_type cap_body cap_kind
 cap_name chore chore_body chore_name content context directive directive_key drop_stmt
 exec_stmt field flow flow_body generate_stmt handle_name identifier implicit_run_stmt
-inline_agic instruct integer_literal invalid_agic_message invalid_directive invalid_flow_stmt
-invalid_missing_body invalid_missing_content invalid_missing_stmt invalid_missing_type
-invalid_param invalid_run_target item_doc keep_stmt let_stmt local_name map_stmt message
+inline_agic instruct integer_literal invalid_flow_stmt
+invalid_missing_body invalid_missing_content invalid_missing_stmt
+invalid_param item_doc keep_stmt let_stmt local_name map_stmt message
 newline param param_doc param_name params plain_comment program program_doc prompt property
 psyche query_value recall_source recall_value reduce_stmt repeat_body repeat_stmt role
 route_value run_stmt runnable_name runnable_ref seek_stmt selection service shebang_comment

@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid, walk_all
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid, walk_all
 from test_vocabulary_support import OPERATIONS
 
 
@@ -36,8 +36,7 @@ def test_operation_prefixes_are_literal_in_both_implicit_text_positions(head, su
 def test_complete_operation_heads_remain_invalid_instead_of_becoming_text(source):
     root = parse(f"flow work:\n  let result = {source}\n")
     assert not valid(root), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])

@@ -42,7 +42,6 @@ enum Token {
   MISSING_REQUIRED,
   INTEGER_LITERAL,
   PARAM_ERROR,
-  MISSING_TYPE,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -75,6 +74,7 @@ typedef struct {
   bool comment_started;
   bool doc_started;
   bool file_start;
+  bool structural_line;
   Trivia trivia;
 } Scanner;
 
@@ -159,6 +159,12 @@ static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
 
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
+  if (token == ITEM_START || token == LINE_START || token == DIRECTIVE_START ||
+      token == UNTIL_START || token == INITIAL_START) {
+    scanner->structural_line = true;
+  } else if (token == NEWLINE || token == BLANK_LINE) {
+    scanner->structural_line = false;
+  }
   if (token != COMMENT_START) {
     scanner->file_start = false;
   }
@@ -255,6 +261,7 @@ static bool lookahead_body_prefix(TSLexer *lexer, Indentation indent, Trivia *tr
 }
 
 static void finish_trivia_line(Scanner *scanner) {
+  scanner->structural_line = false;
   scanner->comment_started = false;
   scanner->doc_started = false;
   scanner->line_started = false;
@@ -262,6 +269,11 @@ static void finish_trivia_line(Scanner *scanner) {
       scanner->trivia.phase != BODY_OUTER_PREFIX) {
     scanner->trivia = (Trivia){0};
   }
+}
+
+static bool recovery_delimiter(int32_t ch) {
+  return ch == ':' || ch == ',' || ch == '(' || ch == ')' || ch == '[' || ch == ']' ||
+         ch == '-' || ch == '?' || ch == '+' || ch == '=';
 }
 
 // Recovery always makes progress on the current physical line and releases any
@@ -277,7 +289,15 @@ static bool scan_error_line(Scanner *scanner, TSLexer *lexer) {
   if (lexer->eof(lexer)) {
     return false;
   }
+  // Preserve structural delimiters for native recovery of missing operands.
+  // Literal text and rejected comment lines remain opaque recovery fragments.
+  if (scanner->structural_line && recovery_delimiter(lexer->lookahead)) {
+    return false;
+  }
   while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    if (scanner->structural_line && recovery_delimiter(lexer->lookahead)) {
+      break;
+    }
     advance(lexer);
   }
   lexer->mark_end(lexer);
@@ -510,16 +530,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   if (scanner->comment_started) {
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
-  }
-  // An explicit body/header colon commits a return annotation even when its
-  // type is absent. Leave the colon to the grammar and stay on this line.
-  if (!at_start && valid[MISSING_TYPE]) {
-    skip_indentation(lexer);
-    lexer->mark_end(lexer);
-    if (lexer->lookahead == ':') {
-      return emit(scanner, lexer, MISSING_TYPE);
-    }
-    return false;
   }
   if (!at_start && valid[PARAM_ERROR]) {
     if (scan_param_error(lexer)) {
@@ -835,7 +845,7 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)scanner->eof_newline;
   buffer[size++] = (char)scanner->comment_started;
   buffer[size++] = (char)scanner->doc_started;
-  buffer[size++] = (char)scanner->file_start;
+  buffer[size++] = (char)(scanner->file_start | (scanner->structural_line << 1));
   buffer[size++] = (char)(scanner->trivia.prefix | (scanner->trivia.phase << 2));
   for (unsigned j = 0; j < 4; j++) {
     buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
@@ -873,7 +883,8 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   scanner->eof_newline = bytes[3];
   scanner->comment_started = bytes[4];
   scanner->doc_started = bytes[5];
-  scanner->file_start = bytes[6];
+  scanner->file_start = bytes[6] & 1;
+  scanner->structural_line = (bytes[6] >> 1) & 1;
   scanner->trivia.prefix = bytes[7] & 3;
   scanner->trivia.phase = bytes[7] >> 2;
   unsigned offset = 8;

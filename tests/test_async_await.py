@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -171,8 +171,7 @@ def test_unsupported_async_and_await_never_fall_back_to_text(binding, statement,
     root = parse(source)
     assert not valid(root), root
     assert not descendants(root, "implicit_run_stmt"), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -268,8 +267,7 @@ def test_keyword_local_names_accept_text_and_operation_results(name, value):
 def test_keyword_local_names_do_not_hide_malformed_operations(name, value):
     root = parse(f"flow launch:\n  let {name} = {value}\n")
     assert not valid(root), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_stmt")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", [

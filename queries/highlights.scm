@@ -7,6 +7,7 @@
 (item_doc) @comment.documentation
 (param_doc) @comment.documentation
 (param_doc "@param" @keyword param: (param_name) @variable.parameter)
+(ERROR) @error
 
 [
   "with"
@@ -90,10 +91,7 @@
 (content (text) @string)
 (property value: (text) @string)
 (invalid_param (text) @string)
-(invalid_directive (text) @string)
 (invalid_flow_stmt (text) @string)
-(invalid_agic_message (text) @string)
-(invalid_run_target (text) @string)
 
 (struct
   name: (type_name) @type)

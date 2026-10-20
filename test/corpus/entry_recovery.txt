@@ -17,8 +17,9 @@ agic next(?: Text[], input: Text[ ]):
       (invalid_param
         (type
           (builtin_type)))
-      (invalid_param
+      (param
         (param_name))
+      (ERROR)
       (invalid_param
         (param_name)
         (type
@@ -84,9 +85,8 @@ flow last:
         (directive_key)
         (query_value)
         (newline))
-      (invalid_directive
+      (ERROR
         (directive_key)
-        (text)
         (newline))
       (directive
         (directive_key)
@@ -99,10 +99,9 @@ flow last:
     (runnable_name)
     (newline)
     (agic_body
-      (invalid_directive
-        (directive_key)
-        (text)
-        (newline))
+      (ERROR
+        (directive_key))
+      (blank_line)
       (directive
         (directive_key)
         (query_value)

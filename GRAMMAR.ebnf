@@ -56,8 +56,7 @@
   {"type":"SYMBOL","name":"_named_binding_start"},
   {"type":"SYMBOL","name":"_missing_required"},
   {"type":"SYMBOL","name":"integer_literal"},
-  {"type":"SYMBOL","name":"_param_error"},
-  {"type":"SYMBOL","name":"_missing_type"}
+  {"type":"SYMBOL","name":"_param_error"}
 ] *)
 
 program ::=
@@ -132,35 +131,35 @@ struct_body ::=
   (* alias {"value":"invalid_missing_body","named":true} *) ( _missing_required ) );
 
 field ::=
-  _line_start (* field "name" *) ( identifier ) ( (* field "optional" *) ( "?" ) )?
-  (* field "colon" *) ( ":" ) (* field "type" *) ( type ) _line_end;
+  _line_start (* field "name" *) ( _name ) ( (* field "optional" *) ( "?" ) )? (* field "colon" *) (
+  ":" ) (* field "type" *) ( type ) _line_end;
 
 psyche ::=
   _psyche_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 _psyche_header ::=
-  (* field "keyword" *) ( "psyche" ) (* field "name" *) ( cap_name ) (* field "colon" *) ( ":" )
+  (* field "keyword" *) ( "psyche" ) (* field "name" *) ( _cap_name ) (* field "colon" *) ( ":" )
   _line_end;
 
 skill ::=
   _skill_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 _skill_header ::=
-  (* field "keyword" *) ( "skill" ) (* field "name" *) ( cap_name ) (* field "colon" *) ( ":" )
+  (* field "keyword" *) ( "skill" ) (* field "name" *) ( _cap_name ) (* field "colon" *) ( ":" )
   _line_end;
 
 service ::=
   _service_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 _service_header ::=
-  (* field "keyword" *) ( "service" ) (* field "name" *) ( cap_name ) (* field "colon" *) ( ":" )
+  (* field "keyword" *) ( "service" ) (* field "name" *) ( _cap_name ) (* field "colon" *) ( ":" )
   _line_end;
 
 prompt ::=
   _prompt_header ( _body_prefix* (* field "body" *) ( cap_body ) | _empty_body );
 
 _prompt_header ::=
-  (* field "keyword" *) ( "prompt" ) (* field "name" *) ( cap_name ) (* field "colon" *) ( ":" )
+  (* field "keyword" *) ( "prompt" ) (* field "name" *) ( _cap_name ) (* field "colon" *) ( ":" )
   _line_end;
 
 cap_body ::=
@@ -175,14 +174,14 @@ chore ::=
   _chore_header ( _body_prefix* (* field "body" *) ( chore_body ) | _empty_body );
 
 _chore_header ::=
-  (* field "keyword" *) ( "chore" ) (* field "name" *) ( chore_name ) (* field "colon" *) ( ":" )
+  (* field "keyword" *) ( "chore" ) (* field "name" *) ( _chore_name ) (* field "colon" *) ( ":" )
   _line_end;
 
-cap_name ::=
-  _snake_kebab_name;
+_cap_name ::=
+  (* alias {"value":"cap_name","named":true} *) ( _snake_kebab_name );
 
-chore_name ::=
-  _snake_kebab_name;
+_chore_name ::=
+  (* alias {"value":"chore_name","named":true} *) ( _snake_kebab_name );
 
 chore_body ::=
   _body_start? _item_indent ( (* field "property" *) ( property ) | _trivia )* (
@@ -190,7 +189,7 @@ chore_body ::=
   _dedent;
 
 property ::=
-  _line_start (* field "key" *) ( identifier ) (* field "operator" *) ( "=" ) (* field "value" *) (
+  _line_start (* field "key" *) ( _name ) (* field "operator" *) ( "=" ) (* field "value" *) (
   (* alias {"value":"text","named":true} *) ( _structural_text ) ) _line_end;
 
 instruct ::=
@@ -199,8 +198,7 @@ instruct ::=
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
 _instruct_header ::=
-  (* field "keyword" *) ( "instruct" ) ( (* field "name" *) ( identifier ) )? (* field "colon" *) (
-  ":" );
+  (* field "keyword" *) ( "instruct" ) ( (* field "name" *) ( _name ) )? (* field "colon" *) ( ":" );
 
 context ::=
   _context_header ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
@@ -208,8 +206,7 @@ context ::=
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
 _context_header ::=
-  (* field "keyword" *) ( "context" ) ( (* field "name" *) ( identifier ) )? (* field "colon" *) (
-  ":" );
+  (* field "keyword" *) ( "context" ) ( (* field "name" *) ( _name ) )? (* field "colon" *) ( ":" );
 
 _inline_content ::=
   (* alias {"value":"text","named":true} *) ( _inline_text );
@@ -225,7 +222,7 @@ agic ::=
   (* prec.right 0 *) ( _agic_header _body_prefix* (* field "body" *) ( agic_body ) );
 
 _agic_header ::=
-  (* field "keyword" *) ( "agic" ) ( (* field "name" *) ( runnable_name ) )? ( (* field "params" *)
+  (* field "keyword" *) ( "agic" ) ( (* field "name" *) ( _runnable_name ) )? ( (* field "params" *)
   ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
 
 agic_body ::=
@@ -242,8 +239,7 @@ _param_entry ::=
 invalid_param ::=
   ( (* field "optional" *) ( "?" ) )? ":" ( (* field "type" *) ( type ) (
   (* alias {"value":"text","named":true} *) ( _param_error ) )? )? | (* field "name" *) (
-  _param_name ) ( (* field "optional" *) ( "?" ) )? ":" | (* field "name" *) ( _param_name ) (
-  (* field "optional" *) ( "?" ) )? ":" (* field "type" *) ( type )
+  _param_name ) ( (* field "optional" *) ( "?" ) )? ":" (* field "type" *) ( type )
   (* alias {"value":"text","named":true} *) ( _param_error );
 
 param ::=
@@ -258,7 +254,7 @@ flow ::=
   (* prec.right 0 *) ( _flow_header _body_prefix* (* field "body" *) ( flow_body ) );
 
 _flow_header ::=
-  (* field "keyword" *) ( "flow" ) ( (* field "name" *) ( runnable_name ) )? ( (* field "params" *)
+  (* field "keyword" *) ( "flow" ) ( (* field "name" *) ( _runnable_name ) )? ( (* field "params" *)
   ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
 
 flow_body ::=
@@ -273,9 +269,7 @@ _stmts ::=
 
 _flow_stmt ::=
   _line_start ( let_stmt | exec_stmt | (* alias {"value":"invalid_flow_stmt","named":true} *) (
-  _invalid_exec_binding ) | (* alias {"value":"invalid_flow_stmt","named":true} *) (
-  _invalid_restricted_binding ) | (* alias {"value":"invalid_flow_stmt","named":true} *) (
-  _invalid_named_binding ) | _flow_operation | invalid_flow_stmt | implicit_run_stmt );
+  _invalid_binding ) | _flow_operation | implicit_run_stmt );
 
 _flow_operation ::=
   run_stmt | await_stmt | spawn_stmt | seek_stmt | ask_stmt | _collection_operation | keep_stmt |
@@ -285,21 +279,14 @@ _collection_operation ::=
   generate_stmt | map_stmt | reduce_stmt;
 
 _bound_operation ::=
-  _operation_binding_start ( _flow_operation |
-  (* alias {"value":"invalid_flow_stmt","named":true} *) ( _invalid_bound_operation ) );
+  _operation_binding_start _flow_operation;
 
-_binding_operation_keyword ::=
-  "run" | "seek" | "ask" | "generate" | "map" | "reduce" | "keep" | "drop" | "sort" | "repeat" |
-  "spawn" | "await" | "async";
-
-_invalid_bound_operation ::=
-  (* prec.dynamic -2 *) ( _binding_operation_keyword ( (* alias {"value":"text","named":true} *) (
-  _recovery_text ) )? _line_end );
+_let_header ::=
+  "let" _named_binding_start (* field "local" *) ( _local_name ) "=";
 
 let_stmt ::=
-  "let" _named_binding_start (* field "local" *) ( local_name ) "=" (* field "stmt" *) (
-  _bound_operation ) | "let" (* field "stmt" *) ( _flow_operation ) | (* prec.right 0 *) ( "let"
-  _named_binding_start (* field "local" *) ( local_name ) "=" ( (* field "value" *) (
+  _let_header (* field "stmt" *) ( _bound_operation ) | "let" (* field "stmt" *) ( _flow_operation )
+  | (* prec.right 0 *) ( _let_header ( (* field "value" *) (
   (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_end | (* prec.right 0 *)
   ( _text_end (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
   ) ) ) );
@@ -310,41 +297,25 @@ exec_stmt ::=
 spawn_stmt ::=
   "spawn" _target_tail;
 
-_invalid_exec_binding ::=
-  "let" ( _named_binding_start (* field "local" *) ( local_name ) "=" )? _exec_binding_start "exec"
-  ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )? _line_end;
-
-_invalid_restricted_binding ::=
-  "let" ( _named_binding_start (* field "local" *) ( local_name ) "=" )? _restricted_binding_start
-  _restricted_binding_keyword ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )?
+_invalid_binding ::=
+  ( _let_header | "let" ) ( _exec_binding_start "exec" | _restricted_binding_start
+  _restricted_binding_keyword ) ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )?
   _line_end;
 
-_invalid_named_binding ::=
-  (* prec.dynamic -2 *) ( "let" (* field "local" *) ( local_name ) (
-  (* alias {"value":"text","named":true} *) ( _recovery_text ) )? _line_end );
-
 run_stmt ::=
-  _run | _async_modifier _run_after_async;
+  _named_run_header _line_end | _run_header (* prec.right 0 *) ( _required_space? _inline_target );
+
+_run_header ::=
+  _async_modifier? "run";
+
+_named_run_header ::=
+  _run_header _required_space _named_target;
 
 _async_modifier ::=
   (* field "async" *) ( "async" );
 
-_run ::=
-  "run" _target_tail;
-
-_run_after_async ::=
-  "run" ( _required_space (* field "target" *) ( runnable_name ) _line_end | (* prec.right 0 *) (
-  _required_space? (* field "target" *) ( inline_agic ) ) |
-  (* alias {"value":"invalid_run_target","named":true} *) ( _invalid_async_target ) );
-
-_invalid_async_target ::=
-  (* prec.dynamic -2 *) ( (* prec -1 *) ( _required_space? ( runnable_name (
-  (* alias {"value":"text","named":true} *) ( _recovery_text ) )? | "->" ( type (
-  (* alias {"value":"text","named":true} *) ( _recovery_text ) )? )? | (
-  (* alias {"value":"text","named":true} *) ( _recovery_text ) )? ) _line_end ) );
-
 await_stmt ::=
-  "await" (* field "handle" *) ( handle_name ) _line_end;
+  "await" (* field "handle" *) ( _handle_name ) _line_end;
 
 implicit_run_stmt ::=
   (* field "content" *) ( (* alias {"value":"content","named":true} *) ( _implicit_content ) );
@@ -357,7 +328,7 @@ _implicit_run_line ::=
   (* alias {"value":"text","named":true} *) ( _flow_raw_text ) newline;
 
 seek_stmt ::=
-  "seek" (* field "agent" *) ( agent_name ) _target_tail;
+  "seek" (* field "agent" *) ( _agent_name ) _target_tail;
 
 ask_stmt ::=
   (* prec.right 0 *) ( "ask" ":" ( (* field "content" *) (
@@ -380,7 +351,7 @@ reduce_stmt ::=
   (* alias {"value":"inline_agic","named":true} *) ( _reduce_empty_block ) );
 
 _reduce_using_header ::=
-  "reduce" "using" _required_space (* field "target" *) ( runnable_name ) ":" _line_end;
+  "reduce" "using" _required_space (* field "target" *) ( _runnable_name ) ":" _line_end;
 
 _reduce_inline_line ::=
   _return_clause? ":" (* field "content" *) ( (* alias {"value":"content","named":true} *) (
@@ -428,7 +399,7 @@ _required_space ::=
   (* token.immediate *) ( ? regex "[ \\t]+" ? );
 
 _named_target ::=
-  (* field "target" *) ( runnable_name );
+  (* field "target" *) ( _runnable_name );
 
 _inline_target ::=
   (* field "target" *) ( inline_agic );
@@ -437,7 +408,7 @@ _target_tail ::=
   _named_target _line_end | (* prec.right 0 *) ( _inline_target );
 
 _using_clause ::=
-  "using" _required_space (* field "target" *) ( runnable_name );
+  "using" _required_space (* field "target" *) ( _runnable_name );
 
 _using_tail ::=
   _using_clause _line_end | _inline_target;
@@ -474,7 +445,7 @@ _times_clause ::=
   (* field "count" *) ( integer_literal ) ( "time" | "times" );
 
 until_clause ::=
-  (* prec.dynamic 2 *) ( _until_start "until" ( (* field "target" *) ( runnable_name ) _line_end |
+  (* prec.dynamic 2 *) ( _until_start "until" ( (* field "target" *) ( _runnable_name ) _line_end |
   (* field "target" *) ( (* alias {"value":"inline_agic","named":true} *) ( _until_agic ) ) ) );
 
 _until_entry ::=
@@ -482,12 +453,9 @@ _until_entry ::=
   (* alias {"value":"invalid_flow_stmt","named":true} *) ( _invalid_until_clause ) );
 
 _invalid_until_clause ::=
-  (* prec.dynamic -2 *) ( _until_start "until" ( (* alias {"value":"text","named":true} *) (
-  _recovery_text ) )? _line_end );
-
-invalid_flow_stmt ::=
-  (* prec.dynamic -2 *) ( _flow_keyword ( (* alias {"value":"text","named":true} *) ( _recovery_text
-  ) )? _line_end );
+  (* prec.dynamic -2 *) ( _until_start "until" ( _runnable_name
+  (* alias {"value":"text","named":true} *) ( _recovery_text ) | (
+  (* alias {"value":"text","named":true} *) ( _recovery_text ) )? ) _line_end );
 
 inline_agic ::=
   _return_clause? ":" ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
@@ -500,39 +468,26 @@ _until_agic ::=
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
 _return_clause ::=
-  (* field "arrow" *) ( "->" ) ( (* field "return" *) ( type ) |
-  (* alias {"value":"invalid_missing_type","named":true} *) ( _missing_type ) );
+  (* field "arrow" *) ( "->" ) (* field "return" *) ( type );
 
 selection ::=
   (* field "side" *) ( "first" | "last" ) _required_space (* field "count" *) ( integer_literal );
 
-runnable_name ::=
-  _identifier;
+_runnable_name ::=
+  (* alias {"value":"runnable_name","named":true} *) ( _identifier );
 
-agent_name ::=
-  _identifier;
+_agent_name ::=
+  (* alias {"value":"agent_name","named":true} *) ( _identifier );
 
-local_name ::=
-  _identifier;
+_local_name ::=
+  (* alias {"value":"local_name","named":true} *) ( _identifier );
 
-handle_name ::=
-  _identifier;
-
-_directive_entry ::=
-  directive | invalid_directive;
-
-invalid_directive ::=
-  (* prec.dynamic -2 *) ( _directive_start (* field "key" *) ( _query_key | _route_key |
-  (* alias {"value":"directive_key","named":true} *) ( "recall" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "lanes" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "context" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "instruct" ) ) ( (* field "operator" *) (
-  _directive_operator ) )? ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )?
-  _line_end );
+_handle_name ::=
+  (* alias {"value":"handle_name","named":true} *) ( _identifier );
 
 directive ::=
   _directive_start ( (* field "key" *) ( _query_key ) (* field "operator" *) ( _directive_operator )
-  (* field "value" *) ( query_value ) | (* field "key" *) ( _route_key ) (* field "operator" *) (
+  (* field "value" *) ( _query_value ) | (* field "key" *) ( _route_key ) (* field "operator" *) (
   "=" ) (* field "value" *) ( route_value ) | (* field "key" *) (
   (* alias {"value":"directive_key","named":true} *) ( "recall" ) ) (* field "operator" *) ( "=" )
   (* field "value" *) ( recall_value ) | (* field "key" *) (
@@ -557,8 +512,9 @@ _route_key ::=
 _directive_operator ::=
   "=" | "+=" | "-=";
 
-query_value ::=
-  (* prec 1 *) ( (* token *) ( (* prec -1 *) ( ? regex "[^ \\t#\\r\\n][^#\\r\\n]*" ? ) ) );
+_query_value ::=
+  (* alias {"value":"query_value","named":true} *) ( (* token *) ( (* prec -1 *) (
+  ? regex "[^ \\t#\\r\\n][^#\\r\\n]*" ? ) ) );
 
 route_value ::=
   "none" | "*" | runnable_ref ( "," runnable_ref )*;
@@ -574,18 +530,15 @@ _recall_source ::=
   (* alias {"value":"recall_source","named":true} *) ( "near" );
 
 _directives ::=
-  (* prec.right 0 *) ( (* field "directive" *) ( _directive_entry ) ( (* field "directive" *) (
-  _directive_entry ) | _trivia )* );
+  (* prec.right 0 *) ( (* field "directive" *) ( directive ) ( (* field "directive" *) ( directive )
+  | _trivia )* );
 
 _text_ref ::=
-  "default" | "none" | identifier;
+  "default" | "none" | _name;
 
 _messages ::=
-  (* prec.right 0 *) ( (* field "message" *) ( _message_entry ) ( (* field "message" *) (
-  _message_entry ) | _trivia )* );
-
-_message_entry ::=
-  message | _line_start invalid_agic_message;
+  (* prec.right 0 *) ( (* field "message" *) ( message ) ( (* field "message" *) ( message ) |
+  _trivia )* );
 
 message ::=
   _line_start ( (* field "role" *) ( _role ) ":" ( (* field "content" *) (
@@ -601,47 +554,12 @@ _message_content ::=
 _implicit_message_line ::=
   (* alias {"value":"text","named":true} *) ( _agic_raw_text ) newline;
 
-invalid_agic_message ::=
-  (* prec.dynamic -2 *) ( _agic_keyword ( (* alias {"value":"text","named":true} *) ( _recovery_text
-  ) )? _line_end );
-
 _role ::=
   (* alias {"value":"role","named":true} *) ( "user" ) | (* alias {"value":"role","named":true} *) (
   "assistant" ) | (* alias {"value":"role","named":true} *) ( "tool" );
 
 _pass_stmt ::=
   (* prec 1 *) ( _line_start "pass" _line_end _trivia* );
-
-_flow_keyword ::=
-  "with" | "struct" | "psyche" | "skill" | "service" | "prompt" | "chore" | "context" | "instruct" |
-  "agic" | "flow" | "run" | "seek" | "ask" | "generate" | "map" | "reduce" | "keep" | "drop" |
-  "sort" | "repeat" | "spawn" | "await" | "until" | "initial" | "windowing" | "using" | "if" | "by"
-  | "in" | "lane" | "lanes" | "ascending" | "descending" | "time" | "times" | "first" | "last" |
-  "let" | "exec" | "async" | "_" | (* alias {"value":"role","named":true} *) ( "user" ) |
-  (* alias {"value":"role","named":true} *) ( "assistant" ) |
-  (* alias {"value":"role","named":true} *) ( "tool" ) | "pass" |
-  (* alias {"value":"directive_key","named":true} *) ( "models" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "tools" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "skills" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "services" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "psyches" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "prompts" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "hands" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "handoffs" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "recall" );
-
-_agic_keyword ::=
-  (* alias {"value":"role","named":true} *) ( "user" ) | (* alias {"value":"role","named":true} *) (
-  "assistant" ) | (* alias {"value":"role","named":true} *) ( "tool" ) | "pass" |
-  (* alias {"value":"directive_key","named":true} *) ( "models" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "tools" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "skills" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "services" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "psyches" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "prompts" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "hands" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "handoffs" ) |
-  (* alias {"value":"directive_key","named":true} *) ( "recall" ) | "lanes" | "context" | "instruct";
 
 _restricted_binding_keyword ::=
   "until" | "_";
@@ -658,8 +576,8 @@ _word ::=
 type_name ::=
   (* token *) ( ? regex "[A-Z][A-Za-z0-9]*" ? );
 
-identifier ::=
-  _identifier;
+_name ::=
+  (* alias {"value":"identifier","named":true} *) ( _identifier );
 
 _identifier ::=
   (* token *) ( ? regex "[a-z][a-z0-9_]*" ? );
@@ -780,6 +698,3 @@ integer_literal ::=
 
 _param_error ::=
   ? external scanner token "_param_error" ?;
-
-_missing_type ::=
-  ? external scanner token "_missing_type" ?;

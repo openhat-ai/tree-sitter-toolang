@@ -54,9 +54,8 @@ flow last:
     (runnable_name)
     (newline)
     (agic_body
-      (invalid_directive
+      (ERROR
         (directive_key)
-        (ERROR)
         (newline))
       (plain_comment)
       (directive
@@ -72,10 +71,9 @@ flow last:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_directive
-        (directive_key)
-        (text)
-        (newline))
+      (ERROR
+        (directive_key))
+      (blank_line)
       (directive
         (directive_key)
         (recall_value)

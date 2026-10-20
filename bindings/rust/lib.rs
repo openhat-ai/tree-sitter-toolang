@@ -8,6 +8,19 @@ pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_toola
 
 #[cfg(test)]
 mod tests {
+    fn native_errors(node: tree_sitter::Node<'_>) -> Vec<tree_sitter::Node<'_>> {
+        let mut pending = vec![node];
+        let mut errors = Vec::new();
+        while let Some(current) = pending.pop() {
+            if current.is_error() || current.is_missing() {
+                errors.push(current);
+            }
+            let mut cursor = current.walk();
+            pending.extend(current.children(&mut cursor));
+        }
+        errors
+    }
+
     fn is_valid(node: tree_sitter::Node<'_>) -> bool {
         if node.has_error() || node.is_missing() || node.kind().starts_with("invalid_") {
             return false;
@@ -73,16 +86,28 @@ mod tests {
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
         assert!(is_valid(root));
-        let body = root.named_child(0).unwrap().child_by_field_name("body").unwrap();
+        let body = root
+            .named_child(0)
+            .unwrap()
+            .child_by_field_name("body")
+            .unwrap();
         let reduce = body.child_by_field_name("stmt").unwrap();
         assert_eq!(reduce.kind(), "reduce_stmt");
         let target = reduce.child_by_field_name("target").unwrap();
         assert_eq!(
-            target.child_by_field_name("content").unwrap().utf8_text(source.as_bytes()).unwrap(),
+            target
+                .child_by_field_name("content")
+                .unwrap()
+                .utf8_text(source.as_bytes())
+                .unwrap(),
             "    Merge.\n      initial: Nested literal.\n"
         );
         assert_eq!(
-            reduce.child_by_field_name("initial").unwrap().utf8_text(source.as_bytes()).unwrap(),
+            reduce
+                .child_by_field_name("initial")
+                .unwrap()
+                .utf8_text(source.as_bytes())
+                .unwrap(),
             " \"Seed # literal\""
         );
         assert!(target.end_byte() < reduce.child_by_field_name("initial").unwrap().start_byte());
@@ -309,10 +334,7 @@ mod tests {
             worker.utf8_text(source.as_bytes()).unwrap().trim(),
             "run worker"
         );
-        assert_eq!(
-            body.named_child(1).unwrap().kind(),
-            "invalid_flow_stmt"
-        );
+        assert_eq!(body.named_child(1).unwrap().kind(), "invalid_flow_stmt");
     }
 
     #[test]
@@ -683,9 +705,7 @@ mod tests {
         assert_eq!(target.kind(), "runnable_name");
         assert_eq!(target.utf8_text(source.as_bytes()).unwrap().trim(), "done");
         let mut cursor = body.walk();
-        let statements: Vec<_> = body
-            .children_by_field_name("stmt", &mut cursor)
-            .collect();
+        let statements: Vec<_> = body.children_by_field_name("stmt", &mut cursor).collect();
         assert_eq!(statements.len(), 2);
         assert!(statements[0].end_byte() <= condition.start_byte());
         assert!(condition.end_byte() <= statements[1].start_byte());
@@ -750,13 +770,13 @@ mod tests {
     }
 
     #[test]
-    fn anonymous_terminals_keep_fields_and_invalid_messages_are_body_entries() {
+    fn anonymous_terminals_keep_fields_and_native_message_errors_stay_local() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
         let source = "flow work(input?: Text[]) -> Text:\n  models += fast\n  async run worker\n  keep last 2\nagic messages:\n  user missing colon\n  user: After.\nflow next:\n  pass\n";
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
-        assert!(!root.has_error()); // The public invalid_* node carries the error.
+        assert!(root.has_error());
         let flow = root.named_child(0).unwrap();
         let parameter = flow
             .child_by_field_name("params")
@@ -799,18 +819,18 @@ mod tests {
             .collect();
         assert_eq!(
             entries.iter().map(|node| node.kind()).collect::<Vec<_>>(),
-            ["invalid_agic_message", "message"]
+            ["message"]
         );
-        assert_eq!(entries[0].parent().unwrap(), body);
+        let diagnostic = native_errors(body)
+            .into_iter()
+            .find(|node| node.is_error())
+            .unwrap();
+        assert_eq!(diagnostic.parent().unwrap(), body);
         assert_eq!(
-            entries[0].start_byte(),
-            source.find("user missing colon").unwrap()
+            diagnostic.utf8_text(source.as_bytes()).unwrap().trim(),
+            "user missing colon"
         );
-        assert_eq!(
-            entries[0].utf8_text(source.as_bytes()).unwrap(),
-            "user missing colon\n"
-        );
-        assert!(entries[1].child_by_field_name("content").is_some());
+        assert!(entries[0].child_by_field_name("content").is_some());
         assert_eq!(
             root.named_child(2)
                 .unwrap()
@@ -836,8 +856,14 @@ mod tests {
                 assert_eq!(owner.kind(), kind);
                 let params = owner.child_by_field_name("params").unwrap();
                 let bad = params.child_by_field_name("param").unwrap();
-                assert_eq!(bad.kind(), "invalid_param");
-                assert_eq!(bad.utf8_text(source.as_bytes()).unwrap(), parameter);
+                if parameter.starts_with(':') || parameter.starts_with('?') {
+                    assert_eq!(bad.kind(), "invalid_param");
+                    assert_eq!(bad.utf8_text(source.as_bytes()).unwrap(), parameter);
+                } else {
+                    assert_eq!(bad.kind(), "param");
+                    assert!(params.has_error());
+                    assert!(bad.child_by_field_name("type").is_none());
+                }
                 let body = owner.child_by_field_name("body").unwrap();
                 let mut cursor = body.walk();
                 let entries: Vec<_> = body
@@ -845,13 +871,19 @@ mod tests {
                     .collect();
                 assert_eq!(
                     entries.iter().map(|node| node.kind()).collect::<Vec<_>>(),
-                    ["directive", "invalid_directive", "directive"]
+                    ["directive", "directive"]
                 );
                 assert_eq!(
-                    entries[1].utf8_text(source.as_bytes()).unwrap(),
-                    "  models after\n"
+                    entries[1]
+                        .child_by_field_name("key")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    "tools"
                 );
                 assert_eq!(entries[1].parent().unwrap(), body);
+                assert!(native_errors(body).into_iter().any(|node| node.is_error()
+                    && node.utf8_text(source.as_bytes()).unwrap().trim() == "models after"));
                 assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
                 let next = root.named_child(2).unwrap();
                 assert_eq!(next.kind(), "flow");
@@ -886,13 +918,10 @@ mod tests {
             assert_eq!(body.named_child(0).unwrap().kind(), "item_doc");
             let reducer = body.child_by_field_name("stmt").unwrap();
             let inline = reducer.child_by_field_name("target").unwrap();
-            let mut cursor = inline.walk();
-            let diagnostic = inline
-                .named_children(&mut cursor)
-                .find(|node| node.kind() == "invalid_missing_type")
-                .unwrap();
-            assert_eq!(diagnostic.start_byte(), diagnostic.end_byte());
-            assert_eq!(diagnostic.child_count(), 0);
+            assert!(root.has_error());
+            assert!(native_errors(reducer)
+                .into_iter()
+                .any(|node| node.is_error() && node.utf8_text(source.as_bytes()).unwrap() == "->"));
             assert!(inline.child_by_field_name("return").is_none());
             assert_eq!(
                 inline
@@ -912,6 +941,67 @@ mod tests {
             );
             assert_eq!(root.named_child(1).unwrap().kind(), "item_doc");
             assert!(is_valid(root.named_child(2).unwrap()));
+        }
+    }
+
+    #[test]
+    fn sync_and_async_target_errors_keep_the_recognized_name() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for modifier in ["", "async "] {
+            for binding in ["", "let ", "let result = "] {
+                let source = format!("flow first:\n  {binding}{modifier}run worker extra\n  run after\nflow next:\n  pass\n");
+                let tree = parser.parse(&source, None).unwrap();
+                let root = tree.root_node();
+                assert!(root.has_error());
+                let body = root
+                    .named_child(0)
+                    .unwrap()
+                    .child_by_field_name("body")
+                    .unwrap();
+                let statement = body.child_by_field_name("stmt").unwrap();
+                let run = if binding.is_empty() {
+                    statement
+                } else {
+                    statement.child_by_field_name("stmt").unwrap()
+                };
+                assert_eq!(run.kind(), "run_stmt");
+                assert_eq!(
+                    run.child_by_field_name("target")
+                        .unwrap()
+                        .utf8_text(source.as_bytes())
+                        .unwrap(),
+                    "worker"
+                );
+                let errors = native_errors(run);
+                assert_eq!(errors.len(), 1);
+                assert!(errors[0].is_error());
+                assert_eq!(errors[0].utf8_text(source.as_bytes()).unwrap(), "extra");
+                assert_eq!(errors[0].start_byte(), source.find("extra").unwrap());
+                assert!(is_valid(root.named_child(1).unwrap()));
+            }
+        }
+    }
+
+    #[test]
+    fn missing_directive_values_are_visible_public_tokens() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for (key, kind) in [
+            ("models", "query_value"),
+            ("context", "identifier"),
+            ("instruct", "identifier"),
+        ] {
+            let source = format!("flow first:\n  {key} =\n  run after\nflow next:\n  pass\n");
+            let tree = parser.parse(&source, None).unwrap();
+            let root = tree.root_node();
+            assert!(root.has_error());
+            let errors = native_errors(root);
+            assert_eq!(errors.len(), 1);
+            assert_eq!(errors[0].kind(), kind);
+            assert!(errors[0].is_missing());
+            assert_eq!(errors[0].start_byte(), errors[0].end_byte());
+            assert!(is_valid(root.named_child(1).unwrap()));
         }
     }
 

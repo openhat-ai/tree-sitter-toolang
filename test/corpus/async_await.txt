@@ -18,19 +18,17 @@ flow second:
     (runnable_name)
     (newline)
     (flow_body
-      (run_stmt
-        (invalid_run_target
-          (newline)))
+      (ERROR
+        (newline))
       (run_stmt
         (runnable_name)
         (newline))
       (let_stmt
         (local_name)
         (run_stmt
-          (invalid_run_target
-            (runnable_name)
-            (text)
-            (newline))))
+          (runnable_name)
+          (ERROR)
+          (newline)))
       (let_stmt
         (run_stmt
           (inline_agic
@@ -265,19 +263,19 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_flow_stmt
+      (ERROR
         (newline))
       (invalid_flow_stmt
         (local_name)
         (newline))
-      (invalid_flow_stmt
-        (text)
+      (ERROR
         (newline))
       (let_stmt
         (local_name)
-        (invalid_flow_stmt
-          (text)
-          (newline)))
+        (ERROR)
+        (newline)
+        (content
+          (invalid_missing_content)))
       (run_stmt
         (runnable_name)
         (newline)))))

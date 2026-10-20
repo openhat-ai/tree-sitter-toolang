@@ -136,6 +136,8 @@ def test_incremental_recovery_edges_and_repairs_match_fresh_trees(newline):
         "flow first:\n  run before\n  # Ordinary.\n  run after\n",
         *PENDING_PREFIXES,
         "flow first:\n  repeat:\n    run worker\n    until 42\n  run after\n",
+        "flow first:\n  repeat:\n    run worker\n    until check()\n  run after\n",
+        "flow first:\n  repeat:\n    run worker\n    until -> Boolean: Ready.\n  run after\n",
         "flow first:\n  repeat:\n    run worker\n    until done\n  run after\n",
     ]
     for prefix in prefixes + prefixes[::-1]:

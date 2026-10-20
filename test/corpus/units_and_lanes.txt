@@ -150,18 +150,15 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (keep_stmt
-        (runnable_name)
-        (ERROR)
-        (newline))
-      (drop_stmt
-        (runnable_name)
-        (ERROR)
-        (newline))
-      (sort_stmt
-        (runnable_name)
-        (ERROR)
-        (newline))
+      (ERROR
+        (runnable_name))
+      (blank_line)
+      (ERROR
+        (runnable_name))
+      (blank_line)
+      (ERROR
+        (runnable_name))
+      (blank_line)
       (run_stmt
         (runnable_name)
         (newline))))
