@@ -19,10 +19,10 @@ ROOT = Path(__file__).parents[1]
     ("agic chat:\n  user:", "message", "content"),
     ("flow work:\n  run:", "inline_agic", "content"),
     ("flow work:\n  spawn:", "inline_agic", "content"),
-    ("flow work:\n  ask:", "ask_statement", "content"),
-    ("flow work:\n  let note =", "let_statement", "value"),
+    ("flow work:\n  ask:", "ask_stmt", "content"),
+    ("flow work:\n  let note =", "let_stmt", "value"),
     ("flow work:\n  repeat:\n    until:", "inline_agic", "content"),
-    ("flow work:\n  reduce using worker:\n    from:", "reduce_statement", "from"),
+    ("flow work:\n  reduce using worker:\n    initial:", "reduce_stmt", "initial"),
 ])
 @pytest.mark.parametrize("multiline", [False, True])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -85,8 +85,8 @@ def test_body_fields_own_entries_directly_and_keep_source_order():
         ("chore", "chore_body", ["property", "content"]),
         ("struct", "struct_body", ["field"]),
         ("agic", "agic_body", ["directive", "message"]),
-        ("flow", "flow_body", ["directive", "statement"]),
-        ("repeat_statement", "repeat_body", ["until", "statement"]),
+        ("flow", "flow_body", ["directive", "stmt"]),
+        ("repeat_stmt", "repeat_body", ["until", "stmt"]),
     ]:
         owner, = descendants(root, owner_kind)
         body = owner.child_by_field_name("body")
@@ -118,7 +118,7 @@ def test_indentation_queries_capture_headers_instead_of_content_rows():
     Bound.
   reduce:
     Merge.
-    from:
+    initial:
       Seed.
 agic chat:
   user:

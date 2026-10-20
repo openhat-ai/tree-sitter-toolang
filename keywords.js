@@ -7,7 +7,7 @@ const operations = [
   "run", "seek", "ask", "generate", "map", "reduce", "keep", "drop", "sort", "repeat", "spawn", "await",
 ];
 const clauses = [
-  "until", "from", "windowing", "using", "if", "by", "in", "lane", "lanes",
+  "until", "initial", "windowing", "using", "if", "by", "in", "lane", "lanes",
   "ascending", "descending", "time", "times", "first", "last",
 ];
 const queryKeys = ["models", "tools", "skills", "services", "psyches", "prompts"];

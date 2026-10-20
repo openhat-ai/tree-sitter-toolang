@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -13,10 +13,10 @@ BINDINGS = ["", "let job = ", "let "]
 
 def assert_binding(root, statement, binding):
     if not binding:
-        assert not descendants(root, "let_statement")
+        assert not descendants(root, "let_stmt")
         return
-    wrapper, = descendants(root, "let_statement")
-    assert wrapper.child_by_field_name("statement") == statement
+    wrapper, = descendants(root, "let_stmt")
+    assert wrapper.child_by_field_name("stmt") == statement
     assert wrapper.child_by_field_name("value") is None
     name = wrapper.child_by_field_name("local")
     expected = binding.split()[1].encode() if "=" in binding else None
@@ -43,7 +43,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
     source = source.replace("\n", ending or "\n") + ending
     root = parse(source)
     assert valid(root), root
-    statement, = descendants(root, "run_statement")
+    statement, = descendants(root, "run_stmt")
     modifier = statement.child_by_field_name("async")
     assert modifier.type == "async" and not modifier.is_named
     assert modifier.text.strip() == b"async"
@@ -59,7 +59,7 @@ def test_async_preserves_run_node_and_target_fields(binding, target, output, nes
     assert_binding(root, statement, binding)
     synchronous = parse(source.replace("async run", "run", 1))
     assert valid(synchronous), synchronous
-    run, = descendants(synchronous, "run_statement")
+    run, = descendants(synchronous, "run_stmt")
     assert run.child_by_field_name("async") is None
     assert str(run.child_by_field_name("target")) == str(node)
     assert run.child_by_field_name("target").text.strip() == node.text.strip()
@@ -75,12 +75,12 @@ def test_await_handle_is_distinct_from_result_binding(binding, handle, ending, n
     source = prefix + indent + binding + "await " + handle + " # Wait for completion."
     root = parse(source.replace("\n", ending or "\n") + ending)
     assert valid(root), root
-    statement, = descendants(root, "await_statement")
+    statement, = descendants(root, "await_stmt")
     name = statement.child_by_field_name("handle")
     assert name.type == "handle_name"
     assert name.child_count == 0
     assert name.text.strip() == handle.encode()
-    assert not descendants(root, "implicit_run_statement")
+    assert not descendants(root, "implicit_run_stmt")
     assert_binding(root, statement, binding)
 
 
@@ -110,13 +110,13 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
     source = source.replace("\n", ending or "\n") + ending
     root = parse(source)
     assert valid(root), root
-    launch, = descendants(root, "spawn_statement")
+    launch, = descendants(root, "spawn_stmt")
     assert launch.parent.child_by_field_name("local").text.strip() == name.encode()
-    assert launch.parent.child_by_field_name("statement") == launch
+    assert launch.parent.child_by_field_name("stmt") == launch
     assert launch.child_by_field_name("target").type == (
         "runnable_name" if target == " research" else "inline_agic"
     )
-    awaits = descendants(root, "await_statement")
+    awaits = descendants(root, "await_stmt")
     assert len(awaits) == 4
     for index, (statement, destination) in enumerate(zip(awaits, [None, "result", None, name])):
         assert statement.child_by_field_name("handle").type == "handle_name"
@@ -125,14 +125,14 @@ def test_spawn_handles_share_await_nodes_and_binding_fields(target, name, nested
             assert statement.parent.type == ("repeat_body" if nested else "flow_body")
         else:
             wrapper = statement.parent
-            assert wrapper.type == "let_statement"
-            assert wrapper.child_by_field_name("statement") == statement
+            assert wrapper.type == "let_stmt"
+            assert wrapper.child_by_field_name("stmt") == statement
             assert wrapper.child_by_field_name("value") is None
             local = wrapper.child_by_field_name("local")
             assert (local.text.strip().decode() if local else None) == destination
     child_root = parse(source.replace("= spawn", "= async run", 1))
     assert valid(child_root), child_root
-    assert [str(node) for node in descendants(child_root, "await_statement")] == [
+    assert [str(node) for node in descendants(child_root, "await_stmt")] == [
         str(node) for node in awaits
     ]
 
@@ -170,9 +170,8 @@ def test_unsupported_async_and_await_never_fall_back_to_text(binding, statement,
     source = f"flow bad:\n  {binding}{statement}".replace("\n", ending or "\n") + ending
     root = parse(source)
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement"), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+    assert not descendants(root, "implicit_run_stmt"), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -198,7 +197,7 @@ def test_invalid_async_run_preserves_following_statements_and_declarations(bindi
     assert not valid(root), root
     assert [node.child_by_field_name("name").text.strip() for node in descendants(root, "flow")] == [b"first", b"second"]
     targets = [node.child_by_field_name("target").text.strip()
-               for node in descendants(root, "run_statement")
+               for node in descendants(root, "run_stmt")
                if node.child_by_field_name("target")]
     assert b"after" in targets, root
     assert b"finish" in targets, root
@@ -245,10 +244,10 @@ def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
     assert not tokens(root, "async")
     assert not tokens(root, "await")
     if binding:
-        wrapper, = descendants(root, "let_statement")
+        wrapper, = descendants(root, "let_stmt")
         assert prefix.encode() in wrapper.child_by_field_name("value").text
     else:
-        assert prefix.encode() in descendants(root, "implicit_run_statement")[0].text
+        assert prefix.encode() in descendants(root, "implicit_run_stmt")[0].text
 
 
 @pytest.mark.parametrize("name", ["async", "await"])
@@ -259,7 +258,7 @@ def test_complete_keyword_boundaries_preserve_prose(prefix, binding):
 def test_keyword_local_names_accept_text_and_operation_results(name, value):
     root = parse(f"flow launch:\n  let {name} = {value}\n")
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     assert binding.child_by_field_name("local").text == name.encode()
 
 
@@ -268,8 +267,7 @@ def test_keyword_local_names_accept_text_and_operation_results(name, value):
 def test_keyword_local_names_do_not_hide_malformed_operations(name, value):
     root = parse(f"flow launch:\n  let {name} = {value}\n")
     assert not valid(root), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", [
@@ -285,7 +283,7 @@ def test_async_await_does_not_extend_binding_names_or_authored_types(statement):
 def test_async_target_names_remain_contextual(name):
     root = parse(f"flow launch:\n  async run {name}\n")
     assert valid(root), root
-    run, = descendants(root, "run_statement")
+    run, = descendants(root, "run_stmt")
     assert run.child_by_field_name("target").text.strip() == name.encode()
 
 
@@ -295,7 +293,7 @@ def test_async_target_names_remain_contextual(name):
 def test_async_run_target_separators(binding, spacing, target):
     root = parse(f"flow launch:\n  {binding}async{spacing}run{spacing}{target}\n")
     assert valid(root), root
-    run, = descendants(root, "run_statement")
+    run, = descendants(root, "run_stmt")
     if target == "worker":
         assert run.child_by_field_name("target").text.strip() == b"worker"
     else:
@@ -311,16 +309,16 @@ def test_async_inline_body_preserves_literal_text_and_repeat_boundaries(binding,
         f"{indent*2}await h\n{indent*2}until: Ready.\n{indent}run finish\n"
     )
     assert valid(root), root
-    loop, = descendants(root, "repeat_statement")
-    run, = descendants(loop, "run_statement")
+    loop, = descendants(root, "repeat_stmt")
+    run, = descendants(loop, "run_stmt")
     assert b"async run worker" in run.child_by_field_name("target").text
     assert b"await h" in run.child_by_field_name("target").text
-    assert not descendants(run, "await_statement")
+    assert not descendants(run, "await_stmt")
     assert not descendants(run, "item_doc")
-    assert len(descendants(loop, "await_statement")) == 1
+    assert len(descendants(loop, "await_stmt")) == 1
     condition = loop.child_by_field_name("body").child_by_field_name("until")
     assert condition.child_by_field_name("target").text.strip() == b": Ready."
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text.strip() == b"finish"
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text.strip() == b"finish"
 
 
 def test_async_and_await_end_implicit_text_paragraphs():
@@ -328,7 +326,7 @@ def test_async_and_await_end_implicit_text_paragraphs():
     assert valid(root), root
     statements, = descendants(root, "flow_body")
     assert [node.type for node in statements.named_children] == [
-        "implicit_run_statement", "run_statement", "await_statement", "implicit_run_statement",
+        "implicit_run_stmt", "run_stmt", "await_stmt", "implicit_run_stmt",
     ]
 
 

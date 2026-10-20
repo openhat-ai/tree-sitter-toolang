@@ -7,6 +7,14 @@
 (item_doc) @comment.documentation
 (param_doc) @comment.documentation
 (param_doc "@param" @keyword param: (param_name) @variable.parameter)
+[
+  (ERROR)
+  (invalid_missing_body)
+  (invalid_missing_content)
+  (invalid_missing_stmt)
+  (invalid_param)
+  (invalid_flow_stmt)
+] @error
 
 [
   "with"
@@ -36,7 +44,7 @@
   "sort"
   "repeat"
   "until"
-  "from"
+  "initial"
   "windowing"
   "using"
   "if"
@@ -89,11 +97,6 @@
 
 (content (text) @string)
 (property value: (text) @string)
-(invalid_param (text) @string)
-(invalid_directive (text) @string)
-(invalid_flow_statement (text) @string)
-(invalid_agic_message (text) @string)
-(invalid_run_target (text) @string)
 
 (struct
   name: (type_name) @type)

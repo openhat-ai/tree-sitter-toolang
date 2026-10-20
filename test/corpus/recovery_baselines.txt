@@ -26,7 +26,7 @@ flow next:
       (blank_line)
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc

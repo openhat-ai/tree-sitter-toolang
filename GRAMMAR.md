@@ -29,6 +29,12 @@ Recovery forms are described under Validity and Recovery.
 Hidden productions start with `_` and add no CST wrapper. Field annotations
 highlight relevant CST structure.
 
+A `_prefix` is an opening fragment that still needs a target or value; a `_head`
+contains the signature or options before structural terminators. A `_header`
+includes its colon and line ending. A `_tail` completes a statement; a `_clause`
+contains a complete modifier phrase. `_body_prefix` denotes preceding trivia,
+as defined below.
+
 Three parameterized abbreviations are used:
 
 - `_body(P)` is an indented structural scope containing `P`, with structural
@@ -111,9 +117,10 @@ runnable_ref    ::= /([A-Za-z_][A-Za-z0-9_-]*::)*(agic:|flow:)?[A-Za-z_][A-Za-z0
 ```
 
 The role-specific names above are distinct public leaves, even where their
-spellings match `identifier`. Keywords are recognized by context, not globally
-excluded from names. Parameters, local destinations, and await handles may use
-names such as `sort`, `until`, `default`, or `none`. `_` may name a parameter,
+spellings match `identifier`; they do not contain nested name nodes. Keywords
+are recognized by context, not globally excluded from names. Parameters, local
+destinations, and await handles may use names such as `sort`, `until`, `default`,
+or `none`. `_` may name a parameter,
 but not a local destination or handle. Qualified `runnable_ref` forms are used
 in route directives; call targets use the narrower `runnable_name`.
 
@@ -141,20 +148,20 @@ in explicit name positions.
 
 ```ebnf
 _declaration_keyword ::= "with" | "struct" | "psyche" | "skill" | "service"
-                      | "prompt" | "chore" | "context" | "instruct" | "agic" | "flow" ;
+                         | "prompt" | "chore" | "context" | "instruct" | "agic" | "flow" ;
 _operation_keyword   ::= "run" | "seek" | "ask" | "generate" | "map" | "reduce"
-                      | "keep" | "drop" | "sort" | "repeat" | "spawn" | "await" ;
-_clause_keyword      ::= "until" | "from" | "windowing" | "using" | "if" | "by"
-                      | "in" | "lane" | "lanes" | "ascending" | "descending"
-                      | "time" | "times" | "first" | "last" ;
-_query_directive_key ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts" ;
-_route_directive_key ::= "hands" | "handoffs" ;
-_directive_keyword   ::= _query_directive_key | _route_directive_key | "recall"
-                      | "lanes" | "context" | "instruct" ;
+                         | "keep" | "drop" | "sort" | "repeat" | "spawn" | "await" ;
+_clause_keyword      ::= "until" | "initial" | "windowing" | "using" | "if" | "by"
+                         | "in" | "lane" | "lanes" | "ascending" | "descending"
+                         | "time" | "times" | "first" | "last" ;
+_query_key           ::= "models" | "tools" | "skills" | "services" | "psyches" | "prompts" ;
+_route_key           ::= "hands" | "handoffs" ;
+_directive_keyword   ::= _query_key | _route_key | "recall"
+                         | "lanes" | "context" | "instruct" ;
 role                 ::= "user" | "assistant" | "tool" ;
 _agic_keyword        ::= _directive_keyword | role | "pass" ;
 _flow_keyword        ::= _declaration_keyword | _operation_keyword | _clause_keyword
-                      | _agic_keyword | "let" | "exec" | "async" | "_" ;
+                         | _agic_keyword | "let" | "exec" | "async" | "_" ;
 ```
 
 ### Comments and Documentation
@@ -260,15 +267,15 @@ The containing construct selects same-line text, an indented block, or an
 implicit paragraph.
 
 ```ebnf
-_content(F)      ::= F:alias(_inline_content, content) _text_end
-                   | _text_end F:alias(_block_content, content) ;
-_inline_content  ::= alias(_inline_text, text) ;
-_inline_text     ::= /[ \t]*[^ \t\r\n][^\r\n]*/ ;
-_text_end        ::= newline ;
-_block_content   ::= blank_line* _text_indent (_content_row | blank_line)+ _dedent ;
-_content_row     ::= alias(_raw_text, text) newline ;
-_raw_text        ::= ? physical text at or beyond the text baseline ? ;
-_paragraph(L)    ::= L (L | blank_line L)* blank_line? ;
+_content(F)     ::= F:alias(_inline_content, content) _text_end
+                    | _text_end F:alias(_block_content, content) ;
+_inline_content ::= alias(_inline_text, text) ;
+_inline_text    ::= /[ \t]*[^ \t\r\n][^\r\n]*/ ;
+_text_end       ::= newline ;
+_block_content  ::= blank_line* _text_indent (_content_line | blank_line)+ _dedent ;
+_content_line   ::= alias(_raw_text, text) newline ;
+_raw_text       ::= ? physical text at or beyond the text baseline ? ;
+_paragraph(L)   ::= L (L | blank_line L)* blank_line? ;
 ```
 
 `_text_indent` and `_dedent` are hidden layout boundaries. Same-line content
@@ -348,21 +355,21 @@ struct Report:
 ### Property Declarations
 
 ```ebnf
-psyche          ::= _psyche_header (_body_prefix* body:cap_body)? ;
-skill           ::= _skill_header (_body_prefix* body:cap_body)? ;
-service         ::= _service_header (_body_prefix* body:cap_body)? ;
-prompt          ::= _prompt_header (_body_prefix* body:cap_body)? ;
-chore           ::= _chore_header (_body_prefix* body:chore_body)? ;
-_psyche_header  ::= keyword:"psyche" name:cap_name colon:":" _line_end ;
-_skill_header   ::= keyword:"skill" name:cap_name colon:":" _line_end ;
-_service_header ::= keyword:"service" name:cap_name colon:":" _line_end ;
-_prompt_header  ::= keyword:"prompt" name:cap_name colon:":" _line_end ;
-_chore_header   ::= keyword:"chore" name:chore_name colon:":" _line_end ;
-cap_body        ::= _body((property:property)+ (content:alias(_cap_content, content))?
-                        | content:alias(_cap_content, content)) ;
-chore_body      ::= _body((property:property)+ (content:alias(_cap_content, content))?
-                        | content:alias(_cap_content, content)) ;
-_cap_content    ::= ? nonempty literal text at the containing body's baseline ? ;
+psyche              ::= _psyche_header (_body_prefix* body:cap_body)? ;
+skill               ::= _skill_header (_body_prefix* body:cap_body)? ;
+service             ::= _service_header (_body_prefix* body:cap_body)? ;
+prompt              ::= _prompt_header (_body_prefix* body:cap_body)? ;
+chore               ::= _chore_header (_body_prefix* body:chore_body)? ;
+_psyche_header      ::= keyword:"psyche" name:cap_name colon:":" _line_end ;
+_skill_header       ::= keyword:"skill" name:cap_name colon:":" _line_end ;
+_service_header     ::= keyword:"service" name:cap_name colon:":" _line_end ;
+_prompt_header      ::= keyword:"prompt" name:cap_name colon:":" _line_end ;
+_chore_header       ::= keyword:"chore" name:chore_name colon:":" _line_end ;
+cap_body            ::= _body((property:property)+ (content:alias(_definition_content, content))?
+                        | content:alias(_definition_content, content)) ;
+chore_body          ::= _body((property:property)+ (content:alias(_definition_content, content))?
+                        | content:alias(_definition_content, content)) ;
+_definition_content ::= ? nonempty literal text at the containing body's baseline ? ;
 ```
 
 These declarations require a name. Their bodies are optional, with a property
@@ -408,10 +415,10 @@ chore review_changes:
 ### Context and Instruct
 
 ```ebnf
-context          ::= _context_header _content(content) ;
-instruct         ::= _instruct_header _content(content) ;
-_context_header  ::= keyword:"context" name:identifier? colon:":" ;
-_instruct_header ::= keyword:"instruct" name:identifier? colon:":" ;
+context          ::= _context_prefix _content(content) ;
+instruct         ::= _instruct_prefix _content(content) ;
+_context_prefix  ::= keyword:"context" name:identifier? colon:":" ;
+_instruct_prefix ::= keyword:"instruct" name:identifier? colon:":" ;
 ```
 
 Both accept an optional name and require same-line or indented text. They have
@@ -428,8 +435,10 @@ instruct: Return a concise answer.
 ```ebnf
 agic         ::= _agic_header _body_prefix* body:agic_body ;
 flow         ::= _flow_header _body_prefix* body:flow_body ;
-_agic_header ::= keyword:"agic" name:runnable_name? params:params? _return_clause? colon:":" _line_end ;
-_flow_header ::= keyword:"flow" name:runnable_name? params:params? _return_clause? colon:":" _line_end ;
+_agic_header ::= _agic_head colon:":" _line_end ;
+_flow_header ::= _flow_head colon:":" _line_end ;
+_agic_head   ::= keyword:"agic" name:runnable_name? params:params? _return_clause? ;
+_flow_head   ::= keyword:"flow" name:runnable_name? params:params? _return_clause? ;
 ```
 
 Name, parameter list, and return annotation are independently optional. A body
@@ -461,13 +470,12 @@ restricted inline target of `until` has no return annotation.
 ### Directive
 
 ```ebnf
-_directives         ::= directive:_directive_entry (directive:_directive_entry | _trivia)* ;
-_directive_entry    ::= directive ;
-directive           ::= _query_directive_key _directive_operator query_value _line_end
-                      | _route_directive_key "=" route_value _line_end
-                      | "recall" "=" recall_value _line_end
-                      | "lanes" "=" (integer_literal | "default") _line_end
-                      | ("context" | "instruct") "=" _text_ref _line_end ;
+_directives         ::= directive:directive (directive:directive | _trivia)* ;
+directive           ::= _query_key _directive_operator query_value _line_end
+                        | _route_key "=" route_value _line_end
+                        | "recall" "=" recall_value _line_end
+                        | "lanes" "=" (integer_literal | "default") _line_end
+                        | ("context" | "instruct") "=" _text_ref _line_end ;
 _directive_operator ::= "=" | "+=" | "-=" ;
 query_value         ::= /[^ \t#\r\n][^#\r\n]*/ ;
 route_value         ::= "none" | "*" | runnable_ref ("," runnable_ref)* ;
@@ -498,13 +506,12 @@ terminal, and `lanes` points to `integer_literal` or anonymous `default`.
 ### Agic
 
 ```ebnf
-agic_body            ::= _body(_directives _messages? | _messages | "pass" _line_end) ;
-_messages            ::= message:_message_entry (message:_message_entry | _trivia)* ;
-_message_entry       ::= message ;
-message              ::= role:role ":" _content(content)
-                       | content:alias(_message_content, content) ;
-_message_content     ::= _paragraph(_unroled_message_line) ;
-_unroled_message_line ::= alias(_agic_raw_text, text) newline ;
+agic_body              ::= _body(_directives _messages? | _messages | "pass" _line_end) ;
+_messages              ::= message:message (message:message | _trivia)* ;
+message                ::= role:role ":" _content(content)
+                           | content:alias(_message_content, content) ;
+_message_content       ::= _paragraph(_implicit_message_line) ;
+_implicit_message_line ::= alias(_agic_raw_text, text) newline ;
 ```
 
 An agic may contain directives alone, messages alone, or directives followed by
@@ -529,18 +536,21 @@ agic summarize(_: Text, style?: Text) -> Text:
 ### Flow
 
 ```ebnf
-flow_body       ::= _body(_directives? _statements | "pass" _line_end) ;
-_statements     ::= statement:_flow_statement (statement:_flow_statement | _trivia)* ;
-_flow_statement ::= let_statement | exec_statement | _flow_operation | implicit_run_statement ;
-_flow_operation ::= run_statement | spawn_statement | await_statement | seek_statement
-                  | ask_statement | generate_statement | map_statement | reduce_statement
-                  | keep_statement | drop_statement | sort_statement | repeat_statement ;
+flow_body       ::= _body(_directives? _stmts | "pass" _line_end) ;
+_stmts          ::= stmt:_flow_stmt (stmt:_flow_stmt | _trivia)* ;
+_flow_stmt      ::= let_stmt | exec_stmt | _flow_operation | implicit_run_stmt ;
+_flow_operation ::= run_stmt | spawn_stmt | await_stmt | seek_stmt
+                    | ask_stmt | generate_stmt | map_stmt | reduce_stmt
+                    | keep_stmt | drop_stmt | sort_stmt | repeat_stmt ;
 ```
+
+Flow and repeat bodies expose statements through `stmt` fields in source order.
+A bound operation is available through `let_stmt.stmt`.
 
 A flow requires statements, optionally preceded by directives. Directives alone
 are insufficient. `pass` is a whole-body alternative and cannot coexist with
 directives or statements. The `flow_body` exposes repeated `directive` and
-`statement` fields in source order.
+`stmt` fields in source order.
 
 ```too
 flow summarize(_: Text) -> Text:
@@ -554,15 +564,20 @@ flow summarize(_: Text) -> Text:
 ### Targets and Lanes
 
 ```ebnf
-_target       ::= target:runnable_name _line_end | target:inline_agic ;
-inline_agic   ::= _return_clause? ":" _content(content) ;
-_lanes_clause ::= "in" lanes:integer_literal ("lane" | "lanes") ;
+_named_target  ::= target:runnable_name ;
+_inline_target ::= target:inline_agic ;
+_target_tail   ::= _named_target _line_end | _inline_target ;
+inline_agic    ::= _return_clause? ":" _content(content) ;
+_lanes_clause  ::= "in" lanes:integer_literal ("lane" | "lanes") ;
 ```
 
 A call's `target` is a `runnable_name` leaf or an `inline_agic` with required text
 and an optional return type. Named targets permit an inline comment, but no
 argument list or trailing prose. After an inline target's colon, the rest of
 that line is content, including clause-like words and `#`.
+
+The hidden target rules expose values directly. Tail rules finish the enclosing
+statement; an inline agic already owns its content's line ending.
 
 `generate`, `map`, `keep`, `drop`, and `sort` permit one lane clause before their
 connector (`using`, `if`, or `by`) or inline target. Each operation below defines
@@ -571,9 +586,10 @@ its remaining order.
 ### Let
 
 ```ebnf
-let_statement ::= "let" local:local_name "=" statement:_flow_operation
-                | "let" statement:_flow_operation
-                | "let" local:local_name "=" _content(value) ;
+let_stmt    ::= _let_prefix stmt:_flow_operation
+               | "let" stmt:_flow_operation
+               | _let_prefix _content(value) ;
+_let_prefix ::= "let" local:local_name "=" ;
 ```
 
 Named bindings require `=`; nameless `let` requires an operation. Text bindings
@@ -604,9 +620,11 @@ flow keyword_names(sort: Text):
 ### Run, Exec, and Spawn
 
 ```ebnf
-run_statement   ::= async:"async"? "run" _target ;
-exec_statement  ::= "exec" _target ;
-spawn_statement ::= "spawn" _target ;
+run_stmt          ::= _named_run_head _line_end | _run_prefix _required_space? _inline_target ;
+_run_prefix       ::= async:"async"? "run" ;
+_named_run_head   ::= _run_prefix _required_space _named_target ;
+exec_stmt         ::= "exec" _target_tail ;
+spawn_stmt        ::= "spawn" _target_tail ;
 ```
 
 All three take a named target or inline agic. Only `run` accepts `async`, placed
@@ -626,7 +644,7 @@ flow inspect:
 ### Await
 
 ```ebnf
-await_statement ::= "await" handle:handle_name _line_end ;
+await_stmt ::= "await" handle:handle_name _line_end ;
 ```
 
 `await` takes one handle name, directly or in a named/nameless `let` binding.
@@ -644,7 +662,7 @@ flow research:
 ### Seek
 
 ```ebnf
-seek_statement ::= "seek" agent:agent_name _target ;
+seek_stmt ::= "seek" agent:agent_name _target_tail ;
 ```
 
 The first name identifies the agent; a runnable name or inline agic follows it.
@@ -658,7 +676,7 @@ flow review:
 ### Ask
 
 ```ebnf
-ask_statement ::= "ask" ":" _content(content) ;
+ask_stmt ::= "ask" ":" _content(content) ;
 ```
 
 The colon introduces required same-line or indented text.
@@ -671,10 +689,10 @@ flow choose:
 ### Generate and Map
 
 ```ebnf
-generate_statement ::= "generate" count:integer_literal _lanes_clause? _using_target ;
-map_statement      ::= "map" _lanes_clause? _using_target ;
-_using_target      ::= _using_clause _line_end | target:inline_agic ;
-_using_clause      ::= "using" target:runnable_name ;
+generate_stmt ::= "generate" count:integer_literal _lanes_clause? _using_tail ;
+map_stmt      ::= "map" _lanes_clause? _using_tail ;
+_using_tail   ::= _using_clause _line_end | _inline_target ;
+_using_clause ::= "using" target:runnable_name ;
 ```
 
 `generate` requires a count immediately after its keyword; `map` takes no count.
@@ -692,50 +710,50 @@ flow expand:
 ### Reduce
 
 ```ebnf
-reduce_statement           ::= "reduce" _using_clause _line_end
-                             | _reduce_named_block_header _body_prefix* _body(_from_clause)
-                             | "reduce" target:alias(_reduce_inline_line, inline_agic)
-                             | "reduce" target:alias(_reduce_inline_block, inline_agic)
-                               _from_clause? _trivia* _dedent ;
-_reduce_named_block_header ::= "reduce" _using_clause ":" _line_end ;
-_reduce_inline_line        ::= _return_clause? ":" content:alias(_inline_content, content) _text_end ;
-_reduce_block_header       ::= _return_clause? ":" _text_end ;
-_reduce_inline_block       ::= _reduce_block_header content:alias(_reduce_content, content) ;
-_reduce_content            ::= blank_line* _reduce_indent _reduce_text_start
-                               (_content_row | blank_line)+ _dedent ;
-_from_clause               ::= "from" ":" _content(from) ;
+reduce_stmt          ::= "reduce" _using_clause _line_end
+                         | _reduce_using_header _body_prefix* _body(_initial_clause)
+                         | "reduce" target:alias(_reduce_inline_line, inline_agic)
+                         | "reduce" target:alias(_reduce_inline_block, inline_agic)
+                           _initial_clause? _trivia* _dedent ;
+_reduce_using_header ::= "reduce" _using_clause ":" _line_end ;
+_reduce_inline_line  ::= _return_clause? ":" content:alias(_inline_content, content) _text_end ;
+_reduce_block_header ::= _return_clause? ":" _text_end ;
+_reduce_inline_block ::= _reduce_block_header content:alias(_reduce_content, content) ;
+_reduce_content      ::= blank_line* _reduce_indent _reduce_text_start
+                        (_content_line | blank_line)+ _dedent ;
+_initial_clause      ::= "initial" ":" _content(initial) ;
 ```
 
-A named reducer's optional header colon requires an indented `from:` initializer.
+A named reducer's optional header colon requires an indented `initial:` initializer.
 An inline reducer may have a same-line value, or an indented value optionally
-followed by `from:` at the text baseline. A same-line reducer cannot have a
-following initializer. A deeper `from:` remains literal text. At the baseline,
-the complete word `from` selects initializer syntax even when malformed.
+followed by `initial:` at the text baseline. A same-line reducer cannot have a
+following initializer. A deeper `initial:` remains literal text. At the baseline,
+the complete word `initial` selects initializer syntax even when malformed.
 
 `_reduce_indent` opens the initializer scope; `_reduce_text_start` opens literal
-text at that baseline. The inner `_dedent` ends reducer text before `from`, and
+text at that baseline. The inner `_dedent` ends reducer text before `initial`, and
 the outer one closes the initializer scope. Leading blank lines belong to the
-reducer's `content`. The CST `target` contains the name or `inline_agic`; `from`
+reducer's `content`. The CST `target` contains the name or `inline_agic`; `initial`
 points directly to the initializer's `content`. There is no separate public body
 or initializer wrapper. `reduce` has no lane clause.
 
 ```too
 flow combine:
   reduce using merge:
-    from: Initial report.
+    initial: Initial report.
   reduce:
     Incorporate {{_}} into the report.
-    from:
+    initial:
       Initial report.
 ```
 
 ### Keep and Drop
 
 ```ebnf
-keep_statement ::= "keep" (selection:selection _line_end | _lanes_clause? _if_target) ;
-drop_statement ::= "drop" (selection:selection _line_end | _lanes_clause? _if_target) ;
-selection      ::= side:("first" | "last") count:integer_literal ;
-_if_target     ::= "if" _target ;
+keep_stmt ::= "keep" (selection:selection _line_end | _lanes_clause? _if_tail) ;
+drop_stmt ::= "drop" (selection:selection _line_end | _lanes_clause? _if_tail) ;
+selection ::= side:("first" | "last") count:integer_literal ;
+_if_tail  ::= "if" _target_tail ;
 ```
 
 Both accept `first N`, `last N`, or a named/inline predicate introduced by `if`.
@@ -752,9 +770,9 @@ flow select:
 ### Sort
 
 ```ebnf
-sort_statement ::= "sort" _order_clause _lanes_clause? _by_target ;
-_order_clause  ::= order:("ascending" | "descending") ;
-_by_target     ::= "by" _target ;
+sort_stmt   ::= "sort" _sort_order _lanes_clause? _by_tail ;
+_sort_order ::= order:("ascending" | "descending") ;
+_by_tail    ::= "by" _target_tail ;
 ```
 
 An explicit order immediately follows `sort`. An optional lane clause follows
@@ -769,15 +787,16 @@ flow order:
 ### Repeat
 
 ```ebnf
-repeat_statement ::= _repeat_header _body_prefix* body:repeat_body ;
-_repeat_header   ::= "repeat" _times_clause? _window_clause? ":" _line_end ;
-_times_clause    ::= count:integer_literal ("time" | "times") ;
-_window_clause   ::= "windowing" window:integer_literal ;
-repeat_body      ::= _body(_statements (until:until_clause _trivia* _statements?)?
-                          | until:until_clause _trivia* _statements) ;
-until_clause     ::= "until" (target:runnable_name _line_end
-                           | target:alias(_until_agic, inline_agic)) ;
-_until_agic      ::= ":" _content(content) ;
+repeat_stmt       ::= _repeat_header _body_prefix* body:repeat_body ;
+_repeat_header    ::= _repeat_head ":" _line_end ;
+_repeat_head      ::= "repeat" _times_clause? _windowing_clause? ;
+_times_clause     ::= count:integer_literal ("time" | "times") ;
+_windowing_clause ::= "windowing" window:integer_literal ;
+repeat_body       ::= _body(_stmts (until:until_clause _trivia* _stmts?)?
+                      | until:until_clause _trivia* _stmts) ;
+until_clause      ::= "until" (target:runnable_name _line_end
+                      | target:alias(_until_agic, inline_agic)) ;
+_until_agic       ::= ":" _content(content) ;
 ```
 
 Count and window are independently optional. If present, the count comes before
@@ -788,7 +807,7 @@ their conditions; `until` is invalid outside a repeat.
 
 The condition takes a bare name or `:` followed by text. It has no return type,
 argument list, or binding. Deeper explicit text remains literal. The CST
-`repeat_body` exposes repeated `statement` fields and optional `until: until_clause`;
+`repeat_body` exposes repeated `stmt` fields and optional `until: until_clause`;
 that clause's `target` is a `runnable_name` or `inline_agic`.
 
 ```too
@@ -802,9 +821,9 @@ flow improve:
 ### Implicit Run
 
 ```ebnf
-implicit_run_statement ::= content:alias(_implicit_content, content) ;
-_implicit_content      ::= _paragraph(_implicit_run_line) ;
-_implicit_run_line     ::= alias(_flow_raw_text, text) newline ;
+implicit_run_stmt  ::= content:alias(_implicit_content, content) ;
+_implicit_content  ::= _paragraph(_implicit_run_line) ;
+_implicit_run_line ::= alias(_flow_raw_text, text) newline ;
 ```
 
 Flow prose follows the implicit paragraph rules with `_flow_keyword` boundaries.
@@ -824,7 +843,7 @@ valid statement form is an error. Use `run:` for unrestricted keyword-led prose.
 
 The hidden inline, block, paragraph, and lexical rules add no forwarding nodes.
 Documentation fields, `property.value`, and `with.reference` point directly to
-`text`. `let_statement.value` and `reduce_statement.from` point to `content`.
+`text`. `let_stmt.value` and `reduce_stmt.initial` point to `content`.
 A same-line `content` excludes its line ending; indented and paragraph values
 include their text-line endings. Parsing does not trim or dedent text.
 
@@ -841,36 +860,50 @@ Highlighting depends on parent nodes and fields, not on `text` alone.
 
 ## Validity and Recovery
 
-Consumers must reject native `ERROR`, missing tokens, and every `invalid_*`
-descendant. `root.has_error` alone is insufficient. Diagnostic alternatives
-retain surrounding structure; they do not make malformed source valid.
+Most malformed source uses native `ERROR` nodes or missing tokens. Check
+`root.has_error` before consuming a tree; inspect `is_error` and `is_missing`
+for local diagnostics. Native missing name and query-value tokens remain visible
+leaves with their public node types. Error nodes may occur between fielded
+members or inside an incomplete construct, so a recovered tree does not imply
+validity.
+
+Five public diagnostic types additionally preserve boundaries that native
+recovery cannot reliably retain. Consumers must also reject every `invalid_*`
+descendant, even when `root.has_error` is false.
 
 | Diagnostic | Meaning |
 | --- | --- |
 | `invalid_missing_body` | Required structural body is absent. |
 | `invalid_missing_content` | Required text is absent. |
-| `invalid_missing_statement` | A flow or repeat still requires a statement. |
-| `invalid_missing_type` | A return arrow lacks a type before an explicit header colon. |
-| `invalid_param` | A parameter annotation has missing operands or malformed trailing text. |
-| `invalid_directive` | A known directive is incomplete or malformed. |
-| `invalid_flow_statement` | A malformed or misplaced flow statement. |
-| `invalid_agic_message` | A malformed keyword-led message entry. |
-| `invalid_run_target` | A malformed target fragment after `async run`. |
+| `invalid_missing_stmt` | A flow or repeat still requires a statement. |
+| `invalid_param` | An unnamed parameter or malformed annotation suffix needs delimiter-bounded recovery. |
+| `invalid_flow_stmt` | A forbidden binding or malformed repeat `until` needs local recovery. |
 
-The four `invalid_missing_*` nodes are zero-width leaves. With a missing return
-type, the owning declaration or inline agic has an `invalid_missing_type` child
-and no `return` field. A missing closing `)` remains a native missing token.
+The three `invalid_missing_*` nodes are zero-width leaves. They keep an empty
+required construct from borrowing content or documentation from the next
+member or declaration. Missing parameter types and return annotations use
+native recovery; a missing return annotation has no usable `return` field.
+An otherwise complete signature with a missing closing `)` uses a native missing
+token.
 
-Hidden entry rules keep diagnostic entries alongside normal ones:
-`params.param` accepts `param` or `invalid_param`, body `directive` accepts
-`directive` or `invalid_directive`, and `agic_body.message` accepts `message` or
-`invalid_agic_message`. There is no normal-node wrapper around an invalid entry.
-Normal required fields remain required in the schema. While a directive prefix
-is open, known malformed directives stay in it; unknown assignment heads remain
+The highlight query captures `ERROR` and all five diagnostic types as `@error`;
+recovery text is not a semantic string. Zero-width diagnostics and native missing
+tokens need an editor or consumer to display their location.
+
+`params.param` accepts `param` or `invalid_param`. Directive and message fields
+contain normal entries only; native errors can be their siblings. Required
+fields remain required in the normal schema, including `run_stmt.target`.
+Both `run` and `async run` share target rules and native recovery; simple
+trailing-text errors retain the recognized target. While a directive prefix is
+open, recovery preserves subsequent directives; unknown assignment heads remain
 native syntax errors.
 
 `invalid_param` excludes list separators. Its trailing recovery text requires a
 real comma or `)` on the same physical line and cannot borrow one from a header
-comment. `invalid_directive` includes indentation and its line ending, like a
-normal directive. `invalid_agic_message` starts at the malformed keyword;
-normal messages retain their leading indentation.
+comment. Structural recovery leaves delimiters and operators to the native
+parser and synchronizes at physical line, indentation, and declaration
+boundaries. Runnable signatures and repeat options reduce before their header
+terminators, so a malformed head cannot borrow a later declaration's colon.
+Damaged signatures do not turn subsequent program documentation or declarations
+into parameters.
+Incremental edits preserve the same ownership and ranges as a fresh parse.

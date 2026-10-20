@@ -26,14 +26,14 @@ enum Token {
   LINE_START,
   DIRECTIVE_START,
   UNTIL_START,
-  FROM_START,
+  INITIAL_START,
   REDUCE_INDENT,
   REDUCE_TEXT_START,
   TEXT_INDENT,
-  CAP_TEXT_START,
+  DEFINITION_TEXT_START,
   RAW_TEXT,
-  FLOW_TEXT,
-  AGIC_TEXT,
+  FLOW_RAW_TEXT,
+  AGIC_RAW_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
   OPERATION_BINDING_START,
@@ -42,7 +42,6 @@ enum Token {
   MISSING_REQUIRED,
   INTEGER_LITERAL,
   PARAM_ERROR,
-  MISSING_TYPE,
 };
 
 enum Mode { STRUCTURAL, TEXT, REDUCE_TEXT };
@@ -75,6 +74,7 @@ typedef struct {
   bool comment_started;
   bool doc_started;
   bool file_start;
+  bool structural_line;
   Trivia trivia;
 } Scanner;
 
@@ -159,6 +159,9 @@ static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
 
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
+  if (token == NEWLINE || token == BLANK_LINE) {
+    scanner->structural_line = false;
+  }
   if (token != COMMENT_START) {
     scanner->file_start = false;
   }
@@ -166,6 +169,15 @@ static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
     scanner->depth--;
   }
   return true;
+}
+
+// Only a normal grammar request confirms a structural line. Provisional
+// recovery markers must not expose a later header's delimiters to an older
+// incomplete construct while native recovery compares alternative parses.
+static bool start_line(Scanner *scanner, TSLexer *lexer, enum Token token) {
+  scanner->line_started = true;
+  scanner->structural_line = true;
+  return emit(scanner, lexer, token);
 }
 
 static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode mode,
@@ -255,6 +267,7 @@ static bool lookahead_body_prefix(TSLexer *lexer, Indentation indent, Trivia *tr
 }
 
 static void finish_trivia_line(Scanner *scanner) {
+  scanner->structural_line = false;
   scanner->comment_started = false;
   scanner->doc_started = false;
   scanner->line_started = false;
@@ -262,6 +275,11 @@ static void finish_trivia_line(Scanner *scanner) {
       scanner->trivia.phase != BODY_OUTER_PREFIX) {
     scanner->trivia = (Trivia){0};
   }
+}
+
+static bool recovery_delimiter(int32_t ch) {
+  return ch == ':' || ch == ',' || ch == '(' || ch == ')' || ch == '[' || ch == ']' ||
+         ch == '-' || ch == '?' || ch == '+' || ch == '=';
 }
 
 // Recovery always makes progress on the current physical line and releases any
@@ -277,7 +295,15 @@ static bool scan_error_line(Scanner *scanner, TSLexer *lexer) {
   if (lexer->eof(lexer)) {
     return false;
   }
+  // Preserve structural delimiters for native recovery of missing operands.
+  // Literal text and rejected comment lines remain opaque recovery fragments.
+  if (scanner->structural_line && recovery_delimiter(lexer->lookahead)) {
+    return false;
+  }
   while (!lexer->eof(lexer) && lexer->lookahead != '\r' && lexer->lookahead != '\n') {
+    if (scanner->structural_line && recovery_delimiter(lexer->lookahead)) {
+      break;
+    }
     advance(lexer);
   }
   lexer->mark_end(lexer);
@@ -350,18 +376,8 @@ static bool scan_param_error(TSLexer *lexer) {
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   skip_indentation(lexer);
   lexer->mark_end(lexer);
-  char word[32] = {0};
-  unsigned length = 0;
-  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
-  while (word_character(lexer->lookahead)) {
-    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      identifier = false;
-    }
-    if (length < sizeof(word) - 1) {
-      word[length++] = (char)lexer->lookahead;
-    }
-    advance(lexer);
-  }
+  char word[32];
+  bool identifier = read_word(lexer, word, sizeof(word));
   // An explicit assignment selects a destination before operation heads. Keep
   // the marked end at the name's start; the grammar consumes the name and '='.
   if (valid[NAMED_BINDING_START] && identifier) {
@@ -511,16 +527,6 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     skip_indentation(lexer);
     return scan_comment(scanner, lexer, valid);
   }
-  // An explicit body/header colon commits a return annotation even when its
-  // type is absent. Leave the colon to the grammar and stay on this line.
-  if (!at_start && valid[MISSING_TYPE]) {
-    skip_indentation(lexer);
-    lexer->mark_end(lexer);
-    if (lexer->lookahead == ':') {
-      return emit(scanner, lexer, MISSING_TYPE);
-    }
-    return false;
-  }
   if (!at_start && valid[PARAM_ERROR]) {
     if (scan_param_error(lexer)) {
       return emit(scanner, lexer, PARAM_ERROR);
@@ -558,7 +564,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   bool opening_body = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT] ||
                       valid[TEXT_INDENT] || valid[REDUCE_INDENT];
   bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
-                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
+                          valid[UNTIL_START] || valid[INITIAL_START] || valid[REDUCE_TEXT_START];
   bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
   bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
   bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
@@ -727,29 +733,28 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   bool property_name = read_word(lexer, word, sizeof(word));
 
   if (frame.mode == REDUCE_TEXT && indent.column == frame.column &&
-      strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
+      strcmp(word, "initial") == 0 && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
   if (valid[ITEM_START] && !scanner->line_started && at_baseline) {
-    scanner->line_started = true;
-    return emit(scanner, lexer, ITEM_START);
+    return start_line(scanner, lexer, ITEM_START);
   }
   if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
-      !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
+      !scanner->line_started && at_baseline && strcmp(word, "initial") == 0) {
     return emit(scanner, lexer, MISSING_REQUIRED);
   }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
-      strcmp(word, "from") != 0) {
+      strcmp(word, "initial") != 0) {
     return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);
   }
-  if (valid[CAP_TEXT_START] && !scanner->line_started && at_baseline) {
+  if (valid[DEFINITION_TEXT_START] && !scanner->line_started && at_baseline) {
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
     }
     if (lexer->lookahead != '=' || !property_name) {
-      return push(scanner, lexer, indent, TEXT, CAP_TEXT_START);
+      return push(scanner, lexer, indent, TEXT, DEFINITION_TEXT_START);
     }
   }
 
@@ -757,8 +762,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     enum Token start = LINE_START;
     if (valid[UNTIL_START] && strcmp(word, "until") == 0) {
       start = UNTIL_START;
-    } else if (valid[FROM_START] && strcmp(word, "from") == 0) {
-      start = FROM_START;
+    } else if (valid[INITIAL_START] && strcmp(word, "initial") == 0) {
+      start = INITIAL_START;
     } else if (valid[DIRECTIVE_START]) {
       bool directive = keyword(word, directive_keywords,
                                sizeof(directive_keywords) / sizeof(*directive_keywords));
@@ -772,18 +777,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       }
     }
     if (start != LINE_START) {
-      scanner->line_started = true;
-      return emit(scanner, lexer, start);
+      return start_line(scanner, lexer, start);
     }
   }
 
-  bool prose = (valid[FLOW_TEXT] &&
+  bool prose = (valid[FLOW_RAW_TEXT] &&
                 !keyword(word, flow_keywords, sizeof(flow_keywords) / sizeof(*flow_keywords))) ||
-               (valid[AGIC_TEXT] &&
+               (valid[AGIC_RAW_TEXT] &&
                 !keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords)));
   if (valid[LINE_START] && !prose && !scanner->line_started && at_baseline) {
-    scanner->line_started = true;
-    return emit(scanner, lexer, LINE_START);
+    return start_line(scanner, lexer, LINE_START);
   }
 
   enum Token text = RAW_TEXT;
@@ -792,16 +795,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
         (indent.column == frame.column && indent.prefix != frame.prefix)) {
       return false;
     }
-    if (valid[FLOW_TEXT]) {
+    if (valid[FLOW_RAW_TEXT]) {
       if (keyword(word, flow_keywords, sizeof(flow_keywords) / sizeof(*flow_keywords))) {
         return false;
       }
-      text = FLOW_TEXT;
-    } else if (valid[AGIC_TEXT]) {
+      text = FLOW_RAW_TEXT;
+    } else if (valid[AGIC_RAW_TEXT]) {
       if (keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords))) {
         return false;
       }
-      text = AGIC_TEXT;
+      text = AGIC_RAW_TEXT;
     } else {
       return false;
     }
@@ -835,7 +838,7 @@ unsigned tree_sitter_toolang_external_scanner_serialize(void *payload, char *buf
   buffer[size++] = (char)scanner->eof_newline;
   buffer[size++] = (char)scanner->comment_started;
   buffer[size++] = (char)scanner->doc_started;
-  buffer[size++] = (char)scanner->file_start;
+  buffer[size++] = (char)(scanner->file_start | (scanner->structural_line << 1));
   buffer[size++] = (char)(scanner->trivia.prefix | (scanner->trivia.phase << 2));
   for (unsigned j = 0; j < 4; j++) {
     buffer[size++] = (char)(scanner->trivia.lines >> (j * 8));
@@ -873,7 +876,8 @@ void tree_sitter_toolang_external_scanner_deserialize(void *payload, const char 
   scanner->eof_newline = bytes[3];
   scanner->comment_started = bytes[4];
   scanner->doc_started = bytes[5];
-  scanner->file_start = bytes[6];
+  scanner->file_start = bytes[6] & 1;
+  scanner->structural_line = (bytes[6] >> 1) & 1;
   scanner->trivia.prefix = bytes[7] & 3;
   scanner->trivia.phase = bytes[7] >> 2;
   unsigned offset = 8;

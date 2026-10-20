@@ -29,7 +29,7 @@ agic describe(until?: Text):
         (param_name)))
     (newline)
     (flow_body
-      (await_statement
+      (await_stmt
         (handle_name)
         (newline))
       (blank_line)))
@@ -65,40 +65,40 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (sort_statement
+        (sort_stmt
           (runnable_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
         (newline)
         (content
           (text)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (spawn_statement
+        (spawn_stmt
           (runnable_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline)))
-      (await_statement
+      (await_stmt
         (handle_name)
         (newline))
-      (let_statement
-        (run_statement
+      (let_stmt
+        (run_stmt
           (runnable_name)
           (newline)))
-      (let_statement
-        (sort_statement
+      (let_stmt
+        (sort_stmt
           (runnable_name)
           (newline))))))

@@ -5,7 +5,7 @@ import pytest
 from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, tokens, valid
 
 
 BINDINGS = ["", "let job = ", "let "]
@@ -19,7 +19,7 @@ def test_spawn_keyword_can_be_a_local_name(value, ending):
     source = f"flow launch:\n  let spawn = {value}".replace("\n", ending or "\n") + ending
     root = parse(source)
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     assert binding.child_by_field_name("local").text == b"spawn"
 
 
@@ -27,9 +27,8 @@ def test_spawn_keyword_can_be_a_local_name(value, ending):
 def test_spawn_local_name_does_not_hide_a_malformed_spawn_value(value):
     root = parse(f"flow launch:\n  let spawn = {value}\n")
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement")
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+    assert not descendants(root, "implicit_run_stmt")
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -49,7 +48,7 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
     source = source.replace("\n", ending or "\n") + ending
     root = parse(source)
     assert valid(root), root
-    statement, = descendants(root, "spawn_statement")
+    statement, = descendants(root, "spawn_stmt")
     keyword, = tokens(statement, "spawn")
     assert keyword.text.strip() == b"spawn"
     node = statement.child_by_field_name("target")
@@ -62,13 +61,13 @@ def test_spawn_target_and_binding_fields(binding, target, output, nested, ending
         assert (return_type.text.decode() if return_type else None) == output
         assert node.child_by_field_name("content").text.strip() == b"Research {{_}}."
     if binding:
-        wrapper, = descendants(root, "let_statement")
-        assert wrapper.child_by_field_name("statement") == statement
+        wrapper, = descendants(root, "let_stmt")
+        assert wrapper.child_by_field_name("stmt") == statement
         assert wrapper.child_by_field_name("value") is None
         name = wrapper.child_by_field_name("local")
         assert (name.text.strip() if name else None) == (b"job" if "=" in binding else None)
     else:
-        assert not descendants(root, "let_statement")
+        assert not descendants(root, "let_stmt")
 
 
 @pytest.mark.parametrize("binding", BINDINGS)
@@ -88,9 +87,8 @@ def test_invalid_spawn_never_falls_back_to_text(binding, statement, ending):
     source = f"flow bad:\n  {binding}{statement}".replace("\n", ending or "\n") + ending
     root = parse(source)
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement"), root
-    assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+    assert not descendants(root, "implicit_run_stmt"), root
+    assert_no_literal_binding_fallback(root)
 
 
 @pytest.mark.parametrize("statement", [
@@ -105,15 +103,15 @@ def test_parenthesized_spawn_is_content_not_a_nested_expression():
     root = parse("flow launch:\n  let job = (spawn worker)\n")
     # Parenthesized text retains the existing Content syntax, not an expression.
     assert valid(root), root
-    assert not descendants(root, "spawn_statement")
-    wrapper, = descendants(root, "let_statement")
+    assert not descendants(root, "spawn_stmt")
+    wrapper, = descendants(root, "let_stmt")
     assert wrapper.child_by_field_name("value").text.strip() == b"(spawn worker)"
 
 
 def test_same_name_spawn_target_is_left_to_runtime_validation():
     root = parse("flow launch:\n  spawn launch\n")
     assert valid(root), root
-    statement, = descendants(root, "spawn_statement")
+    statement, = descendants(root, "spawn_stmt")
     assert statement.child_by_field_name("target").text.strip() == b"launch"
 
 
@@ -124,12 +122,12 @@ def test_same_name_spawn_target_is_left_to_runtime_validation():
 def test_spawn_prefixes_and_all_remain_text(prefix, binding):
     root = parse(f"flow launch:\n  {binding}{prefix} is ordinary text.\n")
     assert valid(root), root
-    assert not descendants(root, "spawn_statement")
+    assert not descendants(root, "spawn_stmt")
     if binding:
-        wrapper, = descendants(root, "let_statement")
+        wrapper, = descendants(root, "let_stmt")
         assert prefix.encode() in wrapper.child_by_field_name("value").text
     else:
-        statement, = descendants(root, "implicit_run_statement")
+        statement, = descendants(root, "implicit_run_stmt")
         assert prefix.encode() in statement.text
 
 
@@ -144,15 +142,15 @@ def test_spawn_inline_text_ends_before_following_statements(binding, header, ind
         f"{indent}spawn worker\n"
     )
     assert valid(root), root
-    loop, = descendants(root, "repeat_statement")
-    inline, named = descendants(root, "spawn_statement")
+    loop, = descendants(root, "repeat_stmt")
+    inline, named = descendants(root, "spawn_stmt")
     target = inline.child_by_field_name("target")
     assert target.type == "inline_agic"
     assert b"## Literal documentation." in target.text
     assert b"spawn finish" in target.text
     assert not descendants(target, "item_doc")
-    assert not descendants(target, "spawn_statement")
-    run, = descendants(loop, "run_statement")
+    assert not descendants(target, "spawn_stmt")
+    run, = descendants(loop, "run_stmt")
     assert run.child_by_field_name("target").text.strip() == b"after_inline"
     assert loop.child_by_field_name("body").child_by_field_name("until").child_by_field_name("target").text.strip() == b": Ready."
     assert named.child_by_field_name("target").text.strip() == b"worker"
@@ -163,13 +161,13 @@ def test_spawn_fixture_preserves_comments_text_and_nested_repeats(newline):
     source = Path(__file__).with_name("fixtures").joinpath("spawn.too").read_text()
     root = parse(source.replace("\n", newline))
     assert valid(root), root
-    targets = [node.child_by_field_name("target") for node in descendants(root, "spawn_statement")]
+    targets = [node.child_by_field_name("target") for node in descendants(root, "spawn_stmt")]
     assert [node.type for node in targets] == [
         "runnable_name", "runnable_name", "inline_agic", "inline_agic", "runnable_name",
     ]
-    outer, inner = descendants(root, "repeat_statement")
-    assert len(descendants(outer, "spawn_statement")) == 3
-    assert len(descendants(inner, "spawn_statement")) == 1
+    outer, inner = descendants(root, "repeat_stmt")
+    assert len(descendants(outer, "spawn_stmt")) == 3
+    assert len(descendants(inner, "spawn_stmt")) == 1
     assert b"spawn remains literal inside inline text." in targets[2].text
     assert not tokens(descendants(root, "agic")[0], "spawn")
     assert len(tokens(root, "spawn")) == 5

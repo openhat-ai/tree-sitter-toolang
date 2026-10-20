@@ -53,7 +53,7 @@ flow improve(_):
         (param_name)))
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (item_doc
@@ -61,15 +61,15 @@ flow improve(_):
           (until_clause
             (runnable_name)
             (newline))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (implicit_run_statement
+          (implicit_run_stmt
             (content
               (text)
               (newline)))
@@ -78,14 +78,14 @@ flow improve(_):
               (content
                 (text))
               (newline)))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (repeat_statement
+          (repeat_stmt
             (newline)
             (repeat_body
               (until_clause
@@ -96,32 +96,32 @@ flow improve(_):
                     (newline)
                     (text)
                     (newline))))
-              (run_statement
+              (run_stmt
                 (runnable_name)
                 (newline))))
           (until_clause
             (runnable_name)
             (newline))))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (let_statement
+          (let_stmt
             (local_name)
             (newline)
             (content
               (text)
               (newline)))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))

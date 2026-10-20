@@ -13,18 +13,18 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (runnable_name)
           (newline))))))

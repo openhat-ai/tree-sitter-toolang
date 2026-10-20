@@ -20,24 +20,24 @@ flow research:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
           (item_doc
             (text))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (item_doc
             (text))
-          (repeat_statement
+          (repeat_stmt
             (newline)
             (repeat_body
               (plain_comment)
               (item_doc
                 (text))
-              (run_statement
+              (run_stmt
                 (runnable_name)
                 (newline))
               (until_clause

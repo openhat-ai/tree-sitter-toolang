@@ -9,10 +9,10 @@ from test_layout_support import declarations, descendants, edit_tree, fingerprin
 
 
 @pytest.mark.parametrize("kind,following,entry", [
-    ("flow", "run after", "run_statement"), ("agic", "user: Following.", "message"),
+    ("flow", "run after", "run_stmt"), ("agic", "user: Following.", "message"),
 ])
 @pytest.mark.parametrize("header", ["modles = fast", "modles += fast", "run = value", "repeat =", "letnote ="])
-@pytest.mark.parametrize("orphan", ["Literal.", "run worker", "from: Seed."])
+@pytest.mark.parametrize("orphan", ["Literal.", "run worker", "initial: Seed."])
 @pytest.mark.parametrize("prefix", ["", "  models = fast\n", "  ## First.\n"])
 @pytest.mark.parametrize("documentation", ["", "  ## Following.\n"])
 @pytest.mark.parametrize("indent,newline", [("  ", "\n"), ("\t", "\r\n")])
@@ -39,7 +39,7 @@ def test_rejected_headers_do_not_rebase_bodies_to_orphaned_nested_lines(
 
 
 @pytest.mark.parametrize("kind,head,following,entry", [
-    ("flow", "run:", "run after", "run_statement"),
+    ("flow", "run:", "run after", "run_stmt"),
     ("agic", "user:", "user: Following.", "message"),
 ])
 @pytest.mark.parametrize("indent,newline", [("  ", b"\n"), ("\t", b"\r\n")])

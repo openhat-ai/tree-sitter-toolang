@@ -22,7 +22,7 @@ def test_missing_body_fixture_uses_local_leaf_diagnostics():
     assert [node.child_by_field_name("name").text
             for node in descendants(root, "flow")] == [b"first", b"next"]
     assert [node.child_by_field_name("target").text
-            for node in descendants(root, "run_statement")] == [
+            for node in descendants(root, "run_stmt")] == [
         b"after_repeat", b"after_text", b"after_reduce",
     ]
 
@@ -73,7 +73,7 @@ def test_missing_body_recovers_at_the_next_statement_or_declaration(header, newl
                             for node in descendants(root, "flow")]
         if nested:
             assert b"after" in [node.child_by_field_name("target").text
-                                 for node in descendants(root, "run_statement")
+                                 for node in descendants(root, "run_stmt")
                                  if node.child_by_field_name("target")]
         previous = current
 
@@ -87,16 +87,16 @@ def test_empty_repeat_diagnostic_does_not_open_a_layout_frame(indent, newline, t
               + f"{indent}run after\nflow next:\n{indent}pass")
     root = parse(source.replace("\n", newline))
     assert not valid(root)
-    loop, = descendants(root, "repeat_statement")
+    loop, = descendants(root, "repeat_stmt")
     body = loop.child_by_field_name("body")
     diagnostic, = descendants(body, "invalid_missing_body")
     assert diagnostic.child_count == 0
     assert diagnostic.start_byte == diagnostic.end_byte
     assert diagnostic.start_point.row == 2
-    assert not descendants(body, "run_statement")
+    assert not descendants(body, "run_stmt")
     assert [node.child_by_field_name("name").text
             for node in descendants(root, "flow")] == [b"first", b"next"]
-    assert descendants(root, "run_statement")[0].child_by_field_name("target").text == b"after"
+    assert descendants(root, "run_stmt")[0].child_by_field_name("target").text == b"after"
 
 
 @pytest.mark.parametrize("role", ["user", "assistant", "tool"])
@@ -109,11 +109,11 @@ def test_empty_message_body_preserves_the_next_message(role):
 
 
 @pytest.mark.parametrize("body,kind", [
-    ("  models=fast\n", "invalid_missing_statement"),
-    ("  repeat:\n    until: Ready.\n  run after\n", "invalid_missing_statement"),
-    ("  reduce:\n    from: Seed.\n  run after\n", "invalid_missing_content"),
+    ("  models=fast\n", "invalid_missing_stmt"),
+    ("  repeat:\n    until: Ready.\n  run after\n", "invalid_missing_stmt"),
+    ("  reduce:\n    initial: Seed.\n  run after\n", "invalid_missing_content"),
     ("  repeat:\n    run one\n    until:\n  run after\n", "invalid_missing_content"),
-    ("  reduce using worker:\n    from:\n  run after\n", "invalid_missing_content"),
+    ("  reduce using worker:\n    initial:\n  run after\n", "invalid_missing_content"),
 ])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_required_content_after_directives_or_clauses_recovers(body, kind, newline):
@@ -134,7 +134,7 @@ def test_required_content_after_directives_or_clauses_recovers(body, kind, newli
         if source == broken:
             assert len(descendants(root, kind)) == 1
             if "run after" in body:
-                assert descendants(root, "run_statement")[-1].text.strip() == b"run after"
+                assert descendants(root, "run_stmt")[-1].text.strip() == b"run after"
         previous = current
 
 
@@ -144,7 +144,7 @@ def test_required_content_after_directives_or_clauses_recovers(body, kind, newli
     "flow first:\n  let h = async run:", "flow first:\n  let note =",
     "flow first:\n  spawn:", "flow first:\n  ask:", "flow first:\n  map:",
     "agic first:\n  user:",
-    "flow first:\n  reduce using worker:\n    from:",
+    "flow first:\n  reduce using worker:\n    initial:",
     "flow first:\n  repeat:\n    run one\n    until:",
 ])
 @pytest.mark.parametrize("marker", ["# Outside.", "## Documentation.", "# Outside.\n\n##! Module."])
@@ -192,4 +192,4 @@ def test_missing_content_comment_fixture_retains_all_declarations():
     assert len(descendants(root, "invalid_missing_content")) == 3
     assert [node.type for node in root.named_children
             if node.type not in {"plain_comment", "item_doc", "param_doc", "program_doc", "blank_line"}] == ["context", "flow", "agic"]
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"

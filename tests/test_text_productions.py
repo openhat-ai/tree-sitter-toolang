@@ -5,7 +5,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, valid, walk
+from test_layout_support import descendants, edit_tree, fingerprint, native_errors, parse, valid
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -13,11 +13,10 @@ def test_text_leaves_preserve_each_lexical_context_and_highlight(newline):
     source = ("#@ Program # details.\n## Item # details.\n"
               "## @param topic Input # details.\nwith skill ./review# Structural.\n"
               "prompt review:\n  answer = yes # Structural.\n  Body # literal.\n"
-              "flow work(topic: Text):\n  let note = \"a#b\"\n  run worker\n"
-              "  until wrong # Structural.\nflow next:\n  pass\n").replace("\n", newline)
+              "flow work(topic: Text):\n  let note = \"a#b\"\n  run worker # Structural.\n"
+              "flow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
-    assert not root.has_error
-    assert not valid(root)
+    assert valid(root), root
     contexts = [
         ("program_doc", "text", b"Program # details.", "comment.documentation"),
         ("item_doc", "text", b"Item # details.", "comment.documentation"),
@@ -39,8 +38,6 @@ def test_text_leaves_preserve_each_lexical_context_and_highlight(newline):
                            for node in captures.get("string", []))
     assert all(node.child_count == 0 and b"\n" not in node.text and b"\r" not in node.text
                for node in descendants(root, "text"))
-    assert not any(node.type in {"text_line", "comment_text", "directive_value", "recall_keyword"}
-                   for node in walk(root))
     assert [node.text for node in descendants(root, "plain_comment")] == [
         b"# Structural.", b"# Structural.", b"# Structural.",
     ]
@@ -52,17 +49,17 @@ def test_text_leaves_preserve_each_lexical_context_and_highlight(newline):
 @pytest.mark.parametrize("text", ["Merge.", "# Heading", "## @param _ Literal."])
 def test_reducer_content_owns_leading_blank_lines(newline, indent, prefix, text):
     source = (f"flow work:\n{indent}reduce:\n{prefix}{indent*2}{text}\n"
-              f"{indent*2}from: Seed.\n{indent}run next\n"
+              f"{indent*2}initial: Seed.\n{indent}run next\n"
               "## Following.\nflow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
     assert valid(root), root
-    reduce, = descendants(root, "reduce_statement")
+    reduce, = descendants(root, "reduce_stmt")
     reducer = reduce.child_by_field_name("target")
     content = reducer.child_by_field_name("content")
     assert content.text == (prefix + indent*2 + text + "\n").replace("\n", newline).encode()
     assert all(node.parent == content for node in descendants(content, "blank_line"))
     assert not descendants(reducer, "plain_comment")
-    assert reduce.child_by_field_name("from").text == b" Seed."
+    assert reduce.child_by_field_name("initial").text == b" Seed."
     assert root.named_children[-2].type == "item_doc"
     assert root.named_children[-1].child_by_field_name("name").text == b"next"
 
@@ -70,19 +67,28 @@ def test_reducer_content_owns_leading_blank_lines(newline, indent, prefix, text)
 @pytest.mark.parametrize("kind", ["flow", "agic"])
 @pytest.mark.parametrize("head", ["recall", "recall =", "recall = auto", "recall += near"])
 @pytest.mark.parametrize("prefix", ["", "  models = fast\n", "  run worker\n"])
-def test_incomplete_recall_keys_keep_the_directive_role(kind, head, prefix):
+def test_incomplete_recall_uses_directive_roles_in_the_prefix_and_errors_after_it(kind, head, prefix):
     prefix = prefix.replace("run worker", "user: Ready.") if kind == "agic" else prefix
     following = "run next" if kind == "flow" else "user: Next."
     root = parse(f"{kind} work:\n{prefix}  {head}\n  {following}\nflow next:\n  pass\n")
     assert not valid(root), root
-    key, = [node for node in descendants(root, "directive_key") if node.text == b"recall"]
     query = Query(Language(tree_sitter_toolang.language()), tree_sitter_toolang.HIGHLIGHTS_QUERY)
-    assert key in QueryCursor(query).captures(root)["property"]
+    captures = QueryCursor(query).captures(root)
+    if "run worker" in prefix or "user:" in prefix:
+        assert root.has_error
+        start = root.text.index(head.encode())
+        assert any(error.start_byte <= start and error.end_byte >= start + len("recall")
+                   for error in native_errors(root))
+        assert any(error.start_byte <= start and error.end_byte >= start + len("recall")
+                   for error in captures["error"])
+    else:
+        key, = [node for node in descendants(root, "directive_key") if node.text == b"recall"]
+        assert key in captures["property"]
     assert not descendants(root, "recall_keyword")
     assert root.named_children[-1].child_by_field_name("name").text == b"next"
 
 
-@pytest.mark.parametrize("following", ["", "    from: Seed.\n", "  # Outside.\n"])
+@pytest.mark.parametrize("following", ["", "    initial: Seed.\n", "  # Outside.\n"])
 @pytest.mark.parametrize("prefix", ["", "\n", " \t\n\n"])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_blank_lines_cannot_satisfy_required_reducer_content(following, prefix, newline):
@@ -93,7 +99,7 @@ def test_blank_lines_cannot_satisfy_required_reducer_content(following, prefix, 
     missing, = descendants(root, "invalid_missing_content")
     assert missing.start_byte == missing.end_byte
     reducer, = descendants(root, "inline_agic")
-    expected = prefix if following.startswith("    from:") else ""
+    expected = prefix if following.startswith("    initial:") else ""
     assert reducer.child_by_field_name("content").text == expected.replace("\n", newline).encode()
     assert root.named_children[-2].type == "item_doc"
     assert root.named_children[-1].child_by_field_name("name").text == b"next"
@@ -118,7 +124,7 @@ def test_text_and_directive_boundary_edits_match_fresh_parses(newline):
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = b""
     tree = parser.parse(previous)
-    for value in [b"Merge.", b"# Heading", b"from: Seed.", b"", b"Merge.\n    from: Seed."]:
+    for value in [b"Merge.", b"# Heading", b"initial: Seed.", b"", b"Merge.\n    initial: Seed."]:
         for prefix in [b"", b"\n", b" \t\n\n"]:
             current = (b"flow work:\n  reduce:\n" + prefix + b"    " + value +
                        b"\n  run next\n## Following.\nflow next:\n  pass\n").replace(b"\n", newline)

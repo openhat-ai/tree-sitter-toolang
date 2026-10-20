@@ -21,7 +21,7 @@ flow next:
       (blank_line)
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -54,9 +54,8 @@ flow last:
     (runnable_name)
     (newline)
     (agic_body
-      (invalid_directive
+      (ERROR
         (directive_key)
-        (ERROR)
         (newline))
       (plain_comment)
       (directive
@@ -72,15 +71,14 @@ flow last:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_directive
-        (directive_key)
-        (text)
-        (newline))
+      (ERROR
+        (directive_key))
+      (blank_line)
       (directive
         (directive_key)
         (recall_value)
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow
@@ -152,7 +150,7 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (ERROR
@@ -165,10 +163,10 @@ flow next:
               (content
                 (text))
               (newline)))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

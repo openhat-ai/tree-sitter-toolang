@@ -26,7 +26,7 @@ flow next:
     (flow_body
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -54,7 +54,7 @@ flow next:
         (type
           (builtin_type))
         (text)))
-    (invalid_missing_type)
+    (ERROR)
     (newline)
     (agic_body
       (message
@@ -75,7 +75,7 @@ flow first:
   let result = reduce -> :
 
     Merge # literal.
-    from: Initial # literal.
+    initial: Initial # literal.
   run after
 flow next:
   pass
@@ -87,11 +87,11 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
-        (reduce_statement
+        (reduce_stmt
+          (ERROR)
           (inline_agic
-            (invalid_missing_type)
             (newline)
             (content
               (blank_line)
@@ -100,7 +100,7 @@ flow next:
           (content
             (text))
           (newline)))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

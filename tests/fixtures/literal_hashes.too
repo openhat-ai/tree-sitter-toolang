@@ -16,7 +16,7 @@ flow work: # Structural declaration comment.
   run worker # Structural operation comment.
   reduce:
     Combine the material.
-    from: # Initial heading.
+    initial: # Initial heading.
   repeat:
     until: # Ready?
     run worker

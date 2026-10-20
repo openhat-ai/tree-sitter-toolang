@@ -32,7 +32,7 @@ flow research(_):
   handoffs = none
   run expand
   reduce using merge:
-    from:
+    initial:
       Initial report.
   repeat 5 times windowing 3:
     run: Improve {{_}}.
@@ -43,5 +43,5 @@ flow seeded(_):
     Expand {{_}}.
   reduce:
     Incorporate {{_}} into {{_1._}}.
-    from:
+    initial:
       Initial report.

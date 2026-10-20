@@ -18,6 +18,6 @@ flow launch:
   spawned and spawner remain ordinary prose.
 
 agic research:
-  spawn remains literal in an unroled message.
+  spawn remains literal in an implicit message.
   user: spawn remains literal in a roled message.
   # spawn is also literal in a comment.

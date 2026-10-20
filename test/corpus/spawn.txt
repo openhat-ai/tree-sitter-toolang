@@ -17,37 +17,37 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (spawn_statement
+      (spawn_stmt
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (spawn_statement
+        (spawn_stmt
           (runnable_name)
           (newline)))
-      (let_statement
-        (spawn_statement
+      (let_stmt
+        (spawn_stmt
           (runnable_name)
           (newline)))
-      (spawn_statement
+      (spawn_stmt
         (inline_agic
           (content
             (text))
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (spawn_statement
+        (spawn_stmt
           (inline_agic
             (content
               (text))
             (newline))))
-      (let_statement
-        (spawn_statement
+      (let_stmt
+        (spawn_stmt
           (inline_agic
             (type
               (builtin_type))
@@ -74,13 +74,13 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (let_statement
+          (let_stmt
             (local_name)
-            (spawn_statement
+            (spawn_stmt
               (inline_agic
                 (type
                   (type_name))
@@ -90,7 +90,7 @@ flow launch:
                   (newline)
                   (text)
                   (newline)))))
-          (spawn_statement
+          (spawn_stmt
             (runnable_name)
             (plain_comment)
             (newline))
@@ -99,6 +99,6 @@ flow launch:
               (content
                 (text))
               (newline)))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))

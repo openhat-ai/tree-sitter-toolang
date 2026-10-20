@@ -7,7 +7,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import descendants, edit_tree, fingerprint, parse, point, valid
+from test_layout_support import assert_no_literal_binding_fallback, descendants, edit_tree, fingerprint, parse, point, valid
 
 
 CONTENT_CONTEXTS = [
@@ -27,10 +27,10 @@ CONTENT_CONTEXTS = [
     ("flow work:\n  keep if:", "inline_agic", "content", ""),
     ("flow work:\n  drop if:", "inline_agic", "content", ""),
     ("flow work:\n  sort ascending by:", "inline_agic", "content", ""),
-    ("flow work:\n  ask:", "ask_statement", "content", ""),
-    ("flow work:\n  let note =", "let_statement", "value", ""),
+    ("flow work:\n  ask:", "ask_stmt", "content", ""),
+    ("flow work:\n  let note =", "let_stmt", "value", ""),
     ("flow work:\n  repeat:\n    until:", "inline_agic", "content", "    run worker\n"),
-    ("flow work:\n  reduce using worker:\n    from:", "reduce_statement", "from", ""),
+    ("flow work:\n  reduce using worker:\n    initial:", "reduce_stmt", "initial", ""),
 ]
 VALUES = [
     "Visit https://example.com/#details", '"a#b"', "# Heading", "#", "## @param _ Literal.",
@@ -76,7 +76,7 @@ def test_inline_content_retains_exact_source_including_hashes(header, kind, fiel
 def test_text_at_eof_preserves_hashes_quotes_and_backslashes(value, separator, ending):
     root = parse(f"flow work:\n  let note ={separator}{value}" + ending)
     assert valid(root), root
-    content = descendants(root, "let_statement")[0].child_by_field_name("value")
+    content = descendants(root, "let_stmt")[0].child_by_field_name("value")
     assert content.text == (separator + value).encode()
     assert not descendants(root, "plain_comment")
 
@@ -100,7 +100,7 @@ def test_structural_values_keep_their_existing_comment_boundaries(source, kind, 
 @pytest.mark.parametrize("source", [
     "flow work: {marker} Structural.\n  run worker\n",
     "flow work:\n  repeat: {marker} Structural.\n    run worker\n",
-    "flow work:\n  reduce using worker: {marker} Structural.\n    from: Seed.\n",
+    "flow work:\n  reduce using worker: {marker} Structural.\n    initial: Seed.\n",
 ])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_structural_headers_keep_inline_comments(source, marker, newline):
@@ -133,8 +133,8 @@ def test_former_text_header_comments_cannot_select_an_indented_body(header, newl
 def test_literal_hashes_do_not_hide_malformed_bound_operations(head, newline):
     root = parse(f"flow work:\n  {head}\n  run after\nflow next:\n  pass\n".replace("\n", newline))
     assert not valid(root), root
-    assert not any(node.child_by_field_name("value") for node in descendants(root, "let_statement"))
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert_no_literal_binding_fallback(root)
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert len(descendants(root, "flow")) == 2
 
 
@@ -162,5 +162,5 @@ def test_incremental_text_and_comment_boundaries_match_fresh_parses(newline):
         assert [n.text for n in descendants(root, "text")] == ([] if text is None else [text])
         assert [n.text for n in descendants(root, "plain_comment")] == ([] if comment is None else [comment])
         assert len(descendants(root, "flow")) == 2
-        assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+        assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
         previous = current

@@ -16,12 +16,18 @@ FIXTURES = sorted((ROOT / "tests/fixtures").glob("*.too"))
 LEAVES = {"identifier", "runnable_name", "type_name", "local_name", "handle_name", "param_name",
           "agent_name", "cap_name", "chore_name", "builtin_type",
           "text", "role", "directive_key", "recall_source"}
-REMOVED = {"text_line", "comment_text", "directive_value", "recall_keyword",
-           "item_doc_comment", "param_doc_tag", "task", "task_keyword", "job_name", "job_body", "item", "base_type", "user_type", "struct_name", "type_suffix",
-           "snake_name", "pascal_name", "agic_name", "flow_name", "field_name",
-           "property_key", "context_name", "instruct_name", "runnable",
-           "agent", "directive_op", "cap_ref", "property_value", "context_body", "instruct_body", "text_inline", "text_block",
-           "text_body", "text_body_line", "indented_raw_text", "unroled_message", "statements", "messages"}
+PUBLIC_NODES = set("""
+agent_name agic agic_body ask_stmt await_stmt blank_line builtin_type cap_body cap_kind
+cap_name chore chore_body chore_name content context directive directive_key drop_stmt
+exec_stmt field flow flow_body generate_stmt handle_name identifier implicit_run_stmt
+inline_agic instruct integer_literal invalid_flow_stmt
+invalid_missing_body invalid_missing_content invalid_missing_stmt
+invalid_param item_doc keep_stmt let_stmt local_name map_stmt message
+newline param param_doc param_name params plain_comment program program_doc prompt property
+psyche query_value recall_source recall_value reduce_stmt repeat_body repeat_stmt role
+route_value run_stmt runnable_name runnable_ref seek_stmt selection service shebang_comment
+skill sort_stmt spawn_stmt struct struct_body text type type_name until_clause with
+""".split())
 
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda path: path.stem)
@@ -30,7 +36,7 @@ def test_fixture_names_are_leaves_and_declarations_are_direct(path):
     assert valid(root), root
     assert declarations(root)
     for node in walk(root):
-        assert node.type not in REMOVED, node
+        assert node.type in PUBLIC_NODES, node
         if node.type in LEAVES:
             assert node.child_count == 0, node
 
@@ -38,6 +44,8 @@ def test_fixture_names_are_leaves_and_declarations_are_direct(path):
 def test_leaf_contract_covers_every_named_role_and_has_no_forwarding_wrappers():
     seen = {node.type for path in FIXTURES for node in walk(parse(path.read_text()))}
     assert LEAVES <= seen
+    metadata = json.loads((ROOT / "src/node-types.json").read_text())
+    assert {node["type"] for node in metadata if node["named"]} == PUBLIC_NODES
     rules = json.loads((ROOT / "src/grammar.json").read_text())["rules"]
     for name, rule in rules.items():
         if name.startswith("_"):
@@ -71,11 +79,11 @@ def test_name_fields_distinguish_declarations_bindings_and_references():
     doc, = descendants(root, "param_doc")
     assert doc.child_by_field_name("name") is None
     assert doc.child_by_field_name("param").type == "param_name"
-    for binding in descendants(root, "let_statement"):
+    for binding in descendants(root, "let_stmt"):
         assert binding.child_by_field_name("name") is None
         local = binding.child_by_field_name("local")
         assert local.type == "local_name" and local.child_count == 0
-    for statement in descendants(root, "await_statement"):
+    for statement in descendants(root, "await_stmt"):
         handle = statement.child_by_field_name("handle")
         assert handle.type == "handle_name" and handle.child_count == 0
         assert handle.text == b"job"

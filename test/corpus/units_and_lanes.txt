@@ -31,14 +31,14 @@ flow literal_units:
     (runnable_name)
     (newline)
     (flow_body
-      (generate_statement
+      (generate_stmt
         (integer_literal)
         (integer_literal)
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (generate_statement
+        (generate_stmt
           (integer_literal)
           (integer_literal)
           (inline_agic
@@ -47,12 +47,12 @@ flow literal_units:
             (content
               (text))
             (newline))))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (let_statement
-        (map_statement
+      (let_stmt
+        (map_stmt
           (integer_literal)
           (inline_agic
             (type
@@ -61,11 +61,11 @@ flow literal_units:
             (content
               (text)
               (newline)))))
-      (keep_statement
+      (keep_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (drop_statement
+      (drop_stmt
         (integer_literal)
         (inline_agic
           (type
@@ -73,11 +73,11 @@ flow literal_units:
           (content
             (text))
           (newline)))
-      (sort_statement
+      (sort_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (sort_statement
+      (sort_stmt
         (integer_literal)
         (inline_agic
           (type
@@ -86,27 +86,27 @@ flow literal_units:
           (content
             (text)
             (newline))))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (let_statement
-        (repeat_statement
+      (let_stmt
+        (repeat_stmt
           (integer_literal)
           (newline)
           (repeat_body
-            (run_statement
+            (run_stmt
               (runnable_name)
               (newline)))))
-      (keep_statement
+      (keep_stmt
         (selection
           (integer_literal))
         (newline))
-      (drop_statement
+      (drop_stmt
         (selection
           (integer_literal))
         (newline))
@@ -115,17 +115,17 @@ flow literal_units:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (inline_agic
           (content
             (text))
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (inline_agic
           (content
@@ -150,19 +150,16 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (keep_statement
-        (runnable_name)
-        (ERROR)
-        (newline))
-      (drop_statement
-        (runnable_name)
-        (ERROR)
-        (newline))
-      (sort_statement
-        (runnable_name)
-        (ERROR)
-        (newline))
-      (run_statement
+      (ERROR
+        (runnable_name))
+      (blank_line)
+      (ERROR
+        (runnable_name))
+      (blank_line)
+      (ERROR
+        (runnable_name))
+      (blank_line)
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow
@@ -187,22 +184,22 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (let_statement
+      (let_stmt
         (local_name)
-        (repeat_statement
+        (repeat_stmt
           (integer_literal)
           (integer_literal)
           (newline)
           (repeat_body
-            (run_statement
+            (run_stmt
               (runnable_name)
               (newline))))))))
 
@@ -218,7 +215,7 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (map_statement
+      (map_stmt
         (integer_literal)
         (inline_agic
           (content

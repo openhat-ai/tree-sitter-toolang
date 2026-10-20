@@ -38,7 +38,7 @@ def test_unknown_assignment_heads_are_native_syntax_errors(kind, key, operator, 
     if kind == "agic":
         assert descendants(work, "message")[-1].child_by_field_name("role").text == b"user"
     else:
-        assert descendants(work, "run_statement")[-1].child_by_field_name("target").text == b"after"
+        assert descendants(work, "run_stmt")[-1].child_by_field_name("target").text == b"after"
 
 
 @pytest.mark.parametrize("kind", ["agic", "flow"])

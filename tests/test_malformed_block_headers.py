@@ -41,7 +41,7 @@ def test_malformed_block_header_retains_surrounding_statements_and_docs(header, 
     for target, parent in [("after", "repeat_body" if nested else "flow_body"),
                            *([("before", "flow_body")] if scope != "first" else []),
                            *([("inner", "repeat_body"), ("after_outer", "flow_body")] if nested else [])]:
-        statement, = [n for n in descendants(root, "run_statement")
+        statement, = [n for n in descendants(root, "run_stmt")
                       if n.child_by_field_name("target") is not None and n.child_by_field_name("target").text == target.encode()]
         assert valid(statement) and statement.parent.type == parent, root
     doc, = [n for n in descendants(root, "item_doc") if n.text == b"## Following." + newline.encode()]
@@ -74,7 +74,7 @@ def test_block_header_repairs_keep_incremental_headers_and_siblings(broken, repa
         root = tree.root_node
         assert fingerprint(root) == fingerprint(parser.parse(source).root_node), source
         assert valid(root) == (header == repaired), root
-        after, = [n for n in descendants(root, "run_statement")
+        after, = [n for n in descendants(root, "run_stmt")
                   if n.child_by_field_name("target") is not None and n.child_by_field_name("target").text == b"after"]
         assert valid(after) and after.parent.type == ("repeat_body" if nested else "flow_body"), root
         assert declarations(root)[0].child_by_field_name("colon").start_byte == source.index(b":"), root

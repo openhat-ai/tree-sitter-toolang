@@ -8,7 +8,7 @@ from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
-from test_layout_support import declarations, descendants, edit_tree, fingerprint, parse, valid, walk
+from test_layout_support import declarations, descendants, edit_tree, fingerprint, native_errors, parse, valid, walk
 
 
 ROOT = Path(__file__).parents[1]
@@ -24,7 +24,7 @@ EMPTY_HEADERS = [
 ] + [
     (f"flow first:\n  {head}", owner, field, True)
     for head, owner, field in [
-        ("repeat:", "repeat_statement", "body"),
+        ("repeat:", "repeat_stmt", "body"),
         ("run:", "inline_agic", "content"),
         ("async run:", "inline_agic", "content"),
         ("exec:", "inline_agic", "content"),
@@ -33,12 +33,12 @@ EMPTY_HEADERS = [
         ("generate 2:", "inline_agic", "content"),
         ("map:", "inline_agic", "content"),
         ("reduce:", "inline_agic", "content"),
-        ("reduce using worker:", "reduce_statement", None),
+        ("reduce using worker:", "reduce_stmt", None),
         ("keep if:", "inline_agic", "content"),
         ("drop if:", "inline_agic", "content"),
         ("sort ascending by:", "inline_agic", "content"),
-        ("ask:", "ask_statement", "content"),
-        ("let note =", "let_statement", "value"),
+        ("ask:", "ask_stmt", "content"),
+        ("let note =", "let_stmt", "value"),
         ("repeat:\n    run worker\n    until:", "inline_agic", "content"),
     ]
 ] + [("agic first:\n  user:", "message", "content", True)]
@@ -113,9 +113,9 @@ def test_call_targets_share_one_field_without_losing_independent_roles(operation
         owner_kind = "until_clause"
     else:
         source = "flow first:\n  " + text + "\n"
-        owner_kind = operation.split()[0] + "_statement"
+        owner_kind = operation.split()[0] + "_stmt"
         if operation == "async run":
-            owner_kind = "run_statement"
+            owner_kind = "run_stmt"
     root = parse(source)
     assert valid(root), root
     owner = descendants(root, owner_kind)[-1]
@@ -156,15 +156,9 @@ def test_public_metadata_exposes_roles_without_layout_or_forwarding_nodes():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
     names = [n["type"] for n in nodes if n["named"]]
     assert len(names) == len(set(names))
-    assert not {"line_end", "text_ref", "inline_agic_body", "invalid_flow_reserved_statement",
-                "invalid_agic_reserved_message", "kebab_name"}.intersection(names)
-    assert not any(name.startswith("flow_") and name.endswith("_keyword") and name != "flow_keyword" for name in names)
-    assert {"invalid_flow_statement", "invalid_run_target", "invalid_agic_message",
+    assert {"invalid_flow_stmt", "invalid_param",
             "runnable_name", "agent_name", "local_name", "handle_name"} <= set(names)
-    rules = json.loads((ROOT / "src/grammar.json").read_text())["rules"]
-    assert "kebab_name" not in rules
-    assert "_repeat_statements" not in rules
-    reduce = next(node for node in nodes if node["type"] == "reduce_statement")
+    reduce = next(node for node in nodes if node["type"] == "reduce_stmt")
     assert reduce["fields"]["target"] == {
         "multiple": False, "required": True,
         "types": [{"type": "inline_agic", "named": True}, {"type": "runnable_name", "named": True}],
@@ -189,34 +183,35 @@ def test_declaration_keywords_and_with_categories_keep_distinct_roles(kind):
 
 
 @pytest.mark.parametrize("statement,kind,fragment", [
-    ("let result run worker", "invalid_flow_statement", "let result run worker"),
-    ("let exec worker", "invalid_flow_statement", "let exec worker"),
-    ("until worker", "invalid_flow_statement", "until worker"),
-    ("async run worker extra", "invalid_run_target", " worker extra"),
-    ("let result = async run worker extra", "invalid_run_target", " worker extra"),
+    ("let result run worker", "ERROR", "let result run worker"),
+    ("let exec worker", "invalid_flow_stmt", "let exec worker"),
+    ("until worker", "ERROR", "until worker"),
+    ("async run worker extra", "ERROR", "extra"),
+    ("let result = async run worker extra", "ERROR", "extra"),
 ])
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_diagnostic_names_distinguish_complete_statements_from_target_fragments(statement, kind, fragment, newline):
     root = parse((f"flow first:\n  {statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline))
     assert not valid(root), root
     diagnostic, = descendants(root, kind)
-    assert diagnostic.text == (fragment + newline).encode()
-    if kind == "invalid_run_target":
-        assert diagnostic.parent.type == "run_statement"
-        assert diagnostic.parent.child_by_field_name("async").text == b"async"
+    if kind == "ERROR":
+        assert root.has_error
+        assert diagnostic.text.strip(b" \t\r\n") == fragment.encode()
     else:
-        assert diagnostic.parent.type == "flow_body"
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+        assert diagnostic.text == (fragment + newline).encode()
+    assert diagnostic.parent.type == ("run_stmt" if fragment == "extra" else "flow_body")
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert declarations(root)[-1].child_by_field_name("name").text == b"next"
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_invalid_agic_message_remains_a_public_local_diagnostic(newline):
+def test_malformed_agic_messages_use_local_native_errors(newline):
     root = parse(("agic first:\n  user missing colon\n  user: Following.\nflow next:\n  pass\n").replace("\n", newline))
-    diagnostic, = descendants(root, "invalid_agic_message")
-    assert diagnostic.text == ("user missing colon" + newline).encode()
+    assert root.has_error
+    diagnostic, = descendants(root, "ERROR")
+    assert diagnostic.text.strip(b" \t\r\n") == b"user missing colon"
     assert diagnostic.parent.type == "agic_body"
-    assert diagnostic in diagnostic.parent.children_by_field_name("message")
+    assert diagnostic not in diagnostic.parent.children_by_field_name("message")
     assert descendants(root, "message")[-1].child_by_field_name("content").text == b" Following."
 
 
@@ -277,8 +272,8 @@ def test_anonymous_terminals_preserve_role_fields_and_byte_ranges(newline):
         ("with", "keyword", b"with"), ("struct", "colon", b":"),
         ("field", "optional", b"?"), ("param", "optional", b"?"),
         ("flow", "arrow", b"->"), ("property", "operator", b"="),
-        ("directive", "operator", b"+="), ("run_statement", "async", b"async"),
-        ("selection", "side", b"first"), ("sort_statement", "order", b"ascending"),
+        ("directive", "operator", b"+="), ("run_stmt", "async", b"async"),
+        ("selection", "side", b"first"), ("sort_stmt", "order", b"ascending"),
     ]:
         owner, = descendants(root, owner_kind)
         token = owner.child_by_field_name(field)
@@ -297,7 +292,7 @@ def test_anonymous_terminals_preserve_role_fields_and_byte_ranges(newline):
 def test_fixed_terminals_are_anonymous_in_generated_metadata():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
     named = {node["type"] for node in nodes if node["named"]}
-    assert len(named) == 80
+    assert len(named) == 76
     assert not any(name.endswith("_keyword") for name in named)
     assert not {"position", "arrow", "assign_operator", "directive_operator", "colon",
                 "comma", "lparen", "rparen", "optional_marker", "array_suffix"} & named
@@ -305,7 +300,6 @@ def test_fixed_terminals_are_anonymous_in_generated_metadata():
     assert message["fields"]["content"]["required"]
     body = next(node for node in nodes if node["type"] == "agic_body")
     assert body["fields"]["message"]["types"] == [
-        {"type": "invalid_agic_message", "named": True},
         {"type": "message", "named": True},
     ]
 
@@ -318,7 +312,7 @@ def test_rejected_route_operators_remain_local_and_highlighted(operator, newline
     root = parse(source)
     assert not valid(root)
     assert declarations(root)[1].child_by_field_name("name").text == b"next"
-    run, = descendants(root, "run_statement")
+    run, = descendants(root, "run_stmt")
     assert run.child_by_field_name("target").text == b"after"
     query = Query(Language(tree_sitter_toolang.language()), tree_sitter_toolang.HIGHLIGHTS_QUERY)
     capture, = [node for node in QueryCursor(query).captures(root)["operator"]
@@ -326,7 +320,7 @@ def test_rejected_route_operators_remain_local_and_highlighted(operator, newline
     assert capture.type == operator and not capture.is_named
     start = source.encode().index(operator.encode())
     assert (capture.start_byte, capture.end_byte) == (start, start + 2)
-    assert capture.parent.type == "invalid_directive"
+    assert capture.parent.is_error
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -346,15 +340,15 @@ def test_message_entries_remain_peers_during_incremental_repairs(newline):
         agic, flow = declarations(root)
         body = agic.child_by_field_name("body")
         entries = body.children_by_field_name("message")
-        assert [node.type for node in entries] == [
-            "message", "message" if expected_valid else "invalid_agic_message", "message",
-        ]
+        assert [node.type for node in entries] == ["message"] * (3 if expected_valid else 2)
         assert entries[0].child_by_field_name("content").text == ("  Before." + newline).encode()
-        assert entries[2].child_by_field_name("content").text == b" After."
-        middle = entries[1]
+        assert entries[-1].child_by_field_name("content").text == b" After."
+        middle = entries[1] if expected_valid else native_errors(body)[0]
         assert middle.parent == body
         if not expected_valid:
             start = source.index(b"user missing colon")
-            assert (middle.start_byte, middle.end_byte) == (start, start + len(entry.encode()) + len(newline))
+            assert middle.start_byte <= start
+            assert source[middle.start_byte:start].strip(b" \t") == b""
+            assert middle.end_byte == start + len(entry.encode())
         assert flow.child_by_field_name("name").text == b"next"
         previous = source

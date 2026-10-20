@@ -1,0 +1,53 @@
+==================
+Native missing values and run errors preserve public roles and following items
+==================
+flow first:
+  context =
+  models =
+  run worker extra
+  async run worker()
+  let result = async run worker.field
+  run after
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (directive
+        (directive_key)
+        (MISSING identifier)
+        (newline))
+      (directive
+        (directive_key)
+        (MISSING query_value)
+        (newline))
+      (run_stmt
+        (runnable_name)
+        (ERROR)
+        (newline))
+      (run_stmt
+        (runnable_name)
+        (ERROR)
+        (newline))
+      (let_stmt
+        (local_name)
+        (run_stmt
+          (runnable_name)
+          (ERROR)
+          (newline)))
+      (run_stmt
+        (runnable_name)
+        (newline))))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))

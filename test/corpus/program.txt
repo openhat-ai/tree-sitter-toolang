@@ -282,18 +282,18 @@ flow research(input: Part[]) -> Answer:
       (blank_line)
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (seek_statement
+      (seek_stmt
         (agent_name)
         (runnable_name)
         (newline))
-      (ask_statement
+      (ask_stmt
         (content
           (text))
         (newline))
-      (run_statement
+      (run_stmt
         (inline_agic
           (type
             (type_name))
@@ -301,27 +301,27 @@ flow research(input: Part[]) -> Answer:
           (content
             (text)
             (newline))))
-      (generate_statement
+      (generate_stmt
         (integer_literal)
         (integer_literal)
         (runnable_name)
         (newline))
-      (keep_statement
+      (keep_stmt
         (integer_literal)
         (inline_agic
           (newline)
           (content
             (text)
             (newline))))
-      (drop_statement
+      (drop_stmt
         (selection
           (integer_literal))
         (newline))
-      (sort_statement
+      (sort_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (inline_agic
           (type
@@ -330,7 +330,7 @@ flow research(input: Part[]) -> Answer:
           (content
             (text)
             (newline))))
-      (run_statement
+      (run_stmt
         (inline_agic
           (type
             (type_name))
@@ -338,16 +338,16 @@ flow research(input: Part[]) -> Answer:
           (content
             (text)
             (newline))))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (runnable_name)
           (newline)))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (until_clause

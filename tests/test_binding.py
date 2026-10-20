@@ -445,7 +445,7 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
         for message in _messages(chore_body)
         if _nodes(message, "role")
     ]
-    chat_unroled_messages = [
+    chat_implicit_messages = [
         message
         for message in _messages(chat_body)
         if not _nodes(message, "role")
@@ -470,8 +470,8 @@ def test_agent_agics_fixture_covers_chat_task_and_chore_shapes():
     assert chore_message_roles == [
         "user",
     ]
-    assert len(chat_unroled_messages) == 1
-    assert "{{_}}" in _text(source, chat_unroled_messages[0])
+    assert len(chat_implicit_messages) == 1
+    assert "{{_}}" in _text(source, chat_implicit_messages[0])
 
 
 def test_kitchen_sink_fixture_covers_core_program_constructs():
@@ -675,11 +675,11 @@ def test_agic_instruction_blocks_must_precede_messages():
 
     tree = parser.parse(source)
 
-    assert tree.root_node.has_error is False
-    assert _nodes(tree.root_node, "invalid_agic_message")
+    assert tree.root_node.has_error
+    assert _nodes(tree.root_node, "ERROR")
 
 
-def test_unroled_messages_do_not_fallback_from_reserved_words():
+def test_implicit_messages_do_not_fallback_from_reserved_words():
     parser = _parser()
     invalid_sources = [
         b"agic bad:\n  instruct default\n",
@@ -769,7 +769,7 @@ def test_pack_is_parsed_as_authored_type_not_builtin_type():
     assert "builtin_type" not in str(type_node)
 
 
-def test_bare_text_is_parsed_as_unroled_message():
+def test_bare_text_is_parsed_as_implicit_message():
     parser = _parser()
     source = (
         b"agic reply(_: Text) -> Text:\n"
@@ -788,7 +788,7 @@ def test_bare_text_is_parsed_as_unroled_message():
     assert "Include the current context in the reply." in _text(source, messages[0])
 
 
-def test_unroled_message_stops_before_explicit_roles():
+def test_implicit_message_stops_before_explicit_roles():
     parser = _parser()
     source = (
         b"agic classify:\n"
@@ -818,7 +818,7 @@ def test_unroled_message_stops_before_explicit_roles():
     ]
 
 
-def test_comments_split_unroled_messages():
+def test_comments_split_implicit_messages():
     parser = _parser()
     source = (
         b"agic split:\n"

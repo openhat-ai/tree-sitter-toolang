@@ -18,28 +18,26 @@ flow second:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
-        (invalid_run_target
-          (newline)))
-      (run_statement
+      (ERROR
+        (newline))
+      (run_stmt
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
-          (invalid_run_target
-            (runnable_name)
-            (text)
-            (newline))))
-      (let_statement
-        (run_statement
+        (run_stmt
+          (runnable_name)
+          (ERROR)
+          (newline)))
+      (let_stmt
+        (run_stmt
           (inline_agic
             (type
               (builtin_type))
             (newline)
             (content
               (invalid_missing_content)))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
       (blank_line)))
@@ -47,7 +45,7 @@ flow second:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))
 
@@ -73,47 +71,47 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (runnable_name)
           (newline)))
-      (let_statement
-        (run_statement
+      (let_stmt
+        (run_stmt
           (runnable_name)
           (newline)))
-      (run_statement
+      (run_stmt
         (inline_agic
           (content
             (text))
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (inline_agic
             (type
               (builtin_type))
             (content
               (text))
             (newline))))
-      (let_statement
-        (run_statement
+      (let_stmt
+        (run_stmt
           (inline_agic
             (newline)
             (content
@@ -137,26 +135,26 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (await_statement
+      (await_stmt
         (handle_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline)))
-      (let_statement
-        (await_statement
+      (let_stmt
+        (await_stmt
           (handle_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline))))))
 
@@ -179,13 +177,13 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (let_statement
+          (let_stmt
             (local_name)
-            (run_statement
+            (run_stmt
               (inline_agic
                 (type
                   (type_name))
@@ -195,7 +193,7 @@ flow launch:
                   (newline)
                   (text)
                   (newline)))))
-          (await_statement
+          (await_stmt
             (handle_name)
             (plain_comment)
             (newline))
@@ -204,7 +202,7 @@ flow launch:
               (content
                 (text))
               (newline)))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))
 
@@ -225,26 +223,26 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
-        (spawn_statement
+        (spawn_stmt
           (runnable_name)
           (newline)))
-      (await_statement
+      (await_stmt
         (handle_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline)))
-      (let_statement
-        (await_statement
+      (let_stmt
+        (await_stmt
           (handle_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline))))))
 
@@ -265,19 +263,19 @@ flow launch:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_flow_statement
+      (ERROR
         (newline))
-      (invalid_flow_statement
+      (invalid_flow_stmt
         (local_name)
         (newline))
-      (invalid_flow_statement
-        (text)
+      (ERROR
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (invalid_flow_statement
-          (text)
-          (newline)))
-      (run_statement
+        (ERROR)
+        (newline)
+        (content
+          (invalid_missing_content)))
+      (run_stmt
         (runnable_name)
         (newline)))))

@@ -46,7 +46,7 @@ def test_list_and_value_directives_are_shared(kind, selection):
 def test_malformed_directives_cannot_become_prose(kind, selection):
     root = parse(f"{kind} work:\n  {selection}\n")
     assert not valid(root)
-    for node in [m for m in descendants(root, "message") if m.child_by_field_name("role") is None] + descendants(root, "implicit_run_statement"):
+    for node in [m for m in descendants(root, "message") if m.child_by_field_name("role") is None] + descendants(root, "implicit_run_stmt"):
         assert node.start_point.row > 1  # Recovery may retain the rejected block's text.
 
 
@@ -56,23 +56,23 @@ def test_malformed_directives_cannot_become_prose(kind, selection):
 @pytest.mark.parametrize("indent", ["  ", "\t"])
 def test_reduce_fields_separate_reducer_and_initializer(head, newline, indent):
     source = (f"flow work:\n{indent}{head}\n{indent*2}Combine {{{{_}}}} with {{{{_1._}}}}.\n"
-              f"{indent*3}from: literal nested text\n\n{indent*2}from:\n{indent*3}Seed.\n"
+              f"{indent*3}initial: literal nested text\n\n{indent*2}initial:\n{indent*3}Seed.\n"
               f"{indent}run next\n").replace("\n", newline)
     root = parse(source)
     assert valid(root)
-    reduce = descendants(root, "reduce_statement")[0]
+    reduce = descendants(root, "reduce_stmt")[0]
     reducer = reduce.child_by_field_name("target")
     assert reducer.type == "inline_agic"
     body = reducer.child_by_field_name("content").text
-    assert b"from: literal nested text" in body
+    assert b"initial: literal nested text" in body
     assert b"Seed." not in body
-    assert b"Seed." in reduce.child_by_field_name("from").text
-    assert len(descendants(root, "run_statement")) == 1
+    assert b"Seed." in reduce.child_by_field_name("initial").text
+    assert len(descendants(root, "run_stmt")) == 1
 
 
 @pytest.mark.parametrize("statement", [
     "reduce using merge", "reduce: Combine {{_}}.", "reduce:\n    Combine {{_}}.",
-    "reduce using merge:\n    from: Seed.", "reduce using merge:\n    from:\n      Seed.",
+    "reduce using merge:\n    initial: Seed.", "reduce using merge:\n    initial:\n      Seed.",
     "run generate", "run -> Text[]:\n    Generate items.", "generate 5 using generate",
     "repeat 5 times windowing 3:\n    run improve\n    until: Stable.",
     "repeat windowing 2:\n    run improve\n    until: Stable.",
@@ -84,11 +84,11 @@ def test_flow_upgrade_forms(statement):
 
 
 @pytest.mark.parametrize("statement", [
-    "reduce using merge:\n    from:",
-    "reduce:\n    from: Missing reducer.", "reduce:\n    Merge.\n    from Seed.",
-    "reduce using merge:\n    from: Seed.\n    from: Duplicate.",
+    "reduce using merge:\n    initial:",
+    "reduce:\n    initial: Missing reducer.", "reduce:\n    Merge.\n    initial Seed.",
+    "reduce using merge:\n    initial: Seed.\n    initial: Duplicate.",
     "reduce windowing 3:\n    Merge.",
-    "repeat 5 times windowing:\n    run improve", "from: Orphaned.",
+    "repeat 5 times windowing:\n    run improve", "initial: Orphaned.",
 ])
 def test_invalid_flow_upgrade_forms(statement):
     assert not valid(parse(f"flow work:\n  {statement}\n"))
@@ -100,13 +100,13 @@ def test_nested_repeat_and_reduce_clause_ownership():
     repeat windowing 1:
       reduce:
         Merge {{_}}.
-        from: Seed.
+        initial: Seed.
       until: Inner.
     until: Outer.
   run next
 """)
     assert valid(root)
-    outer, inner = descendants(root, "repeat_statement")
+    outer, inner = descendants(root, "repeat_stmt")
     assert outer.child_by_field_name("window").text == b"3"
     assert inner.child_by_field_name("window").text == b"1"
     assert b"Outer." in outer.child_by_field_name("body").child_by_field_name("until").text
@@ -115,7 +115,7 @@ def test_nested_repeat_and_reduce_clause_ownership():
 
 @pytest.mark.parametrize("heading", [b"", b"    # Heading\n", b"    ## @param literal\n"])
 def test_reduce_incremental_edits_match_fresh_parse(heading):
-    source = b"flow work:\n  reduce:\n" + heading + b"    Merge {{_}}.\n    from:\n      Seed.\n  run next\n"
+    source = b"flow work:\n  reduce:\n" + heading + b"    Merge {{_}}.\n    initial:\n      Seed.\n  run next\n"
     parser = Parser(Language(tree_sitter_toolang.language()))
     previous = source
     tree = parser.parse(source)
@@ -133,11 +133,11 @@ def test_reduce_incremental_edits_match_fresh_parse(heading):
 def test_reduce_leading_comment_markers_are_literal_reducer_text(prefix, initializer):
     source = f"flow work:\n  reduce:\n    {prefix}\n    Merge {{{{_}}}}.\n"
     if initializer:
-        source += "    from: Seed.\n    # Structural trailing comment.\n"
+        source += "    initial: Seed.\n    # Structural trailing comment.\n"
     source += "  run next\n"
     root = parse(source)
     assert valid(root)
-    reduce = descendants(root, "reduce_statement")[0]
+    reduce = descendants(root, "reduce_stmt")[0]
     reducer = reduce.child_by_field_name("target").child_by_field_name("content")
     assert reducer.text.decode().lstrip().startswith(prefix)
     assert not descendants(reducer, "plain_comment")

@@ -27,16 +27,16 @@ const DOCUMENTATION_FIXTURE = join(
 );
 
 const nodeTypes = JSON.parse(readFileSync(join(REPO_ROOT, "src", "node-types.json"), "utf8"));
-deepStrictEqual(nodeTypes.filter(node => node.named).length, 80);
+deepStrictEqual(nodeTypes.filter(node => node.named).length, 76);
 for (const [owner, field, literal] of [
   ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
   ["param", "optional", "?"], ["property", "operator", "="],
-  ["selection", "side", "first"], ["sort_statement", "order", "ascending"],
+  ["selection", "side", "first"], ["sort_stmt", "order", "ascending"],
 ]) {
   const types = nodeTypes.find(node => node.type === owner && node.named).fields[field].types;
   deepStrictEqual(types.some(type => type.type === literal && !type.named), true);
 }
-deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "spawn_stmt").fields, {
   target: {
     multiple: false,
     required: true,
@@ -46,22 +46,22 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
     ],
   },
 });
-deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "run_stmt").fields, {
   async: {
     multiple: false, required: false, types: [{ type: "async", named: false }],
   },
   target: {
-    multiple: false, required: false,
+    multiple: false, required: true,
     types: [{ type: "inline_agic", named: true }, { type: "runnable_name", named: true }],
   },
 });
-deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "await_stmt").fields, {
   handle: {
     multiple: false, required: true, types: [{ type: "handle_name", named: true }],
   },
 });
-const letFields = nodeTypes.find(node => node.type === "let_statement").fields;
-deepStrictEqual(Object.keys(letFields).sort(), ["local", "statement", "value"]);
+const letFields = nodeTypes.find(node => node.type === "let_stmt").fields;
+deepStrictEqual(Object.keys(letFields).sort(), ["local", "stmt", "value"]);
 deepStrictEqual(letFields.local, {
   multiple: false, required: false, types: [{ type: "local_name", named: true }],
 });
@@ -82,7 +82,7 @@ for (const name of ["local_reference", "item_doc_comment", "param_doc_tag"]) {
   deepStrictEqual(nodeTypes.some(node => node.type === name), false);
 }
 deepStrictEqual(nodeTypes.find(node => node.type === "local_name"), {
-  type: "local_name", named: true, fields: {},
+  type: "local_name", named: true,
 });
 
 for (const name of [
@@ -105,15 +105,15 @@ deepStrictEqual(nodeTypes.find(node => node.type === "type").fields, {
   },
 });
 
-const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
+const repeatFields = nodeTypes.find(node => node.type === "repeat_stmt").fields;
 deepStrictEqual(Object.keys(repeatFields).sort(), ["body", "count", "window"]);
 deepStrictEqual(repeatFields.body, {
   multiple: false, required: true, types: [{ type: "repeat_body", named: true }],
 });
 const repeatBodyFields = nodeTypes.find(node => node.type === "repeat_body").fields;
-deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["statement", "until"]);
+deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["stmt", "until"]);
 // Missing requirements keep the owning body and expose an invalid_* diagnostic.
-deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, false]);
+deepStrictEqual([repeatBodyFields.stmt.multiple, repeatBodyFields.stmt.required], [true, false]);
 deepStrictEqual(repeatBodyFields.until, {
   multiple: false, required: false, types: [{ type: "until_clause", named: true }],
 });
@@ -126,40 +126,33 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
 });
 
 const textField = { multiple: false, required: true, types: [{ type: "content", named: true }] };
-for (const kind of ["context", "instruct", "inline_agic", "ask_statement", "implicit_run_statement"]) {
+for (const kind of ["context", "instruct", "inline_agic", "ask_stmt", "implicit_run_stmt"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields.content, textField, kind);
 }
 const messageFields = nodeTypes.find(node => node.type === "message").fields;
 deepStrictEqual(messageFields.role, {
   multiple: false, required: false, types: [{ type: "role", named: true }],
 });
-// Invalid messages are separate body entries; normal messages require content.
+// Native errors are not ordinary message entries; normal messages require content.
 deepStrictEqual(messageFields.content, textField);
 deepStrictEqual(nodeTypes.find(node => node.type === "agic_body").fields.message.types, [
-  { type: "invalid_agic_message", named: true }, { type: "message", named: true },
+  { type: "message", named: true },
 ]);
 deepStrictEqual(nodeTypes.find(node => node.type === "params").fields.param.types, [
   { type: "invalid_param", named: true }, { type: "param", named: true },
 ]);
 for (const body of ["agic_body", "flow_body"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === body).fields.directive.types, [
-    { type: "directive", named: true }, { type: "invalid_directive", named: true },
+    { type: "directive", named: true },
   ]);
 }
 deepStrictEqual(nodeTypes.find(node => node.type === "param").fields.name.required, true);
 deepStrictEqual(nodeTypes.find(node => node.type === "directive").fields.value.required, true);
-for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
+for (const [kind, field] of [["flow_body", "stmt"], ["agic_body", "message"],
   ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
 }
-for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
-  "unroled_message", "statements", "messages", "invalid_empty_body",
-  "line_end", "inline_agic_body", "text_ref", "invalid_flow_reserved_statement", "invalid_agic_reserved_message",
-  "task", "task_keyword", "job_name", "job_body",
-  "source_file", "module_doc_comment", "module_doc"]) {
-  deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
-}
-for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement", "invalid_missing_type"]) {
+for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_stmt"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind), { type: kind, named: true });
 }
 
@@ -197,6 +190,7 @@ try {
         function: "#778899",
         constant: "#8899aa",
         property: "#99aabb",
+        error: "#aa2233",
       },
     }),
   );
@@ -205,6 +199,54 @@ try {
   if (!dumpOutput.includes("scope: source.toolang")) {
     throw new Error(`Toolang was not discovered by dump-languages.\n${dumpOutput}`);
   }
+
+  const nativeErrors = [
+    "flow first:\n  run worker extra\n  run after\n",
+    "flow first:\n  async run worker extra\n  run after\n",
+    "flow first(topic:):\n  run after\n",
+    "flow first -> :\n  run after\n",
+    "flow first:\n  models =\n  run after\n",
+    "flow first:\n  context =\n  run after\n",
+    "flow first:\n  hands += worker\n  run after\n",
+    "agic first:\n  user missing colon\n  user: After.\n",
+    "flow first:\n  repeat 2 times windowing 1,\n    run worker\n    until ready\n## Next.\n",
+    "agic first(_: Text) -> Json\n  models = fast\n  recall = near\n  tool: Body.\n## Next.\n",
+  ];
+  for (const [index, prefix] of nativeErrors.entries()) {
+    const path = join(configDir, `native-error-${index}.too`);
+    writeFileSync(path, prefix + "flow next:\n  pass\n");
+    const result = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(result.status, 1, result.stdout + result.stderr);
+    deepStrictEqual(/\((ERROR|MISSING)\b/.test(result.stdout), true, result.stdout);
+    deepStrictEqual((result.stdout.match(/\n  \(flow\b/g) ?? []).length,
+      prefix.startsWith("flow") ? 2 : 1, result.stdout);
+    if (index === 1) {
+      const html = runCli("highlight", "--config-path", configPath, "--html", path);
+      deepStrictEqual(html.includes("<span style='color: #aa2233'>extra</span>"), true, html);
+    }
+  }
+
+  for (const [kind, entry] of [["flow", "run worker"], ["agic", "user: Body."]]) {
+    const path = join(configDir, `${kind}-broken-signature.too`);
+    writeFileSync(path, `${kind} first(topic?, Text[]\n other: Json) -> Text[]:\n  ## First.\n  ${entry}\n## Next.\nflow next:\n  pass\n`);
+    const result = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(result.status, 1, result.stdout + result.stderr);
+    deepStrictEqual(result.stdout.includes("\n  (item_doc [4, 0] - [5, 0]"), true, result.stdout);
+    deepStrictEqual(result.stdout.includes("\n  (flow [5, 0] - [7, 0]"), true, result.stdout);
+  }
+
+  const diagnosticsPath = join(configDir, "diagnostics.too");
+  writeFileSync(diagnosticsPath, "flow missing:\ncontext absent:\nflow empty:\n  models = fast\nflow malformed(topic: Text extra):\n  let exec worker\nflow next:\n  pass\n");
+  const diagnosticCaptures = runCli("query", "--config-path", configPath, "--captures",
+    join(REPO_ROOT, "queries", "highlights.scm"), diagnosticsPath);
+  deepStrictEqual((diagnosticCaptures.match(/capture:\s+\d+ - error\b/g) ?? []).length, 5, diagnosticCaptures);
+  const diagnosticHtml = runCli("highlight", "--config-path", configPath, "--html", diagnosticsPath);
+  deepStrictEqual(diagnosticHtml.includes("<span style='color: #aa2233'><span style='color: #99aabb'>topic</span>: <span style='color: #667788'>Text</span> extra</span>"), true, diagnosticHtml);
+  deepStrictEqual(diagnosticHtml.includes("<span style='color: #556677'>"), false, diagnosticHtml);
 
   const textProductionsPath = join(REPO_ROOT, "tests", "fixtures", "text_productions.too");
   const textProductions = runCli("parse", "--config-path", configPath, "--rebuild", textProductionsPath);
@@ -256,7 +298,7 @@ try {
     "item_doc [6, 0] - [7, 0]", "flow [7, 0] - [12, 0]", "flow [12, 0] - [14, 0]"]) {
     deepStrictEqual(recovery.stdout.includes(`\n  (${item}`), true, recovery.stdout);
   }
-  deepStrictEqual(recovery.stdout.includes("invalid_flow_statement"), true, recovery.stdout);
+  deepStrictEqual(recovery.stdout.includes("invalid_flow_stmt"), true, recovery.stdout);
 
   const blockHeaderPath = join(configDir, "malformed-block-header.too");
   writeFileSync(blockHeaderPath, "flow first:\n  run before\n  repeat:\n    run inner\n    let value = sort ascending:\n      Orphaned text.\n    ## Following.\n    run after\n  run after_outer\n## Next.\nflow next:\n  pass\n");
@@ -264,9 +306,9 @@ try {
     cwd: REPO_ROOT, encoding: "utf8",
   });
   deepStrictEqual(blockHeader.status, 1, blockHeader.stdout + blockHeader.stderr);
-  for (const node of ["(repeat_statement [2, 2] - [8, 0]",
-    "\n          (item_doc [6, 4] - [7, 0]", "(run_statement [7, 4] - [8, 0]",
-    "(run_statement [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
+  for (const node of ["(repeat_stmt [2, 2] - [8, 0]",
+    "\n          (item_doc [6, 4] - [7, 0]", "(run_stmt [7, 4] - [8, 0]",
+    "(run_stmt [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
     "\n  (flow [10, 0] - [12, 0]"]) {
     deepStrictEqual(blockHeader.stdout.includes(node), true, blockHeader.stdout);
   }
@@ -396,7 +438,7 @@ try {
     "<span style='color: #334455'>spawn</span>",
     "<span style='color: #556677'>        spawn remains literal inside inline text.</span>",
     "<span style='color: #556677'>    spawn remains literal inside explicit text.</span>",
-    "<span style='color: #556677'>  spawn remains literal in an unroled message.</span>",
+    "<span style='color: #556677'>  spawn remains literal in an implicit message.</span>",
     "<span style='color: #112233'># spawn is also literal in a comment.</span>",
   ]) {
     if (!spawnHtml.includes(expected)) {
@@ -407,7 +449,7 @@ try {
   const collectionHtml = runCli(
     "highlight", "--config-path", configPath, "--html", COLLECTION_FIXTURE,
   );
-  for (const keyword of ["generate", "reduce", "map", "using", "from"]) {
+  for (const keyword of ["generate", "reduce", "map", "using", "initial"]) {
     const expected = `<span style='color: #334455'>${keyword}</span>`;
     if (!collectionHtml.includes(expected)) {
       throw new Error(`Collection highlighting was missing: ${expected}\n${collectionHtml}`);
@@ -433,7 +475,7 @@ try {
     "<span style='color: #334455'>await</span>",
     "<span style='color: #556677'>      async run remains literal inside inline text.</span>",
     "<span style='color: #556677'>      await h remains literal inside inline text.</span>",
-    "<span style='color: #556677'>  async run remains literal in an unroled message.</span>",
+    "<span style='color: #556677'>  async run remains literal in an implicit message.</span>",
     "<span style='color: #556677'>  await h is also literal.</span>",
     "<span style='color: #112233'># await and async remain literal in comments.</span>",
   ]) {
