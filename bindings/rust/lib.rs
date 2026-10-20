@@ -1014,6 +1014,8 @@ mod tests {
             "flow first:\n  repeat 2 times windowing 1\n\n    run worker\n    until ready\n",
             "agic first(_: Text) -> Json\n  models = fast\n  recall = near\n  tool: Body.\n",
             "agic first(_: Text) -> J[on:\n  models = fast\n  recall = near\n  tool: Body.\n",
+            "flow first(topic?, Text[]\n other: Json) -> Text[]:\n  ## First.\n  run worker\n",
+            "agic first(topic?: Text[], other\n Json) -> Text[]\n\n  ## First.\n  user: Body.\n",
         ] {
             for newline in ["\n", "\r\n"] {
                 let prefix = prefix.replace('\n', newline);

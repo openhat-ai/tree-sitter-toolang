@@ -1,7 +1,7 @@
 """Incomplete structural heads cannot borrow a following declaration's colon."""
 
 import pytest
-from tree_sitter import Language, Parser
+from tree_sitter import Language, Parser, Query, QueryCursor
 
 import tree_sitter_toolang
 
@@ -102,3 +102,54 @@ def test_header_terminator_edits_keep_peer_ranges_and_match_fresh_parses(templat
         else:
             assert_next_items(root, source, suffix)
         previous = source
+
+
+BROKEN_SIGNATURES = [
+    "(topic?, Text[]\n other: Json) -> Text[]:",
+    "(topic?: Text[], other\n Json) -> Text[]\n",
+    "(topic, []\n",
+]
+PROGRAM_DOCS = ["# Next résumé.", "## Next résumé.", "#@ Program résumé.", "## @param topic Input résumé."]
+
+
+@pytest.mark.parametrize("kind,entry", [("flow", "run worker"), ("agic", "user: Body.")])
+@pytest.mark.parametrize("signature", BROKEN_SIGNATURES)
+@pytest.mark.parametrize("documentation", PROGRAM_DOCS)
+@pytest.mark.parametrize("item", ITEMS)
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_provisional_recovery_markers_cannot_steal_following_headers(kind, entry, signature, documentation, item, newline):
+    prefix = f"{kind} first{signature}\n  ## First.\n  {entry}\n"
+    suffix = (documentation + "\n" + item).replace("\n", newline).encode()
+    source = prefix.replace("\n", newline).encode() + suffix
+    root = parse(source.decode())
+    assert root.has_error and not valid(root), root
+    boundary = len(source) - len(suffix)
+    assert all(error.end_byte <= boundary for error in native_errors(root)), root
+    doc, = [node for node in root.named_children if node.start_byte == boundary]
+    assert doc.text == (documentation + newline).encode() and valid(doc), root
+    assert_next_items(root, source, suffix)
+
+
+@pytest.mark.parametrize("kind,entry", [("flow", "run worker"), ("agic", "user: Body.")])
+@pytest.mark.parametrize("signature", BROKEN_SIGNATURES)
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_signature_recovery_edits_preserve_peer_queries_and_match_fresh_parses(kind, entry, signature, newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    query = Query(parser.language, tree_sitter_toolang.TAGS_QUERY)
+    previous = b""
+    tree = parser.parse(previous)
+    repaired = "(topic?: Text[], other: Json) -> Text[]:"
+    for header in [repaired, signature, repaired, signature, repaired]:
+        for documentation in PROGRAM_DOCS:
+            prefix = f"{kind} first{header}\n  ## First.\n  {entry}\n"
+            suffix = (documentation + "\n" + SUFFIX).encode().replace(b"\n", newline)
+            source = prefix.encode().replace(b"\n", newline) + suffix
+            edit_tree(tree, previous, source)
+            tree = parser.parse(source, tree)
+            root = tree.root_node
+            assert fingerprint(root) == fingerprint(parser.parse(source).root_node), source
+            assert valid(root) == (header == repaired), root
+            assert_next_items(root, source, suffix)
+            assert {b"next", b"last"} <= {node.text for node in QueryCursor(query).captures(root)["name"]}
+            assert all(error.end_byte <= len(source) - len(suffix) for error in native_errors(root)), root
+            previous = source

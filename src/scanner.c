@@ -159,10 +159,7 @@ static bool read_word(TSLexer *lexer, char *word, unsigned capacity) {
 
 static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
   lexer->result_symbol = token;
-  if (token == ITEM_START || token == LINE_START || token == DIRECTIVE_START ||
-      token == UNTIL_START || token == INITIAL_START) {
-    scanner->structural_line = true;
-  } else if (token == NEWLINE || token == BLANK_LINE) {
+  if (token == NEWLINE || token == BLANK_LINE) {
     scanner->structural_line = false;
   }
   if (token != COMMENT_START) {
@@ -172,6 +169,15 @@ static bool emit(Scanner *scanner, TSLexer *lexer, enum Token token) {
     scanner->depth--;
   }
   return true;
+}
+
+// Only a normal grammar request confirms a structural line. Provisional
+// recovery markers must not expose a later header's delimiters to an older
+// incomplete construct while native recovery compares alternative parses.
+static bool start_line(Scanner *scanner, TSLexer *lexer, enum Token token) {
+  scanner->line_started = true;
+  scanner->structural_line = true;
+  return emit(scanner, lexer, token);
 }
 
 static bool push(Scanner *scanner, TSLexer *lexer, Indentation indent, enum Mode mode,
@@ -743,8 +749,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
 
   bool at_baseline = indent.column == frame.column && indent.prefix == frame.prefix;
   if (valid[ITEM_START] && !scanner->line_started && at_baseline) {
-    scanner->line_started = true;
-    return emit(scanner, lexer, ITEM_START);
+    return start_line(scanner, lexer, ITEM_START);
   }
   if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
       !scanner->line_started && at_baseline && strcmp(word, "initial") == 0) {
@@ -782,8 +787,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
       }
     }
     if (start != LINE_START) {
-      scanner->line_started = true;
-      return emit(scanner, lexer, start);
+      return start_line(scanner, lexer, start);
     }
   }
 
@@ -792,8 +796,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
                (valid[AGIC_RAW_TEXT] &&
                 !keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords)));
   if (valid[LINE_START] && !prose && !scanner->line_started && at_baseline) {
-    scanner->line_started = true;
-    return emit(scanner, lexer, LINE_START);
+    return start_line(scanner, lexer, LINE_START);
   }
 
   enum Token text = RAW_TEXT;

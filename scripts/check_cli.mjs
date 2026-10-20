@@ -228,6 +228,17 @@ try {
     }
   }
 
+  for (const [kind, entry] of [["flow", "run worker"], ["agic", "user: Body."]]) {
+    const path = join(configDir, `${kind}-broken-signature.too`);
+    writeFileSync(path, `${kind} first(topic?, Text[]\n other: Json) -> Text[]:\n  ## First.\n  ${entry}\n## Next.\nflow next:\n  pass\n`);
+    const result = spawnSync("npx", ["tree-sitter", "parse", "--config-path", configPath, path], {
+      cwd: REPO_ROOT, encoding: "utf8",
+    });
+    deepStrictEqual(result.status, 1, result.stdout + result.stderr);
+    deepStrictEqual(result.stdout.includes("\n  (item_doc [4, 0] - [5, 0]"), true, result.stdout);
+    deepStrictEqual(result.stdout.includes("\n  (flow [5, 0] - [7, 0]"), true, result.stdout);
+  }
+
   const diagnosticsPath = join(configDir, "diagnostics.too");
   writeFileSync(diagnosticsPath, "flow missing:\ncontext absent:\nflow empty:\n  models = fast\nflow malformed(topic: Text extra):\n  let exec worker\nflow next:\n  pass\n");
   const diagnosticCaptures = runCli("query", "--config-path", configPath, "--captures",

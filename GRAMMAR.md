@@ -883,7 +883,8 @@ The three `invalid_missing_*` nodes are zero-width leaves. They keep an empty
 required construct from borrowing content or documentation from the next
 member or declaration. Missing parameter types and return annotations use
 native recovery; a missing return annotation has no usable `return` field.
-A missing closing `)` remains a native missing token.
+An otherwise complete signature with a missing closing `)` uses a native missing
+token.
 
 The highlight query captures `ERROR` and all five diagnostic types as `@error`;
 recovery text is not a semantic string. Zero-width diagnostics and native missing
@@ -903,4 +904,6 @@ comment. Structural recovery leaves delimiters and operators to the native
 parser and synchronizes at physical line, indentation, and declaration
 boundaries. Runnable signatures and repeat options reduce before their header
 terminators, so a malformed head cannot borrow a later declaration's colon.
+Damaged signatures do not turn subsequent program documentation or declarations
+into parameters.
 Incremental edits preserve the same ownership and ranges as a fresh parse.
