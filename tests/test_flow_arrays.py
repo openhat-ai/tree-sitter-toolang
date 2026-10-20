@@ -113,7 +113,7 @@ def test_operation_like_prose_stays_literal_inside_explicit_text(text):
 
 
 @pytest.mark.parametrize("text", ["generation", "generate_more", "map2", "mapping", "reduce_more",
-                                 "reducer", "stormy", "scattering", "gathering", "settlement"])
+                                 "reducer", "generate_more", "map_value", "reduce_more", "generating"])
 def test_collection_keyword_prefixes_remain_text(text):
     root = parse(f"flow work:\n  {text} remains prose.\n  let note = {text} remains prose.\n")
     assert valid(root), root

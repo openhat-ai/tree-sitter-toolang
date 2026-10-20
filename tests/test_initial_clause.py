@@ -27,7 +27,10 @@ def test_initial_clause_has_one_content_field_and_preserves_text(header, binding
     statement, = descendants(root, "reduce_stmt")
     initial = statement.child_by_field_name("initial")
     assert initial.type == "content"
-    assert initial.text == source.encode()[initial.start_byte:initial.end_byte]
+    expected = ((indent*3 + value + "\n").replace("\n", newline) if block else " " + value).encode()
+    assert initial.text == expected
+    assert initial.start_byte == source.encode().index(expected)
+    assert initial.end_byte == initial.start_byte + len(expected)
     text, = descendants(initial, "text")
     assert text.text == ((indent*3 if block else " ") + value).encode()
     target = statement.child_by_field_name("target")
@@ -36,6 +39,55 @@ def test_initial_clause_has_one_content_field_and_preserves_text(header, binding
     assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"next"
     assert root.named_children[-2].type == "item_doc"
     assert declarations(root)[-1].child_by_field_name("name").text == b"next"
+
+
+@pytest.mark.parametrize("header", ["reduce using merge:", "reduce:", "reduce -> Text:"])
+@pytest.mark.parametrize("block", [False, True])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("final_newline", [False, True])
+def test_initial_content_ranges_at_end_of_program(header, block, newline, final_newline):
+    reducer = "" if "using" in header else "    Merge.\n"
+    initializer = "initial:\n      Seed # literal." if block else "initial: Seed # literal."
+    source = (f"flow work:\n  {header}\n{reducer}    {initializer}").replace("\n", newline)
+    source += newline if final_newline else ""
+    root = parse(source)
+    assert valid(root), root
+    statement, = descendants(root, "reduce_stmt")
+    content = statement.child_by_field_name("initial")
+    expected = ("      Seed # literal." + (newline if final_newline else "")
+                if block else " Seed # literal.").encode()
+    assert content.text == expected
+    assert content.start_byte == source.encode().index(expected)
+    assert content.end_byte == content.start_byte + len(expected)
+    assert root.end_byte == len(source.encode())
+
+
+@pytest.mark.parametrize("head,kind", [
+    ("run initial", "run_stmt"),
+    ("async run initial", "run_stmt"),
+    ("exec initial", "exec_stmt"),
+    ("spawn initial", "spawn_stmt"),
+    ("seek initial initial", "seek_stmt"),
+    ("generate 2 using initial", "generate_stmt"),
+    ("map using initial", "map_stmt"),
+    ("reduce using initial", "reduce_stmt"),
+    ("keep if initial", "keep_stmt"),
+    ("drop if initial", "drop_stmt"),
+    ("sort ascending by initial", "sort_stmt"),
+    ("until initial", "until_clause"),
+])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_initial_is_a_name_in_each_explicit_target_context(head, kind, newline):
+    source = ("flow work:\n  repeat:\n    run worker\n    " + head + "\n"
+              if kind == "until_clause" else "flow work:\n  " + head + "\n")
+    root = parse(source.replace("\n", newline))
+    assert valid(root), root
+    statement = descendants(root, kind)[0]
+    target = statement.child_by_field_name("target")
+    assert target.type == "runnable_name" and target.text == b"initial"
+    assert target.child_count == 0
+    query = Query(Language(tree_sitter_toolang.language()), tree_sitter_toolang.HIGHLIGHTS_QUERY)
+    assert not any(node.text == b"initial" for node in QueryCursor(query).captures(root)["keyword"])
 
 
 @pytest.mark.parametrize("word", ["intro", "initially", "initial_value", "initial2"])

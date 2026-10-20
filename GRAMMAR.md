@@ -537,6 +537,9 @@ _flow_operation ::= run_stmt | spawn_stmt | await_stmt | seek_stmt
                     | keep_stmt | drop_stmt | sort_stmt | repeat_stmt ;
 ```
 
+Flow and repeat bodies expose statements through `stmt` fields in source order.
+A bound operation is available through `let_stmt.stmt`.
+
 A flow requires statements, optionally preceded by directives. Directives alone
 are insufficient. `pass` is a whole-body alternative and cannot coexist with
 directives or statements. The `flow_body` exposes repeated `directive` and
@@ -701,13 +704,13 @@ reduce_stmt          ::= "reduce" _using_clause _line_end
                          | _reduce_using_header _body_prefix* _body(_initial_clause)
                          | "reduce" target:alias(_reduce_inline_line, inline_agic)
                          | "reduce" target:alias(_reduce_inline_block, inline_agic)
-                               _initial_clause? _trivia* _dedent ;
+                           _initial_clause? _trivia* _dedent ;
 _reduce_using_header ::= "reduce" _using_clause ":" _line_end ;
 _reduce_inline_line  ::= _return_clause? ":" content:alias(_inline_content, content) _text_end ;
 _reduce_block_header ::= _return_clause? ":" _text_end ;
 _reduce_inline_block ::= _reduce_block_header content:alias(_reduce_content, content) ;
 _reduce_content      ::= blank_line* _reduce_indent _reduce_text_start
-                               (_content_line | blank_line)+ _dedent ;
+                        (_content_line | blank_line)+ _dedent ;
 _initial_clause      ::= "initial" ":" _content(initial) ;
 ```
 

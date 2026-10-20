@@ -6,12 +6,10 @@ from tree_sitter import Language, Parser
 import tree_sitter_toolang
 
 from test_layout_support import descendants, edit_tree, fingerprint, parse, tokens, valid, walk_all
+from test_vocabulary_support import OPERATIONS
 
 
-HEADS = [
-    "run", "seek", "ask", "keep", "drop", "sort", "repeat", "generate", "map",
-    "reduce", "spawn", "async", "await", "exec", "scatter", "gather", "storm", "settle",
-]
+HEADS = sorted(OPERATIONS | {"async", "exec"})
 
 
 @pytest.mark.parametrize("head", HEADS)
