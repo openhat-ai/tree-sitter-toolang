@@ -222,8 +222,11 @@ agic ::=
   (* prec.right 0 *) ( _agic_header _body_prefix* (* field "body" *) ( agic_body ) );
 
 _agic_header ::=
+  _agic_head (* field "colon" *) ( ":" ) _line_end;
+
+_agic_head ::=
   (* field "keyword" *) ( "agic" ) ( (* field "name" *) ( _runnable_name ) )? ( (* field "params" *)
-  ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
+  ( params ) )? _return_clause?;
 
 agic_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives _messages? | _messages |
@@ -254,8 +257,11 @@ flow ::=
   (* prec.right 0 *) ( _flow_header _body_prefix* (* field "body" *) ( flow_body ) );
 
 _flow_header ::=
+  _flow_head (* field "colon" *) ( ":" ) _line_end;
+
+_flow_head ::=
   (* field "keyword" *) ( "flow" ) ( (* field "name" *) ( _runnable_name ) )? ( (* field "params" *)
-  ( params ) )? _return_clause? (* field "colon" *) ( ":" ) _line_end;
+  ( params ) )? _return_clause?;
 
 flow_body ::=
   (* prec.right 0 *) ( _body_start? _runnable_indent _trivia* ( _directives ( _stmts |
@@ -429,7 +435,10 @@ repeat_stmt ::=
   (* prec.right 0 *) ( _repeat_header _body_prefix* (* field "body" *) ( repeat_body ) );
 
 _repeat_header ::=
-  "repeat" _times_clause? _windowing_clause? ":" _line_end;
+  _repeat_head ":" _line_end;
+
+_repeat_head ::=
+  "repeat" _times_clause? _windowing_clause?;
 
 repeat_body ::=
   (* prec.right 0 *) ( _body_start? _indent _trivia* ( _stmts ( _until_entry _trivia* _stmts? )? |

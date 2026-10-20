@@ -150,7 +150,8 @@ module.exports = grammar({
     _content_line: ($) => seq(alias($._raw_text, $.text), $.newline),
 
     agic: ($) => prec.right(seq($._agic_header, body($, $.agic_body))),
-    _agic_header: ($) => runnableHeader($, "agic"),
+    _agic_header: ($) => seq($._agic_head, field("colon", ":"), $._line_end),
+    _agic_head: ($) => runnableHead($, "agic"),
     agic_body: ($) =>
       structuralBody($,
         choice(
@@ -185,7 +186,8 @@ module.exports = grammar({
     _param_name: ($) => choice(alias("_", $.param_name), alias($._identifier, $.param_name)),
 
     flow: ($) => prec.right(seq($._flow_header, body($, $.flow_body))),
-    _flow_header: ($) => runnableHeader($, "flow"),
+    _flow_header: ($) => seq($._flow_head, field("colon", ":"), $._line_end),
+    _flow_head: ($) => runnableHead($, "flow"),
     flow_body: ($) =>
       structuralBody($,
         choice(
@@ -389,12 +391,13 @@ module.exports = grammar({
     repeat_stmt: ($) => prec.right(seq(
       $._repeat_header, body($, $.repeat_body),
     )),
-    _repeat_header: ($) => seq(
+    // Reduce options before the terminator so recovery cannot borrow a later
+    // declaration's colon when this header is incomplete.
+    _repeat_header: ($) => seq($._repeat_head, ":", $._line_end),
+    _repeat_head: ($) => seq(
       "repeat",
       optional($._times_clause),
       optional($._windowing_clause),
-      ":",
-      $._line_end,
     ),
     repeat_body: ($) => structuralBody($, choice(
       seq(
@@ -533,13 +536,13 @@ function declarationHeader($, keyword, name) {
   return seq(field("keyword", keyword), field("name", name), field("colon", ":"), $._line_end);
 }
 
-function runnableHeader($, keyword) {
+// Commit the signature independently of its colon and physical line ending.
+function runnableHead($, keyword) {
   return seq(
     field("keyword", keyword),
     optional(field("name", $._runnable_name)),
     optional(field("params", $.params)),
     optional($._return_clause),
-    field("colon", ":"), $._line_end,
   );
 }
 

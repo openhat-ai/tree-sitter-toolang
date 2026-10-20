@@ -1006,6 +1006,43 @@ mod tests {
     }
 
     #[test]
+    fn incomplete_header_terminators_preserve_following_items() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        for prefix in [
+            "flow first:\n  repeat 2 times windowing 1,\n    run worker\n    until ready\n",
+            "flow first:\n  repeat 2 times windowing 1\n\n    run worker\n    until ready\n",
+            "agic first(_: Text) -> Json\n  models = fast\n  recall = near\n  tool: Body.\n",
+            "agic first(_: Text) -> J[on:\n  models = fast\n  recall = near\n  tool: Body.\n",
+        ] {
+            for newline in ["\n", "\r\n"] {
+                let prefix = prefix.replace('\n', newline);
+                let suffix =
+                    "## Next résumé.\nflow next:\n  run next_worker\nagic last:\n  user: Last.\n"
+                        .replace('\n', newline);
+                let source = format!("{prefix}{suffix}");
+                let tree = parser.parse(&source, None).unwrap();
+                let root = tree.root_node();
+                assert!(root.has_error());
+                assert!(native_errors(root)
+                    .into_iter()
+                    .all(|node| node.end_byte() <= prefix.len()));
+                let mut cursor = root.walk();
+                let peers: Vec<_> = root
+                    .named_children(&mut cursor)
+                    .filter(|node| node.start_byte() >= prefix.len())
+                    .collect();
+                assert_eq!(peers.len(), 3);
+                assert_eq!(peers[0].kind(), "item_doc");
+                assert_eq!(peers[1].kind(), "flow");
+                assert_eq!(peers[1].start_byte(), source.find("flow next:").unwrap());
+                assert_eq!(peers[2].kind(), "agic");
+                assert!(peers[1..].iter().all(|node| is_valid(*node)));
+            }
+        }
+    }
+
+    #[test]
     fn can_load_language() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();

@@ -38,6 +38,74 @@ flow next:
       (newline))))
 
 ==================
+Incomplete repeat options cannot borrow the next declaration's colon
+==================
+flow first:
+  repeat 2 times windowing 1,
+    run worker
+    until ready
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (ERROR
+        (integer_literal)
+        (integer_literal)
+        (newline)
+        (blank_line))
+      (blank_line)
+      (invalid_missing_body)))
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
+A malformed return annotation cannot borrow the next declaration's colon
+==================
+agic first(_: Text) -> J[on:
+  models = fast
+  recall = near
+  tool: Body.
+## Next.
+flow next:
+  pass
+
+---
+
+(program
+  (ERROR
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (type
+      (type_name))
+    (newline)
+    (blank_line)
+    (blank_line))
+  (blank_line)
+  (item_doc
+    (text))
+  (flow
+    (runnable_name)
+    (newline)
+    (flow_body
+      (newline))))
+
+==================
 Missing filter connector preserves a nested repeat header
 ==================
 flow first:

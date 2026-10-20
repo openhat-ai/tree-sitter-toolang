@@ -1553,6 +1553,27 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "SYMBOL",
+          "name": "_agic_head"
+        },
+        {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "STRING",
+            "value": ":"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_line_end"
+        }
+      ]
+    },
+    "_agic_head": {
+      "type": "SEQ",
+      "members": [
+        {
           "type": "FIELD",
           "name": "keyword",
           "content": {
@@ -1603,18 +1624,6 @@
               "type": "BLANK"
             }
           ]
-        },
-        {
-          "type": "FIELD",
-          "name": "colon",
-          "content": {
-            "type": "STRING",
-            "value": ":"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_line_end"
         }
       ]
     },
@@ -2019,6 +2028,27 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "SYMBOL",
+          "name": "_flow_head"
+        },
+        {
+          "type": "FIELD",
+          "name": "colon",
+          "content": {
+            "type": "STRING",
+            "value": ":"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_line_end"
+        }
+      ]
+    },
+    "_flow_head": {
+      "type": "SEQ",
+      "members": [
+        {
           "type": "FIELD",
           "name": "keyword",
           "content": {
@@ -2069,18 +2099,6 @@
               "type": "BLANK"
             }
           ]
-        },
-        {
-          "type": "FIELD",
-          "name": "colon",
-          "content": {
-            "type": "STRING",
-            "value": ":"
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_line_end"
         }
       ]
     },
@@ -3777,6 +3795,23 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "SYMBOL",
+          "name": "_repeat_head"
+        },
+        {
+          "type": "STRING",
+          "value": ":"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_line_end"
+        }
+      ]
+    },
+    "_repeat_head": {
+      "type": "SEQ",
+      "members": [
+        {
           "type": "STRING",
           "value": "repeat"
         },
@@ -3803,14 +3838,6 @@
               "type": "BLANK"
             }
           ]
-        },
-        {
-          "type": "STRING",
-          "value": ":"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_line_end"
         }
       ]
     },

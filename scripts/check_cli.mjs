@@ -209,6 +209,8 @@ try {
     "flow first:\n  context =\n  run after\n",
     "flow first:\n  hands += worker\n  run after\n",
     "agic first:\n  user missing colon\n  user: After.\n",
+    "flow first:\n  repeat 2 times windowing 1,\n    run worker\n    until ready\n## Next.\n",
+    "agic first(_: Text) -> Json\n  models = fast\n  recall = near\n  tool: Body.\n## Next.\n",
   ];
   for (const [index, prefix] of nativeErrors.entries()) {
     const path = join(configDir, `native-error-${index}.too`);

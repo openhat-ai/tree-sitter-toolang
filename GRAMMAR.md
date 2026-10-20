@@ -429,8 +429,10 @@ instruct: Return a concise answer.
 ```ebnf
 agic         ::= _agic_header _body_prefix* body:agic_body ;
 flow         ::= _flow_header _body_prefix* body:flow_body ;
-_agic_header ::= keyword:"agic" name:runnable_name? params:params? _return_clause? colon:":" _line_end ;
-_flow_header ::= keyword:"flow" name:runnable_name? params:params? _return_clause? colon:":" _line_end ;
+_agic_header ::= _agic_head colon:":" _line_end ;
+_flow_header ::= _flow_head colon:":" _line_end ;
+_agic_head   ::= keyword:"agic" name:runnable_name? params:params? _return_clause? ;
+_flow_head   ::= keyword:"flow" name:runnable_name? params:params? _return_clause? ;
 ```
 
 Name, parameter list, and return annotation are independently optional. A body
@@ -780,7 +782,8 @@ flow order:
 
 ```ebnf
 repeat_stmt       ::= _repeat_header _body_prefix* body:repeat_body ;
-_repeat_header    ::= "repeat" _times_clause? _windowing_clause? ":" _line_end ;
+_repeat_header    ::= _repeat_head ":" _line_end ;
+_repeat_head      ::= "repeat" _times_clause? _windowing_clause? ;
 _times_clause     ::= count:integer_literal ("time" | "times") ;
 _windowing_clause ::= "windowing" window:integer_literal ;
 repeat_body       ::= _body(_stmts (until:until_clause _trivia* _stmts?)?
@@ -888,5 +891,6 @@ native syntax errors.
 real comma or `)` on the same physical line and cannot borrow one from a header
 comment. Structural recovery leaves delimiters and operators to the native
 parser and synchronizes at physical line, indentation, and declaration
-boundaries. Incremental edits preserve the same ownership and ranges as a
-fresh parse.
+boundaries. Runnable signatures and repeat options reduce before their header
+terminators, so a malformed head cannot borrow a later declaration's colon.
+Incremental edits preserve the same ownership and ranges as a fresh parse.
