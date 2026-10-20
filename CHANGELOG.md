@@ -2,11 +2,69 @@
 
 User-visible grammar, CST, query, and package compatibility changes follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-Dates are the existing Git tag dates. Earlier releases remain available in
+Published release dates follow Git tags. Earlier releases remain available in
 [Git history](https://github.com/openhat-ai/tree-sitter-toolang/tags); this record
 backfills the verified notes from 0.3.2 onward.
 
 ## [Unreleased]
+
+## [0.4.0-alpha.6] - 2026-10-20
+
+### Changed
+
+This is a breaking syntax and CST update from `0.4.0-alpha.5`. Update authored
+initializers, node names, field paths, and diagnostic queries together.
+
+- Replace reducer initializer lines `from: VALUE` with `initial: VALUE`. `from`
+  is an ordinary non-keyword with no compatibility or dedicated rejection path:
+  it is literal text in an inline reducer and invalid in a named reducer's
+  initializer scope. The complete word `initial` now selects syntax at flow
+  statement boundaries and an inline reducer's text baseline. Use `run:` for
+  literal flow prose that starts with it; indent literal reducer text beginning
+  with `initial` below the reducer baseline.
+- Rename statement nodes and their member fields consistently. Initializer
+  values remain direct `content` nodes, and normal `run_stmt.target` is required.
+  Apply the CST migration table below to consumers and queries.
+- Use native `ERROR` nodes and missing terminals for ordinary syntax errors,
+  including malformed run targets, missing types after parameter/return
+  annotation introducers, malformed directives/messages, and missing assignment
+  delimiters. Missing directive values expose public missing leaves such as
+  `identifier` and `query_value`.
+  Native errors can be siblings of fielded members or occur inside incomplete
+  constructs; do not assume every error is a fielded diagnostic entry.
+
+#### CST migration from alpha.5
+
+| Previous shape | Current shape |
+| --- | --- |
+| `*_statement`, including `implicit_run_statement` | `*_stmt`, including `implicit_run_stmt`. |
+| `flow_body.statement`, `repeat_body.statement`, `let_statement.statement` | `flow_body.stmt`, `repeat_body.stmt`, `let_stmt.stmt`. |
+| `reduce_statement.from: content` | `reduce_stmt.initial: content`; source uses `initial:`. |
+| `invalid_flow_statement`, `invalid_missing_statement` | `invalid_flow_stmt`, `invalid_missing_stmt`. |
+| `invalid_run_target`, `invalid_missing_type`, `invalid_directive`, `invalid_agic_message` | Native `ERROR` or missing terminals; these four custom node types are removed. |
+| Diagnostic entries in body `directive` / `message` fields | Only `directive` / `message` node types; native errors may occur beside or inside them. |
+| Optional `run_statement.target` in the generated schema | Required `run_stmt.target`; recovered trees still need validity checks. |
+
+Five public diagnostics remain: `invalid_missing_body`,
+`invalid_missing_content`, `invalid_missing_stmt`, `invalid_param`, and
+`invalid_flow_stmt`. Reject native errors, missing terminals, and every
+`invalid_*` descendant even when `root.has_error` is false. The three
+`invalid_missing_*` markers are zero-width; consumers need to display their
+locations explicitly.
+
+### Fixed
+
+- Bound native recovery at physical lines, indentation, and declaration
+  boundaries. Incomplete runnable/repeat heads and multiply damaged parameter
+  lists retain following program documentation and declarations instead of
+  borrowing their header delimiters. Fresh and incremental parses preserve the
+  same ownership and source ranges.
+- Apply the same target recovery to `run` and `async run`, retaining recognized
+  targets on ordinary trailing-text errors. Malformed operation bindings do not
+  become valid literal text.
+- Capture native `ERROR` and all retained diagnostics as `@error` in the
+  highlight query. Recovery fragments are no longer classified as strings;
+  recognized names, types, and keywords keep their semantic captures.
 
 ## [0.4.0-alpha.5] - 2026-10-19
 
@@ -303,7 +361,8 @@ becomes `item_doc_comment`, and `parent_doc_line` becomes `module_doc_comment`.
 Update queries and node consumers together. Existing `##!` source remains
 valid; do not replace marker-like strings inside literal prompts or history.
 
-[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.5...HEAD
+[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.6...HEAD
+[0.4.0-alpha.6]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.5...v0.4.0-alpha.6
 [0.4.0-alpha.5]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.4...v0.4.0-alpha.5
 [0.4.0-alpha.4]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [0.4.0-alpha.3]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
