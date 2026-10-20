@@ -18,17 +18,17 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (invalid_flow_statement
+      (invalid_flow_stmt
         (ERROR)
         (newline))
       (ERROR)
       (blank_line)
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -62,16 +62,16 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
-          (invalid_flow_statement
+          (invalid_flow_stmt
             (ERROR
               (integer_literal))
             (newline))
@@ -79,10 +79,10 @@ flow next:
           (blank_line)
           (item_doc
             (text))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -116,28 +116,28 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
-          (let_statement
+          (let_stmt
             (local_name)
-            (invalid_flow_statement
+            (invalid_flow_stmt
               (ERROR)
               (newline)))
           (ERROR)
           (blank_line)
           (item_doc
             (text))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc

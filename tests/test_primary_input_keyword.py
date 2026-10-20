@@ -21,9 +21,9 @@ def test_primary_input_cannot_be_an_operation_or_await_handle(statement, ending,
     prefix = "flow work:\n" + ("  repeat:\n" if nested else "")
     root = parse((prefix + indent + statement).replace("\n", ending or "\n") + ending)
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement"), root
+    assert not descendants(root, "implicit_run_stmt"), root
     assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+               for node in descendants(root, "let_stmt")), root
 
 
 @pytest.mark.parametrize("statement", ["_", "let x = _", "await _", "let await _"])
@@ -35,8 +35,8 @@ def test_primary_input_diagnostics_preserve_following_statements(statement):
     assert not valid(root), root
     assert len(descendants(root, "flow")) == 2
     assert [node.child_by_field_name("target").text.strip()
-            for node in descendants(root, "run_statement")] == [b"after", b"finish"]
-    assert [node.text.strip() for node in descendants(root, "implicit_run_statement")] == [
+            for node in descendants(root, "run_stmt")] == [b"after", b"finish"]
+    assert [node.text.strip() for node in descendants(root, "implicit_run_stmt")] == [
         b"Read the input.",
     ]
 

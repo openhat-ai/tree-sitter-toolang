@@ -14,7 +14,7 @@ module.exports = grammar({
     $._comment_start, $.plain_comment, $.shebang_comment,
     $._program_doc_start, $._item_doc_start, $._param_doc_start, $._comment_end,
     $._body_start, $._empty_body, $._item_start, $._item_indent, $._indent, $._runnable_indent, $._dedent, $._line_start, $._directive_start,
-    $._until_start, $._from_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._cap_text_start,
+    $._until_start, $._initial_start, $._reduce_indent, $._reduce_text_start, $._text_indent, $._definition_text_start,
     $._raw_text, $._flow_raw_text, $._agic_raw_text, $._error_line,
     $._exec_binding_start, $._operation_binding_start,
     $._restricted_binding_start, $._named_binding_start,
@@ -109,9 +109,9 @@ module.exports = grammar({
     _prompt_header: ($) => declarationHeader($, "prompt", $.cap_name),
 
     cap_body: ($) => definitionBody($),
-    _cap_content: ($) => seq(
-      $._cap_text_start,
-      repeat1(choice($._content_row, $.blank_line)),
+    _definition_content: ($) => seq(
+      $._definition_text_start,
+      repeat1(choice($._content_line, $.blank_line)),
       $._dedent,
     ),
 
@@ -143,11 +143,11 @@ module.exports = grammar({
       optional($._body_start),
       repeat($.blank_line),
       choice(
-        seq($._text_indent, repeat1(choice($._content_row, $.blank_line)), $._dedent),
+        seq($._text_indent, repeat1(choice($._content_line, $.blank_line)), $._dedent),
         missing($, "content"),
       ),
     ),
-    _content_row: ($) => seq(alias($._raw_text, $.text), $.newline),
+    _content_line: ($) => seq(alias($._raw_text, $.text), $.newline),
 
     agic: ($) => prec.right(seq($._agic_header, body($, $.agic_body))),
     _agic_header: ($) => runnableHeader($, "agic"),
@@ -156,7 +156,7 @@ module.exports = grammar({
         choice(
           seq($._directives, optional($._messages)),
           $._messages,
-          $._pass_statement,
+          $._pass_stmt,
         ),
         $._runnable_indent,
       ),
@@ -189,64 +189,64 @@ module.exports = grammar({
     flow_body: ($) =>
       structuralBody($,
         choice(
-          seq($._directives, choice($._statements, missing($, "statement"))),
-          $._statements,
-          $._pass_statement,
+          seq($._directives, choice($._stmts, missing($, "stmt"))),
+          $._stmts,
+          $._pass_stmt,
         ),
         $._runnable_indent,
       ),
-    _statements: ($) => prec.right(seq(
-      field("statement", $._flow_statement),
-      repeat(choice(field("statement", $._flow_statement), $._trivia)),
+    _stmts: ($) => prec.right(seq(
+      field("stmt", $._flow_stmt),
+      repeat(choice(field("stmt", $._flow_stmt), $._trivia)),
     )),
-    _flow_statement: ($) =>
+    _flow_stmt: ($) =>
       seq($._line_start, choice(
-        $.let_statement,
-        $.exec_statement,
-        alias($._invalid_exec_binding, $.invalid_flow_statement),
-        alias($._invalid_restricted_binding, $.invalid_flow_statement),
-        alias($._invalid_named_binding, $.invalid_flow_statement),
+        $.let_stmt,
+        $.exec_stmt,
+        alias($._invalid_exec_binding, $.invalid_flow_stmt),
+        alias($._invalid_restricted_binding, $.invalid_flow_stmt),
+        alias($._invalid_named_binding, $.invalid_flow_stmt),
         $._flow_operation,
-        $.invalid_flow_statement,
-        $.implicit_run_statement,
+        $.invalid_flow_stmt,
+        $.implicit_run_stmt,
       )),
     _flow_operation: ($) =>
       choice(
-        $.run_statement,
-        $.await_statement,
-        $.spawn_statement,
-        $.seek_statement,
-        $.ask_statement,
+        $.run_stmt,
+        $.await_stmt,
+        $.spawn_stmt,
+        $.seek_stmt,
+        $.ask_stmt,
         $._collection_operation,
-        $.keep_statement,
-        $.drop_statement,
-        $.sort_statement,
-        $.repeat_statement,
+        $.keep_stmt,
+        $.drop_stmt,
+        $.sort_stmt,
+        $.repeat_stmt,
       ),
     _collection_operation: ($) => choice(
-      $.generate_statement, $.map_statement, $.reduce_statement,
+      $.generate_stmt, $.map_stmt, $.reduce_stmt,
     ),
     _bound_operation: ($) => seq(
       // Select operations before the free-form text alternative can consume them.
       $._operation_binding_start,
-      choice($._flow_operation, alias($._invalid_bound_operation, $.invalid_flow_statement)),
+      choice($._flow_operation, alias($._invalid_bound_operation, $.invalid_flow_stmt)),
     ),
-    _binding_operation_word: ($) => keywordChoice($, tables.operation_binding),
+    _binding_operation_keyword: ($) => keywordChoice($, tables.operation_binding),
     _invalid_bound_operation: ($) => prec.dynamic(-2, seq(
-      $._binding_operation_word, optional(alias($._recovery_text, $.text)), $._line_end,
+      $._binding_operation_keyword, optional(alias($._recovery_text, $.text)), $._line_end,
     )),
-    let_statement: ($) =>
+    let_stmt: ($) =>
       choice(
         seq(
           "let",
           $._named_binding_start,
           field("local", $.local_name),
           "=",
-          field("statement", $._bound_operation),
+          field("stmt", $._bound_operation),
         ),
         seq(
           "let",
-          field("statement", $._flow_operation),
+          field("stmt", $._flow_operation),
         ),
         prec.right(seq(
           "let",
@@ -256,8 +256,8 @@ module.exports = grammar({
           content($, "value"),
         )),
       ),
-    exec_statement: ($) => seq("exec", $._target),
-    spawn_statement: ($) => seq("spawn", $._target),
+    exec_stmt: ($) => seq("exec", $._target_tail),
+    spawn_stmt: ($) => seq("spawn", $._target_tail),
     _invalid_exec_binding: ($) => seq(
       "let",
       optional(seq($._named_binding_start, field("local", $.local_name), "=")),
@@ -270,7 +270,7 @@ module.exports = grammar({
       "let",
       optional(seq($._named_binding_start, field("local", $.local_name), "=")),
       $._restricted_binding_start,
-      $._restricted_binding_word,
+      $._restricted_binding_keyword,
       optional(alias($._recovery_text, $.text)),
       $._line_end,
     ),
@@ -281,25 +281,25 @@ module.exports = grammar({
       optional(alias($._recovery_text, $.text)),
       $._line_end,
     )),
-    run_statement: ($) => choice(
+    run_stmt: ($) => choice(
       $._run,
-      seq($._async_modifier, $._run_after_modifier),
+      seq($._async_modifier, $._run_after_async),
     ),
     _async_modifier: ($) => field("async", "async"),
-    _run: ($) => seq("run", $._target),
+    _run: ($) => seq("run", $._target_tail),
     // A modifier consumes the statement-head boundary; keep runworker indivisible.
     // Preserve the unmodified run's existing target ranges above.
-    _run_after_modifier: ($) => seq(
+    _run_after_async: ($) => seq(
       "run",
       choice(
         seq($._required_space, field("target", $.runnable_name), $._line_end),
         prec.right(seq(optional($._required_space), field("target", $.inline_agic))),
-        alias($._invalid_modified_run_tail, $.invalid_run_target),
+        alias($._invalid_async_target, $.invalid_run_target),
       ),
     ),
     // Keep a malformed modified run on its own line even after its target
     // tokens have committed the lexer to structural parsing.
-    _invalid_modified_run_tail: ($) => prec.dynamic(-2, prec(-1, seq(
+    _invalid_async_target: ($) => prec.dynamic(-2, prec(-1, seq(
       optional($._required_space),
       choice(
         seq($.runnable_name, optional(alias($._recovery_text, $.text))),
@@ -310,46 +310,46 @@ module.exports = grammar({
       ),
       $._line_end,
     ))),
-    await_statement: ($) => seq(
+    await_stmt: ($) => seq(
       "await",
       field("handle", $.handle_name),
       $._line_end,
     ),
-    implicit_run_statement: ($) => field("content", alias($._implicit_content, $.content)),
+    implicit_run_stmt: ($) => field("content", alias($._implicit_content, $.content)),
     _implicit_content: ($) => paragraph($, $._implicit_run_line),
     _implicit_run_line: ($) => seq(
       alias($._flow_raw_text, $.text), $.newline,
     ),
 
-    seek_statement: ($) => seq("seek", field("agent", $.agent_name), $._target),
-    ask_statement: ($) =>
+    seek_stmt: ($) => seq("seek", field("agent", $.agent_name), $._target_tail),
+    ask_stmt: ($) =>
       prec.right(seq(
         "ask",
         ":",
         content($, "content"),
       )),
-    generate_statement: ($) =>
+    generate_stmt: ($) =>
       seq(
         "generate",
         $._required_space,
         field("count", $.integer_literal),
         optional($._lanes_clause),
-        $._using_target,
+        $._using_tail,
       ),
-    reduce_statement: ($) =>
+    reduce_stmt: ($) =>
       choice(
         seq("reduce", $._using_clause, $._line_end),
-        seq($._reduce_named_block_header,
-          repeat($._body_prefix), structuralBody($, seq($._from_clause, repeat($._trivia)))),
+        seq($._reduce_using_header,
+          repeat($._body_prefix), structuralBody($, seq($._initial_clause, repeat($._trivia)))),
         prec.right(seq("reduce",
           field("target", alias($._reduce_inline_line, $.inline_agic)))),
         prec.right(seq("reduce",
           field("target", alias($._reduce_inline_block, $.inline_agic)),
-          optional($._from_clause), repeat($._trivia), $._dedent)),
+          optional($._initial_clause), repeat($._trivia), $._dedent)),
         seq("reduce",
           field("target", alias($._reduce_empty_block, $.inline_agic))),
       ),
-    _reduce_named_block_header: ($) => seq(
+    _reduce_using_header: ($) => seq(
       "reduce", usingClause($), ":", $._line_end,
     ),
     _reduce_inline_line: ($) => seq(
@@ -371,20 +371,20 @@ module.exports = grammar({
     _reduce_content: ($) => seq(
       optional($._body_start), repeat($.blank_line), $._reduce_indent,
       choice(
-        seq($._reduce_text_start, repeat1(choice($._content_row, $.blank_line)), $._dedent),
+        seq($._reduce_text_start, repeat1(choice($._content_line, $.blank_line)), $._dedent),
         missing($, "content"),
       ),
     ),
-    _from_clause: ($) => seq(
-      $._from_start, "from", ":", content($, "from"),
+    _initial_clause: ($) => seq(
+      $._initial_start, "initial", ":", content($, "initial"),
     ),
-    map_statement: ($) =>
+    map_stmt: ($) =>
       seq(
         "map",
         optional($._lanes_clause),
-        $._using_target,
+        $._using_tail,
       ),
-    keep_statement: ($) =>
+    keep_stmt: ($) =>
       choice(
         seq(
           "keep",
@@ -393,10 +393,10 @@ module.exports = grammar({
         ),
         prec.right(seq(
           "keep",
-          optional($._lanes_clause), $._if_target,
+          optional($._lanes_clause), $._if_tail,
         )),
       ),
-    drop_statement: ($) =>
+    drop_stmt: ($) =>
       choice(
         seq(
           "drop",
@@ -405,27 +405,31 @@ module.exports = grammar({
         ),
         prec.right(seq(
           "drop",
-          optional($._lanes_clause), $._if_target,
+          optional($._lanes_clause), $._if_tail,
         )),
       ),
-    sort_statement: ($) =>
+    sort_stmt: ($) =>
       prec.right(seq(
         "sort",
-        $._order_clause,
-        optional($._lanes_clause), $._by_target,
+        $._sort_order,
+        optional($._lanes_clause), $._by_tail,
       )),
     _required_space: () => token.immediate(/[ \t]+/),
-    _target: ($) => choice(
-      seq(field("target", $.runnable_name), $._line_end),
-      prec.right(field("target", $.inline_agic)),
+    _named_target: ($) => field("target", $.runnable_name),
+    _inline_target: ($) => field("target", $.inline_agic),
+    // Target forms expose only their value. Tails complete the surrounding
+    // statement; inline content already owns its physical line ending.
+    _target_tail: ($) => choice(
+      seq($._named_target, $._line_end),
+      prec.right($._inline_target),
     ),
     _using_clause: ($) => usingClause($),
-    _using_target: ($) => choice(
+    _using_tail: ($) => choice(
       seq($._using_clause, $._line_end),
-      field("target", $.inline_agic),
+      $._inline_target,
     ),
-    _if_target: ($) => seq("if", $._target),
-    _by_target: ($) => seq("by", $._target),
+    _if_tail: ($) => seq("if", $._target_tail),
+    _by_tail: ($) => seq("by", $._target_tail),
     _lanes_clause: ($) =>
       seq(
         "in",
@@ -433,30 +437,30 @@ module.exports = grammar({
         field("lanes", $.integer_literal),
         choice("lane", "lanes"),
       ),
-    _order_clause: ($) =>
+    _sort_order: ($) =>
       field("order", choice(
         "ascending",
         "descending",
       )),
-    repeat_statement: ($) => prec.right(seq(
+    repeat_stmt: ($) => prec.right(seq(
       $._repeat_header, body($, $.repeat_body),
     )),
     _repeat_header: ($) => seq(
       "repeat",
       optional($._times_clause),
-      optional($._window_clause),
+      optional($._windowing_clause),
       ":",
       $._line_end,
     ),
     repeat_body: ($) => structuralBody($, choice(
       seq(
-        $._statements,
-        optional(seq($._until_entry, repeat($._trivia), optional($._statements))),
+        $._stmts,
+        optional(seq($._until_entry, repeat($._trivia), optional($._stmts))),
       ),
       seq($._until_entry, repeat($._trivia),
-        choice($._statements, missing($, "statement"))),
+        choice($._stmts, missing($, "stmt"))),
     )),
-    _window_clause: ($) => seq(
+    _windowing_clause: ($) => seq(
       "windowing",
       $._required_space, field("window", $.integer_literal),
     ),
@@ -479,13 +483,13 @@ module.exports = grammar({
     // Both alternatives expose existing public nodes directly in the body.
     _until_entry: ($) => choice(
       field("until", $.until_clause),
-      field("statement", alias($._invalid_until_clause, $.invalid_flow_statement)),
+      field("stmt", alias($._invalid_until_clause, $.invalid_flow_stmt)),
     ),
     _invalid_until_clause: ($) => prec.dynamic(-2, seq(
       $._until_start, "until",
       optional(alias($._recovery_text, $.text)), $._line_end,
     )),
-    invalid_flow_statement: ($) =>
+    invalid_flow_stmt: ($) =>
       prec.dynamic(-2, seq(
         $._flow_keyword,
         optional(alias($._recovery_text, $.text)),
@@ -520,16 +524,16 @@ module.exports = grammar({
     _directive_entry: ($) => choice($.directive, $.invalid_directive),
     invalid_directive: ($) => prec.dynamic(-2, seq(
       $._directive_start,
-      field("key", choice($._query_directive_key, $._route_directive_key,
+      field("key", choice($._query_key, $._route_key,
         ...["recall", "lanes", "context", "instruct"].map(word => alias(word, $.directive_key)))),
       optional(field("operator", $._directive_operator)),
       optional(alias($._recovery_text, $.text)),
       $._line_end,
     )),
     directive: ($) => seq($._directive_start, choice(
-      seq(field("key", $._query_directive_key),
+      seq(field("key", $._query_key),
         field("operator", $._directive_operator), field("value", $.query_value)),
-      seq(field("key", $._route_directive_key),
+      seq(field("key", $._route_key),
         field("operator", "="), field("value", $.route_value)),
       seq(field("key", alias("recall", $.directive_key)), field("operator", "="),
         field("value", $.recall_value)),
@@ -539,8 +543,8 @@ module.exports = grammar({
       seq(field("key", choice(alias("instruct", $.directive_key), alias("context", $.directive_key))),
         field("operator", "="), field("value", $._text_ref)),
     ), $._line_end),
-    _query_directive_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
-    _route_directive_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
+    _query_key: ($) => keywordLeaves(QUERY_DIRECTIVE_KEYS, $.directive_key),
+    _route_key: ($) => keywordLeaves(ROUTE_DIRECTIVE_KEYS, $.directive_key),
     _directive_operator: () => choice("=", "+=", "-="),
     // Prefer a valid raw query value over the overlapping recovery fragment.
     query_value: () => prec(1, token(prec(-1, /[^ \t#\r\n][^#\r\n]*/))),
@@ -563,8 +567,8 @@ module.exports = grammar({
         seq(field("role", $._role), ":", content($, "content")),
         field("content", alias($._message_content, $.content)),
       )),
-    _message_content: ($) => paragraph($, $._unroled_message_line),
-    _unroled_message_line: ($) => seq(
+    _message_content: ($) => paragraph($, $._implicit_message_line),
+    _implicit_message_line: ($) => seq(
       alias($._agic_raw_text, $.text), $.newline,
     ),
     invalid_agic_message: ($) =>
@@ -574,11 +578,11 @@ module.exports = grammar({
         $._line_end,
       )),
     _role: ($) => keywordLeaves(roles, $.role),
-    _pass_statement: ($) =>
+    _pass_stmt: ($) =>
       prec(1, seq($._line_start, "pass", $._line_end, repeat($._trivia))),
     _flow_keyword: ($) => keywordChoice($, tables.flow),
     _agic_keyword: ($) => keywordChoice($, tables.agic),
-    _restricted_binding_word: ($) => keywordChoice($, tables.restricted_binding),
+    _restricted_binding_keyword: ($) => keywordChoice($, tables.restricted_binding),
 
     _cap_kind: ($) => keywordLeaves(capKinds, $.cap_kind),
 
@@ -646,7 +650,7 @@ function definitionBody($) {
     optional($._body_start),
     $._item_indent,
     repeat(choice(field("property", $.property), $._trivia)),
-    optional(field("content", alias($._cap_content, $.content))),
+    optional(field("content", alias($._definition_content, $.content))),
     $._dedent,
   );
 }

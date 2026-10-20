@@ -68,11 +68,11 @@ flow work:
     (item_doc
       (text))
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (plain_comment)
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline)))))))
 
@@ -119,22 +119,22 @@ flow work:
       (directive
         (directive_key)
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (seek_statement
+      (seek_stmt
         (agent_name)
         (inline_agic
           (content
             (text))
           (newline)))
-      (map_statement
+      (map_stmt
         (runnable_name)
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (until_clause
@@ -161,16 +161,16 @@ agic work:
     (runnable_name)
     (newline)
     (flow_body
-      (invalid_flow_statement
+      (invalid_flow_stmt
         (local_name)
         (text)
         (newline))
-      (run_statement
+      (run_stmt
         (invalid_run_target
           (runnable_name)
           (text)
           (newline)))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (agic
@@ -221,7 +221,7 @@ flow last:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (inline_agic
           (newline)
           (content

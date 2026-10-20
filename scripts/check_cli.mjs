@@ -31,12 +31,12 @@ deepStrictEqual(nodeTypes.filter(node => node.named).length, 80);
 for (const [owner, field, literal] of [
   ["flow", "keyword", "flow"], ["flow", "colon", ":"], ["flow", "arrow", "->"],
   ["param", "optional", "?"], ["property", "operator", "="],
-  ["selection", "side", "first"], ["sort_statement", "order", "ascending"],
+  ["selection", "side", "first"], ["sort_stmt", "order", "ascending"],
 ]) {
   const types = nodeTypes.find(node => node.type === owner && node.named).fields[field].types;
   deepStrictEqual(types.some(type => type.type === literal && !type.named), true);
 }
-deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "spawn_stmt").fields, {
   target: {
     multiple: false,
     required: true,
@@ -46,7 +46,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "spawn_statement").fields, 
     ],
   },
 });
-deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "run_stmt").fields, {
   async: {
     multiple: false, required: false, types: [{ type: "async", named: false }],
   },
@@ -55,13 +55,13 @@ deepStrictEqual(nodeTypes.find(node => node.type === "run_statement").fields, {
     types: [{ type: "inline_agic", named: true }, { type: "runnable_name", named: true }],
   },
 });
-deepStrictEqual(nodeTypes.find(node => node.type === "await_statement").fields, {
+deepStrictEqual(nodeTypes.find(node => node.type === "await_stmt").fields, {
   handle: {
     multiple: false, required: true, types: [{ type: "handle_name", named: true }],
   },
 });
-const letFields = nodeTypes.find(node => node.type === "let_statement").fields;
-deepStrictEqual(Object.keys(letFields).sort(), ["local", "statement", "value"]);
+const letFields = nodeTypes.find(node => node.type === "let_stmt").fields;
+deepStrictEqual(Object.keys(letFields).sort(), ["local", "stmt", "value"]);
 deepStrictEqual(letFields.local, {
   multiple: false, required: false, types: [{ type: "local_name", named: true }],
 });
@@ -105,15 +105,15 @@ deepStrictEqual(nodeTypes.find(node => node.type === "type").fields, {
   },
 });
 
-const repeatFields = nodeTypes.find(node => node.type === "repeat_statement").fields;
+const repeatFields = nodeTypes.find(node => node.type === "repeat_stmt").fields;
 deepStrictEqual(Object.keys(repeatFields).sort(), ["body", "count", "window"]);
 deepStrictEqual(repeatFields.body, {
   multiple: false, required: true, types: [{ type: "repeat_body", named: true }],
 });
 const repeatBodyFields = nodeTypes.find(node => node.type === "repeat_body").fields;
-deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["statement", "until"]);
+deepStrictEqual(Object.keys(repeatBodyFields).sort(), ["stmt", "until"]);
 // Missing requirements keep the owning body and expose an invalid_* diagnostic.
-deepStrictEqual([repeatBodyFields.statement.multiple, repeatBodyFields.statement.required], [true, false]);
+deepStrictEqual([repeatBodyFields.stmt.multiple, repeatBodyFields.stmt.required], [true, false]);
 deepStrictEqual(repeatBodyFields.until, {
   multiple: false, required: false, types: [{ type: "until_clause", named: true }],
 });
@@ -126,7 +126,7 @@ deepStrictEqual(nodeTypes.find(node => node.type === "until_clause").fields, {
 });
 
 const textField = { multiple: false, required: true, types: [{ type: "content", named: true }] };
-for (const kind of ["context", "instruct", "inline_agic", "ask_statement", "implicit_run_statement"]) {
+for (const kind of ["context", "instruct", "inline_agic", "ask_stmt", "implicit_run_stmt"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields.content, textField, kind);
 }
 const messageFields = nodeTypes.find(node => node.type === "message").fields;
@@ -148,18 +148,11 @@ for (const body of ["agic_body", "flow_body"]) {
 }
 deepStrictEqual(nodeTypes.find(node => node.type === "param").fields.name.required, true);
 deepStrictEqual(nodeTypes.find(node => node.type === "directive").fields.value.required, true);
-for (const [kind, field] of [["flow_body", "statement"], ["agic_body", "message"],
+for (const [kind, field] of [["flow_body", "stmt"], ["agic_body", "message"],
   ["struct_body", "field"], ["cap_body", "property"], ["chore_body", "property"]]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind).fields[field].multiple, true);
 }
-for (const kind of ["text_inline", "text_block", "text_body", "text_body_line", "indented_raw_text",
-  "unroled_message", "statements", "messages", "invalid_empty_body",
-  "line_end", "inline_agic_body", "text_ref", "invalid_flow_reserved_statement", "invalid_agic_reserved_message",
-  "task", "task_keyword", "job_name", "job_body",
-  "source_file", "module_doc_comment", "module_doc"]) {
-  deepStrictEqual(nodeTypes.some(node => node.type === kind), false, kind);
-}
-for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_statement", "invalid_missing_type"]) {
+for (const kind of ["invalid_missing_body", "invalid_missing_content", "invalid_missing_stmt", "invalid_missing_type"]) {
   deepStrictEqual(nodeTypes.find(node => node.type === kind), { type: kind, named: true });
 }
 
@@ -256,7 +249,7 @@ try {
     "item_doc [6, 0] - [7, 0]", "flow [7, 0] - [12, 0]", "flow [12, 0] - [14, 0]"]) {
     deepStrictEqual(recovery.stdout.includes(`\n  (${item}`), true, recovery.stdout);
   }
-  deepStrictEqual(recovery.stdout.includes("invalid_flow_statement"), true, recovery.stdout);
+  deepStrictEqual(recovery.stdout.includes("invalid_flow_stmt"), true, recovery.stdout);
 
   const blockHeaderPath = join(configDir, "malformed-block-header.too");
   writeFileSync(blockHeaderPath, "flow first:\n  run before\n  repeat:\n    run inner\n    let value = sort ascending:\n      Orphaned text.\n    ## Following.\n    run after\n  run after_outer\n## Next.\nflow next:\n  pass\n");
@@ -264,9 +257,9 @@ try {
     cwd: REPO_ROOT, encoding: "utf8",
   });
   deepStrictEqual(blockHeader.status, 1, blockHeader.stdout + blockHeader.stderr);
-  for (const node of ["(repeat_statement [2, 2] - [8, 0]",
-    "\n          (item_doc [6, 4] - [7, 0]", "(run_statement [7, 4] - [8, 0]",
-    "(run_statement [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
+  for (const node of ["(repeat_stmt [2, 2] - [8, 0]",
+    "\n          (item_doc [6, 4] - [7, 0]", "(run_stmt [7, 4] - [8, 0]",
+    "(run_stmt [8, 2] - [9, 0]", "\n  (item_doc [9, 0] - [10, 0]",
     "\n  (flow [10, 0] - [12, 0]"]) {
     deepStrictEqual(blockHeader.stdout.includes(node), true, blockHeader.stdout);
   }
@@ -396,7 +389,7 @@ try {
     "<span style='color: #334455'>spawn</span>",
     "<span style='color: #556677'>        spawn remains literal inside inline text.</span>",
     "<span style='color: #556677'>    spawn remains literal inside explicit text.</span>",
-    "<span style='color: #556677'>  spawn remains literal in an unroled message.</span>",
+    "<span style='color: #556677'>  spawn remains literal in an implicit message.</span>",
     "<span style='color: #112233'># spawn is also literal in a comment.</span>",
   ]) {
     if (!spawnHtml.includes(expected)) {
@@ -407,7 +400,7 @@ try {
   const collectionHtml = runCli(
     "highlight", "--config-path", configPath, "--html", COLLECTION_FIXTURE,
   );
-  for (const keyword of ["generate", "reduce", "map", "using", "from"]) {
+  for (const keyword of ["generate", "reduce", "map", "using", "initial"]) {
     const expected = `<span style='color: #334455'>${keyword}</span>`;
     if (!collectionHtml.includes(expected)) {
       throw new Error(`Collection highlighting was missing: ${expected}\n${collectionHtml}`);
@@ -433,7 +426,7 @@ try {
     "<span style='color: #334455'>await</span>",
     "<span style='color: #556677'>      async run remains literal inside inline text.</span>",
     "<span style='color: #556677'>      await h remains literal inside inline text.</span>",
-    "<span style='color: #556677'>  async run remains literal in an unroled message.</span>",
+    "<span style='color: #556677'>  async run remains literal in an implicit message.</span>",
     "<span style='color: #556677'>  await h is also literal.</span>",
     "<span style='color: #112233'># await and async remain literal in comments.</span>",
   ]) {

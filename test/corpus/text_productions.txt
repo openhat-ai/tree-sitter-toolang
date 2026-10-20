@@ -19,7 +19,7 @@ flow work(topic: Text):
 
     # Literal reducer heading.
     Merge {{_}}.
-    from:
+    initial:
 
       Seed # literal.
   repeat 2 time windowing 1:
@@ -73,24 +73,24 @@ flow next:
         (recall_value
           (recall_source))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (keep_statement
+      (keep_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (sort_statement
+      (sort_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (reduce_statement
+      (reduce_stmt
         (inline_agic
           (newline)
           (content
@@ -104,12 +104,12 @@ flow next:
           (blank_line)
           (text)
           (newline)))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (until_clause
@@ -162,7 +162,7 @@ Blank reducer content remains invalid before its initializer
 flow work:
   reduce:
 
-    from: Seed.
+    initial: Seed.
   run next
 
 ---
@@ -172,7 +172,7 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (reduce_statement
+      (reduce_stmt
         (inline_agic
           (newline)
           (content
@@ -181,6 +181,6 @@ flow work:
         (content
           (text))
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))

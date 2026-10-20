@@ -18,16 +18,16 @@ flow grow(next: Text):
           (builtin_type))))
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (exec_statement
+          (exec_stmt
             (inline_agic
               (content
                 (text))
               (newline)))))
-      (exec_statement
+      (exec_stmt
         (runnable_name)
         (plain_comment)
         (newline)))))
@@ -50,11 +50,11 @@ flow grow:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (newline)
         (repeat_body
-          (exec_statement
+          (exec_stmt
             (inline_agic
               (type
                 (builtin_type))
@@ -62,7 +62,7 @@ flow grow:
               (content
                 (text)
                 (newline))))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (until_clause
@@ -70,6 +70,6 @@ flow grow:
               (content
                 (text))
               (newline)))))
-      (exec_statement
+      (exec_stmt
         (runnable_name)
         (newline)))))

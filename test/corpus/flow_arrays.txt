@@ -7,7 +7,7 @@ flow work:
   map in 2 lanes using transform
   let map -> Text: Transform {{_}}.
   let report = reduce using merge:
-    from: Initial report.
+    initial: Initial report.
 
 ---
 
@@ -16,13 +16,13 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (generate_statement
+      (generate_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (generate_statement
+        (generate_stmt
           (integer_literal)
           (integer_literal)
           (inline_agic
@@ -31,21 +31,21 @@ flow work:
             (content
               (text))
             (newline))))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (let_statement
-        (map_statement
+      (let_stmt
+        (map_stmt
           (inline_agic
             (type
               (builtin_type))
             (content
               (text))
             (newline))))
-      (let_statement
+      (let_stmt
         (local_name)
-        (reduce_statement
+        (reduce_stmt
           (runnable_name)
           (newline)
           (content
@@ -58,7 +58,7 @@ Inline reducer and initializer in a binding
 flow work:
   let report = reduce -> Text:
     Merge {{_}} with {{_1._}}.
-    from: Initial report.
+    initial: Initial report.
   run publish
 
 ---
@@ -68,9 +68,9 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
-        (reduce_statement
+        (reduce_stmt
           (inline_agic
             (type
               (builtin_type))
@@ -81,22 +81,22 @@ flow work:
           (content
             (text))
           (newline)))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline)))))
 
 ==================
-Removed collection words are ordinary content
+Ordinary words remain literal content
 ==================
 flow work:
-  scatter using expand
-  gather using merge
-  storm 2 using sample
-  settle using merge
-  let old_items = scatter using expand
-  let old_report = gather using merge
-  let old_samples = storm 2 using sample
-  let old_result = settle using merge
+  expand using expand
+  collect using merge
+  sample 2 using sample
+  combine using merge
+  let old_items = expand using expand
+  let old_report = collect using merge
+  let old_samples = sample 2 using sample
+  let old_result = combine using merge
 
 ---
 
@@ -105,7 +105,7 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (implicit_run_statement
+      (implicit_run_stmt
         (content
           (text)
           (newline)
@@ -115,22 +115,22 @@ flow work:
           (newline)
           (text)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
@@ -149,9 +149,9 @@ flow work:
     (runnable_name)
     (newline)
     (flow_body
-      (let_statement
+      (let_stmt
         (local_name)
-        (map_statement
+        (map_stmt
           (ERROR)
           (inline_agic
             (content

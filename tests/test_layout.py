@@ -13,8 +13,8 @@ from test_layout_support import declarations, descendants, edit_tree, fingerprin
 def test_repeat_does_not_capture_outer_statement():
     root = parse("flow work:\n  repeat 2 times:\n    run improve\n  run publish\n")
     assert valid(root)
-    loop = descendants(root, "repeat_statement")[0]
-    assert [node.text.strip() for node in descendants(loop, "run_statement")] == [
+    loop = descendants(root, "repeat_stmt")[0]
+    assert [node.text.strip() for node in descendants(loop, "run_stmt")] == [
         b"run improve"
     ]
 
@@ -25,8 +25,8 @@ def test_nested_text_does_not_capture_siblings():
         "    run review\n    until: Ready.\n  run publish\n"
     )
     assert valid(root)
-    loop = descendants(root, "repeat_statement")[0]
-    assert len(descendants(loop, "run_statement")) == 2
+    loop = descendants(root, "repeat_stmt")[0]
+    assert len(descendants(loop, "run_stmt")) == 2
     assert loop.child_by_field_name("body").child_by_field_name("until") is not None
     assert (
         descendants(loop, "text")[0].text == b"      Improve the evidence."
@@ -46,7 +46,7 @@ def test_outer_until_belongs_to_its_indentation():
         "    until: Ready.\n  run publish\n"
     )
     assert valid(root)
-    outer, inner = descendants(root, "repeat_statement")
+    outer, inner = descendants(root, "repeat_stmt")
     assert outer.child_by_field_name("body").child_by_field_name("until") is not None
     assert inner.child_by_field_name("body").child_by_field_name("until") is None
 
@@ -103,11 +103,11 @@ def test_all_inline_bodies_share_relative_layout(indent, header):
     )
     root = parse(source)
     assert valid(root)
-    outer = descendants(root, "repeat_statement")[0]
+    outer = descendants(root, "repeat_stmt")[0]
     text = descendants(outer, "content")[0]
     assert text.text.decode() == body
     assert outer.child_by_field_name("body").child_by_field_name("until") is not None
-    assert descendants(root, "run_statement")[-1].text.strip() == b"run publish"
+    assert descendants(root, "run_stmt")[-1].text.strip() == b"run publish"
 
 
 @pytest.mark.parametrize("header", ["context notes:", "instruct rules:"])
@@ -169,7 +169,7 @@ def test_every_keyword_is_structural_on_every_implicit_line(word, prefix):
     assert not valid(root)
     assert not any(
         f"{word},".encode() in node.text
-        for node in descendants(root, "implicit_run_statement")
+        for node in descendants(root, "implicit_run_stmt")
     )
 
 
@@ -184,7 +184,7 @@ def test_keywords_have_case_sensitive_complete_token_boundaries(word):
     for prose in prose_forms:
         root = parse(f"flow work:\n  {prose}\n")
         assert valid(root)
-        assert len(descendants(root, "implicit_run_statement")) == 1
+        assert len(descendants(root, "implicit_run_stmt")) == 1
     root = parse(f"flow work:\n  run:\n    {word}, literal text.\n")
     assert valid(root)
     assert (
@@ -199,7 +199,7 @@ def test_markdown_indentation_continues_only_non_keyword_prose():
         "flow work:\n  Review the evidence.\n    - First point.\n  Draw a conclusion.\n"
     )
     assert valid(root)
-    assert len(descendants(root, "implicit_run_statement")) == 1
+    assert len(descendants(root, "implicit_run_stmt")) == 1
     assert not valid(parse("flow work:\n  Review the evidence.\n    run improve\n"))
 
 
@@ -210,8 +210,8 @@ def test_comments_do_not_change_layout_and_outer_docs_keep_their_owner():
         "  ## Publish the result.\n  run publish\n"
     )
     assert valid(root)
-    loop = descendants(root, "repeat_statement")[0]
-    assert len(descendants(loop, "run_statement")) == 2
+    loop = descendants(root, "repeat_stmt")[0]
+    assert len(descendants(loop, "run_stmt")) == 2
     assert not descendants(loop, "item_doc")
     assert descendants(root, "item_doc")[0].parent.type == "flow_body"
 
@@ -227,8 +227,8 @@ def test_line_endings_and_eof_preserve_completed_blocks(newline, final_newline):
         source = source.rstrip("\r\n")
     root = parse(source)
     assert valid(root)
-    assert len(descendants(root, "repeat_statement")) == 2
-    assert len(descendants(root, "run_statement")) == 2
+    assert len(descendants(root, "repeat_stmt")) == 2
+    assert len(descendants(root, "run_stmt")) == 2
 
 
 def test_incremental_edits_match_fresh_trees_through_invalid_states():

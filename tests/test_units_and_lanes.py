@@ -12,11 +12,11 @@ from test_layout_support import tokens, descendants, edit_tree, fingerprint, par
 
 
 OPERATIONS = [
-    ("generate 3", "generate_statement", "using", "Text[]"),
-    ("map", "map_statement", "using", "Text"),
-    ("keep", "keep_statement", "if", "Boolean"),
-    ("drop", "drop_statement", "if", "Boolean"),
-    ("sort descending", "sort_statement", "by", "Number"),
+    ("generate 3", "generate_stmt", "using", "Text[]"),
+    ("map", "map_stmt", "using", "Text"),
+    ("keep", "keep_stmt", "if", "Boolean"),
+    ("drop", "drop_stmt", "if", "Boolean"),
+    ("sort descending", "sort_stmt", "by", "Number"),
 ]
 NUMBERS = ["0", "1", "01", "2", "0002", "9" * 128]
 BINDINGS = ["", "let result = ", "let "]
@@ -73,11 +73,11 @@ def test_lane_spellings_preserve_direct_fields_ranges_and_highlights(
         assert runnable.child_by_field_name("return").text == type_name.encode()
         assert not any(node.start_byte >= content.start_byte and node.end_byte <= content.end_byte
                        for node in captures["keyword"])
-    if kind == "generate_statement":
+    if kind == "generate_stmt":
         assert operation.child_by_field_name("count").text == b"3"
     if binding:
-        owner, = descendants(root, "let_statement")
-        assert owner.child_by_field_name("statement") == operation
+        owner, = descendants(root, "let_stmt")
+        assert owner.child_by_field_name("stmt") == operation
         assert owner.child_by_field_name("value") is None
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
@@ -91,7 +91,7 @@ def test_repeat_units_do_not_classify_numeric_value(number, unit, binding, newli
               "    run worker\n  run after\n").replace("\n", newline)
     root = parse(source)
     assert valid(root), root
-    repeat, = descendants(root, "repeat_statement")
+    repeat, = descendants(root, "repeat_stmt")
     count = repeat.child_by_field_name("count")
     window = repeat.child_by_field_name("window")
     assert count.type == window.type == "integer_literal"
@@ -101,7 +101,7 @@ def test_repeat_units_do_not_classify_numeric_value(number, unit, binding, newli
     captures = QueryCursor(highlights).captures(root)
     assert keyword in captures["keyword"] and count in captures["number"]
     assert count.end_byte + 1 == keyword.start_byte
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
 
 
 @pytest.mark.parametrize("head,kind,connector,type_name", OPERATIONS)
@@ -129,9 +129,9 @@ def test_suffix_and_duplicate_lanes_are_invalid_and_preserve_following_source(
     }[placement]
     root = parse((f"flow work:\n  run before\n  {binding}{statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline))
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement"), root
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement"))
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert not descendants(root, "implicit_run_stmt"), root
+    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt"))
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
 
@@ -153,7 +153,7 @@ def test_suffix_and_duplicate_lanes_are_invalid_and_preserve_following_source(
 def test_unit_relaxation_does_not_relax_tokens_or_operation_support(statement, binding):
     root = parse(f"flow work:\n  run before\n  {binding}{statement}\n  run after\nflow next:\n  pass\n")
     assert not valid(root), root
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement"))
+    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt"))
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
 
@@ -162,7 +162,7 @@ def test_unit_relaxation_does_not_relax_tokens_or_operation_support(statement, b
 def test_units_at_eof_and_tab_separators_preserve_source(ending, indent):
     root = parse(f"flow work:\n{indent}map\tin\t01\tlanes\tusing\tworker" + ending)
     assert valid(root), root
-    assert descendants(root, "map_statement")[0].child_by_field_name("lanes").text == b"01"
+    assert descendants(root, "map_stmt")[0].child_by_field_name("lanes").text == b"01"
 
 
 def test_long_numbers_remain_raw_digit_tokens_without_numeric_conversion():
@@ -174,15 +174,12 @@ def test_long_numbers_remain_raw_digit_tokens_without_numeric_conversion():
     assert all(node.text == number.encode() for node in descendants(root, "integer_literal"))
 
 
-def test_private_value_classification_tokens_are_removed():
+def test_integer_literal_is_an_external_named_leaf():
     root = Path(__file__).parents[1]
     grammar = json.loads((root / "src/grammar.json").read_text())
-    externals = {node["name"] for node in grammar["externals"]}
-    assert "integer_literal" in externals
-    assert not {"_one_integer_literal", "_other_integer_literal"} & externals
-    language = Language(tree_sitter_toolang.language())
-    names = {language.node_kind_for_id(i) for i in range(language.node_kind_count)}
-    assert not {"_one_integer_literal", "_other_integer_literal"} & names
+    assert {"type": "SYMBOL", "name": "integer_literal"} in grammar["externals"]
+    nodes = json.loads((root / "src/node-types.json").read_text())
+    assert {"type": "integer_literal", "named": True} in nodes
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -219,5 +216,5 @@ def test_incremental_unit_and_clause_edits_match_fresh_trees(newline, binding):
 def test_suffix_lane_on_first_statement_reports_error_without_losing_following_code(statement, binding, newline):
     root = parse((f"flow work:\n  {binding}{statement}\n  run after\nflow next:\n  pass\n").replace("\n", newline))
     assert not valid(root), root
-    assert descendants(root, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert descendants(root, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"

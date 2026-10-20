@@ -1,0 +1,42 @@
+==================
+Initial keyword and nested literal text have distinct roles
+==================
+flow initial(initial: Text):
+  let initial = Seed.
+  reduce:
+    Merge the input.
+      initial: Nested literal text.
+    initial: "Seed # literal"
+  run initial
+
+---
+
+(program
+  (flow
+    (runnable_name)
+    (params
+      (param
+        (param_name)
+        (type
+          (builtin_type))))
+    (newline)
+    (flow_body
+      (let_stmt
+        (local_name)
+        (content
+          (text))
+        (newline))
+      (reduce_stmt
+        (inline_agic
+          (newline)
+          (content
+            (text)
+            (newline)
+            (text)
+            (newline)))
+        (content
+          (text))
+        (newline))
+      (run_stmt
+        (runnable_name)
+        (newline)))))

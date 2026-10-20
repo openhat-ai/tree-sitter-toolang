@@ -24,7 +24,7 @@ flow work(topic: Text): # Header comment.
   reduce:
     # Literal reducer heading.
     Merge.
-    from: Seed.
+    initial: Seed.
   keep if worker
   drop if: Done.
   sort ascending by worker

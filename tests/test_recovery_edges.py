@@ -10,7 +10,7 @@ from test_recovery_boundaries import assert_next_items
 
 
 OWNERS = [
-    ("flow", "first", "run before", "run after", "run_statement"),
+    ("flow", "first", "run before", "run after", "run_stmt"),
     ("agic", "first", "user: Before.", "user: After.", "message"),
     ("struct", "First", "before: Text", "after: Text", "field"),
     *[(kind, "first", "title = Value", "After.", "text")
@@ -119,7 +119,7 @@ def test_malformed_until_preserves_its_repeat_and_outer_statements(target, posit
     if nested:
         expected[b"between"] = "repeat_body"
     for target, parent in expected.items():
-        statement, = [n for n in descendants(root, "run_statement")
+        statement, = [n for n in descendants(root, "run_stmt")
                       if n.child_by_field_name("target") is not None and n.child_by_field_name("target").text == target]
         assert statement.parent.type == parent and valid(statement), root
     assert not descendants(root, "invalid_missing_body"), root

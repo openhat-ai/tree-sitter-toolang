@@ -21,7 +21,7 @@ mod tests {
     fn text_leaves_and_reducer_ranges_share_the_public_contract() {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
-        let source = "#@ Program.\n## @param topic Input # details.\nflow work(topic: Text):\n  models = fast\n  reduce:\n\n    # Heading\n    Merge.\n    from: Seed.\n  run next\n";
+        let source = "#@ Program.\n## @param topic Input # details.\nflow work(topic: Text):\n  models = fast\n  reduce:\n\n    # Heading\n    Merge.\n    initial: Seed.\n  run next\n";
         let tree = parser.parse(source, None).unwrap();
         let root = tree.root_node();
         assert!(!root.has_error());
@@ -45,7 +45,7 @@ mod tests {
             .child_by_field_name("value")
             .unwrap();
         assert_eq!(value.kind(), "query_value");
-        let reduce = body.child_by_field_name("statement").unwrap();
+        let reduce = body.child_by_field_name("stmt").unwrap();
         let content = reduce
             .child_by_field_name("target")
             .unwrap()
@@ -60,9 +60,32 @@ mod tests {
         assert_eq!(text.kind(), "text");
         assert_eq!(text.child_count(), 0);
         assert_eq!(
-            reduce.child_by_field_name("from").unwrap().kind(),
+            reduce.child_by_field_name("initial").unwrap().kind(),
             "content"
         );
+    }
+
+    #[test]
+    fn initial_fields_preserve_nested_literal_text() {
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&super::LANGUAGE.into()).unwrap();
+        let source = "flow work:\n  reduce:\n    Merge.\n      initial: Nested literal.\n    initial: \"Seed # literal\"\n  run next\n";
+        let tree = parser.parse(source, None).unwrap();
+        let root = tree.root_node();
+        assert!(is_valid(root));
+        let body = root.named_child(0).unwrap().child_by_field_name("body").unwrap();
+        let reduce = body.child_by_field_name("stmt").unwrap();
+        assert_eq!(reduce.kind(), "reduce_stmt");
+        let target = reduce.child_by_field_name("target").unwrap();
+        assert_eq!(
+            target.child_by_field_name("content").unwrap().utf8_text(source.as_bytes()).unwrap(),
+            "    Merge.\n      initial: Nested literal.\n"
+        );
+        assert_eq!(
+            reduce.child_by_field_name("initial").unwrap().utf8_text(source.as_bytes()).unwrap(),
+            " \"Seed # literal\""
+        );
+        assert!(target.end_byte() < reduce.child_by_field_name("initial").unwrap().start_byte());
     }
 
     #[test]
@@ -101,7 +124,7 @@ mod tests {
                     let after = body
                         .named_children(&mut cursor)
                         .find(|node| {
-                            node.kind() == "run_statement"
+                            node.kind() == "run_stmt"
                                 && node
                                     .child_by_field_name("target")
                                     .unwrap()
@@ -127,7 +150,7 @@ mod tests {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&super::LANGUAGE.into()).unwrap();
         for (kind, following, entry) in [
-            ("flow", "run after", "run_statement"),
+            ("flow", "run after", "run_stmt"),
             ("agic", "user: Following.", "message"),
         ] {
             let source = format!("{kind} first:\n  modles = fast\n    Orphaned content.\n  ## Following.\n  {following}\n## Next.\nflow next:\n  pass\n");
@@ -263,7 +286,7 @@ mod tests {
             let mut cursor = body.walk();
             let targets: Vec<_> = body
                 .named_children(&mut cursor)
-                .filter(|node| node.kind() == "run_statement")
+                .filter(|node| node.kind() == "run_stmt")
                 .map(|node| {
                     assert!(!node.has_error());
                     node.child_by_field_name("target")
@@ -277,18 +300,18 @@ mod tests {
         let repeat = items[3]
             .child_by_field_name("body")
             .unwrap()
-            .child_by_field_name("statement")
+            .child_by_field_name("stmt")
             .unwrap();
         let body = repeat.child_by_field_name("body").unwrap();
-        let worker = body.child_by_field_name("statement").unwrap();
-        assert_eq!(worker.kind(), "run_statement");
+        let worker = body.child_by_field_name("stmt").unwrap();
+        assert_eq!(worker.kind(), "run_stmt");
         assert_eq!(
             worker.utf8_text(source.as_bytes()).unwrap().trim(),
             "run worker"
         );
         assert_eq!(
             body.named_child(1).unwrap().kind(),
-            "invalid_flow_statement"
+            "invalid_flow_stmt"
         );
     }
 
@@ -325,7 +348,7 @@ mod tests {
                     .child_by_field_name("body")
                     .unwrap();
                 assert_eq!(
-                    body.child_by_field_name("statement")
+                    body.child_by_field_name("stmt")
                         .unwrap()
                         .child_by_field_name("target")
                         .unwrap()
@@ -362,7 +385,7 @@ mod tests {
         ] {
             assert_eq!(directive.child_by_field_name(field).unwrap().kind(), kind);
         }
-        let run = body.child_by_field_name("statement").unwrap();
+        let run = body.child_by_field_name("stmt").unwrap();
         assert_eq!(
             run.child_by_field_name("target").unwrap().kind(),
             "runnable_name"
@@ -456,7 +479,7 @@ mod tests {
                         .unwrap()
                         .child_by_field_name("body")
                         .unwrap()
-                        .child_by_field_name("statement")
+                        .child_by_field_name("stmt")
                         .unwrap();
                     let lanes = statement.child_by_field_name("lanes").unwrap();
                     assert_eq!(lanes.kind(), "integer_literal");
@@ -474,7 +497,7 @@ mod tests {
                     .unwrap()
                     .child_by_field_name("body")
                     .unwrap()
-                    .child_by_field_name("statement")
+                    .child_by_field_name("stmt")
                     .unwrap();
                 assert_eq!(
                     statement
@@ -611,13 +634,13 @@ mod tests {
             .child_by_field_name("body")
             .unwrap();
         let bare = statements.named_child(0).unwrap();
-        assert_eq!(bare.kind(), "spawn_statement");
+        assert_eq!(bare.kind(), "spawn_stmt");
         assert_eq!(
             bare.child_by_field_name("target").unwrap().kind(),
             "runnable_name"
         );
         let bound = statements.named_child(1).unwrap();
-        assert_eq!(bound.kind(), "let_statement");
+        assert_eq!(bound.kind(), "let_stmt");
         assert_eq!(
             bound
                 .child_by_field_name("local")
@@ -627,8 +650,8 @@ mod tests {
                 .trim(),
             "job"
         );
-        let spawn = bound.child_by_field_name("statement").unwrap();
-        assert_eq!(spawn.kind(), "spawn_statement");
+        let spawn = bound.child_by_field_name("stmt").unwrap();
+        assert_eq!(spawn.kind(), "spawn_stmt");
         assert_eq!(
             spawn.child_by_field_name("target").unwrap().kind(),
             "inline_agic"
@@ -661,7 +684,7 @@ mod tests {
         assert_eq!(target.utf8_text(source.as_bytes()).unwrap().trim(), "done");
         let mut cursor = body.walk();
         let statements: Vec<_> = body
-            .children_by_field_name("statement", &mut cursor)
+            .children_by_field_name("stmt", &mut cursor)
             .collect();
         assert_eq!(statements.len(), 2);
         assert!(statements[0].end_byte() <= condition.start_byte());
@@ -674,8 +697,8 @@ mod tests {
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&language).unwrap();
         for (operation, kind, target) in [
-            ("async run", "run_statement", "target"),
-            ("spawn", "spawn_statement", "target"),
+            ("async run", "run_stmt", "target"),
+            ("spawn", "spawn_stmt", "target"),
         ] {
             let source = format!("flow launch:\n  let h = {operation} worker\n  await h\n  let x = await h\n  let await h\n  let h = await h\n");
             let tree = parser.parse(&source, None).unwrap();
@@ -687,7 +710,7 @@ mod tests {
                 .child_by_field_name("body")
                 .unwrap();
             let launch = statements.named_child(0).unwrap();
-            let statement = launch.child_by_field_name("statement").unwrap();
+            let statement = launch.child_by_field_name("stmt").unwrap();
             assert_eq!(statement.kind(), kind);
             assert_eq!(
                 statement
@@ -708,16 +731,16 @@ mod tests {
                 let await_node = if index == 1 {
                     node
                 } else {
-                    assert_eq!(node.kind(), "let_statement");
+                    assert_eq!(node.kind(), "let_stmt");
                     assert!(node.child_by_field_name("value").is_none());
                     assert_eq!(
                         node.child_by_field_name("local")
                             .map(|node| node.utf8_text(source.as_bytes()).unwrap().trim()),
                         name
                     );
-                    node.child_by_field_name("statement").unwrap()
+                    node.child_by_field_name("stmt").unwrap()
                 };
-                assert_eq!(await_node.kind(), "await_statement");
+                assert_eq!(await_node.kind(), "await_stmt");
                 let handle = await_node.child_by_field_name("handle").unwrap();
                 assert_eq!(handle.kind(), "handle_name");
                 assert_eq!(handle.child_count(), 0);
@@ -742,11 +765,11 @@ mod tests {
             .unwrap();
         let body = flow.child_by_field_name("body").unwrap();
         let directive = body.child_by_field_name("directive").unwrap();
-        let run = body.child_by_field_name("statement").unwrap();
+        let run = body.child_by_field_name("stmt").unwrap();
         let mut cursor = body.walk();
         let keep = body
             .named_children(&mut cursor)
-            .find(|node| node.kind() == "keep_statement")
+            .find(|node| node.kind() == "keep_stmt")
             .unwrap();
         let selection = keep.child_by_field_name("selection").unwrap();
         assert_eq!(selection.kind(), "selection");
@@ -852,7 +875,7 @@ mod tests {
             ("flow work(topic: Text -> Text: # ) ,", false),
             ("flow work(: Text?) -> : # Header.", true),
         ] {
-            let source = format!("{header}\n  ## First.\n  reduce -> :\n\n    Merge.\n    from: Initial.\n  run after\n## Next.\nflow next:\n  pass\n");
+            let source = format!("{header}\n  ## First.\n  reduce -> :\n\n    Merge.\n    initial: Initial.\n  run after\n## Next.\nflow next:\n  pass\n");
             let tree = parser.parse(&source, None).unwrap();
             let root = tree.root_node();
             assert!(!is_valid(root));
@@ -861,7 +884,7 @@ mod tests {
             assert_eq!(flow.child_by_field_name("return").is_none(), missing_type);
             let body = flow.child_by_field_name("body").unwrap();
             assert_eq!(body.named_child(0).unwrap().kind(), "item_doc");
-            let reducer = body.child_by_field_name("statement").unwrap();
+            let reducer = body.child_by_field_name("stmt").unwrap();
             let inline = reducer.child_by_field_name("target").unwrap();
             let mut cursor = inline.walk();
             let diagnostic = inline
@@ -881,7 +904,7 @@ mod tests {
             );
             assert_eq!(
                 reducer
-                    .child_by_field_name("from")
+                    .child_by_field_name("initial")
                     .unwrap()
                     .utf8_text(source.as_bytes())
                     .unwrap(),

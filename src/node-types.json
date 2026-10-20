@@ -191,7 +191,7 @@
     }
   },
   {
-    "type": "ask_statement",
+    "type": "ask_stmt",
     "named": true,
     "fields": {
       "content": {
@@ -217,7 +217,7 @@
     }
   },
   {
-    "type": "await_statement",
+    "type": "await_stmt",
     "named": true,
     "fields": {
       "handle": {
@@ -614,7 +614,7 @@
     }
   },
   {
-    "type": "drop_statement",
+    "type": "drop_stmt",
     "named": true,
     "fields": {
       "lanes": {
@@ -668,7 +668,7 @@
     }
   },
   {
-    "type": "exec_statement",
+    "type": "exec_stmt",
     "named": true,
     "fields": {
       "target": {
@@ -893,72 +893,72 @@
           }
         ]
       },
-      "statement": {
+      "stmt": {
         "multiple": true,
         "required": false,
         "types": [
           {
-            "type": "ask_statement",
+            "type": "ask_stmt",
             "named": true
           },
           {
-            "type": "await_statement",
+            "type": "await_stmt",
             "named": true
           },
           {
-            "type": "drop_statement",
+            "type": "drop_stmt",
             "named": true
           },
           {
-            "type": "exec_statement",
+            "type": "exec_stmt",
             "named": true
           },
           {
-            "type": "generate_statement",
+            "type": "generate_stmt",
             "named": true
           },
           {
-            "type": "implicit_run_statement",
+            "type": "implicit_run_stmt",
             "named": true
           },
           {
-            "type": "invalid_flow_statement",
+            "type": "invalid_flow_stmt",
             "named": true
           },
           {
-            "type": "keep_statement",
+            "type": "keep_stmt",
             "named": true
           },
           {
-            "type": "let_statement",
+            "type": "let_stmt",
             "named": true
           },
           {
-            "type": "map_statement",
+            "type": "map_stmt",
             "named": true
           },
           {
-            "type": "reduce_statement",
+            "type": "reduce_stmt",
             "named": true
           },
           {
-            "type": "repeat_statement",
+            "type": "repeat_stmt",
             "named": true
           },
           {
-            "type": "run_statement",
+            "type": "run_stmt",
             "named": true
           },
           {
-            "type": "seek_statement",
+            "type": "seek_stmt",
             "named": true
           },
           {
-            "type": "sort_statement",
+            "type": "sort_stmt",
             "named": true
           },
           {
-            "type": "spawn_statement",
+            "type": "spawn_stmt",
             "named": true
           }
         ]
@@ -977,7 +977,7 @@
           "named": true
         },
         {
-          "type": "invalid_missing_statement",
+          "type": "invalid_missing_stmt",
           "named": true
         },
         {
@@ -1008,7 +1008,7 @@
     }
   },
   {
-    "type": "generate_statement",
+    "type": "generate_stmt",
     "named": true,
     "fields": {
       "count": {
@@ -1072,7 +1072,7 @@
     "fields": {}
   },
   {
-    "type": "implicit_run_statement",
+    "type": "implicit_run_stmt",
     "named": true,
     "fields": {
       "content": {
@@ -1277,7 +1277,7 @@
     }
   },
   {
-    "type": "invalid_flow_statement",
+    "type": "invalid_flow_stmt",
     "named": true,
     "fields": {
       "local": {
@@ -1412,7 +1412,7 @@
     }
   },
   {
-    "type": "keep_statement",
+    "type": "keep_stmt",
     "named": true,
     "fields": {
       "lanes": {
@@ -1466,7 +1466,7 @@
     }
   },
   {
-    "type": "let_statement",
+    "type": "let_stmt",
     "named": true,
     "fields": {
       "local": {
@@ -1479,60 +1479,60 @@
           }
         ]
       },
-      "statement": {
+      "stmt": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "ask_statement",
+            "type": "ask_stmt",
             "named": true
           },
           {
-            "type": "await_statement",
+            "type": "await_stmt",
             "named": true
           },
           {
-            "type": "drop_statement",
+            "type": "drop_stmt",
             "named": true
           },
           {
-            "type": "generate_statement",
+            "type": "generate_stmt",
             "named": true
           },
           {
-            "type": "invalid_flow_statement",
+            "type": "invalid_flow_stmt",
             "named": true
           },
           {
-            "type": "keep_statement",
+            "type": "keep_stmt",
             "named": true
           },
           {
-            "type": "map_statement",
+            "type": "map_stmt",
             "named": true
           },
           {
-            "type": "reduce_statement",
+            "type": "reduce_stmt",
             "named": true
           },
           {
-            "type": "repeat_statement",
+            "type": "repeat_stmt",
             "named": true
           },
           {
-            "type": "run_statement",
+            "type": "run_stmt",
             "named": true
           },
           {
-            "type": "seek_statement",
+            "type": "seek_stmt",
             "named": true
           },
           {
-            "type": "sort_statement",
+            "type": "sort_stmt",
             "named": true
           },
           {
-            "type": "spawn_statement",
+            "type": "spawn_stmt",
             "named": true
           }
         ]
@@ -1565,7 +1565,7 @@
     "fields": {}
   },
   {
-    "type": "map_statement",
+    "type": "map_stmt",
     "named": true,
     "fields": {
       "lanes": {
@@ -2063,10 +2063,10 @@
     }
   },
   {
-    "type": "reduce_statement",
+    "type": "reduce_stmt",
     "named": true,
     "fields": {
-      "from": {
+      "initial": {
         "multiple": false,
         "required": false,
         "types": [
@@ -2134,72 +2134,72 @@
     "type": "repeat_body",
     "named": true,
     "fields": {
-      "statement": {
+      "stmt": {
         "multiple": true,
         "required": false,
         "types": [
           {
-            "type": "ask_statement",
+            "type": "ask_stmt",
             "named": true
           },
           {
-            "type": "await_statement",
+            "type": "await_stmt",
             "named": true
           },
           {
-            "type": "drop_statement",
+            "type": "drop_stmt",
             "named": true
           },
           {
-            "type": "exec_statement",
+            "type": "exec_stmt",
             "named": true
           },
           {
-            "type": "generate_statement",
+            "type": "generate_stmt",
             "named": true
           },
           {
-            "type": "implicit_run_statement",
+            "type": "implicit_run_stmt",
             "named": true
           },
           {
-            "type": "invalid_flow_statement",
+            "type": "invalid_flow_stmt",
             "named": true
           },
           {
-            "type": "keep_statement",
+            "type": "keep_stmt",
             "named": true
           },
           {
-            "type": "let_statement",
+            "type": "let_stmt",
             "named": true
           },
           {
-            "type": "map_statement",
+            "type": "map_stmt",
             "named": true
           },
           {
-            "type": "reduce_statement",
+            "type": "reduce_stmt",
             "named": true
           },
           {
-            "type": "repeat_statement",
+            "type": "repeat_stmt",
             "named": true
           },
           {
-            "type": "run_statement",
+            "type": "run_stmt",
             "named": true
           },
           {
-            "type": "seek_statement",
+            "type": "seek_stmt",
             "named": true
           },
           {
-            "type": "sort_statement",
+            "type": "sort_stmt",
             "named": true
           },
           {
-            "type": "spawn_statement",
+            "type": "spawn_stmt",
             "named": true
           }
         ]
@@ -2228,7 +2228,7 @@
           "named": true
         },
         {
-          "type": "invalid_missing_statement",
+          "type": "invalid_missing_stmt",
           "named": true
         },
         {
@@ -2255,7 +2255,7 @@
     }
   },
   {
-    "type": "repeat_statement",
+    "type": "repeat_stmt",
     "named": true,
     "fields": {
       "body": {
@@ -2340,7 +2340,7 @@
     }
   },
   {
-    "type": "run_statement",
+    "type": "run_stmt",
     "named": true,
     "fields": {
       "async": {
@@ -2393,7 +2393,7 @@
     "fields": {}
   },
   {
-    "type": "seek_statement",
+    "type": "seek_stmt",
     "named": true,
     "fields": {
       "agent": {
@@ -2627,7 +2627,7 @@
     }
   },
   {
-    "type": "sort_statement",
+    "type": "sort_stmt",
     "named": true,
     "fields": {
       "lanes": {
@@ -2685,7 +2685,7 @@
     }
   },
   {
-    "type": "spawn_statement",
+    "type": "spawn_stmt",
     "named": true,
     "fields": {
       "target": {
@@ -3092,10 +3092,6 @@
     "named": false
   },
   {
-    "type": "from",
-    "named": false
-  },
-  {
     "type": "generate",
     "named": false
   },
@@ -3105,6 +3101,10 @@
   },
   {
     "type": "in",
+    "named": false
+  },
+  {
+    "type": "initial",
     "named": false
   },
   {
@@ -3124,7 +3124,7 @@
     "named": true
   },
   {
-    "type": "invalid_missing_statement",
+    "type": "invalid_missing_stmt",
     "named": true
   },
   {

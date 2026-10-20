@@ -34,7 +34,7 @@ agic next(?: Text[], input: Text[ ]):
     (flow_body
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -92,7 +92,7 @@ flow last:
         (directive_key)
         (query_value)
         (newline))
-      (invalid_missing_statement)))
+      (invalid_missing_stmt)))
   (item_doc
     (text))
   (agic

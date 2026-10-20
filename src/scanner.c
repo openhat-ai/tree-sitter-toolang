@@ -26,14 +26,14 @@ enum Token {
   LINE_START,
   DIRECTIVE_START,
   UNTIL_START,
-  FROM_START,
+  INITIAL_START,
   REDUCE_INDENT,
   REDUCE_TEXT_START,
   TEXT_INDENT,
-  CAP_TEXT_START,
+  DEFINITION_TEXT_START,
   RAW_TEXT,
-  FLOW_TEXT,
-  AGIC_TEXT,
+  FLOW_RAW_TEXT,
+  AGIC_RAW_TEXT,
   ERROR_LINE,
   EXEC_BINDING_START,
   OPERATION_BINDING_START,
@@ -558,7 +558,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   bool opening_body = valid[ITEM_INDENT] || valid[INDENT] || valid[RUNNABLE_INDENT] ||
                       valid[TEXT_INDENT] || valid[REDUCE_INDENT];
   bool structural_entry = valid[LINE_START] || valid[DIRECTIVE_START] ||
-                          valid[UNTIL_START] || valid[FROM_START] || valid[REDUCE_TEXT_START];
+                          valid[UNTIL_START] || valid[INITIAL_START] || valid[REDUCE_TEXT_START];
   bool awaiting_body = scanner->depth == 1 || opening_body || !structural_entry;
   bool literal = frame.mode != STRUCTURAL && indent.column >= frame.column;
   bool opening_text = valid[TEXT_INDENT] && indent.column > frame.column;
@@ -727,7 +727,7 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
   bool property_name = read_word(lexer, word, sizeof(word));
 
   if (frame.mode == REDUCE_TEXT && indent.column == frame.column &&
-      strcmp(word, "from") == 0 && !scanner->line_started && valid[DEDENT]) {
+      strcmp(word, "initial") == 0 && !scanner->line_started && valid[DEDENT]) {
     return emit(scanner, lexer, DEDENT);
   }
 
@@ -737,19 +737,19 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     return emit(scanner, lexer, ITEM_START);
   }
   if (valid[MISSING_REQUIRED] && valid[REDUCE_TEXT_START] &&
-      !scanner->line_started && at_baseline && strcmp(word, "from") == 0) {
+      !scanner->line_started && at_baseline && strcmp(word, "initial") == 0) {
     return emit(scanner, lexer, MISSING_REQUIRED);
   }
   if (valid[REDUCE_TEXT_START] && !scanner->line_started && at_baseline &&
-      strcmp(word, "from") != 0) {
+      strcmp(word, "initial") != 0) {
     return push(scanner, lexer, indent, REDUCE_TEXT, REDUCE_TEXT_START);
   }
-  if (valid[CAP_TEXT_START] && !scanner->line_started && at_baseline) {
+  if (valid[DEFINITION_TEXT_START] && !scanner->line_started && at_baseline) {
     while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
       advance(lexer);
     }
     if (lexer->lookahead != '=' || !property_name) {
-      return push(scanner, lexer, indent, TEXT, CAP_TEXT_START);
+      return push(scanner, lexer, indent, TEXT, DEFINITION_TEXT_START);
     }
   }
 
@@ -757,8 +757,8 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     enum Token start = LINE_START;
     if (valid[UNTIL_START] && strcmp(word, "until") == 0) {
       start = UNTIL_START;
-    } else if (valid[FROM_START] && strcmp(word, "from") == 0) {
-      start = FROM_START;
+    } else if (valid[INITIAL_START] && strcmp(word, "initial") == 0) {
+      start = INITIAL_START;
     } else if (valid[DIRECTIVE_START]) {
       bool directive = keyword(word, directive_keywords,
                                sizeof(directive_keywords) / sizeof(*directive_keywords));
@@ -777,9 +777,9 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
     }
   }
 
-  bool prose = (valid[FLOW_TEXT] &&
+  bool prose = (valid[FLOW_RAW_TEXT] &&
                 !keyword(word, flow_keywords, sizeof(flow_keywords) / sizeof(*flow_keywords))) ||
-               (valid[AGIC_TEXT] &&
+               (valid[AGIC_RAW_TEXT] &&
                 !keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords)));
   if (valid[LINE_START] && !prose && !scanner->line_started && at_baseline) {
     scanner->line_started = true;
@@ -792,16 +792,16 @@ bool tree_sitter_toolang_external_scanner_scan(void *payload, TSLexer *lexer, co
         (indent.column == frame.column && indent.prefix != frame.prefix)) {
       return false;
     }
-    if (valid[FLOW_TEXT]) {
+    if (valid[FLOW_RAW_TEXT]) {
       if (keyword(word, flow_keywords, sizeof(flow_keywords) / sizeof(*flow_keywords))) {
         return false;
       }
-      text = FLOW_TEXT;
-    } else if (valid[AGIC_TEXT]) {
+      text = FLOW_RAW_TEXT;
+    } else if (valid[AGIC_RAW_TEXT]) {
       if (keyword(word, agic_keywords, sizeof(agic_keywords) / sizeof(*agic_keywords))) {
         return false;
       }
-      text = AGIC_TEXT;
+      text = AGIC_RAW_TEXT;
     } else {
       return false;
     }

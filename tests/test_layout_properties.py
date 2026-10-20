@@ -57,11 +57,11 @@ def render_program(program, rng, tabs, indent=""):
 def program_shape(statements):
     result = []
     for statement in statements.named_children:
-        if statement.type == "run_statement":
+        if statement.type == "run_stmt":
             result.append(
                 ("run", statement.child_by_field_name("target").text.decode().strip())
             )
-        elif statement.type == "repeat_statement":
+        elif statement.type == "repeat_stmt":
             count = statement.child_by_field_name("count")
             condition = statement.child_by_field_name("body").child_by_field_name("until")
             if condition is not None:
@@ -109,7 +109,7 @@ def test_generated_layout_preserves_the_independent_statement_tree(seed):
     ]
     statements = flows[0].child_by_field_name("body")
     assert program_shape(statements) == expected, source
-    assert not descendants(flows[1], "run_statement")
+    assert not descendants(flows[1], "run_stmt")
 
 
 EDIT_SOURCES = [
@@ -211,9 +211,9 @@ def test_missing_binding_assignment_recovers_identically_during_edits(newline, o
         root = tree.root_node
         assert fingerprint(root) == fingerprint(parser.parse(current).root_node)
         assert valid(root) == expected_valid
-        assert len(descendants(root, "repeat_statement")) == 1
+        assert len(descendants(root, "repeat_stmt")) == 1
         if not expected_valid:
-            assert len(descendants(root, "invalid_flow_statement")) == 1
+            assert len(descendants(root, "invalid_flow_stmt")) == 1
         previous = current
 
 
@@ -245,13 +245,13 @@ def test_deep_layout_state_survives_edits_and_pending_dedents(depth, newline):
         ), current
         if publish_depth is not None:
             assert valid(tree.root_node)
-            assert len(descendants(tree.root_node, "repeat_statement")) == depth
-            publish = descendants(tree.root_node, "run_statement")[-1]
+            assert len(descendants(tree.root_node, "repeat_stmt")) == depth
+            publish = descendants(tree.root_node, "run_stmt")[-1]
             assert publish.child_by_field_name("target").text.strip() == b"publish"
             owner = publish.parent
             owners = 0
             while owner is not None:
-                owners += owner.type == "repeat_statement"
+                owners += owner.type == "repeat_stmt"
                 owner = owner.parent
             assert owners == publish_depth
         else:
@@ -276,7 +276,7 @@ def test_layout_serialization_capacity_rejects_overflow_and_recovers(newline):
         assert fingerprint(tree.root_node) == fingerprint(parser.parse(current).root_node)
         assert valid(tree.root_node) == (depth <= 166)
         if depth <= 166:
-            assert len(descendants(tree.root_node, "repeat_statement")) == depth
+            assert len(descendants(tree.root_node, "repeat_stmt")) == depth
             assert len(descendants(tree.root_node, "flow")) == 2
         previous = current
 

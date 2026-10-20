@@ -23,7 +23,7 @@ flow launch(_: Text):
     {{await_note}}
 
 agic research:
-  async run remains literal in an unroled message.
+  async run remains literal in an implicit message.
   await h is also literal.
   user: async and await are literal in a roled message.
   # await and async remain literal in comments.

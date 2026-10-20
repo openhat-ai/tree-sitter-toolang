@@ -65,7 +65,7 @@ def test_malformed_statements_preserve_following_siblings_and_items(statement, p
     assert not valid(root), root
     assert any(n.child_by_field_name("target") is not None
                and n.child_by_field_name("target").text == b"after"
-               for n in descendants(root, "run_statement")), root
+               for n in descendants(root, "run_stmt")), root
     assert_next_items(root, source, ("flow next:\n  pass\n").replace("\n", newline).encode())
     if "#" in trivia:
         marker = source.index(trivia.split("\n", 1)[0].encode())
@@ -84,7 +84,7 @@ def test_malformed_directives_preserve_body_entries_and_next_items(directive, ki
     root = parse(source.decode())
     assert not valid(root), root
     assert any(n.text.strip() == following.encode()
-               for n in descendants(root, "message" if kind == "agic" else "run_statement")), root
+               for n in descendants(root, "message" if kind == "agic" else "run_stmt")), root
     assert_next_items(root, source, ("flow next:\n  pass\n").replace("\n", newline).encode())
     doc, = [n for n in root.named_children if n.type == "item_doc"]
     assert doc.text == b"## Next docs." + newline.encode()

@@ -39,7 +39,7 @@ def test_invalid_parameter_entries_preserve_the_signature_body_and_next_item(kin
     assert [node.child_by_field_name("name").text.decode()
             for node in params.children_by_field_name("param") if node.type == "param"] == expected
     body = owner.child_by_field_name("body")
-    assert body.children_by_field_name("statement" if kind == "flow" else "message")[-1].text.strip() == entry.encode()
+    assert body.children_by_field_name("stmt" if kind == "flow" else "message")[-1].text.strip() == entry.encode()
     assert descendants(body, "item_doc")[0].text == ("## First." + newline).encode()
     assert following.child_by_field_name("name").text == b"next" and valid(following)
     assert root.named_children[-2].type == "item_doc"
@@ -64,7 +64,7 @@ def test_invalid_directives_preserve_the_prefix_and_owner_without_a_following_st
     assert diagnostic.child_by_field_name("key").text == key.encode()
     assert diagnostic.text == ("  " + key + tail + newline).encode()
     assert body.children_by_field_name("directive")[-1].child_by_field_name("key").text == b"tools"
-    assert bool(descendants(body, "invalid_missing_statement")) == (kind == "flow")
+    assert bool(descendants(body, "invalid_missing_stmt")) == (kind == "flow")
     assert following.child_by_field_name("name").text == b"next" and valid(following)
     assert root.named_children[-2].type == "item_doc"
 
@@ -106,7 +106,7 @@ def test_parameter_recovery_preserves_native_missing_closing_delimiters(kind, en
     assert owner.child_by_field_name("params").children[-1].is_missing
     assert owner.child_by_field_name("params").children[-1].type == ")"
     assert owner.child_by_field_name("return").text == b"Text"
-    assert descendants(owner.child_by_field_name("body"), "run_statement" if kind == "flow" else "message")
+    assert descendants(owner.child_by_field_name("body"), "run_stmt" if kind == "flow" else "message")
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
 

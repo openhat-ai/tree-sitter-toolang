@@ -16,7 +16,7 @@ flow work(topic: Text):
 
     # Literal reducer heading.
     Merge {{_}}.
-    from:
+    initial:
 
       Seed # literal.
   repeat 2 time windowing 1:

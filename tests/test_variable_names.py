@@ -106,12 +106,12 @@ def test_assignment_selects_keyword_destination_without_changing_ranges(name, as
     source = f"flow work:\n  let {name}{assignment}spawn worker # Result.".replace("\n", ending or "\n") + ending
     root = parse(source)
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     local = binding.child_by_field_name("local")
     assert local.type == "local_name" and local.text == name.encode()
     assert local.child_count == 0
     assert local.end_byte - local.start_byte == len(name)
-    assert binding.child_by_field_name("statement").type == "spawn_statement"
+    assert binding.child_by_field_name("stmt").type == "spawn_stmt"
     operator, = tokens(binding, "=")
     assert operator.text == b"=" and operator.end_byte == operator.start_byte + 1
     assert source.encode()[local.end_byte:operator.start_byte] == assignment.split("=")[0].encode()
@@ -124,7 +124,7 @@ def test_keyword_destinations_accept_indented_literal_values(name):
     source = f"flow work:\n  let {name} =\n    run is literal here.\n    # Literal comment.\n  await {name}\n"
     root = parse(source)
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     value = binding.child_by_field_name("value")
     assert value.type == "content"
     assert [node.text for node in descendants(value, "text")] == [
@@ -132,22 +132,22 @@ def test_keyword_destinations_accept_indented_literal_values(name):
     ]
     handle, = descendants(root, "handle_name")
     assert handle.text == name.encode()
-    assert not descendants(root, "run_statement")
+    assert not descendants(root, "run_stmt")
 
 
 @pytest.mark.parametrize("statement, kind", [
-    ("run worker", "run_statement"),
-    ("async run worker", "run_statement"),
-    ("spawn worker", "spawn_statement"),
-    ("await sort", "await_statement"),
-    ("sort ascending by score", "sort_statement"),
+    ("run worker", "run_stmt"),
+    ("async run worker", "run_stmt"),
+    ("spawn worker", "spawn_stmt"),
+    ("await sort", "await_stmt"),
+    ("sort ascending by score", "sort_stmt"),
 ])
 def test_anonymous_let_operations_keep_their_meaning(statement, kind):
     root = parse(f"flow work:\n  let {statement}\n")
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     assert binding.child_by_field_name("local") is None
-    assert binding.child_by_field_name("statement").type == kind
+    assert binding.child_by_field_name("stmt").type == kind
     assert binding.child_by_field_name("value") is None
 
 
@@ -164,7 +164,7 @@ def test_keyword_binding_errors_preserve_following_source(head, newline):
     assert len([node for node in root.named_children if node.type == "flow"]) == 2
     assert any(node.child_by_field_name("target") is not None
                and node.child_by_field_name("target").text == b"after"
-               for node in descendants(root, "run_statement"))
+               for node in descendants(root, "run_stmt"))
 
 
 @pytest.mark.parametrize("name", KEYWORDS)
@@ -183,5 +183,5 @@ def test_incremental_keyword_assignments_match_fresh_parses(name, newline):
         assert len([node for node in tree.root_node.named_children if node.type == "flow"]) == 2
         assert any(node.child_by_field_name("target") is not None
                    and node.child_by_field_name("target").text == b"after"
-                   for node in descendants(tree.root_node, "run_statement"))
+                   for node in descendants(tree.root_node, "run_stmt"))
         previous = current

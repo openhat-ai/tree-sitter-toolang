@@ -19,9 +19,9 @@ def test_repeat_requires_executable_body_with_optional_bounds(
     expected_valid = body == "run improve"
     assert valid(root) == expected_valid, source
     if expected_valid:
-        loop = descendants(root, "repeat_statement")[0]
+        loop = descendants(root, "repeat_stmt")[0]
         assert loop.child_by_field_name("body").type == "repeat_body"
-        assert [n.text.strip() for n in descendants(loop, "run_statement")] == [
+        assert [n.text.strip() for n in descendants(loop, "run_stmt")] == [
             b"run improve"
         ]
         assert (loop.child_by_field_name("count") is not None) == bool(count)
@@ -129,7 +129,7 @@ def test_implicit_paragraph_boundaries_are_shared_without_absorbing_trivia(
 ):
     root = parse(f"{kind} work:\n  Review the evidence.\n{separator}  Summarize it.\n")
     assert valid(root)
-    node_type = "implicit_run_statement" if kind == "flow" else "message"
+    node_type = "implicit_run_stmt" if kind == "flow" else "message"
     prose = descendants(root, node_type)
     assert len(prose) == paragraphs
     assert [
@@ -153,7 +153,7 @@ def test_flow_keywords_do_not_leak_into_other_implicit_contexts(kind, word):
     root = parse(f"{kind} work:\n  {text}\n")
     assert valid(root)
     assert descendants(root, "text")[0].text.strip() == text.encode()
-    assert not descendants(root, "implicit_run_statement")
+    assert not descendants(root, "implicit_run_stmt")
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
@@ -194,8 +194,8 @@ def test_structural_trivia_preserves_comment_kinds_and_source_ranges(
     for node in comments:
         assert tuple(node.start_point) == point(source, node.start_byte)
         assert tuple(node.end_point) == point(source, node.end_byte)
-    loop = descendants(root, "repeat_statement")[0]
-    assert [n.text.strip() for n in descendants(loop, "run_statement")] == [
+    loop = descendants(root, "repeat_stmt")[0]
+    assert [n.text.strip() for n in descendants(loop, "run_stmt")] == [
         b"run first",
         b"run last",
     ]

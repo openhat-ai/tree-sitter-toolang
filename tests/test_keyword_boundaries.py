@@ -22,12 +22,12 @@ def test_operation_prefixes_are_literal_in_both_implicit_text_positions(head, su
     root = parse((f"flow work:\n  {word}\n  let note = {word}\n"
                   f"  repeat:\n    let nested = {word}\n").replace("\n", newline))
     assert valid(root), root
-    implicit, = descendants(root, "implicit_run_statement")
+    implicit, = descendants(root, "implicit_run_stmt")
     assert implicit.text.strip() == word.encode()
-    bindings = descendants(root, "let_statement")
+    bindings = descendants(root, "let_stmt")
     assert len(bindings) == 2
     for binding in bindings:
-        assert binding.child_by_field_name("statement") is None, binding
+        assert binding.child_by_field_name("stmt") is None, binding
         assert binding.child_by_field_name("value").text.strip() == word.encode()
 
 
@@ -39,7 +39,7 @@ def test_complete_operation_heads_remain_invalid_instead_of_becoming_text(source
     root = parse(f"flow work:\n  let result = {source}\n")
     assert not valid(root), root
     assert all(node.child_by_field_name("value") is None
-               for node in descendants(root, "let_statement")), root
+               for node in descendants(root, "let_stmt")), root
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
@@ -119,7 +119,7 @@ def test_keyword_aliases_preserve_named_leaf_nodes():
 def test_bound_run_range_starts_at_its_keyword(space):
     root = parse(f"flow work:\n  let result ={space}run worker\n")
     assert valid(root), root
-    operation, = descendants(root, "run_statement")
+    operation, = descendants(root, "run_stmt")
     keyword, = tokens(operation, "run")
     assert not keyword.is_named
     assert operation.start_byte == keyword.start_byte
@@ -155,5 +155,5 @@ def test_malformed_bound_operation_does_not_consume_following_statements():
     assert not valid(root), root
     flows = descendants(root, "flow")
     assert [flow.child_by_field_name("name").text for flow in flows] == [b"work", b"next"]
-    after, = descendants(root, "run_statement")
+    after, = descendants(root, "run_stmt")
     assert after.child_by_field_name("target").text == b"after"

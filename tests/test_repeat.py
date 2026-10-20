@@ -22,13 +22,13 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
     source = newline.join(lines) + ending
     root = parse(source)
     assert valid(root), root
-    loop, = descendants(root, "repeat_statement")
+    loop, = descendants(root, "repeat_stmt")
     assert loop.child_by_field_name("until") is None
     body, = loop.children_by_field_name("body")
     assert body.type == "repeat_body"
     assert not descendants(body, "statements")
-    statements = body.children_by_field_name("statement")
-    assert [node.type for node in statements] == ["run_statement", "run_statement"]
+    statements = body.children_by_field_name("stmt")
+    assert [node.type for node in statements] == ["run_stmt", "run_stmt"]
     assert [node.child_by_field_name("target").text.strip() for node in statements] == [b"first", b"last"]
     assert all(node.parent == body for node in statements)
     conditions = body.children_by_field_name("until")
@@ -63,8 +63,8 @@ def test_repeat_fields_order_ranges_and_condition_index(position, condition, hea
 def test_condition_separates_all_ordinary_flow_statement_kinds(statement):
     root = parse(f"flow work:\n  repeat:\n    {statement}\n    until done\n    run next\n")
     assert valid(root), root
-    body = descendants(root, "repeat_statement")[0].child_by_field_name("body")
-    before, after = body.children_by_field_name("statement")
+    body = descendants(root, "repeat_stmt")[0].child_by_field_name("body")
+    before, after = body.children_by_field_name("stmt")
     clause = body.child_by_field_name("until")
     assert before.end_byte <= clause.start_byte < after.start_byte
 
@@ -80,8 +80,8 @@ def test_condition_separates_all_ordinary_flow_statement_kinds(statement):
 def test_invalid_conditions_never_become_valid_text(binding, condition):
     root = parse(f"flow work:\n  repeat:\n    run work\n    {binding}{condition}\n")
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement"), root
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement")), root
+    assert not descendants(root, "implicit_run_stmt"), root
+    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt")), root
 
 
 @pytest.mark.parametrize("condition", ["until done", "until: Ready.", "until: # Ready.", "until:\n      Ready."])
@@ -89,8 +89,8 @@ def test_invalid_conditions_never_become_valid_text(binding, condition):
 def test_conditions_cannot_be_bound(binding, condition):
     root = parse(f"flow work:\n  repeat:\n    run work\n    {binding}{condition}\n")
     assert not valid(root), root
-    assert not descendants(root, "implicit_run_statement")
-    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_statement"))
+    assert not descendants(root, "implicit_run_stmt")
+    assert all(node.child_by_field_name("value") is None for node in descendants(root, "let_stmt"))
 
 
 @pytest.mark.parametrize("space", ["", " ", "  ", "\t"])
@@ -99,11 +99,11 @@ def test_explicit_content_binding_keeps_literal_until_after_header_whitespace(sp
     source = f"flow work:\n  let note ={space}\n    until dawn.\n  run next\n".replace("\n", newline)
     root = parse(source)
     assert valid(root), root
-    binding, = descendants(root, "let_statement")
+    binding, = descendants(root, "let_stmt")
     assert [child.type for child in binding.child_by_field_name("value").named_children] == ["text", "newline"]
     assert b"until dawn." in binding.child_by_field_name("value").text
     assert not descendants(root, "until_clause")
-    assert not descendants(root, "implicit_run_statement")
+    assert not descendants(root, "implicit_run_stmt")
 
 
 @pytest.mark.parametrize("space", ["", " ", "\t"])
@@ -147,17 +147,17 @@ def test_nested_conditions_trivia_prose_and_dedented_siblings(newline):
 """.replace("\n", newline)
     root = parse(source)
     assert valid(root), root
-    outer, inner = descendants(root, "repeat_statement")
+    outer, inner = descendants(root, "repeat_stmt")
     outer_body, inner_body = [loop.child_by_field_name("body") for loop in (outer, inner)]
-    assert [node.type for node in outer_body.children_by_field_name("statement")] == ["repeat_statement", "run_statement"]
-    assert [node.type for node in inner_body.children_by_field_name("statement")] == ["implicit_run_statement", "run_statement"]
+    assert [node.type for node in outer_body.children_by_field_name("stmt")] == ["repeat_stmt", "run_stmt"]
+    assert [node.type for node in inner_body.children_by_field_name("stmt")] == ["implicit_run_stmt", "run_stmt"]
     outer_clause = outer_body.child_by_field_name("until")
     inner_clause = inner_body.child_by_field_name("until")
     assert outer_clause.child_by_field_name("target").text == b"outer_done"
     assert b"until remains literal here." in inner_clause.child_by_field_name("target").text
     assert len(descendants(root, "until_clause")) == 2
     assert len(descendants(inner_body, "item_doc")) == 1
-    assert descendants(root, "run_statement")[-1].parent.type == "flow_body"
+    assert descendants(root, "run_stmt")[-1].parent.type == "flow_body"
 
 
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
@@ -189,5 +189,5 @@ def test_repeat_indentation_capture_has_one_level_per_repeat():
     root = parse("flow work:\n  repeat:\n    until done\n    repeat:\n      run work\n")
     captures = QueryCursor(Query(language, tree_sitter_toolang.INDENTS_QUERY)).captures(root)
     assert [node.type for node in sorted(captures["indent"], key=lambda n: n.start_byte)] == [
-        "flow", "repeat_statement", "repeat_statement",
+        "flow", "repeat_stmt", "repeat_stmt",
     ]

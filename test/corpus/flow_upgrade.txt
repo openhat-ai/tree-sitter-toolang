@@ -36,7 +36,7 @@ flow research(_):
   handoffs = none
   run expand
   reduce using merge:
-    from:
+    initial:
       Initial report.
   repeat 5 times windowing 3:
     run: Improve {{_}}.
@@ -47,7 +47,7 @@ flow seeded(_):
     Expand {{_}}.
   reduce:
     Incorporate {{_}} into {{_1._}}.
-    from:
+    initial:
       Initial report.
 
 ---
@@ -181,22 +181,22 @@ flow seeded(_):
         (directive_key)
         (route_value)
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (reduce_statement
+      (reduce_stmt
         (runnable_name)
         (newline)
         (newline)
         (content
           (text)
           (newline)))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (inline_agic
               (content
                 (text))
@@ -214,7 +214,7 @@ flow seeded(_):
         (param_name)))
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (inline_agic
           (type
             (builtin_type))
@@ -222,7 +222,7 @@ flow seeded(_):
           (content
             (text)
             (newline))))
-      (reduce_statement
+      (reduce_stmt
         (inline_agic
           (newline)
           (content

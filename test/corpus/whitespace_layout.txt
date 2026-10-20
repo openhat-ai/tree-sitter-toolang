@@ -59,17 +59,17 @@ flow empty( )->Text []:
         (directive_key)
         (integer_literal)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (runnable_name)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (await_statement
+        (await_stmt
           (handle_name)
           (newline)))
-      (generate_statement
+      (generate_stmt
         (integer_literal)
         (inline_agic
           (type
@@ -77,20 +77,20 @@ flow empty( )->Text []:
           (content
             (text))
           (newline)))
-      (map_statement
+      (map_stmt
         (integer_literal)
         (runnable_name)
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (integer_literal)
         (integer_literal)
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (plain_comment)
             (newline))))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
@@ -126,29 +126,29 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (invalid_missing_body)))
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (newline)
         (content
           (invalid_missing_content)))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (reduce_statement
+      (reduce_stmt
         (inline_agic
           (newline)
           (content
             (invalid_missing_content))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

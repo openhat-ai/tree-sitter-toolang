@@ -35,7 +35,7 @@ flow example:
   ask: Continue?
   reduce:
     Combine.
-    from: Seed.
+    initial: Seed.
   repeat:
     until: Ready?
     run worker

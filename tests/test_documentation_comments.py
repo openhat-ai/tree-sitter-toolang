@@ -309,7 +309,7 @@ def test_malformed_nested_docs_preserve_following_statement_and_top_level_item(c
     assert root.has_error
     assert [
         node.child_by_field_name("target").text.strip()
-        for node in descendants(root, "run_statement")
+        for node in descendants(root, "run_stmt")
     ] == [b"first", b"last"]
     assert descendants(root, "flow")[-1].child_by_field_name("name").text == b"next"
 
@@ -329,7 +329,7 @@ def test_documentation_nodes_are_peers_with_direct_fields(newline, ending):
     ]
     body = root.named_children[-1].child_by_field_name("body")
     assert [node.type for node in body.named_children] == [
-        "run_statement", "item_doc", "param_doc", "run_statement",
+        "run_stmt", "item_doc", "param_doc", "run_stmt",
     ]
     for owner in [root, body]:
         doc, = [node for node in owner.named_children if node.type == "param_doc"]

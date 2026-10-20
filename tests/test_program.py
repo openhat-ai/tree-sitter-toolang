@@ -37,8 +37,9 @@ def test_program_documentation_exposes_text_without_parameter_tags(ending):
     assert not descendants(documentation, "param_doc")
 
 
-def test_public_metadata_has_no_source_file_or_module_documentation_nodes():
+def test_program_and_documentation_metadata_expose_their_public_roles():
     nodes = json.loads((ROOT / "src/node-types.json").read_text())
-    names = {node["type"] for node in nodes}
-    assert {"program", "program_doc"} <= names
-    assert not {"source_file", "module_doc_comment", "module_doc"} & names
+    schema = {node["type"]: node for node in nodes if node["named"]}
+    children = {node["type"] for node in schema["program"]["children"]["types"]}
+    assert {"program_doc", "item_doc", "param_doc", "flow", "agic"} <= children
+    assert schema["program_doc"]["fields"]["text"]["types"] == [{"type": "text", "named": True}]

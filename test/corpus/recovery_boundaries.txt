@@ -21,7 +21,7 @@ flow next:
       (blank_line)
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -80,7 +80,7 @@ flow last:
         (directive_key)
         (recall_value)
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow
@@ -152,7 +152,7 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (ERROR
@@ -165,10 +165,10 @@ flow next:
               (content
                 (text))
               (newline)))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

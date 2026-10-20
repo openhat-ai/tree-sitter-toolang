@@ -25,7 +25,7 @@ flow next:
     (flow_body
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (item_doc
@@ -57,7 +57,7 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (ERROR
           (plain_comment))
@@ -68,10 +68,10 @@ flow next:
           (param_doc
             (param_name)
             (text))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

@@ -111,15 +111,15 @@ flow next:
         (text))
       (item_doc
         (text))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (item_doc
             (text))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
           (until_clause

@@ -22,21 +22,21 @@ flow work: # Structural.
     (plain_comment)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (inline_agic
           (content
             (text))
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
         (content
           (text))
         (newline))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (plain_comment)
         (newline))
-      (run_statement
+      (run_stmt
         (inline_agic
           (newline)
           (content

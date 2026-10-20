@@ -30,7 +30,7 @@ def test_parameter_recovery_cannot_borrow_a_delimiter_from_the_header_comment(ki
     header_comment, = descendants(owner, "plain_comment")
     assert header_comment.text == comment.encode() and header_comment.parent == owner
     body = owner.child_by_field_name("body")
-    assert body.children_by_field_name("statement" if kind == "flow" else "message")[-1].text.strip() == entry.encode()
+    assert body.children_by_field_name("stmt" if kind == "flow" else "message")[-1].text.strip() == entry.encode()
     assert descendants(body, "item_doc")[0].text == ("## First." + newline).encode()
     assert following.child_by_field_name("name").text == b"next" and valid(following)
     assert root.named_children[-2].type == "item_doc"
@@ -94,7 +94,7 @@ def test_missing_inline_return_types_keep_content_and_following_statements(head,
     assert diagnostic.parent == inline and diagnostic.start_byte == diagnostic.end_byte
     assert inline.child_by_field_name("return") is None
     assert inline.child_by_field_name("content").text.strip() == b"Text # literal."
-    assert descendants(owner, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert descendants(owner, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
 
@@ -127,10 +127,10 @@ def test_missing_inline_colons_keep_modified_run_target_diagnostics(statement, n
     assert not valid(root)
     owner, following = declarations(root)
     diagnostic, = descendants(owner, "invalid_run_target")
-    assert diagnostic.parent.type == "run_statement"
+    assert diagnostic.parent.type == "run_stmt"
     assert diagnostic.parent.child_by_field_name("async").text == b"async"
     assert not descendants(root, "invalid_missing_type")
-    assert descendants(owner, "run_statement")[-1].child_by_field_name("target").text == b"after"
+    assert descendants(owner, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
 
@@ -144,7 +144,7 @@ def test_until_keeps_its_restricted_target_grammar(annotation, newline):
     owner, following = declarations(root)
     assert not descendants(root, "invalid_missing_type")
     assert not descendants(owner, "until_clause")
-    assert [n.child_by_field_name("target").text for n in descendants(owner, "run_statement")] == [b"worker", b"after", b"after_outer"]
+    assert [n.child_by_field_name("target").text for n in descendants(owner, "run_stmt")] == [b"worker", b"after", b"after_outer"]
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
 
@@ -169,20 +169,20 @@ def test_parameter_delimiters_take_priority_over_invalid_entry_fragments(paramet
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 def test_reducer_return_annotations_preserve_content_initializers_and_bindings(binding, type_name, newline):
     source = (f"flow work:\n  {binding}reduce -> {type_name}:\n\n    Merge # literal.\n"
-              "    from: Initial # literal.\n  run after\nflow next:\n  pass\n").replace("\n", newline)
+              "    initial: Initial # literal.\n  run after\nflow next:\n  pass\n").replace("\n", newline)
     root = parse(source)
     assert valid(root) == bool(type_name)
     owner, following = declarations(root)
-    reducer, = descendants(owner, "reduce_statement")
+    reducer, = descendants(owner, "reduce_stmt")
     target = reducer.child_by_field_name("target")
     assert target.type == "inline_agic"
     assert target.child_by_field_name("content").text == (newline + "    Merge # literal." + newline).encode()
-    assert reducer.child_by_field_name("from").text == b" Initial # literal."
+    assert reducer.child_by_field_name("initial").text == b" Initial # literal."
     assert bool(descendants(target, "invalid_missing_type")) == (not type_name)
     if binding:
-        wrapper, = descendants(owner, "let_statement")
-        assert wrapper.child_by_field_name("statement") == reducer
-    assert descendants(owner, "run_statement")[-1].child_by_field_name("target").text == b"after"
+        wrapper, = descendants(owner, "let_stmt")
+        assert wrapper.child_by_field_name("stmt") == reducer
+    assert descendants(owner, "run_stmt")[-1].child_by_field_name("target").text == b"after"
     assert following.child_by_field_name("name").text == b"next" and valid(following)
 
 

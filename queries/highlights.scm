@@ -36,7 +36,7 @@
   "sort"
   "repeat"
   "until"
-  "from"
+  "initial"
   "windowing"
   "using"
   "if"
@@ -91,7 +91,7 @@
 (property value: (text) @string)
 (invalid_param (text) @string)
 (invalid_directive (text) @string)
-(invalid_flow_statement (text) @string)
+(invalid_flow_stmt (text) @string)
 (invalid_agic_message (text) @string)
 (invalid_run_target (text) @string)
 

@@ -1,4 +1,4 @@
-"""Only chores remain in the authored work declaration and CST vocabulary."""
+"""Chore names, optional property bodies, and declaration boundaries."""
 
 import json
 from pathlib import Path
@@ -14,21 +14,21 @@ from test_layout_support import descendants, parse, valid
 ROOT = Path(__file__).parents[1]
 
 
-def test_retired_task_and_job_nodes_are_absent():
+def test_chore_metadata_exposes_its_name_and_optional_body():
     metadata = json.loads((ROOT / "src/node-types.json").read_text())
-    assert not {"task", "task_keyword", "job_name", "job_body"} & {
-        node["type"] for node in metadata
-    }
+    schema = {node["type"]: node for node in metadata if node["named"]}
+    assert schema["chore"]["fields"]["name"]["types"] == [{"type": "chore_name", "named": True}]
+    assert schema["chore"]["fields"]["body"]["required"] is False
+    assert schema["chore_body"]["fields"]["content"]["types"] == [{"type": "content", "named": True}]
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
 @pytest.mark.parametrize("body", ["", "  Review changes.\n", "  title = Review\n"])
-def test_task_declarations_are_rejected(body, newline):
-    source = f"task retired:\n{body}chore remaining:\n  Keep this chore.\n"
+def test_unknown_declarations_preserve_the_following_chore(body, newline):
+    source = f"routine unknown:\n{body}chore remaining:\n  Keep this chore.\n"
     root = parse(source.replace("\n", newline))
     assert not valid(root)
     assert root.has_error
-    assert not descendants(root, "task")
     remaining, = descendants(root, "chore")
     assert remaining.child_by_field_name("name").text == b"remaining"
 

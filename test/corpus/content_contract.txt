@@ -38,7 +38,7 @@ flow example:
   ask: Continue?
   reduce:
     Combine.
-    from: Seed.
+    initial: Seed.
   repeat:
     until: Ready?
     run worker
@@ -134,28 +134,28 @@ flow example:
         (directive_key)
         (query_value)
         (newline))
-      (let_statement
+      (let_stmt
         (local_name)
         (newline)
         (content
           (text)
           (newline)))
-      (let_statement
+      (let_stmt
         (local_name)
-        (run_statement
+        (run_stmt
           (inline_agic
             (newline)
             (content
               (text)
               (newline)))))
-      (await_statement
+      (await_stmt
         (handle_name)
         (newline))
-      (ask_statement
+      (ask_stmt
         (content
           (text))
         (newline))
-      (reduce_statement
+      (reduce_stmt
         (inline_agic
           (newline)
           (content
@@ -164,7 +164,7 @@ flow example:
         (content
           (text))
         (newline))
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (until_clause
@@ -172,6 +172,6 @@ flow example:
               (content
                 (text))
               (newline)))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline)))))))

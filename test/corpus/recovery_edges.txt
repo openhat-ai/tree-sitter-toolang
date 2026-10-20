@@ -17,13 +17,13 @@ agic last:
     (runnable_name)
     (newline)
     (flow_body
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))
       (ERROR
         (plain_comment))
       (blank_line)
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow
@@ -65,7 +65,7 @@ flow next:
         (directive_key)
         (query_value)
         (newline))
-      (invalid_missing_statement)))
+      (invalid_missing_stmt)))
   (param_doc
     (param_name)
     (text))
@@ -73,7 +73,7 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
           (until_clause
@@ -81,7 +81,7 @@ flow next:
               (content
                 (text))
               (newline)))
-          (invalid_missing_statement)))))
+          (invalid_missing_stmt)))))
   (item_doc
     (text))
   (flow
@@ -109,19 +109,19 @@ flow next:
     (runnable_name)
     (newline)
     (flow_body
-      (repeat_statement
+      (repeat_stmt
         (newline)
         (repeat_body
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))
-          (invalid_flow_statement
+          (invalid_flow_stmt
             (text)
             (newline))
-          (run_statement
+          (run_stmt
             (runnable_name)
             (newline))))
-      (run_statement
+      (run_stmt
         (runnable_name)
         (newline))))
   (flow

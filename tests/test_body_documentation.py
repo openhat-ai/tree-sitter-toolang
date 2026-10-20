@@ -14,8 +14,8 @@ OWNERS = [
     ("struct First:", "struct", "struct_body", "one: Text", "two: Text"),
     *[(f"{kind} first:", kind, "chore_body" if kind == "chore" else "cap_body", "one = Value", "two = Value")
       for kind in ["psyche", "skill", "service", "prompt", "chore"]],
-    ("flow first:\n  repeat:", "repeat_statement", "repeat_body", "run one", "run two"),
-    ("flow first:\n  let result = repeat:", "repeat_statement", "repeat_body", "run one", "run two"),
+    ("flow first:\n  repeat:", "repeat_stmt", "repeat_body", "run one", "run two"),
+    ("flow first:\n  let result = repeat:", "repeat_stmt", "repeat_body", "run one", "run two"),
 ]
 
 
@@ -64,7 +64,7 @@ def test_actual_member_sets_the_baseline_and_prefix_spelling(layout, comment_ind
     doc, = descendants(root, "item_doc")
     column = lambda value: len(value.expandtabs(8))
     assert doc.parent == (body if column(comment_indent) >= column(layout) else flow), root
-    assert [n.child_by_field_name("target").text for n in body.children_by_field_name("statement")] == [b"one", b"two"]
+    assert [n.child_by_field_name("target").text for n in body.children_by_field_name("stmt")] == [b"one", b"two"]
 
 
 @pytest.mark.parametrize("newline", ["\n", "\r\n"])
