@@ -1229,7 +1229,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_instruct_header"
+          "name": "_instruct_prefix"
         },
         {
           "type": "CHOICE",
@@ -1286,7 +1286,7 @@
         }
       ]
     },
-    "_instruct_header": {
+    "_instruct_prefix": {
       "type": "SEQ",
       "members": [
         {
@@ -1328,7 +1328,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_context_header"
+          "name": "_context_prefix"
         },
         {
           "type": "CHOICE",
@@ -1385,7 +1385,7 @@
         }
       ]
     },
-    "_context_header": {
+    "_context_prefix": {
       "type": "SEQ",
       "members": [
         {
@@ -2357,7 +2357,7 @@
         }
       ]
     },
-    "_let_header": {
+    "_let_prefix": {
       "type": "SEQ",
       "members": [
         {
@@ -2390,7 +2390,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_let_header"
+              "name": "_let_prefix"
             },
             {
               "type": "FIELD",
@@ -2427,7 +2427,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_let_header"
+                "name": "_let_prefix"
               },
               {
                 "type": "CHOICE",
@@ -2521,7 +2521,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_let_header"
+              "name": "_let_prefix"
             },
             {
               "type": "STRING",
@@ -2591,7 +2591,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_named_run_header"
+              "name": "_named_run_head"
             },
             {
               "type": "SYMBOL",
@@ -2604,7 +2604,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_run_header"
+              "name": "_run_prefix"
             },
             {
               "type": "PREC_RIGHT",
@@ -2635,7 +2635,7 @@
         }
       ]
     },
-    "_run_header": {
+    "_run_prefix": {
       "type": "SEQ",
       "members": [
         {
@@ -2656,12 +2656,12 @@
         }
       ]
     },
-    "_named_run_header": {
+    "_named_run_head": {
       "type": "SEQ",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_run_header"
+          "name": "_run_prefix"
         },
         {
           "type": "SYMBOL",

@@ -132,11 +132,11 @@ module.exports = grammar({
         $._line_end,
       ),
 
-    instruct: ($) => seq($._instruct_header, content($, "content")),
-    _instruct_header: ($) => textHeader($, "instruct"),
+    instruct: ($) => seq($._instruct_prefix, content($, "content")),
+    _instruct_prefix: ($) => textPrefix($, "instruct"),
 
-    context: ($) => seq($._context_header, content($, "content")),
-    _context_header: ($) => textHeader($, "context"),
+    context: ($) => seq($._context_prefix, content($, "content")),
+    _context_prefix: ($) => textPrefix($, "context"),
 
     _inline_content: ($) => alias($._inline_text, $.text),
     _block_content: ($) => seq(
@@ -230,18 +230,18 @@ module.exports = grammar({
       $._operation_binding_start,
       $._flow_operation,
     ),
-    _let_header: ($) => seq("let", $._named_binding_start, field("local", $._local_name), "="),
+    _let_prefix: ($) => seq("let", $._named_binding_start, field("local", $._local_name), "="),
     let_stmt: ($) => choice(
-      seq($._let_header, field("stmt", $._bound_operation)),
+      seq($._let_prefix, field("stmt", $._bound_operation)),
       seq("let", field("stmt", $._flow_operation)),
-      prec.right(seq($._let_header, content($, "value"))),
+      prec.right(seq($._let_prefix, content($, "value"))),
     ),
     exec_stmt: ($) => seq("exec", $._target_tail),
     spawn_stmt: ($) => seq("spawn", $._target_tail),
     // These heads cannot be operations or literal values in a binding. Retain
     // one bounded diagnostic instead of letting text recovery accept them.
     _invalid_binding: ($) => seq(
-      choice($._let_header, "let"),
+      choice($._let_prefix, "let"),
       choice(
         seq($._exec_binding_start, "exec"),
         seq($._restricted_binding_start, $._restricted_binding_keyword),
@@ -250,11 +250,11 @@ module.exports = grammar({
       $._line_end,
     ),
     run_stmt: ($) => choice(
-      seq($._named_run_header, $._line_end),
-      seq($._run_header, prec.right(seq(optional($._required_space), $._inline_target))),
+      seq($._named_run_head, $._line_end),
+      seq($._run_prefix, prec.right(seq(optional($._required_space), $._inline_target))),
     ),
-    _run_header: ($) => seq(optional($._async_modifier), "run"),
-    _named_run_header: ($) => seq($._run_header, $._required_space, $._named_target),
+    _run_prefix: ($) => seq(optional($._async_modifier), "run"),
+    _named_run_head: ($) => seq($._run_prefix, $._required_space, $._named_target),
     _async_modifier: ($) => field("async", "async"),
     await_stmt: ($) => seq(
       "await",
@@ -546,7 +546,7 @@ function runnableHead($, keyword) {
   );
 }
 
-function textHeader($, keyword) {
+function textPrefix($, keyword) {
   return seq(field("keyword", keyword), optional(field("name", $._name)), field("colon", ":"));
 }
 

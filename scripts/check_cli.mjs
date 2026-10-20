@@ -228,6 +228,15 @@ try {
     }
   }
 
+  const diagnosticsPath = join(configDir, "diagnostics.too");
+  writeFileSync(diagnosticsPath, "flow missing:\ncontext absent:\nflow empty:\n  models = fast\nflow malformed(topic: Text extra):\n  let exec worker\nflow next:\n  pass\n");
+  const diagnosticCaptures = runCli("query", "--config-path", configPath, "--captures",
+    join(REPO_ROOT, "queries", "highlights.scm"), diagnosticsPath);
+  deepStrictEqual((diagnosticCaptures.match(/capture:\s+\d+ - error\b/g) ?? []).length, 5, diagnosticCaptures);
+  const diagnosticHtml = runCli("highlight", "--config-path", configPath, "--html", diagnosticsPath);
+  deepStrictEqual(diagnosticHtml.includes("<span style='color: #aa2233'><span style='color: #99aabb'>topic</span>: <span style='color: #667788'>Text</span> extra</span>"), true, diagnosticHtml);
+  deepStrictEqual(diagnosticHtml.includes("<span style='color: #556677'>"), false, diagnosticHtml);
+
   const textProductionsPath = join(REPO_ROOT, "tests", "fixtures", "text_productions.too");
   const textProductions = runCli("parse", "--config-path", configPath, "--rebuild", textProductionsPath);
   for (const kind of ["text", "query_value", "content", "directive_key"]) {

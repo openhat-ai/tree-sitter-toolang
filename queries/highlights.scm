@@ -7,7 +7,14 @@
 (item_doc) @comment.documentation
 (param_doc) @comment.documentation
 (param_doc "@param" @keyword param: (param_name) @variable.parameter)
-(ERROR) @error
+[
+  (ERROR)
+  (invalid_missing_body)
+  (invalid_missing_content)
+  (invalid_missing_stmt)
+  (invalid_param)
+  (invalid_flow_stmt)
+] @error
 
 [
   "with"
@@ -90,8 +97,6 @@
 
 (content (text) @string)
 (property value: (text) @string)
-(invalid_param (text) @string)
-(invalid_flow_stmt (text) @string)
 
 (struct
   name: (type_name) @type)

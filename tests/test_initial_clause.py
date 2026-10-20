@@ -103,7 +103,7 @@ def test_only_the_complete_initial_keyword_selects_an_initializer(word, newline)
     assert statement.child_by_field_name("initial").text == b" Seed."
 
 
-@pytest.mark.parametrize("word", ["initial", "note"])
+@pytest.mark.parametrize("word", ["initial", "from", "note"])
 def test_initializer_words_remain_names_and_deeper_literal_text(word):
     root = parse(f"flow {word}({word}: Text):\n  let {word} = Value.\n  reduce:\n"
                  f"    Merge.\n      {word}: Nested literal.\n    initial: Seed.\n  run {word}\n")
@@ -113,6 +113,55 @@ def test_initializer_words_remain_names_and_deeper_literal_text(word):
         assert name.text == word.encode()
     statement, = descendants(root, "reduce_stmt")
     assert f"{word}: Nested literal.".encode() in statement.child_by_field_name("target").text
+
+
+@pytest.mark.parametrize("word", ["from", "seed", "note"])
+@pytest.mark.parametrize("header", ["reduce:", "reduce -> Text:"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("final_newline", [False, True])
+def test_nonkeywords_are_reducer_text_without_an_initializer(word, header, newline, final_newline):
+    source = f"flow work:\n  {header}\n    Merge.\n    {word}: Seed."
+    if final_newline:
+        source += "\n"
+    source = source.replace("\n", newline)
+    root = parse(source)
+    assert valid(root), root
+    reducer, = descendants(root, "reduce_stmt")
+    assert reducer.child_by_field_name("initial") is None
+    content = reducer.child_by_field_name("target").child_by_field_name("content")
+    expected = (f"    Merge.\n    {word}: Seed." + ("\n" if final_newline else "")).replace("\n", newline).encode()
+    assert content.text == expected
+    assert (content.start_byte, content.end_byte) == (source.encode().index(expected), len(source.encode()))
+    query = Query(Language(tree_sitter_toolang.language()), tree_sitter_toolang.HIGHLIGHTS_QUERY)
+    captures = QueryCursor(query).captures(root)
+    assert descendants(content, "text")[-1] in captures["string"]
+    assert not any(node.text == word.encode() for node in captures.get("keyword", []))
+
+
+@pytest.mark.parametrize("word", ["from", "seed", "note"])
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+def test_only_the_initializer_clause_is_valid_in_a_named_reducer_scope(word, newline):
+    parser = Parser(Language(tree_sitter_toolang.language()))
+    previous = b""
+    tree = parser.parse(previous)
+    for keyword in ["initial", word, "initial", word, "initial"]:
+        source = (f"flow first:\n  reduce using merge:\n    {keyword}: Seed.\n"
+                  "  run after\n## Following.\nflow next:\n  pass\n").encode().replace(b"\n", newline)
+        edit_tree(tree, previous, source)
+        tree = parser.parse(source, tree)
+        root = tree.root_node
+        assert fingerprint(root) == fingerprint(parser.parse(source).root_node)
+        assert valid(root) == (keyword == "initial"), root
+        assert [node.child_by_field_name("name").text for node in declarations(root)] == [b"first", b"next"]
+        doc, following = root.named_children[-2:]
+        assert doc.type == "item_doc" and doc.text == b"## Following." + newline
+        assert valid(following)
+        if keyword == "initial":
+            reducer, = descendants(root, "reduce_stmt")
+            assert reducer.child_by_field_name("initial").text == b" Seed."
+        else:
+            assert root.has_error
+        previous = source
 
 
 @pytest.mark.parametrize("statement", [

@@ -29,6 +29,12 @@ Recovery forms are described under Validity and Recovery.
 Hidden productions start with `_` and add no CST wrapper. Field annotations
 highlight relevant CST structure.
 
+A `_prefix` is an opening fragment that still needs a target or value; a `_head`
+contains the signature or options before structural terminators. A `_header`
+includes its colon and line ending. A `_tail` completes a statement; a `_clause`
+contains a complete modifier phrase. `_body_prefix` denotes preceding trivia,
+as defined below.
+
 Three parameterized abbreviations are used:
 
 - `_body(P)` is an indented structural scope containing `P`, with structural
@@ -409,10 +415,10 @@ chore review_changes:
 ### Context and Instruct
 
 ```ebnf
-context          ::= _context_header _content(content) ;
-instruct         ::= _instruct_header _content(content) ;
-_context_header  ::= keyword:"context" name:identifier? colon:":" ;
-_instruct_header ::= keyword:"instruct" name:identifier? colon:":" ;
+context          ::= _context_prefix _content(content) ;
+instruct         ::= _instruct_prefix _content(content) ;
+_context_prefix  ::= keyword:"context" name:identifier? colon:":" ;
+_instruct_prefix ::= keyword:"instruct" name:identifier? colon:":" ;
 ```
 
 Both accept an optional name and require same-line or indented text. They have
@@ -580,10 +586,10 @@ its remaining order.
 ### Let
 
 ```ebnf
-let_stmt    ::= _let_header stmt:_flow_operation
+let_stmt    ::= _let_prefix stmt:_flow_operation
                | "let" stmt:_flow_operation
-               | _let_header _content(value) ;
-_let_header ::= "let" local:local_name "=" ;
+               | _let_prefix _content(value) ;
+_let_prefix ::= "let" local:local_name "=" ;
 ```
 
 Named bindings require `=`; nameless `let` requires an operation. Text bindings
@@ -614,9 +620,9 @@ flow keyword_names(sort: Text):
 ### Run, Exec, and Spawn
 
 ```ebnf
-run_stmt          ::= _named_run_header _line_end | _run_header _required_space? _inline_target ;
-_run_header       ::= async:"async"? "run" ;
-_named_run_header ::= _run_header _required_space _named_target ;
+run_stmt          ::= _named_run_head _line_end | _run_prefix _required_space? _inline_target ;
+_run_prefix       ::= async:"async"? "run" ;
+_named_run_head   ::= _run_prefix _required_space _named_target ;
 exec_stmt         ::= "exec" _target_tail ;
 spawn_stmt        ::= "spawn" _target_tail ;
 ```
@@ -801,7 +807,7 @@ their conditions; `until` is invalid outside a repeat.
 
 The condition takes a bare name or `:` followed by text. It has no return type,
 argument list, or binding. Deeper explicit text remains literal. The CST
-`repeat_body` exposes repeated `statement` fields and optional `until: until_clause`;
+`repeat_body` exposes repeated `stmt` fields and optional `until: until_clause`;
 that clause's `target` is a `runnable_name` or `inline_agic`.
 
 ```too
@@ -878,6 +884,10 @@ required construct from borrowing content or documentation from the next
 member or declaration. Missing parameter types and return annotations use
 native recovery; a missing return annotation has no usable `return` field.
 A missing closing `)` remains a native missing token.
+
+The highlight query captures `ERROR` and all five diagnostic types as `@error`;
+recovery text is not a semantic string. Zero-width diagnostics and native missing
+tokens need an editor or consumer to display their location.
 
 `params.param` accepts `param` or `invalid_param`. Directive and message fields
 contain normal entries only; native errors can be their siblings. Required

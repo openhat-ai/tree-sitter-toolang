@@ -193,19 +193,19 @@ property ::=
   (* alias {"value":"text","named":true} *) ( _structural_text ) ) _line_end;
 
 instruct ::=
-  _instruct_header ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _instruct_prefix ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
   _inline_content ) ) _text_end | (* prec.right 0 *) ( _text_end (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
-_instruct_header ::=
+_instruct_prefix ::=
   (* field "keyword" *) ( "instruct" ) ( (* field "name" *) ( _name ) )? (* field "colon" *) ( ":" );
 
 context ::=
-  _context_header ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
+  _context_prefix ( (* field "content" *) ( (* alias {"value":"content","named":true} *) (
   _inline_content ) ) _text_end | (* prec.right 0 *) ( _text_end (* field "content" *) (
   (* alias {"value":"content","named":true} *) ( _block_content ) ) ) );
 
-_context_header ::=
+_context_prefix ::=
   (* field "keyword" *) ( "context" ) ( (* field "name" *) ( _name ) )? (* field "colon" *) ( ":" );
 
 _inline_content ::=
@@ -287,12 +287,12 @@ _collection_operation ::=
 _bound_operation ::=
   _operation_binding_start _flow_operation;
 
-_let_header ::=
+_let_prefix ::=
   "let" _named_binding_start (* field "local" *) ( _local_name ) "=";
 
 let_stmt ::=
-  _let_header (* field "stmt" *) ( _bound_operation ) | "let" (* field "stmt" *) ( _flow_operation )
-  | (* prec.right 0 *) ( _let_header ( (* field "value" *) (
+  _let_prefix (* field "stmt" *) ( _bound_operation ) | "let" (* field "stmt" *) ( _flow_operation )
+  | (* prec.right 0 *) ( _let_prefix ( (* field "value" *) (
   (* alias {"value":"content","named":true} *) ( _inline_content ) ) _text_end | (* prec.right 0 *)
   ( _text_end (* field "value" *) ( (* alias {"value":"content","named":true} *) ( _block_content )
   ) ) ) );
@@ -304,18 +304,18 @@ spawn_stmt ::=
   "spawn" _target_tail;
 
 _invalid_binding ::=
-  ( _let_header | "let" ) ( _exec_binding_start "exec" | _restricted_binding_start
+  ( _let_prefix | "let" ) ( _exec_binding_start "exec" | _restricted_binding_start
   _restricted_binding_keyword ) ( (* alias {"value":"text","named":true} *) ( _recovery_text ) )?
   _line_end;
 
 run_stmt ::=
-  _named_run_header _line_end | _run_header (* prec.right 0 *) ( _required_space? _inline_target );
+  _named_run_head _line_end | _run_prefix (* prec.right 0 *) ( _required_space? _inline_target );
 
-_run_header ::=
+_run_prefix ::=
   _async_modifier? "run";
 
-_named_run_header ::=
-  _run_header _required_space _named_target;
+_named_run_head ::=
+  _run_prefix _required_space _named_target;
 
 _async_modifier ::=
   (* field "async" *) ( "async" );
