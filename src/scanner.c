@@ -376,18 +376,8 @@ static bool scan_param_error(TSLexer *lexer) {
 static bool scan_inline_token(Scanner *scanner, TSLexer *lexer, const bool *valid) {
   skip_indentation(lexer);
   lexer->mark_end(lexer);
-  char word[32] = {0};
-  unsigned length = 0;
-  bool identifier = lexer->lookahead >= 'a' && lexer->lookahead <= 'z';
-  while (word_character(lexer->lookahead)) {
-    if (lexer->lookahead >= 'A' && lexer->lookahead <= 'Z') {
-      identifier = false;
-    }
-    if (length < sizeof(word) - 1) {
-      word[length++] = (char)lexer->lookahead;
-    }
-    advance(lexer);
-  }
+  char word[32];
+  bool identifier = read_word(lexer, word, sizeof(word));
   // An explicit assignment selects a destination before operation heads. Keep
   // the marked end at the name's start; the grammar consumes the name and '='.
   if (valid[NAMED_BINDING_START] && identifier) {
