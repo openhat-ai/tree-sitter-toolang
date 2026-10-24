@@ -8,6 +8,59 @@ backfills the verified notes from 0.3.2 onward.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-24
+
+This stable release promotes the `0.4.0-alpha.6` grammar without further parser
+changes. The following summarizes changes since `0.3.4`; the prerelease entries
+below contain detailed migration tables. Syntax and public CST changes are
+breaking. Upgrade source, queries, CST consumers, and the Toolang runtime
+together; installing this parser does not upgrade runtime behavior.
+
+### Added
+
+- Add named and inline `spawn`, `async run`, and single-handle `await`, including
+  named and nameless `let` bindings. `_` is not a destination or await handle.
+- Allow repeat count and window independently, and at most one `until` at any
+  body position. Repeats still require an ordinary statement. Read the condition
+  through `repeat_stmt.body: repeat_body` and its optional `until` field.
+- Generate `GRAMMAR.ebnf` as an implementation reference alongside the valid
+  syntax and public CST contract in `GRAMMAR.md`.
+
+### Changed
+
+- Replace `scatter`/`gather` calls with `run`, `storm` with `generate`, and
+  `settle` with `reduce`. Named generate/map/reduce targets require `using`;
+  inline targets omit it. Preserve explicit array return types when migrating
+  calls. Reducer initializers use `initial:` instead of `from:`. Put lane clauses
+  before the target or predicate introducer. Removed operation words are no
+  longer reserved and may parse as literal prose; migrate intended operations.
+- Use `program` as the root, direct declarations and body members, `*_stmt`
+  statement nodes, repeated `stmt` fields, and one `target` field for named or
+  inline operations. Consolidate text as `content` with direct `text`, `newline`,
+  and `blank_line` children; fixed tokens become anonymous terminals. Update
+  field paths, queries, and range-based extraction using the migration tables.
+- Use `#@` at column zero for program documentation and expose `program_doc`,
+  `item_doc`, and `param_doc` nodes. `##!` is item documentation. Remove `task`
+  declarations in favor of `chore`.
+- Preserve hashes, quotes, and backslashes in explicit text. Accept active
+  keywords as contextual parameter/local names and await handles. Require
+  complete word/integer boundaries; accept `lane`/`lanes` and `time`/`times`
+  independently of numeric value. Reject unknown assignments in open directive
+  prefixes; use explicit text for intended prose.
+- Require Python 3.11 or newer and `setuptools>=77.0.3` for source builds. Publish
+  `cp311-abi3` wheels, with Linux ARM64 wheels built on native runners.
+
+### Fixed
+
+- Keep malformed headers, parameters, directives, and operations from consuming
+  following statements, documentation, or declarations. Fresh and incremental
+  parses preserve ownership and source ranges.
+- Use native `ERROR` nodes and missing tokens for ordinary syntax errors, with
+  five retained `invalid_*` diagnostics for boundary recovery. Reject all three
+  diagnostic forms; `root.has_error` alone is insufficient. Highlight native
+  errors and retained diagnostics as `@error`, and display zero-width diagnostic
+  locations explicitly.
+
 ## [0.4.0-alpha.6] - 2026-10-20
 
 ### Changed
@@ -361,7 +414,8 @@ becomes `item_doc_comment`, and `parent_doc_line` becomes `module_doc_comment`.
 Update queries and node consumers together. Existing `##!` source remains
 valid; do not replace marker-like strings inside literal prompts or history.
 
-[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.6...HEAD
+[Unreleased]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.3.4...v0.4.0
 [0.4.0-alpha.6]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.5...v0.4.0-alpha.6
 [0.4.0-alpha.5]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.4...v0.4.0-alpha.5
 [0.4.0-alpha.4]: https://github.com/openhat-ai/tree-sitter-toolang/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
